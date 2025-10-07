@@ -28,7 +28,6 @@ import {
   Drawer,
   DrawerClose,
   DrawerContent,
-  DrawerDescription,
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
@@ -61,8 +60,8 @@ export const NavigationDrawer = ({
   const [selectedWorkspace, setSelectedWorkspace] = useState<Workspace | null>(null);
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState<Workspace | null>(null);
-  const [actionDrawerOpen, setActionDrawerOpen] = useState(false);
-  const [actionWorkspace, setActionWorkspace] = useState<Workspace | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileMenuWorkspace, setMobileMenuWorkspace] = useState<Workspace | null>(null);
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const longPressTriggered = useRef(false);
   
@@ -94,12 +93,8 @@ export const NavigationDrawer = ({
     longPressTriggered.current = false;
     longPressTimer.current = setTimeout(() => {
       longPressTriggered.current = true;
-      setActionWorkspace(workspace);
-      setActionDrawerOpen(true);
-      // 햅틱 피드백 (지원하는 기기에서만)
-      if (navigator.vibrate) {
-        navigator.vibrate(50);
-      }
+      setMobileMenuWorkspace(workspace);
+      setMobileMenuOpen(true);
     }, 500); // 500ms 꾹 누르기
   };
   
@@ -189,7 +184,7 @@ export const NavigationDrawer = ({
                         </h4>
                       </button>
                     </ContextMenuTrigger>
-                    <ContextMenuContent>
+                    <ContextMenuContent className="hidden md:block">
                       <ContextMenuItem
                         className="gap-2"
                         onClick={() => handleEdit(workspace)}
@@ -249,22 +244,21 @@ export const NavigationDrawer = ({
         </AlertDialogContent>
       </AlertDialog>
       
-      {/* 모바일 액션 드로어 */}
-      <Drawer open={actionDrawerOpen} onOpenChange={setActionDrawerOpen}>
+      {/* 모바일 메뉴 드로어 */}
+      <Drawer open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
         <DrawerContent>
           <DrawerHeader>
-            <DrawerTitle>{actionWorkspace?.title}</DrawerTitle>
-            <DrawerDescription>작업을 선택하세요</DrawerDescription>
+            <DrawerTitle>{mobileMenuWorkspace?.title}</DrawerTitle>
           </DrawerHeader>
           <DrawerFooter>
             <Button
               variant="outline"
               className="gap-2"
               onClick={() => {
-                if (actionWorkspace) {
-                  handleEdit(actionWorkspace);
+                if (mobileMenuWorkspace) {
+                  handleEdit(mobileMenuWorkspace);
                 }
-                setActionDrawerOpen(false);
+                setMobileMenuOpen(false);
               }}
             >
               <Pencil className="w-4 h-4" />
@@ -274,10 +268,10 @@ export const NavigationDrawer = ({
               variant="destructive"
               className="gap-2"
               onClick={() => {
-                if (actionWorkspace) {
-                  handleDeleteClick(actionWorkspace);
+                if (mobileMenuWorkspace) {
+                  handleDeleteClick(mobileMenuWorkspace);
                 }
-                setActionDrawerOpen(false);
+                setMobileMenuOpen(false);
               }}
             >
               <Trash2 className="w-4 h-4" />
