@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { LogOut, User as UserIcon } from 'lucide-react';
+import { LogOut, User as UserIcon, ArrowLeft } from 'lucide-react';
 import { useAuthStore } from '@/shared/stores/auth-store';
 
 const MyPage = () => {
@@ -26,12 +26,28 @@ const MyPage = () => {
   return (
     <div className="min-h-screen bg-gradient-card">
       <header className="border-b border-border/50 bg-background/95 backdrop-blur">
-        <div className="container mx-auto px-8 md:px-4 py-6 md:py-4">
-          <h1 className="text-xl font-bold text-center">마이페이지</h1>
+        <div className="container mx-auto px-4 py-4 md:py-3">
+          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
+            {/* Left: Back Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              aria-label="뒤로가기"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            
+            {/* Center: Title */}
+            <h1 className="text-lg font-bold text-center">마이페이지</h1>
+            
+            {/* Right: Empty space for symmetry */}
+            <div className="w-10" />
+          </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-8 md:px-4 py-12 md:py-8 max-w-2xl">
+      <main className="container mx-auto px-4 py-12 md:py-8 max-w-2xl">
         <div className="space-y-6">
           {/* 사용자 정보 카드 */}
           <Card>

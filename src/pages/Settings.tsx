@@ -1,12 +1,15 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSettingsStore } from '@/shared/stores/settings-store';
 
 const Settings = () => {
+  const navigate = useNavigate();
   const { kakaoRestApiKey, kakaoJsApiKey, setKakaoRestApiKey, setKakaoJsApiKey } = useSettingsStore();
   
   const [restKey, setRestKey] = useState(kakaoRestApiKey || '');
@@ -26,13 +29,28 @@ const Settings = () => {
   return (
     <div className="min-h-screen bg-gradient-card">
       <header className="border-b border-border/50 bg-background/95 backdrop-blur">
-        <div className="container mx-auto px-8 md:px-4 py-6 md:py-4">
-          <h2 className="font-semibold">코스잇다</h2>
+        <div className="container mx-auto px-4 py-4 md:py-3">
+          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
+            {/* Left: Back Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              aria-label="뒤로가기"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            
+            {/* Center: Title */}
+            <h1 className="text-lg font-bold text-center">설정</h1>
+            
+            {/* Right: Empty space for symmetry */}
+            <div className="w-10" />
+          </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-8 md:px-4 py-12 md:py-8 max-w-2xl">
-        <h1 className="text-2xl font-bold mb-8 md:mb-6">설정</h1>
+      <main className="container mx-auto px-4 py-12 md:py-8 max-w-2xl">
 
         <Card>
           <CardHeader>
