@@ -1,0 +1,163 @@
+import { useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import type { Category, Place } from '@/entities/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { GripVertical, Plus, Trash2, ChevronDown, Pencil } from 'lucide-react';
+import { getPlacesByCategory } from '@/mock/edge-functions/place';
+import { PlaceSearchDialog } from '@/features/places/place-search-dialog';
+import { PlaceItem } from '@/features/places/place-item';
+import { EditCategoryDialog } from './edit-category-dialog';
+import { deleteCategory } from '@/mock/edge-functions/category';
+import { toast } from 'sonner';
+
+interface CategoryCardProps {
+  category: Category;
+  workspaceId: string;
+  onPlaceClick?: (place: Place) => void;
+}
+
+export const CategoryCard = ({ category, workspaceId, onPlaceClick }: CategoryCardProps) => {
+  const [searchDialogOpen, setSearchDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
+
+  const places = useLiveQuery(async () => {
+    return await getPlacesByCategory(category.id);
+  }, [category.id]);
+
+  const handleDeleteClick = () => {
+    setDeleteAlertOpen(true);
+  };
+  
+  const handleDeleteConfirm = async () => {
+    const { error } = await deleteCategory(category.id);
+    if (error) {
+      toast.error(error);
+    } else {
+      toast.success('카테고리가 삭제되었습니다.');
+    }
+    setDeleteAlertOpen(false);
+  };
+
+  return (
+    <>
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <Card className="hover-lift">
+          <CollapsibleTrigger asChild>
+            <CardHeader className="pb-3 cursor-pointer hover:bg-accent/50 transition-colors">
+              <div className="flex items-center gap-3">
+                <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" onClick={(e) => e.stopPropagation()} />
+                <div
+                  className="w-4 h-4 rounded-full"
+                  style={{ backgroundColor: category.color }}
+                />
+                <CardTitle className="text-base flex-1">{category.name}</CardTitle>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditDialogOpen(true);
+                  }}
+                >
+                  <Pencil className="w-4 h-4" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteClick();
+                  }}
+                >
+                  <Trash2 className="w-4 h-4 text-destructive" />
+                </Button>
+                <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+              </div>
+            </CardHeader>
+          </CollapsibleTrigger>
+
+          <CollapsibleContent>
+            <CardContent className="space-y-2">
+              {places && places.length > 0 ? (
+                <div className="space-y-2">
+                  {places.map((place) => (
+                    <PlaceItem
+                      key={place.id}
+                      place={place}
+                      categoryId={category.id}
+                      isRepresentative={place.id === category.representativePlaceId}
+                      hasRepresentative={!!category.representativePlaceId}
+                      onPlaceClick={onPlaceClick}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  장소를 추가해보세요
+                </p>
+              )}
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full gap-2"
+                onClick={() => setSearchDialogOpen(true)}
+              >
+                <Plus className="w-4 h-4" />
+                장소 검색
+              </Button>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
+
+      <PlaceSearchDialog
+        open={searchDialogOpen}
+        onOpenChange={setSearchDialogOpen}
+        categoryId={category.id}
+        workspaceId={workspaceId}
+      />
+
+      <EditCategoryDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        category={category}
+      />
+      
+      <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>카테고리 삭제</AlertDialogTitle>
+            <AlertDialogDescription>
+              "<strong>{category.name}</strong>" 카테고리를 정말 삭제하시겠습니까?
+              <br />
+              <span className="text-destructive">이 작업은 되돌릴 수 없으며, 카테고리에 포함된 모든 장소 연결이 함께 삭제됩니다.</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive hover:bg-destructive/90">
+              삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+};
