@@ -128,7 +128,7 @@ export const NavigationDrawer = ({
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-80 p-0 flex flex-col">
-        <SheetHeader className="p-4 pb-3">
+        <SheetHeader className="p-4 pb-3 !text-center">
           <SheetTitle>메뉴</SheetTitle>
         </SheetHeader>
 
