@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,6 +24,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Menu, Plus, Trash2, User as UserIcon, Pencil } from 'lucide-react';
 import type { Workspace, User } from '@/entities/types';
@@ -52,6 +61,10 @@ export const NavigationDrawer = ({
   const [selectedWorkspace, setSelectedWorkspace] = useState<Workspace | null>(null);
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState<Workspace | null>(null);
+  const [actionDrawerOpen, setActionDrawerOpen] = useState(false);
+  const [actionWorkspace, setActionWorkspace] = useState<Workspace | null>(null);
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const longPressTriggered = useRef(false);
   
   const handleEdit = (workspace: Workspace) => {
     setSelectedWorkspace(workspace);
@@ -75,6 +88,32 @@ export const NavigationDrawer = ({
     
     setDeleteAlertOpen(false);
     setSelectedForDelete(null);
+  };
+  
+  const handleTouchStart = (workspace: Workspace) => {
+    longPressTriggered.current = false;
+    longPressTimer.current = setTimeout(() => {
+      longPressTriggered.current = true;
+      setActionWorkspace(workspace);
+      setActionDrawerOpen(true);
+      // 햅틱 피드백 (지원하는 기기에서만)
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+    }, 500); // 500ms 꾹 누르기
+  };
+  
+  const handleTouchEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+    }
+  };
+  
+  const handleWorkspaceClick = (workspace: Workspace) => {
+    if (!longPressTriggered.current) {
+      onSelectWorkspace(workspace.id);
+    }
+    longPressTriggered.current = false;
   };
   
   return (
@@ -135,7 +174,10 @@ export const NavigationDrawer = ({
                   <ContextMenu key={workspace.id}>
                     <ContextMenuTrigger asChild>
                       <button
-                        onClick={() => onSelectWorkspace(workspace.id)}
+                        onClick={() => handleWorkspaceClick(workspace)}
+                        onTouchStart={() => handleTouchStart(workspace)}
+                        onTouchEnd={handleTouchEnd}
+                        onTouchCancel={handleTouchEnd}
                         className={`w-full text-left px-3 py-[18px] rounded-lg border transition-colors ${
                           isActive
                             ? 'bg-primary/10 border-primary'
@@ -206,6 +248,47 @@ export const NavigationDrawer = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+      {/* 모바일 액션 드로어 */}
+      <Drawer open={actionDrawerOpen} onOpenChange={setActionDrawerOpen}>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>{actionWorkspace?.title}</DrawerTitle>
+            <DrawerDescription>작업을 선택하세요</DrawerDescription>
+          </DrawerHeader>
+          <DrawerFooter>
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => {
+                if (actionWorkspace) {
+                  handleEdit(actionWorkspace);
+                }
+                setActionDrawerOpen(false);
+              }}
+            >
+              <Pencil className="w-4 h-4" />
+              편집
+            </Button>
+            <Button
+              variant="destructive"
+              className="gap-2"
+              onClick={() => {
+                if (actionWorkspace) {
+                  handleDeleteClick(actionWorkspace);
+                }
+                setActionDrawerOpen(false);
+              }}
+            >
+              <Trash2 className="w-4 h-4" />
+              삭제
+            </Button>
+            <DrawerClose asChild>
+              <Button variant="outline">취소</Button>
+            </DrawerClose>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </Sheet>
   );
 };
