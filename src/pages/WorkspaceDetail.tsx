@@ -77,7 +77,7 @@ const WorkspaceDetail = () => {
             </div>
             
             {/* Center: Workspace Title */}
-            <div className="text-center min-w-0 flex items-center justify-center">
+            <div className="text-left md:text-center min-w-0 flex items-center md:justify-center">
               <h1 className="text-lg font-bold truncate">{workspace.title}</h1>
             </div>
           </div>
