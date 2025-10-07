@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/mock/db';
 import { useAuthStore } from '@/shared/stores/auth-store';
+import { Button } from '@/components/ui/button';
 import { CategoryList } from '@/features/categories/category-list';
 import { MapCanvas } from '@/features/map/map-canvas';
 import { useSettingsStore } from '@/shared/stores/settings-store';
@@ -41,7 +42,7 @@ const WorkspaceDetail = () => {
       toast.info('Kakao API 키를 설정해주세요.', {
         action: {
           label: '설정하기',
-          onClick: () => navigate('/mypage'),
+          onClick: () => navigate('/settings'),
         },
       });
     }
@@ -87,7 +88,7 @@ const WorkspaceDetail = () => {
       <main className="flex-1 container mx-auto px-8 md:px-4 py-8 md:py-4 overflow-hidden">
         <div className="h-full flex flex-col md:grid md:grid-cols-2 gap-8 md:gap-4">
           {/* Map Section - Always on top on mobile */}
-          <div className="h-[512px] md:h-[calc(100vh-120px)] rounded-xl overflow-hidden border border-border/50 shadow-lg bg-card order-1">
+          <div className="h-[calc((100vh-200px)*5/9)] md:h-[calc(100vh-120px)] rounded-xl overflow-hidden border border-border/50 shadow-lg bg-card order-1">
             {kakaoJsApiKey ? (
               <MapCanvas workspaceId={workspace.id} categories={categories || []} focusedPlace={focusedPlace} />
             ) : (
