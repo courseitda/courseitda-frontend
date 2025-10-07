@@ -1,0 +1,137 @@
+name: Frontend CD to dev environment
+
+on:
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ap-northeast-2
+  NODE_VERSION: 18
+  ENVIRONMENT: dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: development  # GitHub Environment 사용
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint --if-present
+        continue-on-error: true
+
+      - name: Run test
+        run: npm test --if-present
+        env:
+          CI: true  # 테스트는 CI 모드로 실행
+
+      - name: Build for development
+        run: npm run build:dev
+        env:
+          CI: false # 빌드는 경고를 에러로 처리하지 않음
+
+      - name: Check build output
+        run: |
+          # 빌드 결과물 확인
+          if [ ! -d "dist" ]; then
+            echo "❌ dist 폴더가 생성되지 않았습니다."
+            exit 1
+          fi
+          
+          if [ ! -f "dist/index.html" ]; then
+            echo "❌ index.html이 없습니다."
+            exit 1
+          fi
+          
+          echo "✅ 빌드 성공: dist 폴더 확인 완료"
+          ls -lh dist/
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # secrets.S3_BUCKET_NAME: terraform output bucket_name
+      - name: Sync files to S3
+        run: |
+          # sync: 로컬과 S3를 비교한 후, 변경된 파일만 업로드. 변경 기준: 파일 크기, 수정 시간, ETag(파일 해시)
+          # --delete: 변경사항에서 삭제된 파일을 S3에서도 삭제
+          # --cache-control: 브라우저가 1년간 로컬에 캐싱하도록 지시
+          # --exclude: index.html은 미업로드(다른 정책을 적용하기 위해)
+          aws s3 sync dist/ s3://${{ secrets.S3_BUCKET_NAME }}/ \
+            --delete \
+            --cache-control "public, max-age=31536000, immutable" \
+            --exclude "index.html"
+          
+          # cp: 비교 없이 무조건 업로드(덮어쓰기)
+          # --cache-control: 캐싱하면 안 됨. 항상 최신 버전 필요.
+          aws s3 cp dist/index.html s3://${{ secrets.S3_BUCKET_NAME }}/index.html \
+            --cache-control "no-cache, no-store, must-revalidate"
+
+      # CloudFront 캐시 무효화
+      # 캐시 무효화를 하지 않으면 새로 배포됐음에도, CloudFront가 S3로부터 정적 리소스를 가져오지 않고, 본인이 가진 캐시(구버전 정적 리소스)를 사용자에게 응답할 수 있음
+      # secrets.CLOUDFRONT_DISTRIBUTION_ID: terraform output cloudfront_id
+      - name: Create CloudFront invalidation
+        run: |
+          INVALIDATION_ID=$(aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*" \
+            --query 'Invalidation.Id' \
+            --output text)
+          echo "Invalidation ID: $INVALIDATION_ID"
+
+      # CloudFront 캐시 무효화 완료 대기 (최대 5분)
+      - name: Wait for invalidation completion
+        run: |
+          for i in {1..30}; do
+            # 캐시 무효화 상태 확인
+            STATUS=$(aws cloudfront get-invalidation \
+              --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+              --id $(aws cloudfront list-invalidations \
+                --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+                --query 'InvalidationList.Items[0].Id' \
+                --output text) \
+              --query 'Invalidation.Status' \
+              --output text)
+          
+            if [ "$STATUS" = "Completed" ]; then
+              echo "✅ Cache invalidation success!"
+              break
+            fi
+          
+            echo "current state: $STATUS (${i}/30)"
+            # 10초 대기
+            sleep 10
+          done
+
+      - name: Notify deployment status
+        if: success()
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🎉 Deploy success!"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🌐 URL: https://dev.courseitda.me"
+          echo "📦 Environment: ${{ env.ENVIRONMENT }}"
+          echo "👤 Deployed by: ${{ github.actor }}"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+      - name: Notify deployment failure
+        if: failure()
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "❌ 배포 실패!"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Check logs and retry"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
