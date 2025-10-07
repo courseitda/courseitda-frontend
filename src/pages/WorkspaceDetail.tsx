@@ -106,7 +106,7 @@ const WorkspaceDetail = () => {
           </div>
 
           {/* Categories Section - Below map on mobile */}
-          <div className="flex-1 md:h-[calc(100vh-120px)] overflow-y-auto rounded-xl border border-border/50 bg-card p-8 md:p-4 order-2">
+          <div className="flex-1 md:h-[calc(100vh-120px)] overflow-y-auto rounded-xl border border-border/50 bg-card p-4 order-2">
             <CategoryList 
               workspaceId={workspace.id} 
               categories={categories || []} 
