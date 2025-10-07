@@ -16,7 +16,7 @@ import {
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useWorkspaceStore } from '@/shared/stores/workspace-store';
 import { db } from '@/mock/db';
-import { Plus, LogOut, Settings, Pencil } from 'lucide-react';
+import { Plus, LogOut, Settings, Pencil, Trash2 } from 'lucide-react';
 import { CreateWorkspaceDialog } from '@/features/workspaces/create-workspace-dialog';
 import { EditWorkspaceDialog } from '@/features/workspaces/edit-workspace-dialog';
 import { toast } from 'sonner';
@@ -125,32 +125,33 @@ const Workspaces = () => {
             {workspaces?.map((workspace) => (
               <Card
                 key={workspace.id}
-                className="hover-lift cursor-pointer group"
+                className="hover-lift cursor-pointer"
                 onClick={() => handleSelectWorkspace(workspace.id)}
               >
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between gap-2">
-                    <span className="truncate flex-1">{workspace.title}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 shrink-0"
-                      onClick={(e) => handleEdit(workspace, e)}
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Button>
+                  <CardTitle className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
+                    <div className="w-16" />
+                    <span className="truncate text-center">{workspace.title}</span>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => handleEdit(workspace, e)}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={(e) => handleDeleteClick(workspace, e)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    className="w-full opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={(e) => handleDeleteClick(workspace, e)}
-                  >
-                    삭제
-                  </Button>
-                </CardContent>
               </Card>
             ))}
           </div>
@@ -159,12 +160,12 @@ const Workspaces = () => {
 
       {/* Desktop Layout - 3 Column */}
       <main className="hidden md:block min-h-[calc(100vh-80px)]">
-        <div className="grid grid-cols-[1fr_2fr_1fr] h-full">
+        <div className="grid grid-cols-[1fr_2fr_1fr] min-h-[calc(100vh-80px)]">
           {/* Left Side - Light Purple Background */}
-          <div className="bg-primary/5"></div>
+          <div className="bg-primary/5 min-h-[calc(100vh-80px)]"></div>
 
           {/* Center - Workspace List */}
-          <div className="px-4 py-8 overflow-y-auto">
+          <div className="px-4 py-8 overflow-y-auto min-h-[calc(100vh-80px)]">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold">워크스페이스</h2>
               <Button onClick={() => setCreateOpen(true)} className="gap-2">
@@ -185,32 +186,33 @@ const Workspaces = () => {
                 {workspaces?.map((workspace) => (
                   <Card
                     key={workspace.id}
-                    className="hover-lift cursor-pointer group"
+                    className="hover-lift cursor-pointer"
                     onClick={() => handleSelectWorkspace(workspace.id)}
                   >
                     <CardHeader>
-                      <CardTitle className="flex items-center justify-between gap-2">
-                        <span className="truncate flex-1">{workspace.title}</span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 shrink-0"
-                          onClick={(e) => handleEdit(workspace, e)}
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
+                      <CardTitle className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
+                        <div className="w-16" />
+                        <span className="truncate text-center">{workspace.title}</span>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => handleEdit(workspace, e)}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={(e) => handleDeleteClick(workspace, e)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="w-full opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => handleDeleteClick(workspace, e)}
-                      >
-                        삭제
-                      </Button>
-                    </CardContent>
                   </Card>
                 ))}
               </div>
@@ -218,7 +220,7 @@ const Workspaces = () => {
           </div>
 
           {/* Right Side - Light Purple Background */}
-          <div className="bg-primary/5"></div>
+          <div className="bg-primary/5 min-h-[calc(100vh-80px)]"></div>
         </div>
       </main>
 
