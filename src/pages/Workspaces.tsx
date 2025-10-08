@@ -13,6 +13,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useWorkspaceStore } from '@/shared/stores/workspace-store';
 import { db } from '@/mock/db';
@@ -54,14 +60,12 @@ const Workspaces = () => {
     navigate(`/workspace/${id}`);
   };
   
-  const handleEdit = (workspace: Workspace, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleEdit = (workspace: Workspace) => {
     setSelectedForEdit(workspace);
     setEditOpen(true);
   };
 
-  const handleDeleteClick = (workspace: Workspace, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDeleteClick = (workspace: Workspace) => {
     setSelectedForDelete(workspace);
     setDeleteAlertOpen(true);
   };
@@ -123,47 +127,48 @@ const Workspaces = () => {
         ) : (
           <div className="grid grid-cols-1 gap-2.5">
             {workspaces?.map((workspace) => (
-              <Card
-                key={workspace.id}
-                className="hover-lift cursor-pointer"
-                onClick={() => handleSelectWorkspace(workspace.id)}
-              >
-                <CardHeader>
-                  <div className="space-y-1">
-                    <CardTitle className="flex items-center justify-between gap-2 text-base md:text-lg">
-                      <span className="truncate flex-1">{workspace.title}</span>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={(e) => handleEdit(workspace, e)}
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={(e) => handleDeleteClick(workspace, e)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+              <ContextMenu key={workspace.id}>
+                <ContextMenuTrigger asChild>
+                  <Card
+                    className="hover-lift cursor-pointer"
+                    onClick={() => handleSelectWorkspace(workspace.id)}
+                  >
+                    <CardHeader>
+                      <div className="space-y-1">
+                        <CardTitle className="text-base md:text-lg truncate">
+                          {workspace.title}
+                        </CardTitle>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          수정: {new Date(workspace.updatedAt).toLocaleDateString('ko-KR', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
                       </div>
-                    </CardTitle>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      수정: {new Date(workspace.updatedAt).toLocaleDateString('ko-KR', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </p>
-                  </div>
-                </CardHeader>
-              </Card>
+                    </CardHeader>
+                  </Card>
+                </ContextMenuTrigger>
+                <ContextMenuContent>
+                  <ContextMenuItem
+                    className="gap-2"
+                    onClick={() => handleEdit(workspace)}
+                  >
+                    <Pencil className="w-4 h-4" />
+                    이름 바꾸기
+                  </ContextMenuItem>
+                  <ContextMenuItem
+                    className="text-destructive focus:text-destructive gap-2"
+                    onClick={() => handleDeleteClick(workspace)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    삭제
+                  </ContextMenuItem>
+                </ContextMenuContent>
+              </ContextMenu>
             ))}
           </div>
         )}
@@ -195,47 +200,48 @@ const Workspaces = () => {
             ) : (
               <div className="space-y-2">
                 {workspaces?.map((workspace) => (
-                  <Card
-                    key={workspace.id}
-                    className="hover-lift cursor-pointer"
-                    onClick={() => handleSelectWorkspace(workspace.id)}
-                  >
-                    <CardHeader>
-                      <div className="space-y-1">
-                        <CardTitle className="flex items-center justify-between gap-2 text-base md:text-lg">
-                          <span className="truncate flex-1">{workspace.title}</span>
-                          <div className="flex items-center gap-1 shrink-0">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={(e) => handleEdit(workspace, e)}
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                              onClick={(e) => handleDeleteClick(workspace, e)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                  <ContextMenu key={workspace.id}>
+                    <ContextMenuTrigger asChild>
+                      <Card
+                        className="hover-lift cursor-pointer"
+                        onClick={() => handleSelectWorkspace(workspace.id)}
+                      >
+                        <CardHeader>
+                          <div className="space-y-1">
+                            <CardTitle className="text-base md:text-lg truncate">
+                              {workspace.title}
+                            </CardTitle>
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              수정: {new Date(workspace.updatedAt).toLocaleDateString('ko-KR', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
                           </div>
-                        </CardTitle>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          수정: {new Date(workspace.updatedAt).toLocaleDateString('ko-KR', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </p>
-                      </div>
-                    </CardHeader>
-                  </Card>
+                        </CardHeader>
+                      </Card>
+                    </ContextMenuTrigger>
+                    <ContextMenuContent>
+                      <ContextMenuItem
+                        className="gap-2"
+                        onClick={() => handleEdit(workspace)}
+                      >
+                        <Pencil className="w-4 h-4" />
+                        이름 바꾸기
+                      </ContextMenuItem>
+                      <ContextMenuItem
+                        className="text-destructive focus:text-destructive gap-2"
+                        onClick={() => handleDeleteClick(workspace)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        삭제
+                      </ContextMenuItem>
+                    </ContextMenuContent>
+                  </ContextMenu>
                 ))}
               </div>
             )}
