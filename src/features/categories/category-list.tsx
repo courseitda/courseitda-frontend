@@ -51,7 +51,7 @@ export const CategoryList = ({ workspaceId, categories, onPlaceClick }: Category
         <DragDropContext onDragEnd={handleDragEnd}>
           <Droppable droppableId="categories">
             {(provided) => (
-              <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
+              <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-1.5">
                 {categories.map((category, index) => (
                   <Draggable key={category.id} draggableId={category.id} index={index}>
                     {(provided, snapshot) => (
