@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -91,8 +90,7 @@ export const EditWorkspaceDialog = ({ open, onOpenChange, workspace }: EditWorks
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent ref={dialogRef} className="transition-transform duration-200">
         <DialogHeader>
-          <DialogTitle>워크스페이스 수정</DialogTitle>
-          <DialogDescription>워크스페이스 정보를 수정하세요</DialogDescription>
+          <DialogTitle>워크스페이스 이름 바꾸기</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">

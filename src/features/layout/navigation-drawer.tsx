@@ -153,7 +153,7 @@ export const NavigationDrawer = ({
                         onClick={() => handleEdit(workspace)}
                       >
                         <Pencil className="w-4 h-4" />
-                        편집
+                        이름 바꾸기
                       </ContextMenuItem>
                       <ContextMenuItem
                         className="text-destructive focus:text-destructive gap-2"
