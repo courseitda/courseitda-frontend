@@ -97,14 +97,16 @@ const WorkspaceDetail = () => {
             </div>
             
             {/* Center: Workspace Title */}
-            <div className="flex justify-center min-w-0">
+            <div className="flex justify-center items-center min-w-0 relative">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-1.5 hover:opacity-70 transition-opacity">
-                    <h1 className="text-lg font-bold truncate max-w-[200px] md:max-w-[400px]">
-                      {workspace.title}
-                    </h1>
-                    <ChevronDown className="w-4 h-4 shrink-0" />
+                  <button className="hover:opacity-70 transition-opacity">
+                    <div className="flex items-center gap-1">
+                      <h1 className="text-lg font-bold truncate max-w-[200px] md:max-w-[400px]">
+                        {workspace.title}
+                      </h1>
+                      <ChevronDown className="w-4 h-4 shrink-0" />
+                    </div>
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="center" className="w-64">
@@ -113,9 +115,9 @@ const WorkspaceDetail = () => {
                       <DropdownMenuItem
                         key={ws.id}
                         onClick={() => handleSelectWorkspace(ws.id)}
-                        className={`cursor-pointer justify-center ${
+                        className={`cursor-pointer justify-center font-semibold ${
                           ws.id === workspace.id 
-                            ? 'bg-primary/10 font-semibold' 
+                            ? 'bg-primary/10' 
                             : ''
                         }`}
                       >
