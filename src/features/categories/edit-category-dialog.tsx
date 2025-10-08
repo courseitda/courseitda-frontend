@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -25,6 +25,7 @@ export const EditCategoryDialog = ({ open, onOpenChange, category }: EditCategor
   const [name, setName] = useState(category.name);
   const [selectedColor, setSelectedColor] = useState(category.color);
   const [loading, setLoading] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   // Reset form when dialog opens with new category
   useEffect(() => {
@@ -33,6 +34,42 @@ export const EditCategoryDialog = ({ open, onOpenChange, category }: EditCategor
       setSelectedColor(category.color);
     }
   }, [open, category]);
+
+  // Handle keyboard appearance on mobile
+  useEffect(() => {
+    if (!open) return;
+
+    const handleViewportResize = () => {
+      if (!dialogRef.current) return;
+      
+      const visualViewport = window.visualViewport;
+      if (!visualViewport) return;
+
+      // Calculate the available height when keyboard is open
+      const viewportHeight = visualViewport.height;
+      const windowHeight = window.innerHeight;
+      
+      // If viewport is smaller than window, keyboard is likely open
+      if (viewportHeight < windowHeight * 0.8) {
+        // Position dialog in the center of visible viewport
+        dialogRef.current.style.transform = `translate(-50%, calc(-50% - ${(windowHeight - viewportHeight) / 2}px))`;
+      } else {
+        // Reset to center of screen
+        dialogRef.current.style.transform = 'translate(-50%, -50%)';
+      }
+    };
+
+    // Check if visualViewport is supported (modern mobile browsers)
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleViewportResize);
+      window.visualViewport.addEventListener('scroll', handleViewportResize);
+      
+      return () => {
+        window.visualViewport?.removeEventListener('resize', handleViewportResize);
+        window.visualViewport?.removeEventListener('scroll', handleViewportResize);
+      };
+    }
+  }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,7 +99,7 @@ export const EditCategoryDialog = ({ open, onOpenChange, category }: EditCategor
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent ref={dialogRef} className="transition-transform duration-200">
         <DialogHeader>
           <DialogTitle>카테고리 수정</DialogTitle>
           <DialogDescription>카테고리 정보를 수정하세요</DialogDescription>
