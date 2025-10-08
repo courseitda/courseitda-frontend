@@ -330,24 +330,38 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
         const current = representativeCategoriesWithPlaces[i]!;
         const next = representativeCategoriesWithPlaces[i + 1]!;
         
-        // Interpolate color between current and next category colors
-        const segmentColor = interpolateColor(current.category.color, next.category.color);
+        // Create gradient by dividing the segment into multiple smaller segments
+        const numSegments = 20; // Number of sub-segments for smooth gradient
         
-        const segmentPath = [
-          new kakao.maps.LatLng(current.place.lat, current.place.lng),
-          new kakao.maps.LatLng(next.place.lat, next.place.lng),
-        ];
+        for (let j = 0; j < numSegments; j++) {
+          const ratio1 = j / numSegments;
+          const ratio2 = (j + 1) / numSegments;
+          
+          // Calculate intermediate positions
+          const lat1 = current.place.lat + (next.place.lat - current.place.lat) * ratio1;
+          const lng1 = current.place.lng + (next.place.lng - current.place.lng) * ratio1;
+          const lat2 = current.place.lat + (next.place.lat - current.place.lat) * ratio2;
+          const lng2 = current.place.lng + (next.place.lng - current.place.lng) * ratio2;
+          
+          // Calculate color for this sub-segment
+          const segmentColor = interpolateColor(current.category.color, next.category.color, ratio1);
+          
+          const segmentPath = [
+            new kakao.maps.LatLng(lat1, lng1),
+            new kakao.maps.LatLng(lat2, lng2),
+          ];
 
-        const polyline = new kakao.maps.Polyline({
-          path: segmentPath,
-          strokeWeight: 3,
-          strokeColor: segmentColor,
-          strokeOpacity: 0.7,
-          strokeStyle: 'dash',
-        });
+          const polyline = new kakao.maps.Polyline({
+            path: segmentPath,
+            strokeWeight: 3,
+            strokeColor: segmentColor,
+            strokeOpacity: 0.7,
+            strokeStyle: 'dash',
+          });
 
-        polyline.setMap(map);
-        polylines.push(polyline);
+          polyline.setMap(map);
+          polylines.push(polyline);
+        }
       }
       
       polylinesRef.current = polylines;
