@@ -54,6 +54,12 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceId }: AddCatego
   useEffect(() => {
     if (!open) return;
 
+    // Reset position when dialog opens
+    if (dialogRef.current) {
+      dialogRef.current.style.top = '50%';
+      dialogRef.current.style.transform = 'translate(-50%, -50%)';
+    }
+
     const handleViewportResize = () => {
       if (!dialogRef.current) return;
       
@@ -64,19 +70,23 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceId }: AddCatego
       const viewportHeight = visualViewport.height;
       const windowHeight = window.innerHeight;
       
+      // Always keep top at 50%
+      dialogRef.current.style.top = '50%';
+      
       // If viewport is smaller than window, keyboard is likely open
       if (viewportHeight < windowHeight * 0.8) {
         // Position dialog in the center of visible viewport (excluding keyboard)
         const keyboardHeight = windowHeight - viewportHeight;
         const offsetY = keyboardHeight / 2;
-        dialogRef.current.style.top = `calc(50% - ${offsetY}px)`;
-        dialogRef.current.style.transform = 'translate(-50%, -50%)';
+        dialogRef.current.style.transform = `translate(-50%, calc(-50% - ${offsetY}px))`;
       } else {
         // Reset to center of screen
-        dialogRef.current.style.top = '50%';
         dialogRef.current.style.transform = 'translate(-50%, -50%)';
       }
     };
+
+    // Initial call
+    handleViewportResize();
 
     // Check if visualViewport is supported (modern mobile browsers)
     if (window.visualViewport) {
