@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -96,7 +95,6 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceId }: AddCatego
       <DialogContent ref={dialogRef} className="transition-transform duration-200">
         <DialogHeader>
           <DialogTitle>카테고리 추가</DialogTitle>
-          <DialogDescription>새로운 카테고리를 추가하세요</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">

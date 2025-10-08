@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -102,7 +101,6 @@ export const EditCategoryDialog = ({ open, onOpenChange, category }: EditCategor
       <DialogContent ref={dialogRef} className="transition-transform duration-200">
         <DialogHeader>
           <DialogTitle>카테고리 수정</DialogTitle>
-          <DialogDescription>카테고리 정보를 수정하세요</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">

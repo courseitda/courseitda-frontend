@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -88,7 +87,6 @@ export const CreateWorkspaceDialog = ({ open, onOpenChange }: CreateWorkspaceDia
       <DialogContent ref={dialogRef} className="transition-transform duration-200">
         <DialogHeader>
           <DialogTitle>새 워크스페이스</DialogTitle>
-          <DialogDescription>새로운 코스 플래닝을 시작하세요</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
