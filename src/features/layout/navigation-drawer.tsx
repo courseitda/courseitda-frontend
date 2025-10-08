@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
@@ -65,6 +65,18 @@ export const NavigationDrawer = ({
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const longPressTriggered = useRef(false);
   
+  // 모든 다이얼로그가 닫힐 때 상태를 완전히 리셋
+  useEffect(() => {
+    if (!mobileMenuOpen && !editDialogOpen && !deleteAlertOpen) {
+      // 다이얼로그가 모두 닫혔을 때 상태 리셋
+      longPressTriggered.current = false;
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+        longPressTimer.current = null;
+      }
+    }
+  }, [mobileMenuOpen, editDialogOpen, deleteAlertOpen]);
+  
   const handleEdit = (workspace: Workspace) => {
     setSelectedWorkspace(workspace);
     setEditDialogOpen(true);
@@ -99,13 +111,10 @@ export const NavigationDrawer = ({
   };
   
   const handleTouchEnd = () => {
+    // 타이머가 완료되기 전에 손을 뗀 경우 타이머 취소
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
-    }
-    // 타이머가 실행되지 않았다면 longPressTriggered를 리셋
-    if (!longPressTriggered.current) {
-      longPressTriggered.current = false;
     }
   };
   
