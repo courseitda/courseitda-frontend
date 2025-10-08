@@ -108,7 +108,7 @@ const Workspaces = () => {
       </header>
 
       {/* Mobile Layout */}
-      <main className="md:hidden container mx-auto px-8 py-12">
+      <main className="md:hidden container mx-auto px-8 py-6">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-xl font-semibold">워크스페이스</h2>
           <Button onClick={() => setCreateOpen(true)} className="gap-2">
@@ -181,7 +181,7 @@ const Workspaces = () => {
           <div className="bg-primary/5 min-h-[calc(100vh-80px)]"></div>
 
           {/* Center - Workspace List */}
-          <div className="px-4 py-8 overflow-y-auto min-h-[calc(100vh-80px)]">
+          <div className="px-4 py-4 overflow-y-auto min-h-[calc(100vh-80px)]">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold">워크스페이스</h2>
               <Button onClick={() => setCreateOpen(true)} className="gap-2">
