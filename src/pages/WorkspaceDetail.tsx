@@ -8,8 +8,18 @@ import { CategoryList } from '@/features/categories/category-list';
 import { MapCanvas } from '@/features/map/map-canvas';
 import { useSettingsStore } from '@/shared/stores/settings-store';
 import { toast } from 'sonner';
-import { NavigationDrawer } from '@/features/layout/navigation-drawer';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Check, Plus, LayoutGrid, User as UserIcon, Settings, LogOut } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { CreateWorkspaceDialog } from '@/features/workspaces/create-workspace-dialog';
 import type { Place } from '@/entities/types';
 
 const WorkspaceDetail = () => {
@@ -19,6 +29,8 @@ const WorkspaceDetail = () => {
   const kakaoJsApiKey = useSettingsStore((state) => state.kakaoJsApiKey);
   const kakaoRestApiKey = useSettingsStore((state) => state.kakaoRestApiKey);
   const [focusedPlace, setFocusedPlace] = useState<Place | null>(null);
+  const [createWorkspaceOpen, setCreateWorkspaceOpen] = useState(false);
+  const logout = useAuthStore((state) => state.logout);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -53,6 +65,11 @@ const WorkspaceDetail = () => {
     navigate(`/workspace/${workspaceId}`);
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
   if (!workspace || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -80,18 +97,88 @@ const WorkspaceDetail = () => {
             </div>
             
             {/* Center: Workspace Title */}
-            <div className="text-center min-w-0">
-              <h1 className="text-lg font-bold truncate">{workspace.title}</h1>
+            <div className="flex justify-center min-w-0">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-1.5 hover:opacity-70 transition-opacity">
+                    <h1 className="text-lg font-bold truncate max-w-[200px] md:max-w-[400px]">
+                      {workspace.title}
+                    </h1>
+                    <ChevronDown className="w-4 h-4 shrink-0" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" className="w-64">
+                  <div className="max-h-[180px] overflow-y-auto">
+                    {workspaces?.map((ws) => (
+                      <DropdownMenuItem
+                        key={ws.id}
+                        onClick={() => handleSelectWorkspace(ws.id)}
+                        className={`cursor-pointer justify-center ${
+                          ws.id === workspace.id 
+                            ? 'bg-primary/10 font-semibold' 
+                            : ''
+                        }`}
+                      >
+                        <span className="truncate">{ws.title}</span>
+                      </DropdownMenuItem>
+                    ))}
+                  </div>
+                  <DropdownMenuSeparator />
+                  <div className="px-1 pb-1">
+                    <button
+                      onClick={() => setCreateWorkspaceOpen(true)}
+                      className="w-full flex items-center justify-center gap-2 px-2 py-1.5 text-sm rounded-sm border border-dashed border-border hover:bg-accent transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      새 워크스페이스
+                    </button>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             
-            {/* Right: Navigation */}
+            {/* Right: Profile Menu */}
             <div className="flex items-center">
-              <NavigationDrawer
-                workspaces={workspaces || []}
-                currentWorkspaceId={workspace.id}
-                onSelectWorkspace={handleSelectWorkspace}
-                user={user}
-              />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="gap-2 h-10">
+                    <Avatar className="w-8 h-8">
+                      <AvatarFallback className="bg-primary text-primary-foreground">
+                        <UserIcon className="w-4 h-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="hidden sm:inline font-medium">{user.nickname}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{user.nickname}</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate('/mypage')} className="gap-2">
+                    <UserIcon className="w-4 h-4" />
+                    마이페이지
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/workspaces')} className="gap-2">
+                    <LayoutGrid className="w-4 h-4" />
+                    워크스페이스
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/settings')} className="gap-2">
+                    <Settings className="w-4 h-4" />
+                    설정
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive gap-2">
+                    <LogOut className="w-4 h-4" />
+                    로그아웃
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
@@ -128,6 +215,11 @@ const WorkspaceDetail = () => {
           </div>
         </div>
       </main>
+
+      <CreateWorkspaceDialog 
+        open={createWorkspaceOpen} 
+        onOpenChange={setCreateWorkspaceOpen} 
+      />
     </div>
   );
 };

@@ -19,10 +19,19 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useWorkspaceStore } from '@/shared/stores/workspace-store';
 import { db } from '@/mock/db';
-import { Plus, LogOut, Settings, Pencil, Trash2, Clock } from 'lucide-react';
+import { Plus, LogOut, Settings, Pencil, Trash2, Clock, User as UserIcon, LayoutGrid, MapPin } from 'lucide-react';
 import { CreateWorkspaceDialog } from '@/features/workspaces/create-workspace-dialog';
 import { EditWorkspaceDialog } from '@/features/workspaces/edit-workspace-dialog';
 import { toast } from 'sonner';
@@ -52,7 +61,7 @@ const Workspaces = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/auth');
+    navigate('/');
   };
 
   const handleSelectWorkspace = (id: string) => {
@@ -89,26 +98,65 @@ const Workspaces = () => {
   return (
     <div className="min-h-screen bg-gradient-card">
       <header className="border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-8 md:px-4 py-6 md:py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div>
-              <h1 className="text-2xl font-bold">코스잇다</h1>
-              <p className="text-sm text-muted-foreground">{user.nickname}님, 환영합니다!</p>
+        <div className="container mx-auto px-4 py-4 md:py-3">
+          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
+            <div className="flex items-center gap-1.5 md:gap-2">
+              <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center">
+                <MapPin className="w-5 h-5 text-white" />
+              </div>
+              <span className="font-bold text-lg whitespace-nowrap">코스잇다</span>
             </div>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="icon" onClick={() => navigate('/settings')}>
-              <Settings className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" size="icon" onClick={handleLogout}>
-              <LogOut className="w-4 h-4" />
-            </Button>
+            
+            <div></div>
+            
+            <div className="flex items-center">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="gap-2 h-10">
+                  <Avatar className="w-8 h-8">
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      <UserIcon className="w-4 h-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="hidden sm:inline font-medium">{user.nickname}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{user.nickname}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate('/mypage')} className="gap-2">
+                  <UserIcon className="w-4 h-4" />
+                  마이페이지
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/workspaces')} className="gap-2">
+                  <LayoutGrid className="w-4 h-4" />
+                  워크스페이스
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/settings')} className="gap-2">
+                  <Settings className="w-4 h-4" />
+                  설정
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive gap-2">
+                  <LogOut className="w-4 h-4" />
+                  로그아웃
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Mobile Layout */}
-      <main className="md:hidden container mx-auto px-8 py-6">
+      <main className="md:hidden container mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-xl font-semibold">워크스페이스</h2>
           <Button onClick={() => setCreateOpen(true)} className="gap-2">

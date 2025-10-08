@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { MapPin, Calendar, Route, LogOut, User as UserIcon, LayoutGrid } from 'lucide-react';
+import { MapPin, Calendar, Route, LogOut, User as UserIcon, LayoutGrid, Settings } from 'lucide-react';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import {
   DropdownMenu,
@@ -26,19 +26,22 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-accent/5 to-background">
       {/* Header */}
       <header className="border-b border-border/40 bg-background/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-1.5 md:gap-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center">
-              <MapPin className="w-5 h-5 text-white" />
+        <div className="container mx-auto px-4 py-4 md:py-3">
+          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
+            <div className="flex items-center gap-1.5 md:gap-2">
+              <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center">
+                <MapPin className="w-5 h-5 text-white" />
+              </div>
+              <span className="font-bold text-lg whitespace-nowrap">코스잇다</span>
             </div>
-            <span className="font-bold text-lg">코스잇다</span>
-          </div>
-          
-          <div className="flex items-center gap-3">
+            
+            <div></div>
+            
+            <div className="flex items-center">
             {isAuthenticated && user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center gap-2 h-10">
+                  <Button variant="ghost" className="gap-2 h-10">
                     <Avatar className="w-8 h-8">
                       <AvatarFallback className="bg-primary text-primary-foreground">
                         <UserIcon className="w-4 h-4" />
@@ -57,17 +60,21 @@ const Index = () => {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate('/workspaces')}>
-                    <LayoutGrid className="w-4 h-4 mr-2" />
-                    워크스페이스
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/mypage')}>
-                    <UserIcon className="w-4 h-4 mr-2" />
+                  <DropdownMenuItem onClick={() => navigate('/mypage')} className="gap-2">
+                    <UserIcon className="w-4 h-4" />
                     마이페이지
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/workspaces')} className="gap-2">
+                    <LayoutGrid className="w-4 h-4" />
+                    워크스페이스
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/settings')} className="gap-2">
+                    <Settings className="w-4 h-4" />
+                    설정
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
-                    <LogOut className="w-4 h-4 mr-2" />
+                  <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive gap-2">
+                    <LogOut className="w-4 h-4" />
                     로그아웃
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -77,11 +84,12 @@ const Index = () => {
                 로그인
               </Button>
             )}
+            </div>
           </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-8 md:px-4 py-20 md:py-16">
+      <div className="container mx-auto px-4 py-20 md:py-16">
         <div className="max-w-4xl mx-auto text-center space-y-8">
           <div className="flex items-center justify-center gap-2 mb-8">
             <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-glow">
