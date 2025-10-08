@@ -57,38 +57,36 @@ export const CategoryCard = ({ category, workspaceId, onPlaceClick }: CategoryCa
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <Card className="hover-lift">
           <CollapsibleTrigger asChild>
-            <CardHeader className="pb-3 cursor-pointer hover:bg-accent/50 transition-colors">
-              <div className="flex items-center gap-3">
-                <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" onClick={(e) => e.stopPropagation()} />
-                <div
-                  className="w-4 h-4 rounded-full"
-                  style={{ backgroundColor: category.color }}
-                />
-                <CardTitle className="text-base flex-1">{category.name}</CardTitle>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8" 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setEditDialogOpen(true);
-                  }}
-                >
-                  <Pencil className="w-4 h-4" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8" 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteClick();
-                  }}
-                >
-                  <Trash2 className="w-4 h-4 text-destructive" />
-                </Button>
-                <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
-              </div>
+            <CardHeader className="flex-row items-center space-y-0 py-3 cursor-pointer hover:bg-accent/50 transition-colors">
+              <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab mr-3" onClick={(e) => e.stopPropagation()} />
+              <div
+                className="w-4 h-4 rounded-full mr-3"
+                style={{ backgroundColor: category.color }}
+              />
+              <CardTitle className="text-base flex-1">{category.name}</CardTitle>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 ml-2" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditDialogOpen(true);
+                }}
+              >
+                <Pencil className="w-4 h-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 ml-2" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteClick();
+                }}
+              >
+                <Trash2 className="w-4 h-4 text-destructive" />
+              </Button>
+              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ml-2 ${isOpen ? 'rotate-180' : ''}`} />
             </CardHeader>
           </CollapsibleTrigger>
 
