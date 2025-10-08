@@ -63,7 +63,7 @@ export const CategoryCard = ({ category, workspaceId, onPlaceClick }: CategoryCa
                 className="w-4 h-4 rounded-full mr-3"
                 style={{ backgroundColor: category.color }}
               />
-              <CardTitle className="text-base flex-1">{category.name}</CardTitle>
+              <CardTitle className={`text-base flex-1 md:truncate ${!isOpen ? 'truncate' : ''}`}>{category.name}</CardTitle>
               <Button 
                 variant="ghost" 
                 size="icon" 
