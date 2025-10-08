@@ -20,7 +20,7 @@ interface AddCategoryDialogProps {
   workspaceId: string;
 }
 
-const SUGGESTED_CATEGORIES = ['점심', '카페', '산책', '쇼핑', '저녁', '디저트'];
+const SUGGESTED_CATEGORIES = ['점심', '카페', '산책', '쇼핑', '저녁'];
 
 export const AddCategoryDialog = ({ open, onOpenChange, workspaceId }: AddCategoryDialogProps) => {
   const { colorPaletteMode, setColorPaletteMode } = useSettingsStore();
@@ -168,7 +168,7 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceId }: AddCatego
 
           <div className="space-y-2">
             <Label>추천 카테고리</Label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex justify-center gap-2">
               {SUGGESTED_CATEGORIES.map((category) => (
                 <Button
                   key={category}
