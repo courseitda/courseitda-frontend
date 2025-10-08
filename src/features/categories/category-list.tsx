@@ -61,7 +61,12 @@ export const CategoryList = ({ workspaceId, categories, onPlaceClick }: Category
                         {...provided.dragHandleProps}
                         className={snapshot.isDragging ? 'opacity-50' : ''}
                       >
-                        <CategoryCard category={category} workspaceId={workspaceId} onPlaceClick={onPlaceClick} />
+                        <CategoryCard 
+                          category={category} 
+                          workspaceId={workspaceId} 
+                          index={index}
+                          onPlaceClick={onPlaceClick} 
+                        />
                       </div>
                     )}
                   </Draggable>

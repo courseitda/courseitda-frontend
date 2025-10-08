@@ -25,10 +25,11 @@ import { toast } from 'sonner';
 interface CategoryCardProps {
   category: Category;
   workspaceId: string;
+  index: number;
   onPlaceClick?: (place: Place) => void;
 }
 
-export const CategoryCard = ({ category, workspaceId, onPlaceClick }: CategoryCardProps) => {
+export const CategoryCard = ({ category, workspaceId, index, onPlaceClick }: CategoryCardProps) => {
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
@@ -60,9 +61,11 @@ export const CategoryCard = ({ category, workspaceId, onPlaceClick }: CategoryCa
             <CardHeader className="flex-row items-center space-y-0 py-3 cursor-pointer hover:bg-accent/50 transition-colors">
               <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab mr-3" onClick={(e) => e.stopPropagation()} />
               <div
-                className="w-4 h-4 rounded-full mr-3"
+                className="w-6 h-6 rounded-full mr-3 flex items-center justify-center text-white text-xs font-bold shrink-0"
                 style={{ backgroundColor: category.color }}
-              />
+              >
+                {index + 1}
+              </div>
               <CardTitle className={`text-base flex-1 md:truncate ${!isOpen ? 'truncate' : ''}`}>{category.name}</CardTitle>
               <Button 
                 variant="ghost" 
