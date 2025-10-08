@@ -79,9 +79,9 @@ const WorkspaceDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-card flex flex-col">
+    <div className="h-screen bg-gradient-card flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="border-b border-border/50 bg-background/95 backdrop-blur sticky top-0 z-20 shrink-0">
+      <header className="border-b border-border/50 bg-background/95 backdrop-blur z-20 shrink-0">
         <div className="container mx-auto px-4 py-4 md:py-3">
           <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
             {/* Left: Back Button */}
@@ -186,34 +186,36 @@ const WorkspaceDetail = () => {
         </div>
       </header>
 
-      {/* Main Content - Mobile: Map top, Categories bottom / Desktop: Side by side */}
-      <main className="flex-1 container mx-auto px-4 py-2.5 md:py-4 overflow-hidden">
-        <div className="h-full flex flex-col md:grid md:grid-cols-2 gap-2.5 md:gap-4">
-          {/* Map Section - Always on top on mobile */}
-          <div className="h-[calc((100vh-200px)*5/9)] md:h-[calc(100vh-120px)] rounded-xl overflow-hidden border border-border/50 shadow-lg bg-card order-1">
-            {kakaoJsApiKey ? (
-              <MapCanvas workspaceId={workspace.id} categories={categories || []} focusedPlace={focusedPlace} />
-            ) : (
-              <div className="h-full flex items-center justify-center p-6 text-center">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    지도를 표시하려면 Kakao API 키를 설정해주세요.
-                  </p>
-                  <Button size="sm" onClick={() => navigate('/settings')}>
-                    설정하기
-                  </Button>
+      {/* Main Content - Mobile: Map fixed top, Categories scrollable / Desktop: Side by side */}
+      <main className="flex-1 min-h-0">
+        <div className="container mx-auto px-4 h-full">
+          <div className="h-full py-2.5 md:py-4 flex flex-col md:grid md:grid-cols-2 gap-2.5 md:gap-4">
+            {/* Map Section - Fixed on mobile, normal on desktop */}
+            <div className="h-[calc((100vh-64px)*0.45)] md:h-full rounded-xl overflow-hidden border border-border/50 shadow-lg bg-card shrink-0">
+              {kakaoJsApiKey ? (
+                <MapCanvas workspaceId={workspace.id} categories={categories || []} focusedPlace={focusedPlace} />
+              ) : (
+                <div className="h-full flex items-center justify-center p-6 text-center">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      지도를 표시하려면 Kakao API 키를 설정해주세요.
+                    </p>
+                    <Button size="sm" onClick={() => navigate('/settings')}>
+                      설정하기
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
 
-          {/* Categories Section - Below map on mobile */}
-          <div className="flex-1 md:h-[calc(100vh-120px)] overflow-y-auto rounded-xl border border-border/50 bg-card p-4 order-2">
-            <CategoryList 
-              workspaceId={workspace.id} 
-              categories={categories || []} 
-              onPlaceClick={setFocusedPlace}
-            />
+            {/* Categories Section - Scrollable on mobile, normal on desktop */}
+            <div className="flex-1 md:h-full overflow-y-auto rounded-xl border border-border/50 bg-card p-4 min-h-0">
+              <CategoryList 
+                workspaceId={workspace.id} 
+                categories={categories || []} 
+                onPlaceClick={setFocusedPlace}
+              />
+            </div>
           </div>
         </div>
       </main>
