@@ -65,15 +65,10 @@ export const NavigationDrawer = ({
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const longPressTriggered = useRef(false);
   
-  // 모든 다이얼로그가 닫힐 때 상태를 완전히 리셋
+  // 모든 다이얼로그가 닫힐 때 longPressTriggered 상태만 리셋
   useEffect(() => {
     if (!mobileMenuOpen && !editDialogOpen && !deleteAlertOpen) {
-      // 다이얼로그가 모두 닫혔을 때 상태 리셋
       longPressTriggered.current = false;
-      if (longPressTimer.current) {
-        clearTimeout(longPressTimer.current);
-        longPressTimer.current = null;
-      }
     }
   }, [mobileMenuOpen, editDialogOpen, deleteAlertOpen]);
   
@@ -102,7 +97,6 @@ export const NavigationDrawer = ({
   };
   
   const handleTouchStart = (workspace: Workspace) => {
-    longPressTriggered.current = false;
     longPressTimer.current = setTimeout(() => {
       longPressTriggered.current = true;
       setMobileMenuWorkspace(workspace);
@@ -111,7 +105,7 @@ export const NavigationDrawer = ({
   };
   
   const handleTouchEnd = () => {
-    // 타이머가 완료되기 전에 손을 뗀 경우 타이머 취소
+    // 타이머 클리어
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
@@ -119,21 +113,9 @@ export const NavigationDrawer = ({
   };
   
   const handleWorkspaceClick = (workspace: Workspace) => {
+    // 롱프레스가 아닌 경우에만 워크스페이스 선택
     if (!longPressTriggered.current) {
       onSelectWorkspace(workspace.id);
-    }
-    longPressTriggered.current = false;
-  };
-  
-  const handleMobileMenuChange = (open: boolean) => {
-    setMobileMenuOpen(open);
-    // 메뉴가 닫힐 때 상태 리셋
-    if (!open) {
-      longPressTriggered.current = false;
-      if (longPressTimer.current) {
-        clearTimeout(longPressTimer.current);
-        longPressTimer.current = null;
-      }
     }
   };
   
@@ -271,7 +253,7 @@ export const NavigationDrawer = ({
       </AlertDialog>
       
       {/* 모바일 메뉴 드로어 */}
-      <Drawer open={mobileMenuOpen} onOpenChange={handleMobileMenuChange}>
+      <Drawer open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
         <DrawerContent>
           <DrawerHeader>
             <DrawerTitle>{mobileMenuWorkspace?.title}</DrawerTitle>
