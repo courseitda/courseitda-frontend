@@ -43,10 +43,14 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceId }: AddCatego
       
       // If viewport is smaller than window, keyboard is likely open
       if (viewportHeight < windowHeight * 0.8) {
-        // Position dialog in the center of visible viewport
-        dialogRef.current.style.transform = `translate(-50%, calc(-50% - ${(windowHeight - viewportHeight) / 2}px))`;
+        // Position dialog in the center of visible viewport (excluding keyboard)
+        const keyboardHeight = windowHeight - viewportHeight;
+        const offsetY = keyboardHeight / 2;
+        dialogRef.current.style.top = `calc(50% - ${offsetY}px)`;
+        dialogRef.current.style.transform = 'translate(-50%, -50%)';
       } else {
         // Reset to center of screen
+        dialogRef.current.style.top = '50%';
         dialogRef.current.style.transform = 'translate(-50%, -50%)';
       }
     };
