@@ -121,7 +121,7 @@ const Workspaces = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 gap-8">
+          <div className="grid grid-cols-1 gap-2.5">
             {workspaces?.map((workspace) => (
               <Card
                 key={workspace.id}
@@ -182,7 +182,7 @@ const Workspaces = () => {
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-2">
                 {workspaces?.map((workspace) => (
                   <Card
                     key={workspace.id}
