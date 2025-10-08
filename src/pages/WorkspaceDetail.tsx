@@ -65,8 +65,13 @@ const WorkspaceDetail = () => {
       {/* Header */}
       <header className="border-b border-border/50 bg-background/95 backdrop-blur sticky top-0 z-20 shrink-0">
         <div className="container mx-auto px-4 py-4 md:py-3">
-          <div className="grid grid-cols-[auto_1fr] items-center gap-4">
-            {/* Left: Navigation */}
+          <div className="flex items-center justify-between gap-4">
+            {/* Left: Workspace Title */}
+            <div className="text-left min-w-0">
+              <h1 className="text-lg font-bold truncate">{workspace.title}</h1>
+            </div>
+            
+            {/* Right: Navigation */}
             <div className="flex items-center">
               <NavigationDrawer
                 workspaces={workspaces || []}
@@ -74,11 +79,6 @@ const WorkspaceDetail = () => {
                 onSelectWorkspace={handleSelectWorkspace}
                 user={user}
               />
-            </div>
-            
-            {/* Center: Workspace Title */}
-            <div className="text-left md:text-center min-w-0 flex items-center md:justify-center">
-              <h1 className="text-lg font-bold truncate">{workspace.title}</h1>
             </div>
           </div>
         </div>
