@@ -129,9 +129,8 @@ const Workspaces = () => {
                 onClick={() => handleSelectWorkspace(workspace.id)}
               >
                 <CardHeader>
-                  <CardTitle className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
-                    <div className="w-16" />
-                    <span className="truncate text-center">{workspace.title}</span>
+                  <CardTitle className="flex items-center justify-between gap-2">
+                    <span className="truncate flex-1">{workspace.title}</span>
                     <div className="flex items-center gap-1 shrink-0">
                       <Button
                         variant="ghost"
@@ -190,9 +189,8 @@ const Workspaces = () => {
                     onClick={() => handleSelectWorkspace(workspace.id)}
                   >
                     <CardHeader>
-                      <CardTitle className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
-                        <div className="w-16" />
-                        <span className="truncate text-center">{workspace.title}</span>
+                      <CardTitle className="flex items-center justify-between gap-2">
+                        <span className="truncate flex-1">{workspace.title}</span>
                         <div className="flex items-center gap-1 shrink-0">
                           <Button
                             variant="ghost"
