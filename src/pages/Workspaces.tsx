@@ -130,7 +130,7 @@ const Workspaces = () => {
               >
                 <CardHeader>
                   <div className="space-y-1">
-                    <CardTitle className="flex items-center justify-between gap-2">
+                    <CardTitle className="flex items-center justify-between gap-2 text-base md:text-lg">
                       <span className="truncate flex-1">{workspace.title}</span>
                       <div className="flex items-center gap-1 shrink-0">
                         <Button
@@ -202,7 +202,7 @@ const Workspaces = () => {
                   >
                     <CardHeader>
                       <div className="space-y-1">
-                        <CardTitle className="flex items-center justify-between gap-2">
+                        <CardTitle className="flex items-center justify-between gap-2 text-base md:text-lg">
                           <span className="truncate flex-1">{workspace.title}</span>
                           <div className="flex items-center gap-1 shrink-0">
                             <Button
