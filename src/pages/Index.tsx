@@ -1,14 +1,86 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { MapPin, Calendar, Users, Route } from 'lucide-react';
+import { MapPin, Calendar, Route, LogOut, User as UserIcon, LayoutGrid } from 'lucide-react';
 import { useAuthStore } from '@/shared/stores/auth-store';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 const Index = () => {
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+
+  const handleLogout = () => {
+    logout();
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-accent/5 to-background">
+      {/* Header */}
+      <header className="border-b border-border/40 bg-background/50 backdrop-blur-sm">
+        <div className="container mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-1.5 md:gap-2">
+            <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center">
+              <MapPin className="w-5 h-5 text-white" />
+            </div>
+            <span className="font-bold text-lg">코스잇다</span>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            {isAuthenticated && user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center gap-2 h-10">
+                    <Avatar className="w-8 h-8">
+                      <AvatarFallback className="bg-primary text-primary-foreground">
+                        <UserIcon className="w-4 h-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="hidden sm:inline font-medium">{user.nickname}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{user.nickname}</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate('/workspaces')}>
+                    <LayoutGrid className="w-4 h-4 mr-2" />
+                    워크스페이스
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/mypage')}>
+                    <UserIcon className="w-4 h-4 mr-2" />
+                    마이페이지
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    로그아웃
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button onClick={() => navigate('/auth')}>
+                로그인
+              </Button>
+            )}
+          </div>
+        </div>
+      </header>
+
       <div className="container mx-auto px-8 md:px-4 py-20 md:py-16">
         <div className="max-w-4xl mx-auto text-center space-y-8">
           <div className="flex items-center justify-center gap-2 mb-8">
