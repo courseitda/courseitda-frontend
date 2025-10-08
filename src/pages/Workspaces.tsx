@@ -16,7 +16,7 @@ import {
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useWorkspaceStore } from '@/shared/stores/workspace-store';
 import { db } from '@/mock/db';
-import { Plus, LogOut, Settings, Pencil, Trash2 } from 'lucide-react';
+import { Plus, LogOut, Settings, Pencil, Trash2, Clock } from 'lucide-react';
 import { CreateWorkspaceDialog } from '@/features/workspaces/create-workspace-dialog';
 import { EditWorkspaceDialog } from '@/features/workspaces/edit-workspace-dialog';
 import { toast } from 'sonner';
@@ -129,27 +129,39 @@ const Workspaces = () => {
                 onClick={() => handleSelectWorkspace(workspace.id)}
               >
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between gap-2">
-                    <span className="truncate flex-1">{workspace.title}</span>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={(e) => handleEdit(workspace, e)}
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={(e) => handleDeleteClick(workspace, e)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </CardTitle>
+                  <div className="space-y-1">
+                    <CardTitle className="flex items-center justify-between gap-2">
+                      <span className="truncate flex-1">{workspace.title}</span>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={(e) => handleEdit(workspace, e)}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={(e) => handleDeleteClick(workspace, e)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      수정: {new Date(workspace.updatedAt).toLocaleDateString('ko-KR', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
                 </CardHeader>
               </Card>
             ))}
@@ -189,27 +201,39 @@ const Workspaces = () => {
                     onClick={() => handleSelectWorkspace(workspace.id)}
                   >
                     <CardHeader>
-                      <CardTitle className="flex items-center justify-between gap-2">
-                        <span className="truncate flex-1">{workspace.title}</span>
-                        <div className="flex items-center gap-1 shrink-0">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={(e) => handleEdit(workspace, e)}
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                            onClick={(e) => handleDeleteClick(workspace, e)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </CardTitle>
+                      <div className="space-y-1">
+                        <CardTitle className="flex items-center justify-between gap-2">
+                          <span className="truncate flex-1">{workspace.title}</span>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={(e) => handleEdit(workspace, e)}
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={(e) => handleDeleteClick(workspace, e)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </CardTitle>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          수정: {new Date(workspace.updatedAt).toLocaleDateString('ko-KR', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
                     </CardHeader>
                   </Card>
                 ))}

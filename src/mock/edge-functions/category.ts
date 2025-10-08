@@ -33,6 +33,11 @@ export const addCategory = async (input: {
 
     await db.categories.add(category);
 
+    // Update workspace updatedAt
+    await db.workspaces.update(input.workspaceId, {
+      updatedAt: new Date().toISOString(),
+    });
+
     return { category };
   } catch (error) {
     console.error('Add category error:', error);
@@ -60,6 +65,11 @@ export const updateCategory = async (
       updatedAt: new Date().toISOString(),
     });
 
+    // Update workspace updatedAt
+    await db.workspaces.update(category.workspaceId, {
+      updatedAt: new Date().toISOString(),
+    });
+
     return {};
   } catch (error) {
     console.error('Update category error:', error);
@@ -69,9 +79,19 @@ export const updateCategory = async (
 
 export const deleteCategory = async (id: string): Promise<{ error?: string }> => {
   try {
+    const category = await db.categories.get(id);
+    if (!category) {
+      return { error: '카테고리를 찾을 수 없습니다.' };
+    }
+
     // Delete related category places
     await db.categoryPlaces.where('categoryId').equals(id).delete();
     await db.categories.delete(id);
+
+    // Update workspace updatedAt
+    await db.workspaces.update(category.workspaceId, {
+      updatedAt: new Date().toISOString(),
+    });
 
     return {};
   } catch (error) {
@@ -94,6 +114,11 @@ export const reorderCategories = async (
     );
 
     await Promise.all(updates);
+
+    // Update workspace updatedAt
+    await db.workspaces.update(workspaceId, {
+      updatedAt: new Date().toISOString(),
+    });
 
     return {};
   } catch (error) {
@@ -126,6 +151,11 @@ export const setRepresentativePlace = async (
 
     await db.categories.update(categoryId, {
       representativePlaceId: placeId,
+      updatedAt: new Date().toISOString(),
+    });
+
+    // Update workspace updatedAt
+    await db.workspaces.update(category.workspaceId, {
       updatedAt: new Date().toISOString(),
     });
 
