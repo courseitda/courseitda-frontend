@@ -101,6 +101,11 @@ export const NavigationDrawer = ({
   const handleTouchEnd = () => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+    // 타이머가 실행되지 않았다면 longPressTriggered를 리셋
+    if (!longPressTriggered.current) {
+      longPressTriggered.current = false;
     }
   };
   
@@ -109,6 +114,18 @@ export const NavigationDrawer = ({
       onSelectWorkspace(workspace.id);
     }
     longPressTriggered.current = false;
+  };
+  
+  const handleMobileMenuChange = (open: boolean) => {
+    setMobileMenuOpen(open);
+    // 메뉴가 닫힐 때 상태 리셋
+    if (!open) {
+      longPressTriggered.current = false;
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+        longPressTimer.current = null;
+      }
+    }
   };
   
   return (
@@ -245,7 +262,7 @@ export const NavigationDrawer = ({
       </AlertDialog>
       
       {/* 모바일 메뉴 드로어 */}
-      <Drawer open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+      <Drawer open={mobileMenuOpen} onOpenChange={handleMobileMenuChange}>
         <DrawerContent>
           <DrawerHeader>
             <DrawerTitle>{mobileMenuWorkspace?.title}</DrawerTitle>
