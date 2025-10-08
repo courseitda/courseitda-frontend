@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,14 +24,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-} from '@/components/ui/drawer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Menu, Plus, Trash2, User as UserIcon, Pencil } from 'lucide-react';
 import type { Workspace, User } from '@/entities/types';
@@ -60,17 +52,6 @@ export const NavigationDrawer = ({
   const [selectedWorkspace, setSelectedWorkspace] = useState<Workspace | null>(null);
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState<Workspace | null>(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [mobileMenuWorkspace, setMobileMenuWorkspace] = useState<Workspace | null>(null);
-  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
-  const longPressTriggered = useRef(false);
-  
-  // 모든 다이얼로그가 닫힐 때 longPressTriggered 상태만 리셋
-  useEffect(() => {
-    if (!mobileMenuOpen && !editDialogOpen && !deleteAlertOpen) {
-      longPressTriggered.current = false;
-    }
-  }, [mobileMenuOpen, editDialogOpen, deleteAlertOpen]);
   
   const handleEdit = (workspace: Workspace) => {
     setSelectedWorkspace(workspace);
@@ -94,29 +75,6 @@ export const NavigationDrawer = ({
     
     setDeleteAlertOpen(false);
     setSelectedForDelete(null);
-  };
-  
-  const handleTouchStart = (workspace: Workspace) => {
-    longPressTimer.current = setTimeout(() => {
-      longPressTriggered.current = true;
-      setMobileMenuWorkspace(workspace);
-      setMobileMenuOpen(true);
-    }, 500); // 500ms 꾹 누르기
-  };
-  
-  const handleTouchEnd = () => {
-    // 타이머 클리어
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
-    }
-  };
-  
-  const handleWorkspaceClick = (workspace: Workspace) => {
-    // 롱프레스가 아닌 경우에만 워크스페이스 선택
-    if (!longPressTriggered.current) {
-      onSelectWorkspace(workspace.id);
-    }
   };
   
   return (
@@ -177,10 +135,7 @@ export const NavigationDrawer = ({
                   <ContextMenu key={workspace.id}>
                     <ContextMenuTrigger asChild>
                       <button
-                        onClick={() => handleWorkspaceClick(workspace)}
-                        onTouchStart={() => handleTouchStart(workspace)}
-                        onTouchEnd={handleTouchEnd}
-                        onTouchCancel={handleTouchEnd}
+                        onClick={() => onSelectWorkspace(workspace.id)}
                         className={`w-full text-left px-3 py-[18px] rounded-lg border transition-colors ${
                           isActive
                             ? 'bg-primary/10 border-primary'
@@ -192,7 +147,7 @@ export const NavigationDrawer = ({
                         </h4>
                       </button>
                     </ContextMenuTrigger>
-                    <ContextMenuContent className="hidden md:block">
+                    <ContextMenuContent>
                       <ContextMenuItem
                         className="gap-2"
                         onClick={() => handleEdit(workspace)}
@@ -251,46 +206,6 @@ export const NavigationDrawer = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      
-      {/* 모바일 메뉴 드로어 */}
-      <Drawer open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>{mobileMenuWorkspace?.title}</DrawerTitle>
-          </DrawerHeader>
-          <DrawerFooter>
-            <Button
-              variant="outline"
-              className="gap-2"
-              onClick={() => {
-                if (mobileMenuWorkspace) {
-                  handleEdit(mobileMenuWorkspace);
-                }
-                setMobileMenuOpen(false);
-              }}
-            >
-              <Pencil className="w-4 h-4" />
-              편집
-            </Button>
-            <Button
-              variant="destructive"
-              className="gap-2"
-              onClick={() => {
-                if (mobileMenuWorkspace) {
-                  handleDeleteClick(mobileMenuWorkspace);
-                }
-                setMobileMenuOpen(false);
-              }}
-            >
-              <Trash2 className="w-4 h-4" />
-              삭제
-            </Button>
-            <DrawerClose asChild>
-              <Button variant="outline">취소</Button>
-            </DrawerClose>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
     </Sheet>
   );
 };
