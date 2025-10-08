@@ -85,8 +85,8 @@ const WorkspaceDetail = () => {
       </header>
 
       {/* Main Content - Mobile: Map top, Categories bottom / Desktop: Side by side */}
-      <main className="flex-1 container mx-auto px-4 py-8 md:py-4 overflow-hidden">
-        <div className="h-full flex flex-col md:grid md:grid-cols-2 gap-8 md:gap-4">
+      <main className="flex-1 container mx-auto px-4 py-2.5 md:py-4 overflow-hidden">
+        <div className="h-full flex flex-col md:grid md:grid-cols-2 gap-2.5 md:gap-4">
           {/* Map Section - Always on top on mobile */}
           <div className="h-[calc((100vh-200px)*5/9)] md:h-[calc(100vh-120px)] rounded-xl overflow-hidden border border-border/50 shadow-lg bg-card order-1">
             {kakaoJsApiKey ? (
