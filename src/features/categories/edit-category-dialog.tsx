@@ -10,8 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { updateCategory } from '@/mock/edge-functions/category';
-import { CATEGORY_COLORS } from '@/shared/constants/colors';
-import { Check } from 'lucide-react';
+import { getCategoryColors, PALETTE_NAMES, type PaletteMode } from '@/shared/constants/colors';
+import { useSettingsStore } from '@/shared/stores/settings-store';
+import { Check, Palette } from 'lucide-react';
 import type { Category } from '@/entities/types';
 
 interface EditCategoryDialogProps {
@@ -21,18 +22,28 @@ interface EditCategoryDialogProps {
 }
 
 export const EditCategoryDialog = ({ open, onOpenChange, category }: EditCategoryDialogProps) => {
+  const { colorPaletteMode, setColorPaletteMode } = useSettingsStore();
+  const colors = getCategoryColors(colorPaletteMode);
   const [name, setName] = useState(category.name);
   const [selectedColor, setSelectedColor] = useState(category.color);
   const [loading, setLoading] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  // Reset form when dialog opens with new category
+  const handleTogglePalette = () => {
+    const modes: PaletteMode[] = ['vibrant', 'pastel', 'deep', 'soft', 'muted'];
+    const currentIndex = modes.indexOf(colorPaletteMode);
+    const nextMode = modes[(currentIndex + 1) % modes.length];
+    setColorPaletteMode(nextMode);
+  };
+
+  // Reset form and palette when dialog opens with new category
   useEffect(() => {
     if (open) {
+      setColorPaletteMode('vibrant');
       setName(category.name);
       setSelectedColor(category.color);
     }
-  }, [open, category]);
+  }, [open, category, setColorPaletteMode]);
 
   // Handle keyboard appearance on mobile
   useEffect(() => {
@@ -105,9 +116,12 @@ export const EditCategoryDialog = ({ open, onOpenChange, category }: EditCategor
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label>색상 선택</Label>
-            <div className="grid grid-cols-9 gap-2">
-              {CATEGORY_COLORS.map((color) => (
+            <div className="flex items-center justify-between">
+              <Label>색상 선택</Label>
+              <span className="text-xs text-muted-foreground">{PALETTE_NAMES[colorPaletteMode]}</span>
+            </div>
+            <div className="grid grid-cols-7 gap-2 justify-items-center">
+              {colors.map((color) => (
                 <button
                   key={color}
                   type="button"
@@ -121,6 +135,14 @@ export const EditCategoryDialog = ({ open, onOpenChange, category }: EditCategor
                   )}
                 </button>
               ))}
+              <button
+                type="button"
+                onClick={handleTogglePalette}
+                className="w-10 h-10 rounded-full border-2 border-dashed border-border hover:scale-110 transition-transform relative cursor-pointer flex items-center justify-center bg-background"
+                aria-label="색상 팔레트 변경"
+              >
+                <Palette className="w-5 h-5 text-muted-foreground" />
+              </button>
             </div>
           </div>
 

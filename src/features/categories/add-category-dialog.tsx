@@ -10,8 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { addCategory } from '@/mock/edge-functions/category';
-import { CATEGORY_COLORS } from '@/shared/constants/colors';
-import { Check } from 'lucide-react';
+import { getCategoryColors, PALETTE_NAMES, type PaletteMode } from '@/shared/constants/colors';
+import { useSettingsStore } from '@/shared/stores/settings-store';
+import { Check, Palette } from 'lucide-react';
 
 interface AddCategoryDialogProps {
   open: boolean;
@@ -22,10 +23,32 @@ interface AddCategoryDialogProps {
 const SUGGESTED_CATEGORIES = ['점심', '카페', '산책', '쇼핑', '저녁', '디저트'];
 
 export const AddCategoryDialog = ({ open, onOpenChange, workspaceId }: AddCategoryDialogProps) => {
+  const { colorPaletteMode, setColorPaletteMode } = useSettingsStore();
+  const colors = getCategoryColors(colorPaletteMode);
   const [name, setName] = useState('');
-  const [selectedColor, setSelectedColor] = useState(CATEGORY_COLORS[0]);
+  const [selectedColor, setSelectedColor] = useState(colors[0]);
   const [loading, setLoading] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
+
+  // Reset to vibrant mode when dialog opens
+  useEffect(() => {
+    if (open) {
+      setColorPaletteMode('vibrant');
+      setSelectedColor(getCategoryColors('vibrant')[0]);
+    }
+  }, [open, setColorPaletteMode]);
+
+  // Update selected color when palette changes
+  useEffect(() => {
+    setSelectedColor(getCategoryColors(colorPaletteMode)[0]);
+  }, [colorPaletteMode]);
+
+  const handleTogglePalette = () => {
+    const modes: PaletteMode[] = ['vibrant', 'pastel', 'deep', 'soft', 'muted'];
+    const currentIndex = modes.indexOf(colorPaletteMode);
+    const nextMode = modes[(currentIndex + 1) % modes.length];
+    setColorPaletteMode(nextMode);
+  };
 
   // Handle keyboard appearance on mobile
   useEffect(() => {
@@ -89,7 +112,7 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceId }: AddCatego
 
     toast.success('카테고리가 추가되었습니다!');
     setName('');
-    setSelectedColor(CATEGORY_COLORS[0]);
+    setSelectedColor(getCategoryColors(colorPaletteMode)[0]);
     onOpenChange(false);
     setLoading(false);
   };
@@ -103,9 +126,12 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceId }: AddCatego
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label>색상 선택</Label>
-            <div className="grid grid-cols-9 gap-2">
-              {CATEGORY_COLORS.map((color) => (
+            <div className="flex items-center justify-between">
+              <Label>색상 선택</Label>
+              <span className="text-xs text-muted-foreground">{PALETTE_NAMES[colorPaletteMode]}</span>
+            </div>
+            <div className="grid grid-cols-7 gap-2 justify-items-center">
+              {colors.map((color) => (
                 <button
                   key={color}
                   type="button"
@@ -119,6 +145,14 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceId }: AddCatego
                   )}
                 </button>
               ))}
+              <button
+                type="button"
+                onClick={handleTogglePalette}
+                className="w-10 h-10 rounded-full border-2 border-dashed border-border hover:scale-110 transition-transform relative cursor-pointer flex items-center justify-center bg-background"
+                aria-label="색상 팔레트 변경"
+              >
+                <Palette className="w-5 h-5 text-muted-foreground" />
+              </button>
             </div>
           </div>
 
