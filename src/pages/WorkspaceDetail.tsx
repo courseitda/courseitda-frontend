@@ -9,6 +9,7 @@ import { MapCanvas } from '@/features/map/map-canvas';
 import { useSettingsStore } from '@/shared/stores/settings-store';
 import { toast } from 'sonner';
 import { NavigationDrawer } from '@/features/layout/navigation-drawer';
+import { ArrowLeft } from 'lucide-react';
 import type { Place } from '@/entities/types';
 
 const WorkspaceDetail = () => {
@@ -65,9 +66,21 @@ const WorkspaceDetail = () => {
       {/* Header */}
       <header className="border-b border-border/50 bg-background/95 backdrop-blur sticky top-0 z-20 shrink-0">
         <div className="container mx-auto px-4 py-4 md:py-3">
-          <div className="flex items-center justify-between gap-4">
-            {/* Left: Workspace Title */}
-            <div className="text-left min-w-0">
+          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
+            {/* Left: Back Button */}
+            <div className="flex items-center">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/workspaces')}
+                aria-label="뒤로가기"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+            </div>
+            
+            {/* Center: Workspace Title */}
+            <div className="text-center min-w-0">
               <h1 className="text-lg font-bold truncate">{workspace.title}</h1>
             </div>
             
