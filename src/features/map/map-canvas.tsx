@@ -140,14 +140,14 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
           width: 32px;
           height: 32px;
           background-color: ${category.color};
-          border: 3px solid white;
+          border: 3px solid hsl(var(--card));
           border-radius: 50%;
           box-shadow: 0 2px 8px rgba(0,0,0,0.3);
           display: flex;
           align-items: center;
           justify-content: center;
           font-weight: bold;
-          color: white;
+          color: hsl(var(--card));
           font-size: 14px;
           cursor: pointer;
           z-index: 100;
@@ -159,7 +159,7 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
           width: 20px;
           height: 20px;
           background-color: ${category.color};
-          border: 2px solid white;
+          border: 2px solid hsl(var(--card));
           border-radius: 50%;
           box-shadow: 0 2px 6px rgba(0,0,0,0.3);
           cursor: pointer;
@@ -183,7 +183,7 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
         const container = document.createElement('div');
         container.style.cssText = `
           padding: 12px;
-          background: white;
+          background: hsl(var(--card));
           border-radius: 8px;
           box-shadow: 0 2px 8px rgba(0,0,0,0.15);
           min-width: 200px;
@@ -203,7 +203,7 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
         nameDiv.style.cssText = `
           font-size: 14px;
           font-weight: 600;
-          color: #1a1a1a;
+          color: hsl(var(--foreground));
           flex: 1;
         `;
         nameDiv.textContent = place.name;
@@ -215,8 +215,8 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
           width: 32px;
           height: 32px;
           border-radius: 6px;
-          border: 1px solid ${currentIsRepresentative ? '#6E59A5' : '#d1d5db'};
-          background: ${currentIsRepresentative ? '#f3f0ff' : 'white'};
+          border: 1px solid ${currentIsRepresentative ? 'hsl(var(--primary))' : 'hsl(var(--border))'};
+          background: ${currentIsRepresentative ? 'hsl(var(--accent))' : 'hsl(var(--card))'};
           cursor: pointer;
           display: flex;
           align-items: center;
@@ -233,7 +233,7 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
         svg.setAttribute('height', '16');
         svg.setAttribute('viewBox', '0 0 24 24');
         svg.setAttribute('fill', 'none');
-        svg.setAttribute('stroke', currentIsRepresentative ? '#6E59A5' : '#9ca3af');
+        svg.setAttribute('stroke', currentIsRepresentative ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))');
         svg.setAttribute('stroke-width', '2.5');
         svg.setAttribute('stroke-linecap', 'round');
         svg.setAttribute('stroke-linejoin', 'round');
@@ -247,10 +247,10 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
         checkButton.appendChild(svg);
 
         checkButton.addEventListener('mouseenter', () => {
-          checkButton.style.background = currentIsRepresentative ? '#e9e3ff' : '#f9fafb';
+          checkButton.style.background = currentIsRepresentative ? 'hsl(var(--accent) / 0.8)' : 'hsl(var(--secondary))';
         });
         checkButton.addEventListener('mouseleave', () => {
-          checkButton.style.background = currentIsRepresentative ? '#f3f0ff' : 'white';
+          checkButton.style.background = currentIsRepresentative ? 'hsl(var(--accent))' : 'hsl(var(--card))';
         });
 
         const handleCheckClick = async (e: MouseEvent) => {
