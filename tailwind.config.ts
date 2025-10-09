@@ -56,6 +56,24 @@ export default {
           red: "hsl(var(--category-red))",
           cyan: "hsl(var(--category-cyan))",
         },
+        // 에러 페이지 색상 (404 등)
+        "error-page": {
+          bg: "hsl(var(--error-page-bg))",
+          text: "hsl(var(--error-page-text))",
+          "text-dark": "hsl(var(--error-page-text-dark))",
+        },
+        // 링크 색상
+        link: {
+          DEFAULT: "hsl(var(--link))",
+          hover: "hsl(var(--link-hover))",
+        },
+        // Destructive Toast 강조 색상
+        "destructive-toast": {
+          light: "hsl(var(--destructive-light))",
+          lighter: "hsl(var(--destructive-lighter))",
+          ring: "hsl(var(--destructive-ring))",
+          "ring-offset": "hsl(var(--destructive-ring-offset))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
