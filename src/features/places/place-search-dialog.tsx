@@ -83,13 +83,14 @@ export const PlaceSearchDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>장소 검색</DialogTitle>
           <DialogDescription>Kakao 지도에서 장소를 검색하고 추가하세요</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4 min-h-0 flex-1">
+          {/* 고정된 검색 영역 */}
           <div className="flex gap-2">
             <div className="flex-1">
               <Input
@@ -110,48 +111,51 @@ export const PlaceSearchDialog = ({
             </Button>
           </div>
 
-          {loading && (
-            <div className="text-center py-8 text-muted-foreground">검색 중...</div>
-          )}
+          {/* 스크롤 가능한 결과 영역 */}
+          <div className="flex-1 overflow-y-auto min-h-0">
+            {loading && (
+              <div className="text-center py-8 text-muted-foreground">검색 중...</div>
+            )}
 
-          {!loading && results.length > 0 && (
-            <div className="space-y-2">
-              {results.map((place) => (
-                <div
-                  key={place.id}
-                  className="p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium mb-1">{place.place_name}</h4>
-                      <div className="space-y-1 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3 flex-shrink-0" />
-                          <span className="truncate">{place.address_name}</span>
-                        </div>
-                        {place.road_address_name && (
-                          <div className="text-xs truncate">{place.road_address_name}</div>
-                        )}
-                        {place.phone && (
+            {!loading && results.length > 0 && (
+              <div className="space-y-2 pr-2">
+                {results.map((place) => (
+                  <div
+                    key={place.id}
+                    className="p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium mb-1">{place.place_name}</h4>
+                        <div className="space-y-1 text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">
-                            <Phone className="w-3 h-3 flex-shrink-0" />
-                            <span>{place.phone}</span>
+                            <MapPin className="w-3 h-3 flex-shrink-0" />
+                            <span className="truncate">{place.address_name}</span>
                           </div>
-                        )}
+                          {place.road_address_name && (
+                            <div className="text-xs truncate">{place.road_address_name}</div>
+                          )}
+                          {place.phone && (
+                            <div className="flex items-center gap-1">
+                              <Phone className="w-3 h-3 flex-shrink-0" />
+                              <span>{place.phone}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
+                      <Button
+                        size="sm"
+                        onClick={() => handleAdd(place)}
+                        disabled={adding === place.id}
+                      >
+                        {adding === place.id ? '추가 중...' : '추가'}
+                      </Button>
                     </div>
-                    <Button
-                      size="sm"
-                      onClick={() => handleAdd(place)}
-                      disabled={adding === place.id}
-                    >
-                      {adding === place.id ? '추가 중...' : '추가'}
-                    </Button>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
