@@ -32,6 +32,7 @@ import { useAuthStore } from '@/shared/stores/auth-store';
 import { useWorkspaceStore } from '@/shared/stores/workspace-store';
 import { db } from '@/mock/db';
 import { Plus, LogOut, Settings, Pencil, Trash2, Clock, User as UserIcon, LayoutGrid, MapPin } from 'lucide-react';
+import logo from '@/assets/logo-no-background.png';
 import { CreateWorkspaceDialog } from '@/features/workspaces/create-workspace-dialog';
 import { EditWorkspaceDialog } from '@/features/workspaces/edit-workspace-dialog';
 import { toast } from 'sonner';
@@ -101,9 +102,7 @@ const Workspaces = () => {
         <div className="container mx-auto px-4 py-4 md:py-3">
           <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
             <div className="flex items-center gap-1.5 md:gap-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center">
-                <MapPin className="w-5 h-5 text-white" />
-              </div>
+              <img src={logo} alt="코스잇다 로고" className="w-10 h-10 object-contain" />
               <span className="font-bold text-lg whitespace-nowrap">코스잇다</span>
             </div>
             
