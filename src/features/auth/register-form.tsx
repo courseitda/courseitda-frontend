@@ -241,7 +241,7 @@ export const RegisterForm = () => {
             disabled={nicknameCheckLoading || nickname.length < 2}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-xs bg-primary text-primary-foreground px-3 py-1 rounded hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {nicknameCheckLoading ? '확인 중...' : '중복 확인'}
+            {nicknameCheckLoading ? '확인 중...' : '확인'}
           </button>
         </div>
         {nicknameError && (
@@ -274,7 +274,7 @@ export const RegisterForm = () => {
             disabled={emailCheckLoading || email.length === 0}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-xs bg-primary text-primary-foreground px-3 py-1 rounded hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {emailCheckLoading ? '인증 중...' : '인증하기'}
+            {emailCheckLoading ? '인증 중...' : '인증'}
           </button>
         </div>
         {emailError && (

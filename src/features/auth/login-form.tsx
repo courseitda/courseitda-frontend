@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { loginUser } from '@/mock/edge-functions/auth';
 import { useAuthStore } from '@/shared/stores/auth-store';
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 
 export const LoginForm = () => {
   const navigate = useNavigate();
@@ -13,6 +13,7 @@ export const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,27 +35,44 @@ export const LoginForm = () => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="email">이메일</Label>
-        <Input
-          id="email"
-          type="email"
-          placeholder="your@email.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
+        <div className="relative">
+          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Input
+            id="email"
+            type="email"
+            placeholder="이메일"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="pl-10"
+          />
+        </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="password">비밀번호</Label>
-        <Input
-          id="password"
-          type="password"
-          placeholder="••••••"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        <div className="relative">
+          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Input
+            id="password"
+            type={showPassword ? 'text' : 'password'}
+            placeholder="비밀번호"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="pl-10 pr-10"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {showPassword ? (
+              <EyeOff className="h-5 w-5" />
+            ) : (
+              <Eye className="h-5 w-5" />
+            )}
+          </button>
+        </div>
       </div>
 
       <Button type="submit" className="w-full" disabled={loading}>
