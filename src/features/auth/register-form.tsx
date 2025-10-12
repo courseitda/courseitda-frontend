@@ -23,10 +23,6 @@ export const RegisterForm = () => {
   const [emailError, setEmailError] = useState('');
   const [emailCheckLoading, setEmailCheckLoading] = useState(false);
   const [emailChecked, setEmailChecked] = useState(false);
-  const [showVerificationCode, setShowVerificationCode] = useState(false);
-  const [verificationCode, setVerificationCode] = useState('');
-  const [verificationCodeError, setVerificationCodeError] = useState('');
-  const [verificationCompleted, setVerificationCompleted] = useState(false);
 
   // 비밀번호 검증 규칙
   const passwordValidation = useMemo(() => {
@@ -93,10 +89,6 @@ export const RegisterForm = () => {
     const value = e.target.value;
     setEmail(value);
     setEmailChecked(false);
-    setShowVerificationCode(false);
-    setVerificationCode('');
-    setVerificationCodeError('');
-    setVerificationCompleted(false);
     
     // 이메일 형식 검증
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -107,8 +99,8 @@ export const RegisterForm = () => {
     }
   };
 
-  // 이메일 중복 확인 및 인증 메일 발송
-  const handleEmailVerification = async () => {
+  // 이메일 중복 확인
+  const handleEmailCheck = async () => {
     // 이메일 형식 검증
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -125,40 +117,12 @@ export const RegisterForm = () => {
       if (usedEmails.includes(email.toLowerCase())) {
         setEmailError('이미 사용중인 이메일입니다');
         setEmailChecked(false);
-        setShowVerificationCode(false);
       } else {
         setEmailError('');
         setEmailChecked(true);
-        setShowVerificationCode(true);
-        toast.success('인증 메일이 발송되었습니다');
       }
       setEmailCheckLoading(false);
     }, 1000); // 1초 딜레이로 로딩 상태 시뮬레이션
-  };
-
-  // 인증 코드 변경 핸들러
-  const handleVerificationCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setVerificationCode(value);
-    setVerificationCodeError('');
-    setVerificationCompleted(false);
-  };
-
-  // 인증 코드 확인 버튼 핸들러
-  const handleVerificationCodeCheck = () => {
-    if (verificationCode.length !== 6) {
-      setVerificationCodeError('인증번호 6자리를 입력해주세요');
-      return;
-    }
-    
-    // 123456이면 인증 완료
-    if (verificationCode === '123456') {
-      setVerificationCompleted(true);
-      setVerificationCodeError('');
-    } else {
-      setVerificationCodeError('인증번호가 올바르지 않습니다');
-      setVerificationCompleted(false);
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -167,33 +131,28 @@ export const RegisterForm = () => {
 
     // 닉네임 중복 확인 검사
     if (!nicknameChecked) {
-      toast.error('닉네임 중복 확인을 해주세요.');
       setLoading(false);
       return;
     }
 
     if (nicknameError) {
-      toast.error('사용중인 닉네임입니다.');
       setLoading(false);
       return;
     }
 
-    // 이메일 인증 검증
+    // 이메일 중복 확인 검증
+    if (!emailChecked) {
+      setLoading(false);
+      return;
+    }
+
     if (emailError) {
-      toast.error('이메일을 확인해주세요.');
-      setLoading(false);
-      return;
-    }
-
-    if (!verificationCompleted) {
-      toast.error('이메일 인증을 완료해주세요.');
       setLoading(false);
       return;
     }
 
     // 비밀번호 검증 확인
     if (!isPasswordValid) {
-      toast.error('비밀번호 요구사항을 모두 충족해주세요.');
       setLoading(false);
       return;
     }
@@ -201,7 +160,6 @@ export const RegisterForm = () => {
     const { user, error } = await registerUser({ email, password, nickname });
 
     if (error || !user) {
-      toast.error(error || '회원가입에 실패했습니다.');
       setLoading(false);
       return;
     }
@@ -210,14 +168,12 @@ export const RegisterForm = () => {
     const loginResult = await loginUser({ email, password });
     
     if (loginResult.error || !loginResult.user || !loginResult.token) {
-      toast.error('회원가입은 성공했으나 로그인에 실패했습니다.');
       setLoading(false);
       navigate('/auth?tab=login');
       return;
     }
 
     setAuth(loginResult.user, loginResult.token);
-    toast.success('회원가입 완료!');
     navigate('/workspaces');
   };
 
@@ -270,11 +226,11 @@ export const RegisterForm = () => {
           />
           <button
             type="button"
-            onClick={handleEmailVerification}
+            onClick={handleEmailCheck}
             disabled={emailCheckLoading || email.length === 0}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-xs bg-primary text-primary-foreground px-3 py-1 rounded hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {emailCheckLoading ? '인증 중...' : '인증'}
+            {emailCheckLoading ? '확인 중...' : '확인'}
           </button>
         </div>
         {emailError && (
@@ -284,42 +240,8 @@ export const RegisterForm = () => {
         )}
         {emailChecked && !emailError && (
           <p className="text-xs text-green-600 flex items-center gap-1">
-            ✓ 인증 메일이 발송되었습니다
+            ✓ 사용 가능한 이메일입니다
           </p>
-        )}
-        
-        {/* 인증 코드 입력 창 */}
-        {showVerificationCode && (
-          <div className="space-y-2">
-            <div className="relative">
-              <Input
-                type="text"
-                placeholder="인증번호 6자리 입력"
-                value={verificationCode}
-                onChange={handleVerificationCodeChange}
-                maxLength={6}
-                className="text-center tracking-widest pr-16"
-              />
-              <button
-                type="button"
-                onClick={handleVerificationCodeCheck}
-                disabled={verificationCode.length !== 6}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs bg-primary text-primary-foreground px-3 py-1 rounded hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                확인
-              </button>
-            </div>
-            {verificationCodeError && (
-              <p className="text-xs text-destructive flex items-center gap-1">
-                ✗ {verificationCodeError}
-              </p>
-            )}
-            {verificationCompleted && (
-              <p className="text-xs text-green-600 flex items-center gap-1">
-                ✓ 이메일 인증이 완료되었습니다
-              </p>
-            )}
-          </div>
         )}
       </div>
 
