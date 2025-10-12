@@ -29,6 +29,9 @@ build
 *.secret
 config/secrets.json
 
+# Cursor AI rules
+.cursorrules
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
