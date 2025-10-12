@@ -30,6 +30,7 @@ export const EditWorkspaceDialog = ({ open, onOpenChange, workspace }: EditWorks
     }
   }, [open, workspace]);
 
+  // UserRequest: 모바일에서 키보드 올라올 때 팝업이 가려지지 않도록 키보드를 제외한 화면 중앙에 위치
   // Handle keyboard appearance on mobile
   useEffect(() => {
     if (!open) return;

@@ -25,10 +25,12 @@ const MyPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-card">
+      {/* UserRequest: 좌우 여백을 0.5배로 축소하여 통일 (px-8 → px-4) */}
       <header className="border-b border-border/50 bg-background/95 backdrop-blur">
         <div className="container mx-auto px-4 py-4 md:py-3">
           <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
             {/* Left: Back Button */}
+            {/* UserRequest: 마이페이지에 뒤로가기 버튼 추가 */}
             <Button
               variant="ghost"
               size="icon"
@@ -39,6 +41,7 @@ const MyPage = () => {
             </Button>
             
             {/* Center: Title */}
+            {/* UserRequest: 제목 가운데 정렬 */}
             <h1 className="text-lg font-bold text-center">마이페이지</h1>
             
             {/* Right: Empty space for symmetry */}

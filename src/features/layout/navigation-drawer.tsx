@@ -89,6 +89,7 @@ export const NavigationDrawer = ({
         </Button>
       </SheetTrigger>
       <SheetContent side="right" className="w-[75vw] md:w-80 p-0 flex flex-col">
+        {/* UserRequest: 네비게이션 드로우바 제목을 가운데 정렬 (!text-center) */}
         <SheetHeader className="p-4 pb-3 !text-center">
           <SheetTitle>메뉴</SheetTitle>
         </SheetHeader>

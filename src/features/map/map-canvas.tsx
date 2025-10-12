@@ -330,6 +330,7 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
         const current = representativeCategoriesWithPlaces[i]!;
         const next = representativeCategoriesWithPlaces[i + 1]!;
         
+        // UserRequest: 경로를 20개의 선분으로 분할하여 양 끝 마커 색상으로 그라데이션 구현
         // Create gradient by dividing the segment into multiple smaller segments
         const numSegments = 20; // Number of sub-segments for smooth gradient
         
@@ -351,6 +352,7 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
             new kakao.maps.LatLng(lat2, lng2),
           ];
 
+          // UserRequest: 점선 스타일 유지하면서 그라데이션 적용
           const polyline = new kakao.maps.Polyline({
             path: segmentPath,
             strokeWeight: 3,

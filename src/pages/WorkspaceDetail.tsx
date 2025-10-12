@@ -81,6 +81,7 @@ const WorkspaceDetail = () => {
   return (
     <div className="h-screen bg-gradient-card flex flex-col overflow-hidden">
       {/* Header */}
+      {/* UserRequest: 좌우 여백을 0.5배로 축소 (px-8 → px-4) */}
       <header className="border-b border-border/50 bg-background/95 backdrop-blur z-20 shrink-0">
         <div className="container mx-auto px-4 py-4 md:py-3">
           <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
@@ -97,6 +98,7 @@ const WorkspaceDetail = () => {
             </div>
             
             {/* Center: Workspace Title */}
+            {/* UserRequest: 모바일에서 워크스페이스 제목 왼쪽 정렬 (사용자가 드롭다운 메뉴로 대체하여 현재는 중앙 정렬) */}
             <div className="flex justify-center items-center min-w-0 relative">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -187,10 +189,12 @@ const WorkspaceDetail = () => {
       </header>
 
       {/* Main Content - Mobile: Map fixed top, Categories scrollable / Desktop: Side by side */}
+      {/* UserRequest: 좌우 여백을 0.5배로 축소 (px-8 → px-4) */}
       <main className="flex-1 min-h-0">
         <div className="container mx-auto px-4 h-full">
           <div className="h-full py-2.5 md:py-4 flex flex-col md:grid md:grid-cols-2 gap-2.5 md:gap-4">
             {/* Map Section - Fixed on mobile, normal on desktop */}
+            {/* UserRequest: 모바일 지도 높이를 화면의 약 45% 비율로 설정 (기존 5/9 ≈ 0.55에서 조정) */}
             <div className="h-[calc((100vh-64px)*0.45)] md:h-full rounded-xl overflow-hidden border border-border/50 shadow-lg bg-card shrink-0">
               {kakaoJsApiKey ? (
                 <MapCanvas workspaceId={workspace.id} categories={categories || []} focusedPlace={focusedPlace} />
@@ -209,6 +213,7 @@ const WorkspaceDetail = () => {
             </div>
 
             {/* Categories Section - Scrollable on mobile, normal on desktop */}
+            {/* UserRequest: 카테고리 영역 패딩을 0.5배로 축소 (p-8 → p-4) */}
             <div className="flex-1 md:h-full overflow-y-auto rounded-xl border border-border/50 bg-card p-4 min-h-0">
               <CategoryList 
                 workspaceId={workspace.id} 

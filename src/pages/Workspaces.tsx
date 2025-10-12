@@ -155,6 +155,7 @@ const Workspaces = () => {
       </header>
 
       {/* Mobile Layout */}
+      {/* UserRequest: 모바일 뷰 좌우 여백을 0.5배로 축소 (px-8 → px-4) */}
       <main className="md:hidden container mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-xl font-semibold">워크스페이스</h2>
@@ -173,6 +174,7 @@ const Workspaces = () => {
           </Card>
         ) : (
           <div className="grid grid-cols-1 gap-2.5">
+            {/* UserRequest: 워크스페이스 간격을 0.3배로 축소 (gap-8 → gap-2.5) */}
             {workspaces?.map((workspace) => (
               <ContextMenu key={workspace.id}>
                 <ContextMenuTrigger asChild>
@@ -182,9 +184,11 @@ const Workspaces = () => {
                   >
                     <CardHeader>
                       <div className="space-y-1">
+                        {/* UserRequest: 모바일 폰트 크기 축소 (text-base), 워크스페이스 이름 왼쪽 정렬 */}
                         <CardTitle className="text-base md:text-lg truncate">
                           {workspace.title}
                         </CardTitle>
+                        {/* UserRequest: 마지막 수정 시간 표시, Clock 아이콘 추가, "마지막" 멘트 제거 */}
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           수정: {new Date(workspace.updatedAt).toLocaleDateString('ko-KR', {
@@ -222,6 +226,7 @@ const Workspaces = () => {
       </main>
 
       {/* Desktop Layout - 3 Column */}
+      {/* UserRequest: 데스크톱 화면에서 워크스페이스가 적어도 전체 영역 높이 보장 (min-h-[calc(100vh-80px)]) */}
       <main className="hidden md:block min-h-[calc(100vh-80px)]">
         <div className="grid grid-cols-[1fr_2fr_1fr] min-h-[calc(100vh-80px)]">
           {/* Left Side - Light Purple Background */}
@@ -246,6 +251,7 @@ const Workspaces = () => {
               </Card>
             ) : (
               <div className="space-y-2">
+                {/* UserRequest: 데스크톱 워크스페이스 간격 space-y-2 (8px) */}
                 {workspaces?.map((workspace) => (
                   <ContextMenu key={workspace.id}>
                     <ContextMenuTrigger asChild>
@@ -255,9 +261,11 @@ const Workspaces = () => {
                       >
                         <CardHeader>
                           <div className="space-y-1">
+                            {/* UserRequest: 모바일 폰트 크기 축소 (text-base), 워크스페이스 이름 왼쪽 정렬 */}
                             <CardTitle className="text-base md:text-lg truncate">
                               {workspace.title}
                             </CardTitle>
+                            {/* UserRequest: 마지막 수정 시간 표시, Clock 아이콘 추가, "마지막" 멘트 제거 */}
                             <p className="text-xs text-muted-foreground flex items-center gap-1">
                               <Clock className="w-3 h-3" />
                               수정: {new Date(workspace.updatedAt).toLocaleDateString('ko-KR', {
