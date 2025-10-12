@@ -1,3 +1,9 @@
+// UserRequest: 카테고리 색상을 18개에서 14개로 축소 후 13개로 조정
+// UserRequest: 7개씩 2줄로 일정한 간격, 중앙 정렬
+// UserRequest: 마지막 칸을 색상 팔레트 모드 전환 버튼으로 활용
+// UserRequest: 5가지 색상 팔레트 모드 제공 (Vibrant, Pastel, Deep, Soft, Muted)
+// UserRequest: 팔레트 이름을 영어로 표기
+// UserRequest: 다이얼로그를 열 때마다 기본(Vibrant) 모드로 초기화
 // 색상 팔레트 모드
 export const COLOR_PALETTES = {
   vibrant: [

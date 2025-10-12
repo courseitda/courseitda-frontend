@@ -45,6 +45,7 @@ export const EditCategoryDialog = ({ open, onOpenChange, category }: EditCategor
     }
   }, [open, category, setColorPaletteMode]);
 
+  // UserRequest: 키보드를 내렸다가 다시 올려도 팝업창이 올바른 위치에 유지되도록 수정
   // Handle keyboard appearance on mobile
   useEffect(() => {
     if (!open) return;
@@ -129,6 +130,7 @@ export const EditCategoryDialog = ({ open, onOpenChange, category }: EditCategor
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* UserRequest: 색상을 7개씩 2줄로 중앙 정렬하여 배치 */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label>색상 선택</Label>
