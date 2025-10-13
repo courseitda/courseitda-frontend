@@ -21,6 +21,7 @@ export const registerUser = async (input: {
       return { error: '모든 필드를 입력해주세요.' };
     }
 
+    // UserRequest: Change password minimum length from 6 to 8 to match frontend validation
     if (input.password.length < 8) {
       return { error: '비밀번호는 최소 8자 이상이어야 합니다.' };
     }
