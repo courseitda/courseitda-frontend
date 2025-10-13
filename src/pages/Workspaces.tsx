@@ -101,13 +101,14 @@ const Workspaces = () => {
       <header className="border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 py-4 md:py-3">
           <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
-            {/* UserRequest: Click "코스잇다" logo to navigate to landing page */}
+            {/* UserRequest: Courseitda 로고 클릭 시 랜딩 페이지로 이동 */}
+            {/* UserRequest: Courseitda 텍스트 색상을 더 진한 보라색으로 변경 */}
             <div 
               className="flex items-center gap-1.5 md:gap-2 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => navigate('/')}
             >
               <img src={logo} alt="코스잇다 로고" className="w-10 h-10 object-contain" />
-              <span className="font-bold text-lg whitespace-nowrap">코스잇다</span>
+              <span className="font-bold text-lg whitespace-nowrap text-purple-900">코스잇다</span>
             </div>
             
             <div></div>
