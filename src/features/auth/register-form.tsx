@@ -160,14 +160,18 @@ export const RegisterForm = () => {
     const { user, error } = await registerUser({ email, password, nickname });
 
     if (error || !user) {
+      toast.error(error || '회원가입에 실패했습니다.');
       setLoading(false);
       return;
     }
+
+    toast.success('회원가입이 완료되었습니다!');
 
     // Auto-login after successful registration
     const loginResult = await loginUser({ email, password });
     
     if (loginResult.error || !loginResult.user || !loginResult.token) {
+      toast.error('자동 로그인에 실패했습니다. 다시 로그인해주세요.');
       setLoading(false);
       navigate('/auth?tab=login');
       return;

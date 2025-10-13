@@ -21,8 +21,8 @@ export const registerUser = async (input: {
       return { error: '모든 필드를 입력해주세요.' };
     }
 
-    if (input.password.length < 6) {
-      return { error: '비밀번호는 최소 6자 이상이어야 합니다.' };
+    if (input.password.length < 8) {
+      return { error: '비밀번호는 최소 8자 이상이어야 합니다.' };
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
