@@ -107,8 +107,8 @@ const Workspaces = () => {
               className="flex items-center gap-1.5 md:gap-2 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => navigate('/')}
             >
-              <img src={logo} alt="코스잇다 로고" className="w-10 h-10 object-contain" />
-              <span className="font-bold text-lg whitespace-nowrap text-purple-900">코스잇다</span>
+              <img src={logo} alt="코스잇다 로고" className="w-10 h-10 object-contain rounded-lg" />
+              <span className="font-bold text-lg whitespace-nowrap text-purple-900">CourseItDa</span>
             </div>
             
             <div></div>
