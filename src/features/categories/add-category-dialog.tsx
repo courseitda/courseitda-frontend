@@ -77,8 +77,8 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceId }: AddCatego
     setColorPaletteMode(nextMode);
   };
 
-  // UserRequest: 키보드가 올라왔을 때 키보드를 제외한 남은 화면 기준으로 정중앙 정렬
-  // Handle keyboard appearance on mobile - center dialog in visible viewport
+  // UserRequest: 모바일에서 키보드가 올라오면 팝업창의 가장 윗부분을 화면 최상단에 맞춤
+  // Handle keyboard appearance on mobile - align dialog top to screen top
   useEffect(() => {
     if (!open) {
       setKeyboardOffset(0);
@@ -98,11 +98,8 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceId }: AddCatego
       
       // If viewport is significantly smaller than window, keyboard is open
       if (viewportHeight < windowHeight * 0.85) {
-        // Calculate offset to center dialog in visible viewport (excluding keyboard)
-        // We need to shift the dialog up by half the keyboard height
-        const keyboardHeight = windowHeight - viewportHeight;
-        const offset = keyboardHeight / 2;
-        setKeyboardOffset(offset);
+        // Set offset to 1 to indicate keyboard is open (will set top: 0)
+        setKeyboardOffset(1);
       } else {
         // Reset to center of full screen
         setKeyboardOffset(0);
@@ -159,9 +156,8 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceId }: AddCatego
         ref={dialogRef} 
         className="transition-all duration-200"
         style={{
-          top: keyboardOffset > 0 
-            ? `calc(50% - ${keyboardOffset}px)` 
-            : '50%'
+          top: keyboardOffset > 0 ? '0' : '50%',
+          transform: keyboardOffset > 0 ? 'translateX(-50%)' : 'translate(-50%, -50%)'
         }}
       >
         <DialogHeader>
