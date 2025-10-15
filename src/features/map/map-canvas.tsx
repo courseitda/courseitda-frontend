@@ -42,6 +42,14 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
   const markersRef = useRef<any[]>([]);
   const polylinesRef = useRef<any[]>([]);
   const currentInfoWindowRef = useRef<any>(null);
+  const hasInitializedBounds = useRef<boolean>(false);
+  const prevPlacesCountRef = useRef<number>(0);
+
+  // Reset bounds flag when workspace changes
+  useEffect(() => {
+    hasInitializedBounds.current = false;
+    prevPlacesCountRef.current = 0;
+  }, [workspaceId]);
 
   // Get all places for all categories
   const allPlacesData = useLiveQuery(async () => {
@@ -367,9 +375,14 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
       polylinesRef.current = polylines;
     }
 
-    // Fit bounds
-    if (markers.length > 0) {
+    // UserRequest: 대표장소 변경 시 지도 위치 유지 - 최초 로딩이나 장소 개수 변경 시에만 bounds 재설정
+    const currentPlacesCount = allPlacesData.size;
+    const shouldUpdateBounds = !hasInitializedBounds.current || prevPlacesCountRef.current !== currentPlacesCount;
+    
+    if (markers.length > 0 && shouldUpdateBounds) {
       map.setBounds(bounds);
+      hasInitializedBounds.current = true;
+      prevPlacesCountRef.current = currentPlacesCount;
     }
   }, [ready, allPlacesData, categories]);
 
