@@ -46,8 +46,8 @@ export const EditCategoryDialog = ({ open, onOpenChange, category }: EditCategor
     }
   }, [open, category, setColorPaletteMode]);
 
-  // UserRequest: 모바일에서 키보드가 올라오면 팝업창의 가장 윗부분을 화면 최상단에 맞춤
-  // Handle keyboard appearance on mobile - align dialog top to screen top
+  // UserRequest: 모바일에서 키보드가 올라오면 팝업창의 하단을 키보드 상단에 맞춤
+  // Handle keyboard appearance on mobile - align dialog bottom to keyboard top
   useEffect(() => {
     if (!open) {
       setKeyboardOffset(0);
@@ -67,8 +67,9 @@ export const EditCategoryDialog = ({ open, onOpenChange, category }: EditCategor
       
       // If viewport is significantly smaller than window, keyboard is open
       if (viewportHeight < windowHeight * 0.85) {
-        // Set offset to 1 to indicate keyboard is open (will set top: 0)
-        setKeyboardOffset(1);
+        // Calculate keyboard height
+        const keyboardHeight = windowHeight - viewportHeight;
+        setKeyboardOffset(keyboardHeight);
       } else {
         // Reset to center of full screen
         setKeyboardOffset(0);
@@ -120,13 +121,14 @@ export const EditCategoryDialog = ({ open, onOpenChange, category }: EditCategor
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
         ref={dialogRef} 
-        className={`transition-all duration-200 ${keyboardOffset > 0 ? 'pt-0 rounded-t-none' : ''}`}
+        className="transition-all duration-200"
         style={{
-          top: keyboardOffset > 0 ? '0' : '50%',
+          top: keyboardOffset > 0 ? 'auto' : '50%',
+          bottom: keyboardOffset > 0 ? `${keyboardOffset}px` : 'auto',
           transform: keyboardOffset > 0 ? 'translateX(-50%)' : 'translate(-50%, -50%)'
         }}
       >
-        <DialogHeader className={keyboardOffset > 0 ? 'pt-4' : ''}>
+        <DialogHeader>
           <DialogTitle>카테고리 수정</DialogTitle>
         </DialogHeader>
 
