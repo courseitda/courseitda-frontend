@@ -29,9 +29,8 @@ export const PlaceItem = ({ place, categoryId, isRepresentative, hasRepresentati
     
     if (error) {
       toast.error(error);
-    } else {
-      toast.success(isRepresentative ? '대표 장소가 해제되었습니다.' : '대표 장소로 설정되었습니다.');
     }
+    // UserRequest: 대표장소 설정 시 토스트 메시지 제거
   };
 
   return (

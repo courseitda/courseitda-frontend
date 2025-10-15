@@ -264,9 +264,7 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
           if (error) {
             toast.error(error);
           } else {
-            toast.success(
-              currentIsRepresentative ? '대표 장소가 해제되었습니다.' : `"${place.name}"을(를) 대표 장소로 설정했습니다.`
-            );
+            // UserRequest: 대표장소 설정 시 토스트 메시지 제거
             // Close info window after successful operation
             if (currentInfoWindowRef.current) {
               currentInfoWindowRef.current.setMap(null);
