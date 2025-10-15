@@ -108,7 +108,7 @@ const Workspaces = () => {
               onClick={() => navigate('/')}
             >
               <img src={logo} alt="코스잇다 로고" className="w-10 h-10 object-contain rounded-lg" />
-              <span className="font-bold text-lg whitespace-nowrap text-purple-900">CourseItDa</span>
+              <span className="font-bold text-lg whitespace-nowrap text-purple-900">코스잇다</span>
             </div>
             
             <div></div>
