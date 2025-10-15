@@ -28,6 +28,7 @@ export const EditCategoryDialog = ({ open, onOpenChange, category }: EditCategor
   const [selectedColor, setSelectedColor] = useState(category.color);
   const [loading, setLoading] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
 
   const handleTogglePalette = () => {
     const modes: PaletteMode[] = ['vibrant', 'pastel', 'deep', 'soft', 'muted'];
@@ -45,39 +46,35 @@ export const EditCategoryDialog = ({ open, onOpenChange, category }: EditCategor
     }
   }, [open, category, setColorPaletteMode]);
 
-  // UserRequest: 키보드를 내렸다가 다시 올려도 팝업창이 올바른 위치에 유지되도록 수정
-  // Handle keyboard appearance on mobile
+  // UserRequest: 키보드가 올라왔을 때 키보드를 제외한 남은 화면 기준으로 정중앙 정렬
+  // Handle keyboard appearance on mobile - center dialog in visible viewport
   useEffect(() => {
-    if (!open) return;
-
-    // Reset position when dialog opens
-    if (dialogRef.current) {
-      dialogRef.current.style.top = '50%';
-      dialogRef.current.style.transform = 'translate(-50%, -50%)';
+    if (!open) {
+      setKeyboardOffset(0);
+      return;
     }
 
     const handleViewportResize = () => {
-      if (!dialogRef.current) return;
-      
       const visualViewport = window.visualViewport;
-      if (!visualViewport) return;
+      if (!visualViewport) {
+        setKeyboardOffset(0);
+        return;
+      }
 
       // Calculate the available height when keyboard is open
       const viewportHeight = visualViewport.height;
       const windowHeight = window.innerHeight;
       
-      // Always keep top at 50%
-      dialogRef.current.style.top = '50%';
-      
-      // If viewport is smaller than window, keyboard is likely open
-      if (viewportHeight < windowHeight * 0.8) {
-        // Position dialog in the center of visible viewport (excluding keyboard)
+      // If viewport is significantly smaller than window, keyboard is open
+      if (viewportHeight < windowHeight * 0.85) {
+        // Calculate offset to center dialog in visible viewport (excluding keyboard)
+        // We need to shift the dialog up by half the keyboard height
         const keyboardHeight = windowHeight - viewportHeight;
-        const offsetY = keyboardHeight / 2;
-        dialogRef.current.style.transform = `translate(-50%, calc(-50% - ${offsetY}px))`;
+        const offset = keyboardHeight / 2;
+        setKeyboardOffset(offset);
       } else {
-        // Reset to center of screen
-        dialogRef.current.style.transform = 'translate(-50%, -50%)';
+        // Reset to center of full screen
+        setKeyboardOffset(0);
       }
     };
 
@@ -124,7 +121,15 @@ export const EditCategoryDialog = ({ open, onOpenChange, category }: EditCategor
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent ref={dialogRef} className="transition-transform duration-200">
+      <DialogContent 
+        ref={dialogRef} 
+        className="transition-all duration-200"
+        style={{
+          top: keyboardOffset > 0 
+            ? `calc(50% - ${keyboardOffset}px)` 
+            : '50%'
+        }}
+      >
         <DialogHeader>
           <DialogTitle>카테고리 수정</DialogTitle>
         </DialogHeader>
