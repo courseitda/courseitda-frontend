@@ -13,6 +13,7 @@ import { addCategory } from '@/mock/edge-functions/category';
 import { getCategoryColors, PALETTE_NAMES, type PaletteMode } from '@/shared/constants/colors';
 import { useSettingsStore } from '@/shared/stores/settings-store';
 import { Check, Palette } from 'lucide-react';
+import { db } from '@/mock/db';
 
 interface AddCategoryDialogProps {
   open: boolean;
@@ -26,22 +27,47 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceId }: AddCatego
   const { colorPaletteMode, setColorPaletteMode } = useSettingsStore();
   const colors = getCategoryColors(colorPaletteMode);
   const [name, setName] = useState('');
-  const [selectedColor, setSelectedColor] = useState(colors[0]);
+  const [selectedColor, setSelectedColor] = useState<string>(colors[0]);
   const [loading, setLoading] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  // Reset to vibrant mode when dialog opens
+  // UserRequest: 카테고리 생성 시 사용하지 않은 색상으로 자동 선택
+  // 워크스페이스의 기존 카테고리 색상들을 확인하여 사용하지 않은 색상을 선택
+  const getNextAvailableColor = async (paletteMode: PaletteMode) => {
+    const colors = getCategoryColors(paletteMode);
+    
+    // Get existing categories for this workspace
+    const existingCategories = await db.categories
+      .where('workspaceId')
+      .equals(workspaceId)
+      .toArray();
+    
+    // Extract used colors
+    const usedColors = new Set(existingCategories.map(cat => cat.color));
+    
+    // Find first unused color
+    const availableColor = colors.find(color => !usedColors.has(color));
+    
+    // Return available color or fallback to first color
+    return availableColor || colors[0];
+  };
+
+  // Reset to vibrant mode when dialog opens and select unused color
   useEffect(() => {
     if (open) {
       setColorPaletteMode('vibrant');
-      setSelectedColor(getCategoryColors('vibrant')[0]);
+      getNextAvailableColor('vibrant').then(color => {
+        setSelectedColor(color);
+      });
     }
-  }, [open, setColorPaletteMode]);
+  }, [open, setColorPaletteMode, workspaceId]);
 
-  // Update selected color when palette changes
+  // Update selected color when palette changes - select unused color
   useEffect(() => {
-    setSelectedColor(getCategoryColors(colorPaletteMode)[0]);
-  }, [colorPaletteMode]);
+    getNextAvailableColor(colorPaletteMode).then(color => {
+      setSelectedColor(color);
+    });
+  }, [colorPaletteMode, workspaceId]);
 
   const handleTogglePalette = () => {
     const modes: PaletteMode[] = ['vibrant', 'pastel', 'deep', 'soft', 'muted'];
@@ -123,7 +149,9 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceId }: AddCatego
 
     toast.success('카테고리가 추가되었습니다!');
     setName('');
-    setSelectedColor(getCategoryColors(colorPaletteMode)[0]);
+    // Select next unused color after adding category
+    const nextColor = await getNextAvailableColor(colorPaletteMode);
+    setSelectedColor(nextColor);
     onOpenChange(false);
     setLoading(false);
   };
