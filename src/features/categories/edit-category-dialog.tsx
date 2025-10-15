@@ -120,13 +120,13 @@ export const EditCategoryDialog = ({ open, onOpenChange, category }: EditCategor
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
         ref={dialogRef} 
-        className="transition-all duration-200"
+        className={`transition-all duration-200 ${keyboardOffset > 0 ? 'pt-0 rounded-t-none' : ''}`}
         style={{
           top: keyboardOffset > 0 ? '0' : '50%',
           transform: keyboardOffset > 0 ? 'translateX(-50%)' : 'translate(-50%, -50%)'
         }}
       >
-        <DialogHeader>
+        <DialogHeader className={keyboardOffset > 0 ? 'pt-4' : ''}>
           <DialogTitle>카테고리 수정</DialogTitle>
         </DialogHeader>
 
