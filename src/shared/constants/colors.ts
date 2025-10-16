@@ -4,10 +4,11 @@
 // UserRequest: 5가지 색상 팔레트 모드 제공 (Vibrant, Pastel, Deep, Soft, Muted)
 // UserRequest: 팔레트 이름을 영어로 표기
 // UserRequest: 다이얼로그를 열 때마다 기본(Vibrant) 모드로 초기화
-// 색상 팔레트 모드
+
+// 카테고리 색상 팔레트 정의 - 5가지 모드(vibrant, pastel, deep, soft, muted)로 다양한 색상 조합 제공
 export const COLOR_PALETTES = {
   vibrant: [
-    // 첫 번째 줄 - 따뜻한 색상 (빨강 → 주황 → 노랑 → 초록)
+    // 첫 번째 줄 - 따뜻한 색상 (빨강 → 주황 → 노랑 → 초록) - 생동감 있는 색상
     '#EF4444', // red
     '#F97316', // deep orange
     '#F59E0B', // orange
@@ -15,7 +16,7 @@ export const COLOR_PALETTES = {
     '#22C55E', // green bright
     '#10B981', // green
     '#14B8A6', // teal
-    // 두 번째 줄 - 차가운 색상 (청록 → 파랑 → 보라 → 분홍)
+    // 두 번째 줄 - 차가운 색상 (청록 → 파랑 → 보라 → 분홍) - 시원하고 차분한 색상
     '#06B6D4', // cyan
     '#3B82F6', // sky blue
     '#2563EB', // blue
@@ -24,7 +25,7 @@ export const COLOR_PALETTES = {
     '#D946EF', // fuchsia
   ],
   pastel: [
-    // 파스텔 톤
+    // 파스텔 톤 - 부드럽고 밝은 색상으로 편안한 느낌 제공
     '#FCA5A5', // pastel red
     '#FDBA74', // pastel orange
     '#FCD34D', // pastel yellow
@@ -40,7 +41,7 @@ export const COLOR_PALETTES = {
     '#F0ABFC', // pastel fuchsia
   ],
   deep: [
-    // 진한 색상
+    // 진한 색상 - 깊고 강렬한 색상으로 선명한 대비 효과
     '#B91C1C', // deep red
     '#C2410C', // deep orange
     '#B45309', // deep amber
@@ -56,7 +57,7 @@ export const COLOR_PALETTES = {
     '#A21CAF', // deep fuchsia
   ],
   soft: [
-    // 부드러운 색상
+    // 부드러운 색상 - 중간 톤으로 눈에 편안하고 세련된 느낌
     '#FB7185', // soft rose
     '#FB923C', // soft orange
     '#FBBF24', // soft amber
@@ -72,7 +73,7 @@ export const COLOR_PALETTES = {
     '#E879F9', // soft fuchsia
   ],
   muted: [
-    // 차분한 색상
+    // 차분한 색상 - vibrant보다 약간 어두운 톤으로 침착한 분위기
     '#DC2626', // muted red
     '#EA580C', // muted orange
     '#D97706', // muted amber
@@ -89,8 +90,10 @@ export const COLOR_PALETTES = {
   ],
 } as const;
 
+// 팔레트 모드 타입 정의
 export type PaletteMode = keyof typeof COLOR_PALETTES;
 
+// 팔레트 모드별 표시 이름 - UI에 표시할 영문명
 export const PALETTE_NAMES: Record<PaletteMode, string> = {
   vibrant: 'Vibrant',
   pastel: 'Pastel',
@@ -99,12 +102,14 @@ export const PALETTE_NAMES: Record<PaletteMode, string> = {
   muted: 'Muted',
 };
 
+// 선택한 모드의 전체 색상 배열 반환
 export const getCategoryColors = (mode: PaletteMode = 'vibrant') => {
   return COLOR_PALETTES[mode];
 };
 
 export type CategoryColor = string;
 
+// 인덱스를 기반으로 색상 반환 - 인덱스가 배열 크기를 초과하면 순환하여 색상 할당
 export const getCategoryColor = (index: number, mode: PaletteMode = 'vibrant'): CategoryColor => {
   const colors = COLOR_PALETTES[mode];
   return colors[index % colors.length];
