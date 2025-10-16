@@ -52,13 +52,13 @@ const WorkspaceDetail = () => {
     [id]
   );
 
-  // 워크스페이스 전환을 위해 현재 사용자의 모든 워크스페이스 목록 조회
+  // 헤더의 워크스페이스 전환 드롭다운을 위해 모든 워크스페이스 목록 조회
   const workspaces = useLiveQuery(
     () => (user ? db.workspaces.where('ownerId').equals(user.id).toArray() : []),
     [user]
   );
 
-  // API 키 미설정 시 사용자에게 안내 토스트 표시 (설정 페이지로 이동 유도)
+  // API 키 미설정 시 사용자에게 안내 토스트 표시하여 설정 페이지로 이동 유도
   useEffect(() => {
     if (!kakaoJsApiKey || !kakaoRestApiKey) {
       toast.info('Kakao API 키를 설정해주세요.', {
@@ -70,18 +70,18 @@ const WorkspaceDetail = () => {
     }
   }, [kakaoJsApiKey, kakaoRestApiKey, navigate]);
 
-  // 워크스페이스 전환 시 해당 워크스페이스의 상세 페이지로 이동
+  // 워크스페이스 전환 - 다른 워크스페이스의 상세 페이지로 이동
   const handleSelectWorkspace = (workspaceId: string) => {
     navigate(`/workspace/${workspaceId}`);
   };
 
-  // 로그아웃 처리 후 랜딩 페이지로 이동
+  // 로그아웃 처리 후 인증 상태 초기화 및 랜딩 페이지로 이동
   const handleLogout = () => {
     logout();
     navigate('/');
   };
 
-  // 워크스페이스 또는 사용자 정보가 없으면 에러 메시지 표시
+  // 워크스페이스 또는 사용자 정보가 로드되지 않았으면 에러 화면 표시
   if (!workspace || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">

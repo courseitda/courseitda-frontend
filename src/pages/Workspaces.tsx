@@ -66,13 +66,13 @@ const Workspaces = () => {
     [user]
   );
 
-  // 로그아웃 처리 후 랜딩 페이지로 이동
+  // 로그아웃 처리 후 인증 상태 초기화 및 랜딩 페이지로 이동
   const handleLogout = () => {
     logout();
     navigate('/');
   };
 
-  // 워크스페이스 선택 시 전역 상태에 저장하고 상세 페이지로 이동
+  // 워크스페이스 선택 - 전역 상태에 저장하고 상세 페이지로 이동
   const handleSelectWorkspace = (id: string) => {
     setSelectedWorkspace(id);
     navigate(`/workspace/${id}`);
@@ -90,11 +90,11 @@ const Workspaces = () => {
     setDeleteAlertOpen(true);
   };
   
-  // 워크스페이스 삭제 확정 처리 - Edge Function 호출하여 관련 데이터 모두 삭제
+  // 워크스페이스 삭제 확정 - Edge Function을 통해 cascade delete 수행
   const handleDeleteConfirm = async () => {
     if (!selectedForDelete) return;
 
-    // Edge Function을 통해 워크스페이스와 관련된 모든 데이터(카테고리, 장소) 삭제
+    // Edge Function에서 워크스페이스와 관련된 모든 데이터(카테고리, 장소) 삭제
     const { error } = await deleteWorkspace(selectedForDelete.id);
     if (error) {
       toast.error(error);
@@ -102,7 +102,7 @@ const Workspaces = () => {
       toast.success('워크스페이스가 삭제되었습니다.');
     }
     
-    // 삭제 후 다이얼로그 닫고 선택 상태 초기화
+    // 삭제 완료 후 상태 초기화
     setDeleteAlertOpen(false);
     setSelectedForDelete(null);
   };

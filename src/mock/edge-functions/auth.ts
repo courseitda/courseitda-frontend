@@ -1,43 +1,47 @@
 import { db } from '../db';
 import type { User } from '@/entities/types';
 
-// Mock password hashing (simple for demo)
+// Mock 비밀번호 해싱 - 실제 운영에서는 bcrypt 등 보안 라이브러리 사용 필요
 const hashPassword = (password: string): string => {
-  return btoa(password); // In real app, use bcrypt
+  return btoa(password); // Base64 인코딩 (데모용)
 };
 
+// 비밀번호 검증 - 입력된 비밀번호와 저장된 해시 비교
 const verifyPassword = (password: string, hash: string): boolean => {
   return btoa(password) === hash;
 };
 
+// 회원가입 Edge Function - 입력 검증 후 사용자 생성
 export const registerUser = async (input: {
   email: string;
   password: string;
   nickname: string;
 }): Promise<{ user?: User; error?: string }> => {
   try {
-    // Validation
+    // 필수 입력값 검증
     if (!input.email || !input.password || !input.nickname) {
       return { error: '모든 필드를 입력해주세요.' };
     }
 
     // UserRequest: Change password minimum length from 6 to 8 to match frontend validation
+    // 비밀번호 최소 길이 검증 - 프론트엔드 검증과 일치
     if (input.password.length < 8) {
       return { error: '비밀번호는 최소 8자 이상이어야 합니다.' };
     }
 
+    // 이메일 형식 검증
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(input.email)) {
       return { error: '올바른 이메일 형식이 아닙니다.' };
     }
 
-    // Check duplicate email
+    // 이메일 중복 확인 - 동일한 이메일로 가입 방지
     const existing = await db.users.where('email').equals(input.email).first();
     if (existing) {
       return { error: '이미 사용 중인 이메일입니다.' };
     }
 
-    // Create user
+    // 사용자 생성 및 DB 저장
     const user: User = {
       id: crypto.randomUUID(),
       email: input.email,
@@ -55,28 +59,29 @@ export const registerUser = async (input: {
   }
 };
 
+// 로그인 Edge Function - 이메일과 비밀번호로 사용자 인증
 export const loginUser = async (input: {
   email: string;
   password: string;
 }): Promise<{ user?: User; token?: string; error?: string }> => {
   try {
-    // Validation
+    // 필수 입력값 검증
     if (!input.email || !input.password) {
       return { error: '이메일과 비밀번호를 입력해주세요.' };
     }
 
-    // Find user
+    // 이메일로 사용자 조회
     const user = await db.users.where('email').equals(input.email).first();
     if (!user) {
       return { error: '존재하지 않는 계정입니다.' };
     }
 
-    // Verify password
+    // 비밀번호 검증 - 해시 비교
     if (!verifyPassword(input.password, user.password)) {
       return { error: '비밀번호가 일치하지 않습니다.' };
     }
 
-    // Generate mock token
+    // Mock 토큰 생성 - 실제 운영에서는 JWT 등 사용
     const token = btoa(JSON.stringify({ userId: user.id, timestamp: Date.now() }));
 
     return { user, token };
@@ -86,8 +91,10 @@ export const loginUser = async (input: {
   }
 };
 
+// 토큰 검증 Edge Function - 토큰의 유효성 확인
 export const verifyToken = async (token: string): Promise<{ userId?: string; error?: string }> => {
   try {
+    // 토큰 디코딩 및 사용자 존재 여부 확인
     const decoded = JSON.parse(atob(token));
     const user = await db.users.get(decoded.userId);
     

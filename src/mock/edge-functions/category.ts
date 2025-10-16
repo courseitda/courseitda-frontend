@@ -1,18 +1,19 @@
 import { db } from '../db';
 import type { Category } from '@/entities/types';
 
+// 카테고리 추가 Edge Function - 워크스페이스에 새 카테고리 생성
 export const addCategory = async (input: {
   workspaceId: string;
   name: string;
   color: string;
 }): Promise<{ category?: Category; error?: string }> => {
   try {
-    // Validation
+    // 카테고리 이름 필수 입력 검증
     if (!input.name || input.name.trim().length === 0) {
       return { error: '카테고리 이름을 입력해주세요.' };
     }
 
-    // Get current categories count for sort order
+    // 현재 카테고리 개수 조회하여 새 카테고리의 순서 결정
     const existingCategories = await db.categories
       .where('workspaceId')
       .equals(input.workspaceId)
@@ -20,6 +21,7 @@ export const addCategory = async (input: {
 
     const sortOrder = existingCategories.length;
 
+    // 카테고리 생성 및 DB 저장
     const category: Category = {
       id: crypto.randomUUID(),
       workspaceId: input.workspaceId,
@@ -33,7 +35,7 @@ export const addCategory = async (input: {
 
     await db.categories.add(category);
 
-    // Update workspace updatedAt
+    // 워크스페이스 수정 시각 업데이트 - 변경 이력 추적
     await db.workspaces.update(input.workspaceId, {
       updatedAt: new Date().toISOString(),
     });
@@ -45,27 +47,31 @@ export const addCategory = async (input: {
   }
 };
 
+// 카테고리 수정 Edge Function - 이름이나 색상 변경
 export const updateCategory = async (
   id: string,
   updates: Partial<Pick<Category, 'name' | 'color'>>
 ): Promise<{ error?: string }> => {
   try {
+    // 카테고리 존재 여부 확인
     const category = await db.categories.get(id);
     if (!category) {
       return { error: '카테고리를 찾을 수 없습니다.' };
     }
 
+    // 이름 변경 시 빈 문자열 방지
     if (updates.name !== undefined && updates.name.trim().length === 0) {
       return { error: '카테고리 이름을 입력해주세요.' };
     }
 
+    // 카테고리 정보 업데이트
     await db.categories.update(id, {
       ...updates,
       name: updates.name?.trim(),
       updatedAt: new Date().toISOString(),
     });
 
-    // Update workspace updatedAt
+    // 워크스페이스 수정 시각 업데이트 - 변경 이력 추적
     await db.workspaces.update(category.workspaceId, {
       updatedAt: new Date().toISOString(),
     });
@@ -77,18 +83,20 @@ export const updateCategory = async (
   }
 };
 
+// 카테고리 삭제 Edge Function - 카테고리와 연결된 장소 관계도 함께 삭제
 export const deleteCategory = async (id: string): Promise<{ error?: string }> => {
   try {
+    // 카테고리 존재 여부 확인
     const category = await db.categories.get(id);
     if (!category) {
       return { error: '카테고리를 찾을 수 없습니다.' };
     }
 
-    // Delete related category places
+    // 카테고리와 연결된 장소 관계 삭제 (cascade delete)
     await db.categoryPlaces.where('categoryId').equals(id).delete();
     await db.categories.delete(id);
 
-    // Update workspace updatedAt
+    // 워크스페이스 수정 시각 업데이트 - 변경 이력 추적
     await db.workspaces.update(category.workspaceId, {
       updatedAt: new Date().toISOString(),
     });
@@ -100,12 +108,13 @@ export const deleteCategory = async (id: string): Promise<{ error?: string }> =>
   }
 };
 
+// 카테고리 순서 변경 Edge Function - 드래그앤드롭 후 새 순서를 DB에 반영
 export const reorderCategories = async (
   workspaceId: string,
   orderedIds: string[]
 ): Promise<{ error?: string }> => {
   try {
-    // Update sortOrder for each category
+    // 새로운 순서대로 각 카테고리의 sortOrder 업데이트
     const updates = orderedIds.map((id, index) =>
       db.categories.update(id, {
         sortOrder: index,
@@ -113,9 +122,10 @@ export const reorderCategories = async (
       })
     );
 
+    // 모든 업데이트를 병렬로 실행하여 성능 향상
     await Promise.all(updates);
 
-    // Update workspace updatedAt
+    // 워크스페이스 수정 시각 업데이트 - 변경 이력 추적
     await db.workspaces.update(workspaceId, {
       updatedAt: new Date().toISOString(),
     });
@@ -127,17 +137,19 @@ export const reorderCategories = async (
   }
 };
 
+// 대표 장소 설정 Edge Function - 경로 생성에 사용할 장소를 카테고리별로 지정
 export const setRepresentativePlace = async (
   categoryId: string,
   placeId: string | null
 ): Promise<{ error?: string }> => {
   try {
+    // 카테고리 존재 여부 확인
     const category = await db.categories.get(categoryId);
     if (!category) {
       return { error: '카테고리를 찾을 수 없습니다.' };
     }
 
-    // Verify place exists in this category if placeId is provided
+    // 장소 ID가 제공된 경우 해당 장소가 카테고리에 속하는지 검증
     if (placeId) {
       const categoryPlace = await db.categoryPlaces
         .where('[categoryId+placeId]')
@@ -149,12 +161,13 @@ export const setRepresentativePlace = async (
       }
     }
 
+    // 대표 장소 설정 (null이면 해제)
     await db.categories.update(categoryId, {
       representativePlaceId: placeId,
       updatedAt: new Date().toISOString(),
     });
 
-    // Update workspace updatedAt
+    // 워크스페이스 수정 시각 업데이트 - 변경 이력 추적
     await db.workspaces.update(category.workspaceId, {
       updatedAt: new Date().toISOString(),
     });

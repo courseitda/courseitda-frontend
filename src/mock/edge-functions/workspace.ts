@@ -1,6 +1,7 @@
 import { db } from '../db';
 import type { Workspace } from '@/entities/types';
 
+// 워크스페이스 생성 Edge Function - 새로운 여행 계획/코스 컨테이너 생성
 export const createWorkspace = async (input: {
   ownerId: string;
   title: string;
@@ -8,15 +9,17 @@ export const createWorkspace = async (input: {
   date?: string;
 }): Promise<{ workspace?: Workspace; error?: string }> => {
   try {
-    // Validation
+    // 워크스페이스 제목 필수 입력 검증
     if (!input.title || input.title.trim().length === 0) {
       return { error: '워크스페이스 제목을 입력해주세요.' };
     }
 
+    // 인원수 유효성 검증 - 1명 이상이어야 함
     if (input.headcount !== undefined && input.headcount < 1) {
       return { error: '인원은 최소 1명 이상이어야 합니다.' };
     }
 
+    // 워크스페이스 생성 및 DB 저장
     const workspace: Workspace = {
       id: crypto.randomUUID(),
       ownerId: input.ownerId,
@@ -36,24 +39,29 @@ export const createWorkspace = async (input: {
   }
 };
 
+// 워크스페이스 수정 Edge Function - 제목, 인원수, 날짜 변경
 export const updateWorkspace = async (
   id: string,
   updates: Partial<Pick<Workspace, 'title' | 'headcount' | 'date'>>
 ): Promise<{ error?: string }> => {
   try {
+    // 워크스페이스 존재 여부 확인
     const workspace = await db.workspaces.get(id);
     if (!workspace) {
       return { error: '워크스페이스를 찾을 수 없습니다.' };
     }
 
+    // 제목 변경 시 빈 문자열 방지
     if (updates.title !== undefined && updates.title.trim().length === 0) {
       return { error: '워크스페이스 제목을 입력해주세요.' };
     }
 
+    // 인원수 유효성 검증
     if (updates.headcount !== undefined && updates.headcount < 1) {
       return { error: '인원은 최소 1명 이상이어야 합니다.' };
     }
 
+    // 워크스페이스 정보 업데이트
     await db.workspaces.update(id, {
       ...updates,
       title: updates.title?.trim(),
@@ -67,16 +75,20 @@ export const updateWorkspace = async (
   }
 };
 
+// 워크스페이스 삭제 Edge Function - 워크스페이스와 하위 모든 데이터 삭제
 export const deleteWorkspace = async (id: string): Promise<{ error?: string }> => {
   try {
-    // Delete related categories and their places
+    // 워크스페이스에 속한 카테고리 조회
     const categories = await db.categories.where('workspaceId').equals(id).toArray();
     
+    // 각 카테고리의 장소 연결 정보 삭제 (cascade delete)
     for (const category of categories) {
       await db.categoryPlaces.where('categoryId').equals(category.id).delete();
     }
     
+    // 워크스페이스의 모든 카테고리 삭제
     await db.categories.where('workspaceId').equals(id).delete();
+    // 워크스페이스 자체 삭제
     await db.workspaces.delete(id);
 
     return {};
@@ -86,6 +98,7 @@ export const deleteWorkspace = async (id: string): Promise<{ error?: string }> =
   }
 };
 
+// 소유자별 워크스페이스 조회 - 사용자가 생성한 모든 워크스페이스 목록 반환
 export const getWorkspacesByOwner = async (ownerId: string): Promise<Workspace[]> => {
   return await db.workspaces.where('ownerId').equals(ownerId).toArray();
 };

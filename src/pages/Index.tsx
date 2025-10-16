@@ -23,7 +23,7 @@ const Index = () => {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
 
-  // 로그아웃 처리 후 인증 상태 초기화
+  // 로그아웃 처리 후 전역 인증 상태 초기화
   const handleLogout = () => {
     logout();
   };
