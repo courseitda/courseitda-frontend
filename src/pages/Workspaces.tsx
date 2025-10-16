@@ -39,6 +39,10 @@ import { toast } from 'sonner';
 import { deleteWorkspace } from '@/mock/edge-functions/workspace';
 import type { Workspace } from '@/entities/types';
 
+/**
+ * 워크스페이스 목록 페이지 컴포넌트
+ * 사용자의 모든 워크스페이스를 카드 형태로 표시하며, 생성/수정/삭제 기능 제공
+ */
 const Workspaces = () => {
   const navigate = useNavigate();
   const { user, logout, isAuthenticated } = useAuthStore();
@@ -49,40 +53,48 @@ const Workspaces = () => {
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState<Workspace | null>(null);
 
+  // 미인증 사용자 접근 차단 - 로그인 페이지로 리다이렉트하여 보안 유지
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/auth');
     }
   }, [isAuthenticated, navigate]);
 
+  // 현재 사용자가 소유한 모든 워크스페이스를 실시간으로 조회
   const workspaces = useLiveQuery(
     () => (user ? db.workspaces.where('ownerId').equals(user.id).toArray() : []),
     [user]
   );
 
+  // 로그아웃 처리 후 랜딩 페이지로 이동
   const handleLogout = () => {
     logout();
     navigate('/');
   };
 
+  // 워크스페이스 선택 시 전역 상태에 저장하고 상세 페이지로 이동
   const handleSelectWorkspace = (id: string) => {
     setSelectedWorkspace(id);
     navigate(`/workspace/${id}`);
   };
   
+  // 워크스페이스 수정 다이얼로그 열기
   const handleEdit = (workspace: Workspace) => {
     setSelectedForEdit(workspace);
     setEditOpen(true);
   };
 
+  // 워크스페이스 삭제 확인 다이얼로그 열기
   const handleDeleteClick = (workspace: Workspace) => {
     setSelectedForDelete(workspace);
     setDeleteAlertOpen(true);
   };
   
+  // 워크스페이스 삭제 확정 처리 - Edge Function 호출하여 관련 데이터 모두 삭제
   const handleDeleteConfirm = async () => {
     if (!selectedForDelete) return;
 
+    // Edge Function을 통해 워크스페이스와 관련된 모든 데이터(카테고리, 장소) 삭제
     const { error } = await deleteWorkspace(selectedForDelete.id);
     if (error) {
       toast.error(error);
@@ -90,10 +102,12 @@ const Workspaces = () => {
       toast.success('워크스페이스가 삭제되었습니다.');
     }
     
+    // 삭제 후 다이얼로그 닫고 선택 상태 초기화
     setDeleteAlertOpen(false);
     setSelectedForDelete(null);
   };
 
+  // 사용자 정보 로딩 전까지 컴포넌트 렌더링 방지
   if (!user) return null;
 
   return (
@@ -101,8 +115,8 @@ const Workspaces = () => {
       <header className="border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 py-4 md:py-3">
           <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
-            {/* UserRequest: Courseitda 로고 클릭 시 랜딩 페이지로 이동 */}
-            {/* UserRequest: 코스잇다 텍스트 색상을 primary 색상으로 변경 */}
+            {/* 로고 클릭 시 랜딩 페이지로 이동하여 사용자가 언제든지 홈으로 돌아갈 수 있도록 네비게이션 편의성 제공 */}
+            {/* 브랜드 아이덴티티 강조를 위해 코스잇다 텍스트를 primary 색상으로 변경 */}
             <div 
               className="flex items-center gap-1.5 md:gap-2 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => navigate('/')}
@@ -111,6 +125,7 @@ const Workspaces = () => {
               <span className="font-bold text-lg whitespace-nowrap text-primary">코스잇다</span>
             </div>
             
+            {/* 중앙: 3열 그리드 레이아웃의 중앙 공간 (타이틀 없음) */}
             <div></div>
             
             <div className="flex items-center">
@@ -159,8 +174,8 @@ const Workspaces = () => {
         </div>
       </header>
 
-      {/* Mobile Layout */}
-      {/* UserRequest: 모바일 뷰 좌우 여백을 0.5배로 축소 (px-8 → px-4) */}
+      {/* Mobile Layout: 모바일 화면 전용 레이아웃 */}
+      {/* 모바일 뷰 좌우 여백 축소 (px-8 → px-4)로 콘텐츠 영역 확보 및 일관된 레이아웃 유지 */}
       <main className="md:hidden container mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-xl font-semibold">워크스페이스</h2>
@@ -179,7 +194,7 @@ const Workspaces = () => {
           </Card>
         ) : (
           <div className="grid grid-cols-1 gap-2.5">
-            {/* UserRequest: 워크스페이스 간격을 0.3배로 축소 (gap-8 → gap-2.5) */}
+            {/* 워크스페이스 카드 간격 축소 (gap-8 → gap-2.5)로 화면에 더 많은 워크스페이스를 표시하여 스크롤 감소 */}
             {workspaces?.map((workspace) => (
               <ContextMenu key={workspace.id}>
                 <ContextMenuTrigger asChild>
@@ -189,11 +204,11 @@ const Workspaces = () => {
                   >
                     <CardHeader>
                       <div className="space-y-1">
-                        {/* UserRequest: 모바일 폰트 크기 축소 (text-base), 워크스페이스 이름 왼쪽 정렬 */}
+                        {/* 모바일 폰트 크기 축소 (text-base)로 공간 효율 증대, 워크스페이스 이름 왼쪽 정렬로 가독성 향상 */}
                         <CardTitle className="text-base md:text-lg truncate">
                           {workspace.title}
                         </CardTitle>
-                        {/* UserRequest: 마지막 수정 시간 표시, Clock 아이콘 추가, "마지막" 멘트 제거 */}
+                        {/* 마지막 수정 시간에 Clock 아이콘 추가하여 시간 정보 직관적 표시, "마지막" 불필요 단어 제거로 간결성 확보 */}
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           수정: {new Date(workspace.updatedAt).toLocaleDateString('ko-KR', {
@@ -230,14 +245,14 @@ const Workspaces = () => {
         )}
       </main>
 
-      {/* Desktop Layout - 3 Column */}
-      {/* UserRequest: 데스크톱 화면에서 워크스페이스가 적어도 전체 영역 높이 보장 (min-h-[calc(100vh-80px)]) */}
+      {/* Desktop Layout: 3열 그리드 레이아웃 (좌우 배경 + 중앙 콘텐츠) */}
+      {/* 데스크톱 화면에서 최소 높이 보장 (min-h-[calc(100vh-80px)])으로 워크스페이스 목록이 전체 화면 높이를 차지하여 시각적 완성도 향상 */}
       <main className="hidden md:block min-h-[calc(100vh-80px)]">
         <div className="grid grid-cols-[1fr_2fr_1fr] min-h-[calc(100vh-80px)]">
-          {/* Left Side - Light Purple Background */}
+          {/* 좌측: 배경 영역 (primary/5 색상으로 시각적 여유 제공) */}
           <div className="bg-primary/5 min-h-[calc(100vh-80px)]"></div>
 
-          {/* Center - Workspace List */}
+          {/* 중앙: 워크스페이스 목록 콘텐츠 */}
           <div className="px-4 py-4 overflow-y-auto min-h-[calc(100vh-80px)]">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold">워크스페이스</h2>
@@ -256,7 +271,7 @@ const Workspaces = () => {
               </Card>
             ) : (
               <div className="space-y-2">
-                {/* UserRequest: 데스크톱 워크스페이스 간격 space-y-2 (8px) */}
+                {/* 데스크톱 워크스페이스 카드 간격 space-y-2 (8px)로 적절한 시각적 구분 제공 */}
                 {workspaces?.map((workspace) => (
                   <ContextMenu key={workspace.id}>
                     <ContextMenuTrigger asChild>
@@ -266,11 +281,11 @@ const Workspaces = () => {
                       >
                         <CardHeader>
                           <div className="space-y-1">
-                            {/* UserRequest: 모바일 폰트 크기 축소 (text-base), 워크스페이스 이름 왼쪽 정렬 */}
+                            {/* 모바일 폰트 크기 축소 (text-base)로 공간 효율 증대, 워크스페이스 이름 왼쪽 정렬로 가독성 향상 */}
                             <CardTitle className="text-base md:text-lg truncate">
                               {workspace.title}
                             </CardTitle>
-                            {/* UserRequest: 마지막 수정 시간 표시, Clock 아이콘 추가, "마지막" 멘트 제거 */}
+                            {/* 마지막 수정 시간에 Clock 아이콘 추가하여 시간 정보 직관적 표시, "마지막" 불필요 단어 제거로 간결성 확보 */}
                             <p className="text-xs text-muted-foreground flex items-center gap-1">
                               <Clock className="w-3 h-3" />
                               수정: {new Date(workspace.updatedAt).toLocaleDateString('ko-KR', {
@@ -307,7 +322,7 @@ const Workspaces = () => {
             )}
           </div>
 
-          {/* Right Side - Light Purple Background */}
+          {/* 우측: 배경 영역 (primary/5 색상으로 시각적 여유 제공) */}
           <div className="bg-primary/5 min-h-[calc(100vh-80px)]"></div>
         </div>
       </main>

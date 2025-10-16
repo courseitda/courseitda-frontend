@@ -22,6 +22,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { CreateWorkspaceDialog } from '@/features/workspaces/create-workspace-dialog';
 import type { Place } from '@/entities/types';
 
+/**
+ * 워크스페이스 상세 페이지 - 카테고리 관리 및 지도 표시
+ * 지도와 카테고리 목록을 동시에 보여주며, 장소 클릭 시 지도에서 강조 표시
+ */
 const WorkspaceDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -32,24 +36,29 @@ const WorkspaceDetail = () => {
   const [createWorkspaceOpen, setCreateWorkspaceOpen] = useState(false);
   const logout = useAuthStore((state) => state.logout);
 
+  // 미인증 사용자 접근 차단 - 로그인 페이지로 리다이렉트하여 보안 유지
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/auth');
     }
   }, [isAuthenticated, navigate]);
 
+  // URL 파라미터로부터 현재 워크스페이스 정보를 실시간으로 조회
   const workspace = useLiveQuery(() => (id ? db.workspaces.get(id) : undefined), [id]);
 
+  // 현재 워크스페이스의 카테고리 목록을 정렬 순서대로 실시간 조회
   const categories = useLiveQuery(
     () => (id ? db.categories.where('workspaceId').equals(id).sortBy('sortOrder') : []),
     [id]
   );
 
+  // 워크스페이스 전환을 위해 현재 사용자의 모든 워크스페이스 목록 조회
   const workspaces = useLiveQuery(
     () => (user ? db.workspaces.where('ownerId').equals(user.id).toArray() : []),
     [user]
   );
 
+  // API 키 미설정 시 사용자에게 안내 토스트 표시 (설정 페이지로 이동 유도)
   useEffect(() => {
     if (!kakaoJsApiKey || !kakaoRestApiKey) {
       toast.info('Kakao API 키를 설정해주세요.', {
@@ -61,15 +70,18 @@ const WorkspaceDetail = () => {
     }
   }, [kakaoJsApiKey, kakaoRestApiKey, navigate]);
 
+  // 워크스페이스 전환 시 해당 워크스페이스의 상세 페이지로 이동
   const handleSelectWorkspace = (workspaceId: string) => {
     navigate(`/workspace/${workspaceId}`);
   };
 
+  // 로그아웃 처리 후 랜딩 페이지로 이동
   const handleLogout = () => {
     logout();
     navigate('/');
   };
 
+  // 워크스페이스 또는 사용자 정보가 없으면 에러 메시지 표시
   if (!workspace || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -80,12 +92,12 @@ const WorkspaceDetail = () => {
 
   return (
     <div className="h-screen bg-gradient-card flex flex-col overflow-hidden">
-      {/* Header */}
-      {/* UserRequest: 좌우 여백을 0.5배로 축소 (px-8 → px-4) */}
+      {/* Header: 워크스페이스 정보 및 사용자 메뉴 */}
+      {/* 모든 페이지 헤더 여백 통일 (px-8 → px-4)로 콘텐츠 영역 확보 및 일관된 레이아웃 유지 */}
       <header className="border-b border-border/50 bg-background/95 backdrop-blur z-20 shrink-0">
         <div className="container mx-auto px-4 py-4 md:py-3">
           <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
-            {/* Left: Back Button */}
+            {/* 좌측: 뒤로가기 버튼 - 워크스페이스 목록으로 이동 */}
             <div className="flex items-center">
               <Button
                 variant="ghost"
@@ -97,8 +109,7 @@ const WorkspaceDetail = () => {
               </Button>
             </div>
             
-            {/* Center: Workspace Title */}
-            {/* UserRequest: 모바일에서 워크스페이스 제목 왼쪽 정렬 (사용자가 드롭다운 메뉴로 대체하여 현재는 중앙 정렬) */}
+            {/* 중앙: 워크스페이스 제목 드롭다운 - 다른 워크스페이스로 빠르게 전환 가능하도록 UX 개선 (중앙 정렬로 시각적 균형 유지) */}
             <div className="flex justify-center items-center min-w-0 relative">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -188,13 +199,13 @@ const WorkspaceDetail = () => {
         </div>
       </header>
 
-      {/* Main Content - Mobile: Map fixed top, Categories scrollable / Desktop: Side by side */}
-      {/* UserRequest: 좌우 여백을 0.5배로 축소 (px-8 → px-4) */}
+      {/* Main Content: 지도와 카테고리 목록을 동시에 표시 (모바일: 상하 구조 / 데스크톱: 좌우 구조) */}
+      {/* 모든 페이지 콘텐츠 여백 통일 (px-8 → px-4)로 일관된 레이아웃 및 콘텐츠 영역 확보 */}
       <main className="flex-1 min-h-0">
         <div className="container mx-auto px-4 h-full">
           <div className="h-full py-2.5 md:py-4 flex flex-col md:grid md:grid-cols-2 gap-2.5 md:gap-4">
-            {/* Map Section - Fixed on mobile, normal on desktop */}
-            {/* UserRequest: 모바일 지도 높이를 화면의 약 45% 비율로 설정 (기존 5/9 ≈ 0.55에서 조정) */}
+            {/* 지도 영역: 장소를 시각적으로 표시 (모바일: 고정 높이 / 데스크톱: 유동 높이) */}
+            {/* 모바일에서 지도 높이를 화면의 45%로 설정하여 지도와 카테고리 목록의 균형잡힌 공간 배분 (기존 55%에서 조정) */}
             <div className="h-[calc((100vh-64px)*0.45)] md:h-full rounded-xl overflow-hidden border border-border/50 shadow-lg bg-card shrink-0">
               {kakaoJsApiKey ? (
                 <MapCanvas workspaceId={workspace.id} categories={categories || []} focusedPlace={focusedPlace} />
@@ -212,8 +223,8 @@ const WorkspaceDetail = () => {
               )}
             </div>
 
-            {/* Categories Section - Scrollable on mobile, normal on desktop */}
-            {/* UserRequest: 카테고리 영역 패딩을 0.5배로 축소 (p-8 → p-4) */}
+            {/* 카테고리 영역: 카테고리별 장소 목록 표시 (모바일/데스크톱 모두 스크롤 가능) */}
+            {/* 카테고리 영역 내부 패딩 축소 (p-8 → p-4)로 콘텐츠 공간 확보 및 여백 통일 */}
             <div className="flex-1 md:h-full overflow-y-auto rounded-xl border border-border/50 bg-card p-4 min-h-0">
               <CategoryList 
                 workspaceId={workspace.id} 

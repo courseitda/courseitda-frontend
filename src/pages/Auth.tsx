@@ -7,13 +7,19 @@ import { RegisterForm } from '@/features/auth/register-form';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { MapPin } from 'lucide-react';
 
+/**
+ * 로그인 및 회원가입을 처리하는 인증 페이지 컴포넌트
+ * 이미 인증된 사용자는 자동으로 워크스페이스 목록으로 리다이렉트
+ */
 const Auth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
+  // URL 쿼리 파라미터에서 탭 정보를 읽어 초기 탭 설정 (기본값: login)
   const defaultTab = searchParams.get('tab') || 'login';
 
+  // 이미 로그인된 사용자가 인증 페이지 접근 시 워크스페이스 목록으로 자동 이동
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/workspaces');

@@ -1,9 +1,14 @@
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 
+/**
+ * 존재하지 않는 경로 접근 시 표시되는 404 에러 페이지
+ * 잘못된 경로 접근을 콘솔에 로깅하여 디버깅 정보 제공
+ */
 const NotFound = () => {
   const location = useLocation();
 
+  // 사용자가 접근하려 한 잘못된 경로를 콘솔에 기록하여 디버깅 지원
   useEffect(() => {
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);
   }, [location.pathname]);

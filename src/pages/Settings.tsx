@@ -8,19 +8,27 @@ import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSettingsStore } from '@/shared/stores/settings-store';
 
+/**
+ * Kakao API 키를 설정하는 페이지 컴포넌트
+ * REST API 키와 JavaScript 키를 입력받아 로컬 스토리지에 저장
+ */
 const Settings = () => {
   const navigate = useNavigate();
   const { kakaoRestApiKey, kakaoJsApiKey, setKakaoRestApiKey, setKakaoJsApiKey } = useSettingsStore();
   
+  // 기존에 저장된 API 키를 초기값으로 설정하여 수정 시 편의성 제공
   const [restKey, setRestKey] = useState(kakaoRestApiKey || '');
   const [jsKey, setJsKey] = useState(kakaoJsApiKey || '');
 
+  // API 키 유효성 검증 후 저장 처리
   const handleSave = () => {
+    // 두 키 모두 입력되어야 저장 가능하도록 검증
     if (!restKey || !jsKey) {
       toast.error('모든 API 키를 입력해주세요.');
       return;
     }
 
+    // 검증 통과 시 스토어에 저장하여 전역 상태 업데이트
     setKakaoRestApiKey(restKey);
     setKakaoJsApiKey(jsKey);
     toast.success('API 키가 저장되었습니다.');
@@ -28,12 +36,11 @@ const Settings = () => {
 
   return (
     <div className="min-h-screen bg-gradient-card">
-      {/* UserRequest: 좌우 여백을 0.5배로 축소하여 통일 (px-8 → px-4) */}
+      {/* 모든 페이지 헤더 여백 통일 (px-8 → px-4)로 콘텐츠 영역 확보 및 일관된 레이아웃 유지 */}
       <header className="border-b border-border/50 bg-background/95 backdrop-blur">
         <div className="container mx-auto px-4 py-4 md:py-3">
           <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
-            {/* Left: Back Button */}
-            {/* UserRequest: 설정 페이지에 뒤로가기 버튼 추가 */}
+            {/* 좌측: 뒤로가기 버튼 - 이전 페이지로 쉽게 돌아갈 수 있도록 추가하여 네비게이션 편의성 향상 */}
             <Button
               variant="ghost"
               size="icon"
@@ -43,11 +50,10 @@ const Settings = () => {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             
-            {/* Center: Title */}
-            {/* UserRequest: 제목 가운데 정렬 */}
+            {/* 중앙: 페이지 제목 - 3열 그리드 중앙에 배치로 시각적 균형 및 페이지 정체성 명확화 */}
             <h1 className="text-lg font-bold text-center">설정</h1>
             
-            {/* Right: Empty space for symmetry */}
+            {/* 우측: 그리드 대칭을 위한 빈 공간 (좌측 버튼과 동일한 너비) */}
             <div className="w-10" />
           </div>
         </div>

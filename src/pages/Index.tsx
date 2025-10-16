@@ -13,36 +13,42 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
+/**
+ * 애플리케이션의 랜딩 페이지 컴포넌트
+ * 서비스 소개와 주요 기능을 안내하며, 인증 상태에 따라 다른 액션 버튼 제공
+ */
 const Index = () => {
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
 
+  // 로그아웃 처리 후 인증 상태 초기화
   const handleLogout = () => {
     logout();
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-accent/5 to-background">
-      {/* UserRequest: 랜딩 페이지에 로그인 상태 표시 - 로그인된 경우 오른쪽 상단에 프로필 아바타 드롭다운, 미로그인 시 로그인 버튼 표시 */}
-      {/* UserRequest: 모바일 뷰에서 헤더의 코스잇다를 왼쪽으로 더 붙이기 위해 px-4로 조정 */}
-      {/* UserRequest: 모든 페이지 헤더를 동일한 구조로 통일 (px-4 py-4 md:py-3, 3열 그리드) - 프로필 아이콘이 물리적으로 정확히 동일한 위치에 고정 */}
-      {/* Header */}
+      {/* Header: 로그인 상태에 따라 다른 UI를 표시하여 사용자 경험 개선 */}
+      {/* 랜딩 페이지 헤더에 인증 상태별 UI 제공 - 로그인 시 프로필 드롭다운, 미로그인 시 로그인 버튼으로 명확한 액션 유도 */}
+      {/* 모바일 좌우 여백을 px-4로 줄여 콘텐츠 영역 확보 및 로고를 왼쪽에 밀착 배치 */}
+      {/* 모든 페이지 헤더 구조 통일 (px-4, py-4 md:py-3, 3열 그리드) - 페이지 전환 시에도 프로필 아이콘 위치를 일관되게 유지하여 사용성 향상 */}
       <header className="border-b border-border/40 bg-background/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4 md:py-3">
           <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
-            {/* UserRequest: 코스잇다 텍스트 색상을 primary 색상으로 변경 */}
+            {/* 브랜드 아이덴티티 강조를 위해 코스잇다 텍스트를 primary 색상으로 변경 */}
             <div className="flex items-center gap-1.5 md:gap-2">
               <img src={logo} alt="코스잇다 로고" className="w-10 h-10 object-contain rounded-lg" />
               <span className="font-bold text-lg whitespace-nowrap text-primary">코스잇다</span>
             </div>
             
+            {/* 중앙: 3열 그리드 레이아웃의 중앙 공간 (타이틀 없음) */}
             <div></div>
             
-            {/* UserRequest: 워크스페이스 상세 페이지의 네비게이션 드로어에서 사용하는 User 아이콘을 아바타에 적용 */}
-            {/* UserRequest: 데스크톱 뷰에서 아바타와 닉네임을 함께 표시 (모바일은 아이콘만) */}
-            {/* UserRequest: 모든 사용자 메뉴를 마이페이지 / 워크스페이스 / 설정 / 로그아웃 순서로 통일 */}
+            {/* 전체 페이지 UI 일관성을 위해 User 아이콘을 아바타 내부에 배치 */}
+            {/* 데스크톱에서는 아바타와 닉네임을 함께 표시하여 인지성 향상, 모바일에서는 공간 효율을 위해 아이콘만 표시 */}
+            {/* 모든 사용자 메뉴를 마이페이지 → 워크스페이스 → 설정 → 로그아웃 순서로 통일하여 일관된 네비게이션 경험 제공 */}
             <div className="flex items-center">
             {isAuthenticated && user ? (
               <DropdownMenu>
