@@ -115,8 +115,8 @@ const Workspaces = () => {
       <header className="border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 py-4 md:py-3">
           <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
-            {/* 로고 클릭 시 랜딩 페이지로 이동하여 사용자가 언제든지 홈으로 돌아갈 수 있도록 네비게이션 편의성 제공 */}
-            {/* 브랜드 아이덴티티 강조를 위해 코스잇다 텍스트를 primary 색상으로 변경 */}
+            {/* UserRequest: Courseitda 로고 클릭 시 랜딩 페이지로 이동 */}
+            {/* UserRequest: 코스잇다 텍스트 색상을 primary 색상으로 변경 */}
             <div 
               className="flex items-center gap-1.5 md:gap-2 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => navigate('/')}
@@ -174,8 +174,8 @@ const Workspaces = () => {
         </div>
       </header>
 
-      {/* Mobile Layout: 모바일 화면 전용 레이아웃 */}
-      {/* 모바일 뷰 좌우 여백 축소 (px-8 → px-4)로 콘텐츠 영역 확보 및 일관된 레이아웃 유지 */}
+      {/* Mobile Layout */}
+      {/* UserRequest: 모바일 뷰 좌우 여백을 0.5배로 축소 (px-8 → px-4) */}
       <main className="md:hidden container mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-xl font-semibold">워크스페이스</h2>
@@ -194,7 +194,7 @@ const Workspaces = () => {
           </Card>
         ) : (
           <div className="grid grid-cols-1 gap-2.5">
-            {/* 워크스페이스 카드 간격 축소 (gap-8 → gap-2.5)로 화면에 더 많은 워크스페이스를 표시하여 스크롤 감소 */}
+            {/* UserRequest: 워크스페이스 간격을 0.3배로 축소 (gap-8 → gap-2.5) */}
             {workspaces?.map((workspace) => (
               <ContextMenu key={workspace.id}>
                 <ContextMenuTrigger asChild>
@@ -204,11 +204,11 @@ const Workspaces = () => {
                   >
                     <CardHeader>
                       <div className="space-y-1">
-                        {/* 모바일 폰트 크기 축소 (text-base)로 공간 효율 증대, 워크스페이스 이름 왼쪽 정렬로 가독성 향상 */}
+                        {/* UserRequest: 모바일 폰트 크기 축소 (text-base), 워크스페이스 이름 왼쪽 정렬 */}
                         <CardTitle className="text-base md:text-lg truncate">
                           {workspace.title}
                         </CardTitle>
-                        {/* 마지막 수정 시간에 Clock 아이콘 추가하여 시간 정보 직관적 표시, "마지막" 불필요 단어 제거로 간결성 확보 */}
+                        {/* UserRequest: 마지막 수정 시간 표시, Clock 아이콘 추가, "마지막" 멘트 제거 */}
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           수정: {new Date(workspace.updatedAt).toLocaleDateString('ko-KR', {
@@ -245,8 +245,8 @@ const Workspaces = () => {
         )}
       </main>
 
-      {/* Desktop Layout: 3열 그리드 레이아웃 (좌우 배경 + 중앙 콘텐츠) */}
-      {/* 데스크톱 화면에서 최소 높이 보장 (min-h-[calc(100vh-80px)])으로 워크스페이스 목록이 전체 화면 높이를 차지하여 시각적 완성도 향상 */}
+      {/* Desktop Layout - 3 Column */}
+      {/* UserRequest: 데스크톱 화면에서 워크스페이스가 적어도 전체 영역 높이 보장 (min-h-[calc(100vh-80px)]) */}
       <main className="hidden md:block min-h-[calc(100vh-80px)]">
         <div className="grid grid-cols-[1fr_2fr_1fr] min-h-[calc(100vh-80px)]">
           {/* 좌측: 배경 영역 (primary/5 색상으로 시각적 여유 제공) */}
@@ -271,7 +271,7 @@ const Workspaces = () => {
               </Card>
             ) : (
               <div className="space-y-2">
-                {/* 데스크톱 워크스페이스 카드 간격 space-y-2 (8px)로 적절한 시각적 구분 제공 */}
+                {/* UserRequest: 데스크톱 워크스페이스 간격 space-y-2 (8px) */}
                 {workspaces?.map((workspace) => (
                   <ContextMenu key={workspace.id}>
                     <ContextMenuTrigger asChild>
@@ -281,11 +281,11 @@ const Workspaces = () => {
                       >
                         <CardHeader>
                           <div className="space-y-1">
-                            {/* 모바일 폰트 크기 축소 (text-base)로 공간 효율 증대, 워크스페이스 이름 왼쪽 정렬로 가독성 향상 */}
+                            {/* UserRequest: 모바일 폰트 크기 축소 (text-base), 워크스페이스 이름 왼쪽 정렬 */}
                             <CardTitle className="text-base md:text-lg truncate">
                               {workspace.title}
                             </CardTitle>
-                            {/* 마지막 수정 시간에 Clock 아이콘 추가하여 시간 정보 직관적 표시, "마지막" 불필요 단어 제거로 간결성 확보 */}
+                            {/* UserRequest: 마지막 수정 시간 표시, Clock 아이콘 추가, "마지막" 멘트 제거 */}
                             <p className="text-xs text-muted-foreground flex items-center gap-1">
                               <Clock className="w-3 h-3" />
                               수정: {new Date(workspace.updatedAt).toLocaleDateString('ko-KR', {

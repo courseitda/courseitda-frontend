@@ -23,6 +23,7 @@ interface PlaceSearchDialogProps {
   workspaceId: string;
 }
 
+// 장소 검색 다이얼로그 - Kakao Local API를 사용하여 장소를 검색하고 카테고리에 추가
 export const PlaceSearchDialog = ({
   open,
   onOpenChange,
@@ -35,12 +36,15 @@ export const PlaceSearchDialog = ({
   const [loading, setLoading] = useState(false);
   const [adding, setAdding] = useState<string | null>(null);
 
+  // Kakao Local API를 통해 장소 검색 수행
   const handleSearch = async () => {
+    // API 키 미설정 시 사용자에게 안내
     if (!kakaoRestApiKey) {
       toast.error('Kakao REST API 키를 설정해주세요.');
       return;
     }
 
+    // 빈 검색어 입력 방지
     if (!query.trim()) {
       toast.error('검색어를 입력해주세요.');
       return;
@@ -49,9 +53,11 @@ export const PlaceSearchDialog = ({
     setLoading(true);
 
     try {
+      // Kakao REST API로 장소 검색 요청
       const data = await searchPlaces(query, kakaoRestApiKey);
       setResults(data.documents);
 
+      // 검색 결과가 없을 경우 안내
       if (data.documents.length === 0) {
         toast.info('검색 결과가 없습니다.');
       }
@@ -63,9 +69,11 @@ export const PlaceSearchDialog = ({
     }
   };
 
+  // 검색된 장소를 카테고리에 추가
   const handleAdd = async (place: KakaoPlace) => {
     setAdding(place.id);
 
+    // Edge Function을 통해 장소를 카테고리에 연결
     const { error } = await addPlaceToCategory({
       workspaceId,
       categoryId,

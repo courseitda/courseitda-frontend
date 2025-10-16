@@ -7,6 +7,7 @@ import { registerUser, loginUser } from '@/mock/edge-functions/auth';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { Check, X, AlertCircle, Eye, EyeOff, User, Mail, Lock } from 'lucide-react';
 
+// 회원가입 폼 컴포넌트 - 닉네임, 이메일, 비밀번호 입력 및 검증 후 회원 등록
 export const RegisterForm = () => {
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
@@ -24,7 +25,7 @@ export const RegisterForm = () => {
   const [emailCheckLoading, setEmailCheckLoading] = useState(false);
   const [emailChecked, setEmailChecked] = useState(false);
 
-  // 비밀번호 검증 규칙
+  // 비밀번호 보안 요구사항(8자 이상, 영문/숫자/특수문자 포함)을 실시간으로 검증
   const passwordValidation = useMemo(() => {
     return {
       minLength: password.length >= 8,
@@ -38,31 +39,31 @@ export const RegisterForm = () => {
   const isPasswordRequirementsMet = Object.values(passwordValidation).every(Boolean);
   const isPasswordValid = isPasswordRequirementsMet && passwordsMatch;
 
-  // 비밀번호 입력 핸들러 (한글 차단)
+  // 비밀번호 입력 시 한글을 자동으로 제거하여 영문/숫자/특수문자만 입력 가능하도록 제한
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // 영문, 숫자, 특수문자만 허용 (한글 제외)
     const filteredValue = value.replace(/[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/g, '');
     setPassword(filteredValue);
   };
 
+  // 비밀번호 확인 입력 시에도 한글을 자동으로 제거하여 일관성 유지
   const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // 영문, 숫자, 특수문자만 허용 (한글 제외)
     const filteredValue = value.replace(/[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/g, '');
     setConfirmPassword(filteredValue);
   };
 
-  // 닉네임 변경 핸들러
+  // 닉네임 입력 시 중복 확인 상태를 초기화하여 재검증 유도
   const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setNickname(value);
-    setNicknameChecked(false); // 닉네임이 변경되면 중복 확인 상태 초기화
+    setNicknameChecked(false);
     setNicknameError('');
   };
 
-  // 닉네임 중복 확인 버튼 클릭 핸들러
+  // 닉네임 중복 확인을 서버 API를 통해 검증 (현재는 Mock 데이터로 시뮬레이션)
   const handleNicknameCheck = async () => {
+    // 최소 길이 검증 - 2자 미만은 서버 요청 없이 클라이언트에서 차단
     if (nickname.length < 2) {
       setNicknameError('닉네임은 2자 이상 입력해주세요');
       return;
@@ -70,7 +71,7 @@ export const RegisterForm = () => {
 
     setNicknameCheckLoading(true);
     
-    // 실제로는 서버 API를 호출해야 함
+    // TODO: 실제 서버 API 연동 시 이 부분을 Edge Function 호출로 교체 필요
     setTimeout(() => {
       const usedNicknames = ['admin', 'user', 'test', 'manager', 'guest'];
       if (usedNicknames.includes(nickname.toLowerCase())) {
@@ -81,16 +82,16 @@ export const RegisterForm = () => {
         setNicknameChecked(true);
       }
       setNicknameCheckLoading(false);
-    }, 1000); // 1초 딜레이로 로딩 상태 시뮬레이션
+    }, 1000);
   };
 
-  // 이메일 변경 핸들러
+  // 이메일 입력 시 형식을 실시간 검증하고 중복 확인 상태 초기화
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setEmail(value);
     setEmailChecked(false);
     
-    // 이메일 형식 검증
+    // 정규식을 통한 이메일 형식 검증
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (value.length > 0 && !emailRegex.test(value)) {
       setEmailError('유효하지 않은 이메일 형식입니다');
@@ -99,9 +100,9 @@ export const RegisterForm = () => {
     }
   };
 
-  // 이메일 중복 확인
+  // 이메일 중복 확인을 서버 API를 통해 검증 (현재는 Mock 데이터로 시뮬레이션)
   const handleEmailCheck = async () => {
-    // 이메일 형식 검증
+    // 형식 검증 후 서버 요청 - 불필요한 API 호출 방지
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setEmailError('유효하지 않은 이메일 형식입니다');
@@ -110,9 +111,8 @@ export const RegisterForm = () => {
 
     setEmailCheckLoading(true);
     
-    // 실제로는 서버 API를 호출해야 함
+    // TODO: 실제 서버 API 연동 시 이 부분을 Edge Function 호출로 교체 필요
     setTimeout(() => {
-      // 예시: 특정 이메일들을 이미 사용 중으로 가정
       const usedEmails = ['test@example.com', 'admin@example.com', 'user@example.com'];
       if (usedEmails.includes(email.toLowerCase())) {
         setEmailError('이미 사용중인 이메일입니다');
@@ -122,14 +122,15 @@ export const RegisterForm = () => {
         setEmailChecked(true);
       }
       setEmailCheckLoading(false);
-    }, 1000); // 1초 딜레이로 로딩 상태 시뮬레이션
+    }, 1000);
   };
 
+  // 회원가입 폼 제출 - 모든 검증을 통과한 경우에만 회원 등록 진행
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // 닉네임 중복 확인 검사
+    // 닉네임 중복 확인 완료 여부 검증
     if (!nicknameChecked) {
       setLoading(false);
       return;
@@ -140,7 +141,7 @@ export const RegisterForm = () => {
       return;
     }
 
-    // 이메일 중복 확인 검증
+    // 이메일 중복 확인 완료 여부 검증
     if (!emailChecked) {
       setLoading(false);
       return;
@@ -151,15 +152,17 @@ export const RegisterForm = () => {
       return;
     }
 
-    // 비밀번호 검증 확인
+    // 비밀번호 보안 요구사항 및 일치 여부 검증
     if (!isPasswordValid) {
       setLoading(false);
       return;
     }
 
+    // Edge Function을 통해 회원가입 요청 수행
     const { user, error } = await registerUser({ email, password, nickname });
 
     // UserRequest: Display error toast message when registration fails
+    // 회원가입 실패 시 사용자에게 오류 메시지 표시
     if (error || !user) {
       toast.error(error || '회원가입에 실패했습니다.');
       setLoading(false);
@@ -169,10 +172,11 @@ export const RegisterForm = () => {
     // UserRequest: Display success toast message when registration succeeds
     toast.success('회원가입이 완료되었습니다!');
 
-    // Auto-login after successful registration
+    // 회원가입 성공 후 자동 로그인 처리하여 사용자 경험 개선
     const loginResult = await loginUser({ email, password });
     
     // UserRequest: Display error toast message when auto-login fails
+    // 자동 로그인 실패 시 로그인 페이지로 이동하여 수동 로그인 유도
     if (loginResult.error || !loginResult.user || !loginResult.token) {
       toast.error('자동 로그인에 실패했습니다. 다시 로그인해주세요.');
       setLoading(false);
@@ -180,6 +184,7 @@ export const RegisterForm = () => {
       return;
     }
 
+    // 자동 로그인 성공 시 전역 상태에 인증 정보 저장 후 워크스페이스로 이동
     setAuth(loginResult.user, loginResult.token);
     navigate('/workspaces');
   };

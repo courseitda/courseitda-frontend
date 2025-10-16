@@ -40,6 +40,7 @@ interface NavigationDrawerProps {
   user: User;
 }
 
+// 네비게이션 드로어 컴포넌트 - 워크스페이스 목록과 계정 정보를 표시하는 사이드 메뉴
 export const NavigationDrawer = ({
   workspaces,
   currentWorkspaceId,
@@ -53,19 +54,23 @@ export const NavigationDrawer = ({
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState<Workspace | null>(null);
   
+  // 워크스페이스 수정 다이얼로그 열기
   const handleEdit = (workspace: Workspace) => {
     setSelectedWorkspace(workspace);
     setEditDialogOpen(true);
   };
   
+  // 워크스페이스 삭제 확인 다이얼로그 열기
   const handleDeleteClick = (workspace: Workspace) => {
     setSelectedForDelete(workspace);
     setDeleteAlertOpen(true);
   };
   
+  // 워크스페이스 삭제 확인 후 Edge Function을 통해 워크스페이스와 관련 데이터 모두 삭제
   const handleDeleteConfirm = async () => {
     if (!selectedForDelete) return;
 
+    // Edge Function에서 워크스페이스와 연결된 카테고리, 장소도 함께 삭제
     const { error } = await deleteWorkspace(selectedForDelete.id);
     if (error) {
       toast.error(error);

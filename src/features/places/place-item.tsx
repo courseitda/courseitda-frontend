@@ -13,7 +13,9 @@ interface PlaceItemProps {
   onPlaceClick?: (place: Place) => void;
 }
 
+// 장소 아이템 컴포넌트 - 카테고리 내 장소 정보를 표시하며 대표 장소 설정 및 삭제 기능 제공
 export const PlaceItem = ({ place, categoryId, isRepresentative, hasRepresentative, onPlaceClick }: PlaceItemProps) => {
+  // 장소 삭제 처리 - Edge Function을 통해 카테고리와의 연결 제거
   const handleDelete = async () => {
     const { error } = await removePlace(place.id, categoryId);
     if (error) {
@@ -23,6 +25,7 @@ export const PlaceItem = ({ place, categoryId, isRepresentative, hasRepresentati
     }
   };
 
+  // 대표 장소 설정/해제 처리 - 이미 대표 장소면 해제, 아니면 설정
   const handleSetRepresentative = async () => {
     const newPlaceId = isRepresentative ? null : place.id;
     const { error } = await setRepresentativePlace(categoryId, newPlaceId);

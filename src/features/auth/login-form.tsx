@@ -7,6 +7,7 @@ import { loginUser } from '@/mock/edge-functions/auth';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 
+// 사용자 로그인 폼 컴포넌트 - 이메일과 비밀번호를 입력받아 인증 처리
 export const LoginForm = () => {
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
@@ -15,18 +16,22 @@ export const LoginForm = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // 로그인 요청을 처리하고 성공 시 인증 상태를 설정한 뒤 워크스페이스 목록으로 이동
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
+    // Edge Function을 통해 로그인 인증 수행
     const { user, token, error } = await loginUser({ email, password });
 
+    // 로그인 실패 시 에러 메시지 표시 후 종료
     if (error || !user || !token) {
       toast.error(error || '로그인에 실패했습니다.');
       setLoading(false);
       return;
     }
 
+    // 로그인 성공 시 전역 상태에 사용자 정보와 토큰 저장
     setAuth(user, token);
     toast.success('로그인 성공!');
     navigate('/workspaces');

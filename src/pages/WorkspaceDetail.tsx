@@ -92,8 +92,8 @@ const WorkspaceDetail = () => {
 
   return (
     <div className="h-screen bg-gradient-card flex flex-col overflow-hidden">
-      {/* Header: 워크스페이스 정보 및 사용자 메뉴 */}
-      {/* 모든 페이지 헤더 여백 통일 (px-8 → px-4)로 콘텐츠 영역 확보 및 일관된 레이아웃 유지 */}
+      {/* Header */}
+      {/* UserRequest: 좌우 여백을 0.5배로 축소 (px-8 → px-4) */}
       <header className="border-b border-border/50 bg-background/95 backdrop-blur z-20 shrink-0">
         <div className="container mx-auto px-4 py-4 md:py-3">
           <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
@@ -199,13 +199,13 @@ const WorkspaceDetail = () => {
         </div>
       </header>
 
-      {/* Main Content: 지도와 카테고리 목록을 동시에 표시 (모바일: 상하 구조 / 데스크톱: 좌우 구조) */}
-      {/* 모든 페이지 콘텐츠 여백 통일 (px-8 → px-4)로 일관된 레이아웃 및 콘텐츠 영역 확보 */}
+      {/* Main Content - Mobile: Map fixed top, Categories scrollable / Desktop: Side by side */}
+      {/* UserRequest: 좌우 여백을 0.5배로 축소 (px-8 → px-4) */}
       <main className="flex-1 min-h-0">
         <div className="container mx-auto px-4 h-full">
           <div className="h-full py-2.5 md:py-4 flex flex-col md:grid md:grid-cols-2 gap-2.5 md:gap-4">
-            {/* 지도 영역: 장소를 시각적으로 표시 (모바일: 고정 높이 / 데스크톱: 유동 높이) */}
-            {/* 모바일에서 지도 높이를 화면의 45%로 설정하여 지도와 카테고리 목록의 균형잡힌 공간 배분 (기존 55%에서 조정) */}
+            {/* Map Section - Fixed on mobile, normal on desktop */}
+            {/* UserRequest: 모바일 지도 높이를 화면의 약 45% 비율로 설정 (기존 5/9 ≈ 0.55에서 조정) */}
             <div className="h-[calc((100vh-64px)*0.45)] md:h-full rounded-xl overflow-hidden border border-border/50 shadow-lg bg-card shrink-0">
               {kakaoJsApiKey ? (
                 <MapCanvas workspaceId={workspace.id} categories={categories || []} focusedPlace={focusedPlace} />
@@ -223,8 +223,8 @@ const WorkspaceDetail = () => {
               )}
             </div>
 
-            {/* 카테고리 영역: 카테고리별 장소 목록 표시 (모바일/데스크톱 모두 스크롤 가능) */}
-            {/* 카테고리 영역 내부 패딩 축소 (p-8 → p-4)로 콘텐츠 공간 확보 및 여백 통일 */}
+            {/* Categories Section - Scrollable on mobile, normal on desktop */}
+            {/* UserRequest: 카테고리 영역 패딩을 0.5배로 축소 (p-8 → p-4) */}
             <div className="flex-1 md:h-full overflow-y-auto rounded-xl border border-border/50 bg-card p-4 min-h-0">
               <CategoryList 
                 workspaceId={workspace.id} 

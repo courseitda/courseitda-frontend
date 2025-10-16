@@ -14,16 +14,21 @@ interface CategoryListProps {
   onPlaceClick?: (place: Place) => void;
 }
 
+// 카테고리 목록 컴포넌트 - 드래그 앤 드롭으로 순서 변경 가능한 카테고리 카드 목록 표시
 export const CategoryList = ({ workspaceId, categories, onPlaceClick }: CategoryListProps) => {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
 
+  // 드래그 앤 드롭으로 카테고리 순서 변경 시 새로운 순서를 DB에 저장
   const handleDragEnd = async (result: DropResult) => {
+    // 드롭 위치가 유효하지 않으면 아무것도 하지 않음
     if (!result.destination) return;
 
+    // 배열을 복사하여 순서 변경 작업 수행
     const items = Array.from(categories);
     const [reorderedItem] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reorderedItem);
 
+    // 변경된 순서를 ID 배열로 변환하여 Edge Function을 통해 DB에 저장
     const orderedIds = items.map((item) => item.id);
     const { error } = await reorderCategories(workspaceId, orderedIds);
 

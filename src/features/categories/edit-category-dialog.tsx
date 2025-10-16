@@ -21,6 +21,7 @@ interface EditCategoryDialogProps {
   category: Category;
 }
 
+// 카테고리 수정 다이얼로그 - 카테고리의 이름과 색상을 변경
 export const EditCategoryDialog = ({ open, onOpenChange, category }: EditCategoryDialogProps) => {
   const { colorPaletteMode, setColorPaletteMode } = useSettingsStore();
   const colors = getCategoryColors(colorPaletteMode);
@@ -30,6 +31,7 @@ export const EditCategoryDialog = ({ open, onOpenChange, category }: EditCategor
   const dialogRef = useRef<HTMLDivElement>(null);
   const [keyboardOffset, setKeyboardOffset] = useState(0);
 
+  // 팔레트 버튼 클릭 시 다음 팔레트 모드로 순환 전환
   const handleTogglePalette = () => {
     const modes: PaletteMode[] = ['vibrant', 'pastel', 'deep', 'soft', 'muted'];
     const currentIndex = modes.indexOf(colorPaletteMode);
@@ -37,7 +39,7 @@ export const EditCategoryDialog = ({ open, onOpenChange, category }: EditCategor
     setColorPaletteMode(nextMode);
   };
 
-  // Reset form and palette when dialog opens with new category
+  // 다이얼로그 열릴 때 폼 데이터를 현재 카테고리 정보로 초기화
   useEffect(() => {
     if (open) {
       setColorPaletteMode('vibrant');
@@ -91,9 +93,11 @@ export const EditCategoryDialog = ({ open, onOpenChange, category }: EditCategor
     }
   }, [open]);
 
+  // 카테고리 수정 요청 처리 - 유효성 검증 후 Edge Function을 통해 DB 업데이트
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // 빈 문자열이나 공백만 있는 경우 수정 방지
     if (!name.trim()) {
       toast.error('카테고리 이름을 입력해주세요.');
       return;
@@ -101,17 +105,20 @@ export const EditCategoryDialog = ({ open, onOpenChange, category }: EditCategor
 
     setLoading(true);
 
+    // Edge Function을 통해 카테고리 정보 업데이트
     const { error } = await updateCategory(category.id, {
       name: name.trim(),
       color: selectedColor,
     });
 
+    // 수정 실패 시 에러 메시지 표시
     if (error) {
       toast.error(error);
       setLoading(false);
       return;
     }
 
+    // 수정 성공 후 다이얼로그 닫기
     toast.success('카테고리가 수정되었습니다!');
     onOpenChange(false);
     setLoading(false);

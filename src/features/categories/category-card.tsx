@@ -29,20 +29,24 @@ interface CategoryCardProps {
   onPlaceClick?: (place: Place) => void;
 }
 
+// 카테고리 카드 컴포넌트 - 카테고리 정보와 포함된 장소 목록을 표시하며 접기/펼치기 가능
 export const CategoryCard = ({ category, workspaceId, index, onPlaceClick }: CategoryCardProps) => {
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(true);
 
+  // 카테고리에 속한 장소 목록을 실시간으로 조회하여 변경사항 자동 반영
   const places = useLiveQuery(async () => {
     return await getPlacesByCategory(category.id);
   }, [category.id]);
 
+  // 삭제 버튼 클릭 시 확인 다이얼로그 표시
   const handleDeleteClick = () => {
     setDeleteAlertOpen(true);
   };
   
+  // 삭제 확인 후 Edge Function을 통해 카테고리와 연결된 모든 장소 함께 삭제
   const handleDeleteConfirm = async () => {
     const { error } = await deleteCategory(category.id);
     if (error) {

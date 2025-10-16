@@ -18,12 +18,13 @@ interface EditWorkspaceDialogProps {
   workspace: Workspace;
 }
 
+// 워크스페이스 수정 다이얼로그 - 워크스페이스의 제목을 변경
 export const EditWorkspaceDialog = ({ open, onOpenChange, workspace }: EditWorkspaceDialogProps) => {
   const [title, setTitle] = useState(workspace.title);
   const [loading, setLoading] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  // Reset form when dialog opens with new workspace
+  // 다이얼로그 열릴 때 폼 데이터를 현재 워크스페이스 정보로 초기화
   useEffect(() => {
     if (open) {
       setTitle(workspace.title);
@@ -31,7 +32,7 @@ export const EditWorkspaceDialog = ({ open, onOpenChange, workspace }: EditWorks
   }, [open, workspace]);
 
   // UserRequest: 모바일에서 키보드 올라올 때 팝업이 가려지지 않도록 키보드를 제외한 화면 중앙에 위치
-  // Handle keyboard appearance on mobile
+  // 모바일 키보드가 팝업을 가리지 않도록 동적으로 위치 조정
   useEffect(() => {
     if (!open) return;
 
@@ -41,21 +42,21 @@ export const EditWorkspaceDialog = ({ open, onOpenChange, workspace }: EditWorks
       const visualViewport = window.visualViewport;
       if (!visualViewport) return;
 
-      // Calculate the available height when keyboard is open
+      // 키보드 표시 시 보이는 영역 높이 계산
       const viewportHeight = visualViewport.height;
       const windowHeight = window.innerHeight;
       
-      // If viewport is smaller than window, keyboard is likely open
+      // 보이는 영역이 80% 미만으로 줄어들면 키보드가 올라온 것으로 판단
       if (viewportHeight < windowHeight * 0.8) {
-        // Position dialog in the center of visible viewport
+        // 보이는 영역의 중앙에 다이얼로그 배치
         dialogRef.current.style.transform = `translate(-50%, calc(-50% - ${(windowHeight - viewportHeight) / 2}px))`;
       } else {
-        // Reset to center of screen
+        // 키보드가 내려가면 화면 중앙으로 재배치
         dialogRef.current.style.transform = 'translate(-50%, -50%)';
       }
     };
 
-    // Check if visualViewport is supported (modern mobile browsers)
+    // visualViewport API를 지원하는 최신 모바일 브라우저에서만 동작
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', handleViewportResize);
       window.visualViewport.addEventListener('scroll', handleViewportResize);
@@ -67,21 +68,25 @@ export const EditWorkspaceDialog = ({ open, onOpenChange, workspace }: EditWorks
     }
   }, [open]);
 
+  // 워크스페이스 수정 요청 처리
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     setLoading(true);
 
+    // Edge Function을 통해 워크스페이스 정보 업데이트
     const { error } = await updateWorkspace(workspace.id, {
       title,
     });
 
+    // 수정 실패 시 에러 메시지 표시
     if (error) {
       toast.error(error);
       setLoading(false);
       return;
     }
 
+    // 수정 성공 후 다이얼로그 닫기
     toast.success('워크스페이스가 수정되었습니다!');
     onOpenChange(false);
     setLoading(false);
