@@ -22,6 +22,7 @@ interface EditCategoryDialogProps {
 }
 
 // 카테고리 수정 다이얼로그 - 카테고리의 이름과 색상을 변경
+// 사용 위치: features/categories/category-card
 export const EditCategoryDialog = ({ open, onOpenChange, category }: EditCategoryDialogProps) => {
   const { colorPaletteMode, setColorPaletteMode } = useSettingsStore();
   const colors = getCategoryColors(colorPaletteMode);

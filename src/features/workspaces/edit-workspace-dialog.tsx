@@ -19,6 +19,7 @@ interface EditWorkspaceDialogProps {
 }
 
 // 워크스페이스 수정 다이얼로그 - 워크스페이스의 제목을 변경
+// 사용 위치: features/layout/navigation-drawer, pages/Workspaces
 export const EditWorkspaceDialog = ({ open, onOpenChange, workspace }: EditWorkspaceDialogProps) => {
   const [title, setTitle] = useState(workspace.title);
   const [loading, setLoading] = useState(false);

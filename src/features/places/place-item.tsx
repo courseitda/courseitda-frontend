@@ -14,6 +14,7 @@ interface PlaceItemProps {
 }
 
 // 장소 아이템 컴포넌트 - 카테고리 내 장소 정보를 표시하며 대표 장소 설정 및 삭제 기능 제공
+// 사용 위치: features/categories/category-card
 export const PlaceItem = ({ place, categoryId, isRepresentative, hasRepresentative, onPlaceClick }: PlaceItemProps) => {
   // 장소 삭제 처리 - Edge Function을 통해 카테고리와의 연결 제거
   const handleDelete = async () => {

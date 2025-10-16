@@ -18,6 +18,7 @@ interface CreateWorkspaceDialogProps {
 }
 
 // 워크스페이스 생성 다이얼로그 - 새로운 워크스페이스를 생성
+// 사용 위치: features/layout/navigation-drawer, pages/WorkspaceDetail, pages/Workspaces
 export const CreateWorkspaceDialog = ({ open, onOpenChange }: CreateWorkspaceDialogProps) => {
   const user = useAuthStore((state) => state.user);
   const [title, setTitle] = useState('');

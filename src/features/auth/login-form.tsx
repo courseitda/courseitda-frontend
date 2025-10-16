@@ -7,7 +7,8 @@ import { loginUser } from '@/mock/edge-functions/auth';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 
-// 사용자 로그인 폼 컴포넌트 - 이메일과 비밀번호를 입력받아 인증 처리
+// 로그인 폼 컴포넌트 - 이메일과 비밀번호를 입력받아 인증 처리
+// 사용 위치: pages/Auth
 export const LoginForm = () => {
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);

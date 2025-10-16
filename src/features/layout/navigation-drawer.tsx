@@ -41,6 +41,7 @@ interface NavigationDrawerProps {
 }
 
 // 네비게이션 드로어 컴포넌트 - 워크스페이스 목록과 계정 정보를 표시하는 사이드 메뉴
+// 사용 위치: 현재 미사용 (Sheet 기반 네비게이션, 필요 시 복구 가능)
 export const NavigationDrawer = ({
   workspaces,
   currentWorkspaceId,

@@ -25,6 +25,7 @@ interface AddCategoryDialogProps {
 const SUGGESTED_CATEGORIES = ['점심', '카페', '산책', '쇼핑', '저녁'];
 
 // 카테고리 추가 다이얼로그 - 색상 선택과 이름 입력을 통해 새 카테고리 생성
+// 사용 위치: features/categories/category-list
 export const AddCategoryDialog = ({ open, onOpenChange, workspaceId }: AddCategoryDialogProps) => {
   const { colorPaletteMode, setColorPaletteMode } = useSettingsStore();
   const colors = getCategoryColors(colorPaletteMode);

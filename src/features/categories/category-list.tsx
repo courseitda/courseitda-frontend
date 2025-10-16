@@ -15,6 +15,7 @@ interface CategoryListProps {
 }
 
 // 카테고리 목록 컴포넌트 - 드래그 앤 드롭으로 순서 변경 가능한 카테고리 카드 목록 표시
+// 사용 위치: pages/WorkspaceDetail
 export const CategoryList = ({ workspaceId, categories, onPlaceClick }: CategoryListProps) => {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
 

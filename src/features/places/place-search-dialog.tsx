@@ -24,6 +24,7 @@ interface PlaceSearchDialogProps {
 }
 
 // 장소 검색 다이얼로그 - Kakao Local API를 사용하여 장소를 검색하고 카테고리에 추가
+// 사용 위치: features/categories/category-card
 export const PlaceSearchDialog = ({
   open,
   onOpenChange,

@@ -8,6 +8,7 @@ import { useAuthStore } from '@/shared/stores/auth-store';
 import { Check, X, AlertCircle, Eye, EyeOff, User, Mail, Lock } from 'lucide-react';
 
 // 회원가입 폼 컴포넌트 - 닉네임, 이메일, 비밀번호 입력 및 검증 후 회원 등록
+// 사용 위치: pages/Auth
 export const RegisterForm = () => {
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);

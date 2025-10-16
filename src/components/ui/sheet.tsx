@@ -75,7 +75,7 @@ const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Con
           {/* 방향에 따라 위치가 다른 닫기 버튼 */}
           <SheetPrimitive.Close className={cn("absolute top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-secondary hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none", closePosition)}>
             <CloseIcon className="h-5 w-5" />
-            <span className="sr-only">Close</span>
+            <span className="sr-only">닫기</span>
           </SheetPrimitive.Close>
         </SheetPrimitive.Content>
       </SheetPortal>

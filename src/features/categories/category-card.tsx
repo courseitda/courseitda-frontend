@@ -30,6 +30,7 @@ interface CategoryCardProps {
 }
 
 // 카테고리 카드 컴포넌트 - 카테고리 정보와 포함된 장소 목록을 표시하며 접기/펼치기 가능
+// 사용 위치: features/categories/category-list
 export const CategoryCard = ({ category, workspaceId, index, onPlaceClick }: CategoryCardProps) => {
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);

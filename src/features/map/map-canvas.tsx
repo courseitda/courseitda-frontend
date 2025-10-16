@@ -8,6 +8,9 @@ import { getPlacesByCategory } from '@/mock/edge-functions/place';
 import { setRepresentativePlace } from '@/mock/edge-functions/category';
 import { toast } from 'sonner';
 
+// 지도 캔버스 컴포넌트 - Kakao Maps SDK를 사용하여 장소 마커와 경로 표시
+// 사용 위치: pages/WorkspaceDetail
+
 // 두 색상 간 선형 보간을 통해 그라데이션 색상 생성 - 경로에 부드러운 색상 전환 효과 적용
 const interpolateColor = (color1: string, color2: string, ratio: number = 0.5): string => {
   const hex1 = color1.replace('#', '');

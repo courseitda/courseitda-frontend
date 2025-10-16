@@ -3,7 +3,10 @@ import * as RechartsPrimitive from "recharts";
 
 import { cn } from "@/lib/utils";
 
-// Format: { THEME_NAME: CSS_SELECTOR }
+// Chart 컴포넌트 - Recharts 기반 차트 UI
+// 사용 위치: 현재 미사용 (필요 시 통계 대시보드에 활용 가능)
+
+// 차트 테마 설정 - 라이트/다크 모드 지원
 const THEMES = { light: "", dark: ".dark" } as const;
 
 export type ChartConfig = {
@@ -17,8 +20,10 @@ type ChartContextProps = {
   config: ChartConfig;
 };
 
+// Chart 설정을 전달하는 Context
 const ChartContext = React.createContext<ChartContextProps | null>(null);
 
+// Chart 설정에 접근하는 훅 - ChartContainer 내부에서만 사용 가능
 function useChart() {
   const context = React.useContext(ChartContext);
 
@@ -274,7 +279,7 @@ const ChartLegendContent = React.forwardRef<
 });
 ChartLegendContent.displayName = "ChartLegend";
 
-// Helper to extract item config from a payload.
+// payload에서 설정 정보를 추출하는 헬퍼 함수
 function getPayloadConfigFromPayload(config: ChartConfig, payload: unknown, key: string) {
   if (typeof payload !== "object" || payload === null) {
     return undefined;
