@@ -8,6 +8,7 @@ interface SpinnerProps {
   className?: string;
 }
 
+// 스피너 크기별 클래스 정의
 const sizeClasses = {
   sm: "h-4 w-4",
   md: "h-8 w-8",
@@ -15,6 +16,7 @@ const sizeClasses = {
   xl: "h-16 w-16",
 };
 
+// 스피너 테두리 두께 정의
 const borderSizes = {
   sm: "border-2",
   md: "border-2",
@@ -22,8 +24,10 @@ const borderSizes = {
   xl: "border-4",
 };
 
+// 다양한 스타일의 로딩 스피너 컴포넌트 - 상황에 맞는 variant 선택 가능
 export function Spinner({ size = "md", variant = "dots", className }: SpinnerProps) {
 
+  // dots 스타일 - 3개의 점이 순차적으로 튀어오르는 애니메이션
   if (variant === "dots") {
     const dotSize = size === "sm" ? "2" : size === "md" ? "3" : size === "lg" ? "4" : "5";
     return (

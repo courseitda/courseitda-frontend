@@ -4,12 +4,16 @@ import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 
+// 경고 다이얼로그 루트 컴포넌트 - 중요한 작업에 대한 사용자 확인을 받는 모달
 const AlertDialog = AlertDialogPrimitive.Root;
 
+// 경고 다이얼로그 열기 트리거 요소
 const AlertDialogTrigger = AlertDialogPrimitive.Trigger;
 
+// 경고 다이얼로그 포털 - body에 다이얼로그를 렌더링
 const AlertDialogPortal = AlertDialogPrimitive.Portal;
 
+// 경고 다이얼로그 배경 오버레이 - 어두운 배경으로 경고 메시지에 집중 유도
 const AlertDialogOverlay = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Overlay>
@@ -25,6 +29,7 @@ const AlertDialogOverlay = React.forwardRef<
 ));
 AlertDialogOverlay.displayName = AlertDialogPrimitive.Overlay.displayName;
 
+// 경고 다이얼로그 콘텐츠 영역 - 화면 중앙에 경고 메시지 표시
 const AlertDialogContent = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
@@ -44,16 +49,19 @@ const AlertDialogContent = React.forwardRef<
 ));
 AlertDialogContent.displayName = AlertDialogPrimitive.Content.displayName;
 
+// 경고 다이얼로그 헤더 영역 - 제목과 설명을 담는 컨테이너
 const AlertDialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div className={cn("flex flex-col space-y-2 text-center sm:text-left", className)} {...props} />
 );
 AlertDialogHeader.displayName = "AlertDialogHeader";
 
+// 경고 다이얼로그 푸터 영역 - 확인/취소 버튼을 배치하는 컨테이너
 const AlertDialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", className)} {...props} />
 );
 AlertDialogFooter.displayName = "AlertDialogFooter";
 
+// 경고 다이얼로그 제목
 const AlertDialogTitle = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Title>
@@ -62,6 +70,7 @@ const AlertDialogTitle = React.forwardRef<
 ));
 AlertDialogTitle.displayName = AlertDialogPrimitive.Title.displayName;
 
+// 경고 다이얼로그 설명
 const AlertDialogDescription = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Description>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Description>
@@ -70,6 +79,7 @@ const AlertDialogDescription = React.forwardRef<
 ));
 AlertDialogDescription.displayName = AlertDialogPrimitive.Description.displayName;
 
+// 경고 다이얼로그 확인 버튼 - 위험한 작업을 실행
 const AlertDialogAction = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Action>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Action>
@@ -78,6 +88,7 @@ const AlertDialogAction = React.forwardRef<
 ));
 AlertDialogAction.displayName = AlertDialogPrimitive.Action.displayName;
 
+// 경고 다이얼로그 취소 버튼 - 작업을 중단하고 다이얼로그 닫기
 const AlertDialogCancel = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Cancel>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Cancel>

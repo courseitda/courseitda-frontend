@@ -4,6 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
+// 버튼 스타일 변형 정의 - 다양한 용도별 스타일(variant)과 크기(size)를 조합하여 일관된 버튼 디자인 제공
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
@@ -36,8 +37,10 @@ export interface ButtonProps
   asChild?: boolean;
 }
 
+// 재사용 가능한 버튼 컴포넌트 - asChild 속성으로 다른 요소(Link 등)로 렌더링 가능
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
+    // asChild가 true면 Slot으로 렌더링하여 자식 요소의 속성을 병합
     const Comp = asChild ? Slot : "button";
     return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />;
   },
