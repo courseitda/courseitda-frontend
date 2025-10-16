@@ -4,16 +4,25 @@ import { Check, ChevronRight, Circle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+// 드롭다운 메뉴 컴포넌트 - 클릭 시 표시되는 메뉴
+// 사용 위치: pages (Index, MyPage, WorkspaceDetail, Workspaces)
+
+// 드롭다운 메뉴 루트 컴포넌트
 const DropdownMenu = DropdownMenuPrimitive.Root;
 
+// 드롭다운 메뉴 트리거 - 클릭 감지 요소
 const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
 
+// 드롭다운 메뉴 그룹 - 메뉴 아이템 그룹화
 const DropdownMenuGroup = DropdownMenuPrimitive.Group;
 
+// 드롭다운 메뉴 포털 - body에 메뉴 렌더링
 const DropdownMenuPortal = DropdownMenuPrimitive.Portal;
 
+// 드롭다운 서브메뉴 루트
 const DropdownMenuSub = DropdownMenuPrimitive.Sub;
 
+// 드롭다운 라디오 그룹 - 단일 선택 메뉴 아이템
 const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup;
 
 const DropdownMenuSubTrigger = React.forwardRef<

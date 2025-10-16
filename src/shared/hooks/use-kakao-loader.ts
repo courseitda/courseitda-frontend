@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { loadKakaoMapScript } from '@/shared/lib/kakao';
 
 // Kakao Maps SDK 로딩 상태를 관리하는 훅 - SDK 로딩 완료 여부와 에러 상태를 제공
+// 사용 위치: features/map (map-canvas)
 export const useKakaoLoader = (jsKey: string | null) => {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<Error | null>(null);

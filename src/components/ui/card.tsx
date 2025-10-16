@@ -2,7 +2,10 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-// 카드 컨테이너 - 콘텐츠를 구분하여 표시하는 기본 박스
+// 카드 컴포넌트 - 콘텐츠를 구분하여 표시하는 기본 박스
+// 사용 위치: features/categories (category-card), pages (Auth, MyPage, Settings, Workspaces)
+
+// 카드 컨테이너
 const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => (
   <div ref={ref} className={cn("rounded-lg border bg-card text-card-foreground shadow-sm", className)} {...props} />
 ));

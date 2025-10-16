@@ -34,8 +34,7 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceId }: AddCatego
   const dialogRef = useRef<HTMLDivElement>(null);
   const [keyboardOffset, setKeyboardOffset] = useState(0);
 
-  // UserRequest: 카테고리 생성 시 사용하지 않은 색상으로 자동 선택
-  // 워크스페이스의 기존 카테고리 색상들을 확인하여 중복을 피하고 시각적 구분성 향상
+  // UserRequest: 카테고리 생성 시 사용하지 않은 색상으로 자동 선택하여 중복 방지 및 시각적 구분성 향상
   const getNextAvailableColor = async (paletteMode: PaletteMode) => {
     const colors = getCategoryColors(paletteMode);
     
@@ -80,8 +79,7 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceId }: AddCatego
     setColorPaletteMode(nextMode);
   };
 
-  // UserRequest: 모바일에서 키보드가 올라오면 팝업창의 하단을 키보드 상단에 맞춤
-  // 모바일 키보드가 팝업을 가리지 않도록 팝업 위치를 키보드 상단으로 동적 조정
+  // UserRequest: 모바일에서 키보드가 올라오면 팝업창의 하단을 키보드 상단에 맞춰 입력 필드가 가려지지 않도록 처리
   useEffect(() => {
     if (!open) {
       setKeyboardOffset(0);
@@ -174,7 +172,7 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceId }: AddCatego
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* UserRequest: 색상을 7개씩 2줄로 중앙 정렬하여 배치 */}
+          {/* UserRequest: 색상을 7개씩 2줄로 중앙 정렬하여 배치하고 시각적 균형 유지 */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label>색상 선택</Label>

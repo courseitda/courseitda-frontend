@@ -33,7 +33,7 @@ export const PlaceItem = ({ place, categoryId, isRepresentative, hasRepresentati
     if (error) {
       toast.error(error);
     }
-    // UserRequest: 대표장소 설정 시 토스트 메시지 제거
+    // UserRequest: 대표장소 설정 시 토스트 메시지를 제거하여 불필요한 알림 방지
   };
 
   return (

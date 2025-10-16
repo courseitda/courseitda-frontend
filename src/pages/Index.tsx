@@ -30,14 +30,14 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-accent/5 to-background">
-      {/* UserRequest: 랜딩 페이지에 로그인 상태 표시 - 로그인된 경우 오른쪽 상단에 프로필 아바타 드롭다운, 미로그인 시 로그인 버튼 표시 */}
-      {/* UserRequest: 모바일 뷰에서 헤더의 코스잇다를 왼쪽으로 더 붙이기 위해 px-4로 조정 */}
-      {/* UserRequest: 모든 페이지 헤더를 동일한 구조로 통일 (px-4 py-4 md:py-3, 3열 그리드) - 프로필 아이콘이 물리적으로 정확히 동일한 위치에 고정 */}
-      {/* Header */}
+      {/* UserRequest: 랜딩 페이지에 로그인 상태 표시 - 로그인된 경우 오른쪽 상단에 프로필 아바타 드롭다운, 미로그인 시 로그인 버튼 표시하여 편의성 향상 */}
+      {/* UserRequest: 모바일 뷰에서 헤더의 코스잇다를 왼쪽으로 더 붙이기 위해 px-4로 조정하여 모바일 UI 최적화 */}
+      {/* UserRequest: 모든 페이지 헤더를 동일한 구조로 통일하여 일관성 유지 (px-4 py-4 md:py-3, 3열 그리드) - 프로필 아이콘이 물리적으로 정확히 동일한 위치에 고정 */}
+      {/* 헤더 */}
       <header className="border-b border-border/40 bg-background/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4 md:py-3">
           <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
-            {/* UserRequest: 코스잇다 텍스트 색상을 primary 색상으로 변경 */}
+            {/* UserRequest: 코스잇다 텍스트 색상을 primary 색상으로 변경하여 브랜드 아이덴티티 강화 */}
             <div className="flex items-center gap-1.5 md:gap-2">
               <img src={logo} alt="코스잇다 로고" className="w-10 h-10 object-contain rounded-lg" />
               <span className="font-bold text-lg whitespace-nowrap text-primary">코스잇다</span>
@@ -45,9 +45,9 @@ const Index = () => {
             
             <div></div>
             
-            {/* UserRequest: 워크스페이스 상세 페이지의 네비게이션 드로어에서 사용하는 User 아이콘을 아바타에 적용 */}
-            {/* UserRequest: 데스크톱 뷰에서 아바타와 닉네임을 함께 표시 (모바일은 아이콘만) */}
-            {/* UserRequest: 모든 사용자 메뉴를 마이페이지 / 워크스페이스 / 설정 / 로그아웃 순서로 통일 */}
+            {/* UserRequest: 워크스페이스 상세 페이지의 네비게이션 드로어에서 사용하는 User 아이콘을 아바타에 적용하여 일관성 유지 */}
+            {/* UserRequest: 데스크톱 뷰에서 아바타와 닉네임을 함께 표시하고 모바일은 아이콘만 표시하여 공간 효율성 향상 */}
+            {/* UserRequest: 모든 사용자 메뉴를 마이페이지 / 워크스페이스 / 설정 / 로그아웃 순서로 통일하여 일관된 네비게이션 제공 */}
             <div className="flex items-center">
             {isAuthenticated && user ? (
               <DropdownMenu>

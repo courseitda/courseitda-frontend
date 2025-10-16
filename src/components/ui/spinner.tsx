@@ -127,8 +127,9 @@ export function Spinner({ size = "md", variant = "dots", className }: SpinnerPro
   }
 
 
+  // route 스타일 - 경로를 그리는 듯한 로딩 애니메이션
   if (variant === "route") {
-    // UserRequest: 경로를 그리는 듯한 로딩 뷰 - 눕힌 S자 형태로 구현
+    // UserRequest: 경로를 그리는 듯한 로딩 뷰를 눕힌 S자 형태로 구현하여 여행 경로 테마 반영
     const svgSize = size === "sm" ? 32 : size === "md" ? 64 : size === "lg" ? 96 : 128;
     const strokeWidth = size === "sm" ? 2 : size === "md" ? 3 : size === "lg" ? 4 : 5;
     const dotSize = size === "sm" ? 4 : size === "md" ? 6 : size === "lg" ? 8 : 10;
@@ -144,7 +145,7 @@ export function Spinner({ size = "md", variant = "dots", className }: SpinnerPro
           className={className}
         >
           <defs>
-            {/* UserRequest: 선이 그려지는 효과 - 클리핑 패스로 점선이 순차적으로 나타나는 애니메이션 */}
+            {/* UserRequest: 선이 그려지는 효과를 클리핑 패스로 구현하여 점선이 순차적으로 나타나는 애니메이션 연출 */}
             <clipPath id="revealClip">
               <rect x="0" y="0" width="0" height="100">
                 <animate
@@ -157,7 +158,7 @@ export function Spinner({ size = "md", variant = "dots", className }: SpinnerPro
             </clipPath>
           </defs>
           
-          {/* UserRequest: 배경 경로 - 점선 (흐릿하게) - 눕힌 S자 형태 */}
+          {/* UserRequest: 배경 경로를 흐릿한 점선 형태로 표시하여 경로 전체 윤곽 표시 (눕힌 S자 형태) */}
           <path
             d="M 10 50 C 10 30, 30 30, 40 50 C 50 70, 60 70, 70 50 C 80 30, 90 30, 90 50"
             stroke="hsl(var(--primary))"
@@ -168,7 +169,7 @@ export function Spinner({ size = "md", variant = "dots", className }: SpinnerPro
             opacity="0.2"
           />
           
-          {/* UserRequest: 경로 선 - 점선이 그려지는 애니메이션 - 눕힌 S자 형태 (3px 선, 8px 간격) */}
+          {/* UserRequest: 경로 선을 점선이 그려지는 애니메이션으로 표현 (눕힌 S자 형태, 3px 선, 8px 간격) */}
           <path
             d="M 10 50 C 10 30, 30 30, 40 50 C 50 70, 60 70, 70 50 C 80 30, 90 30, 90 50"
             stroke="hsl(var(--primary))"
@@ -180,7 +181,7 @@ export function Spinner({ size = "md", variant = "dots", className }: SpinnerPro
             clipPath="url(#revealClip)"
           />
           
-          {/* UserRequest: 4개 마커 - 경로를 따라 배치된 원형 마커들 (펄스 애니메이션) */}
+          {/* UserRequest: 4개 마커를 경로를 따라 배치하고 펄스 애니메이션을 적용하여 생동감 표현 */}
           <circle
             cx="10"
             cy="50"
@@ -267,8 +268,7 @@ export function LoadingView({
     ? "fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
     : "flex items-center justify-center p-8";
 
-  // UserRequest: 로딩 중입니다 말고 멘트가 지속적으로 바뀌는 것으로 하자. 멘트는 "지도를 불러오는 중입니다..." "마커를 찍는 중입니다..." "경로를 잇는 중입니다..." 이런 느낌으로
-  // 처리: route 스타일에서 4가지 단계별 메시지를 2초마다 순환하도록 구현
+  // UserRequest: 로딩 중 멘트가 지속적으로 바뀌도록 구현 - "지도를 불러오는 중", "마커를 찍는 중", "경로를 잇는 중" 등 4가지 단계별 메시지를 2초마다 순환하여 로딩 과정 시각화
   const routeMessages = [
     "지도를 불러오는 중입니다...",
     "마커를 찍는 중입니다...",
@@ -281,7 +281,7 @@ export function LoadingView({
 
     const interval = setInterval(() => {
       setCurrentMessageIndex((prev) => (prev + 1) % routeMessages.length);
-    }, 2000); // UserRequest: 2초마다 변경 (원래 0.5초였으나 1초로 수정 후 2초로 최종 조정)
+    }, 2000); // UserRequest: 2초마다 메시지 변경하여 적절한 속도로 로딩 진행 상황 표시 (원래 0.5초였으나 1초로 수정 후 2초로 최종 조정)
 
     return () => clearInterval(interval);
   }, [variant, routeMessages.length]);
@@ -293,11 +293,10 @@ export function LoadingView({
 
   return (
     <div className={containerClass}>
-      {/* UserRequest: 저 밑 배경에 지도를 나타내는 아이콘을 깔아주면 어때? */}
-      {/* 처리: route 스타일 fullScreen 모드에서 지도 그리드 라인, MapPin, Map 아이콘들을 배경에 배치 */}
+      {/* UserRequest: 배경에 지도를 나타내는 아이콘을 배치하여 지도 테마 강화 - route 스타일 fullScreen 모드에서 지도 그리드 라인, MapPin, Map 아이콘들을 배경에 배치 */}
       {variant === "route" && fullScreen && (
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {/* UserRequest: 지도 그리드 라인 - 10x10 그리드로 지도 느낌 연출 */}
+          {/* UserRequest: 지도 그리드 라인을 10x10 그리드로 배치하여 지도 느낌 연출 */}
           <div className="absolute inset-0 opacity-[0.03]">
             {/* 가로 선들 - 10% 간격으로 배치 */}
             {Array.from({ length: 10 }).map((_, i) => (
@@ -317,7 +316,7 @@ export function LoadingView({
             ))}
           </div>
           
-          {/* UserRequest: 흩어진 지도 핀 아이콘들 - 다양한 크기와 위치에 배치하여 지도 느낌 연출 */}
+          {/* UserRequest: 흩어진 지도 핀 아이콘들을 다양한 크기와 위치에 배치하여 지도 느낌 연출 */}
           <MapPin className="absolute top-[15%] left-[20%] w-8 h-8 text-primary/10 animate-pulse" style={{ animationDelay: "0s", animationDuration: "3s" }} />
           <MapPin className="absolute top-[25%] right-[25%] w-6 h-6 text-primary/10 animate-pulse" style={{ animationDelay: "0.5s", animationDuration: "3s" }} />
           <MapPin className="absolute bottom-[20%] left-[30%] w-7 h-7 text-primary/10 animate-pulse" style={{ animationDelay: "1s", animationDuration: "3s" }} />
@@ -325,7 +324,7 @@ export function LoadingView({
           <MapPin className="absolute top-[40%] left-[15%] w-5 h-5 text-primary/10 animate-pulse" style={{ animationDelay: "2s", animationDuration: "3s" }} />
           <MapPin className="absolute top-[60%] right-[30%] w-8 h-8 text-primary/10 animate-pulse" style={{ animationDelay: "2.5s", animationDuration: "3s" }} />
           
-          {/* UserRequest: 큰 지도 아이콘들 - 배경에 큰 Map 아이콘들을 배치하여 지도 테마 강화 */}
+          {/* UserRequest: 큰 지도 아이콘들을 배경에 배치하여 지도 테마 강화 */}
           <Map className="absolute top-[10%] right-[15%] w-16 h-16 text-primary/5 animate-pulse" style={{ animationDuration: "4s" }} />
           <Map className="absolute bottom-[15%] left-[10%] w-20 h-20 text-primary/5 animate-pulse" style={{ animationDelay: "1s", animationDuration: "4s" }} />
           <Map className="absolute top-[50%] right-[10%] w-12 h-12 text-primary/5 animate-pulse" style={{ animationDelay: "2s", animationDuration: "4s" }} />
@@ -336,8 +335,7 @@ export function LoadingView({
         <div className="relative">
           <Spinner size={size} variant={variant} />
         </div>
-        {/* UserRequest: 원래 진해졌다 옅어졌다 했잖아 그걸 그대로 사용을 한 상태에서 해달라고 */}
-        {/* 처리: animate-pulse 효과를 유지하면서 동적 메시지 변경 기능 추가 */}
+        {/* UserRequest: 메시지가 진해졌다 옅어지는 animate-pulse 효과를 유지하면서 동적 메시지 변경 기능 추가 */}
         <p className="text-base font-medium text-foreground animate-pulse min-h-[1.5rem] text-center">
           {getCurrentMessage()}
         </p>

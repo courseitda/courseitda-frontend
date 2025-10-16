@@ -1,5 +1,8 @@
 import type { KakaoSearchResponse } from '@/entities/types';
 
+// Kakao API 통신 관련 함수들
+// 사용 위치: features/places (place-search-dialog), features/map (map-canvas), shared/hooks (use-kakao-loader)
+
 // Kakao Local API 엔드포인트 - 키워드로 장소 검색
 export const KAKAO_API_URL = 'https://dapi.kakao.com/v2/local/search/keyword.json';
 

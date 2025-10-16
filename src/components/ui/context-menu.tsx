@@ -4,16 +4,25 @@ import { Check, ChevronRight, Circle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+// 컨텍스트 메뉴 컴포넌트 - 우클릭 시 표시되는 메뉴
+// 사용 위치: features/layout (navigation-drawer), pages/Workspaces
+
+// 컨텍스트 메뉴 루트 컴포넌트
 const ContextMenu = ContextMenuPrimitive.Root;
 
+// 컨텍스트 메뉴 트리거 - 우클릭 감지 영역
 const ContextMenuTrigger = ContextMenuPrimitive.Trigger;
 
+// 컨텍스트 메뉴 그룹 - 메뉴 아이템 그룹화
 const ContextMenuGroup = ContextMenuPrimitive.Group;
 
+// 컨텍스트 메뉴 포털 - body에 메뉴 렌더링
 const ContextMenuPortal = ContextMenuPrimitive.Portal;
 
+// 컨텍스트 서브메뉴 루트
 const ContextMenuSub = ContextMenuPrimitive.Sub;
 
+// 컨텍스트 라디오 그룹 - 단일 선택 메뉴 아이템
 const ContextMenuRadioGroup = ContextMenuPrimitive.RadioGroup;
 
 const ContextMenuSubTrigger = React.forwardRef<

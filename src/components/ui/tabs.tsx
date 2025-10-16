@@ -3,8 +3,13 @@ import * as TabsPrimitive from "@radix-ui/react-tabs";
 
 import { cn } from "@/lib/utils";
 
+// 탭 컴포넌트 - 여러 콘텐츠를 탭으로 전환하며 표시
+// 사용 위치: pages/Auth (로그인/회원가입 탭)
+
+// 탭 루트 컴포넌트
 const Tabs = TabsPrimitive.Root;
 
+// 탭 목록 컨테이너 - 탭 버튼들을 담는 영역
 const TabsList = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.List>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
@@ -20,6 +25,7 @@ const TabsList = React.forwardRef<
 ));
 TabsList.displayName = TabsPrimitive.List.displayName;
 
+// 탭 전환 버튼 - 클릭 시 해당 탭 콘텐츠 표시
 const TabsTrigger = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
@@ -35,6 +41,7 @@ const TabsTrigger = React.forwardRef<
 ));
 TabsTrigger.displayName = TabsPrimitive.Trigger.displayName;
 
+// 탭 콘텐츠 영역 - 선택된 탭의 내용 표시
 const TabsContent = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>

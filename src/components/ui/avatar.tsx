@@ -3,6 +3,10 @@ import * as AvatarPrimitive from "@radix-ui/react-avatar";
 
 import { cn } from "@/lib/utils";
 
+// 아바타 컴포넌트 - 사용자 프로필 이미지 또는 대체 텍스트 표시
+// 사용 위치: features/layout (navigation-drawer), pages (Index, MyPage, WorkspaceDetail, Workspaces)
+
+// 아바타 루트 컨테이너
 const Avatar = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>
@@ -15,6 +19,7 @@ const Avatar = React.forwardRef<
 ));
 Avatar.displayName = AvatarPrimitive.Root.displayName;
 
+// 아바타 이미지 - 프로필 사진 표시
 const AvatarImage = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Image>,
   React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>
@@ -23,6 +28,7 @@ const AvatarImage = React.forwardRef<
 ));
 AvatarImage.displayName = AvatarPrimitive.Image.displayName;
 
+// 아바타 대체 콘텐츠 - 이미지 로드 실패 시 표시할 아이콘 또는 텍스트
 const AvatarFallback = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Fallback>,
   React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Fallback>

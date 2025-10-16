@@ -48,8 +48,7 @@ export const EditCategoryDialog = ({ open, onOpenChange, category }: EditCategor
     }
   }, [open, category, setColorPaletteMode]);
 
-  // UserRequest: 모바일에서 키보드가 올라오면 팝업창의 하단을 키보드 상단에 맞춤
-  // Handle keyboard appearance on mobile - align dialog bottom to keyboard top
+  // UserRequest: 모바일에서 키보드가 올라오면 팝업창의 하단을 키보드 상단에 맞춰 입력 필드가 가려지지 않도록 처리
   useEffect(() => {
     if (!open) {
       setKeyboardOffset(0);
@@ -140,7 +139,7 @@ export const EditCategoryDialog = ({ open, onOpenChange, category }: EditCategor
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* UserRequest: 색상을 7개씩 2줄로 중앙 정렬하여 배치 */}
+          {/* UserRequest: 색상을 7개씩 2줄로 중앙 정렬하여 배치하고 시각적 균형 유지 */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label>색상 선택</Label>

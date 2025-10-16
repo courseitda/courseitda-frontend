@@ -47,7 +47,7 @@ export const CategoryList = ({ workspaceId, categories, onPlaceClick }: Category
         </Button>
       </div>
 
-      {/* UserRequest: 카테고리 카드 사이 여백을 0.5배로 축소 (space-y-3 → space-y-1.5) */}
+      {/* UserRequest: 카테고리 카드 사이 여백을 0.5배로 축소하여 공간 효율성 향상 (space-y-3 → space-y-1.5) */}
       {categories.length === 0 ? (
         <div className="border-2 border-dashed border-border rounded-xl p-8 text-center">
           <p className="text-muted-foreground mb-4">카테고리를 추가해보세요</p>

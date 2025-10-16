@@ -2,6 +2,7 @@ import Dexie, { Table } from 'dexie';
 import type { User, Workspace, Category, Place, CategoryPlace } from '@/entities/types';
 
 // IndexedDB 데이터베이스 클래스 정의 - 브라우저에 로컬 데이터 저장
+// 사용 위치: mock/edge-functions (auth, category, place, workspace), features (카테고리, 장소 조회)
 export class CourseitdaDB extends Dexie {
   users!: Table<User, string>;
   workspaces!: Table<Workspace, string>;

@@ -92,8 +92,8 @@ const WorkspaceDetail = () => {
 
   return (
     <div className="h-screen bg-gradient-card flex flex-col overflow-hidden">
-      {/* Header */}
-      {/* UserRequest: 좌우 여백을 0.5배로 축소 (px-8 → px-4) */}
+      {/* 헤더 */}
+      {/* UserRequest: 좌우 여백을 0.5배로 축소하여 다른 페이지와 통일성 유지 (px-8 → px-4) */}
       <header className="border-b border-border/50 bg-background/95 backdrop-blur z-20 shrink-0">
         <div className="container mx-auto px-4 py-4 md:py-3">
           <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
@@ -152,7 +152,7 @@ const WorkspaceDetail = () => {
               </DropdownMenu>
             </div>
             
-            {/* Right: Profile Menu */}
+            {/* 우측: 프로필 메뉴 */}
             <div className="flex items-center">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -199,13 +199,13 @@ const WorkspaceDetail = () => {
         </div>
       </header>
 
-      {/* Main Content - Mobile: Map fixed top, Categories scrollable / Desktop: Side by side */}
-      {/* UserRequest: 좌우 여백을 0.5배로 축소 (px-8 → px-4) */}
+      {/* 메인 콘텐츠 - 모바일: 지도 상단 고정, 카테고리 스크롤 / 데스크톱: 좌우 분할 */}
+      {/* UserRequest: 좌우 여백을 0.5배로 축소하여 다른 페이지와 통일성 유지 (px-8 → px-4) */}
       <main className="flex-1 min-h-0">
         <div className="container mx-auto px-4 h-full">
           <div className="h-full py-2.5 md:py-4 flex flex-col md:grid md:grid-cols-2 gap-2.5 md:gap-4">
-            {/* Map Section - Fixed on mobile, normal on desktop */}
-            {/* UserRequest: 모바일 지도 높이를 화면의 약 45% 비율로 설정 (기존 5/9 ≈ 0.55에서 조정) */}
+            {/* 지도 영역 - 모바일에서는 고정, 데스크톱에서는 일반 */}
+            {/* UserRequest: 모바일 지도 높이를 화면의 약 45% 비율로 설정하여 카테고리 영역과 균형 유지 (기존 5/9 ≈ 0.55에서 조정) */}
             <div className="h-[calc((100vh-64px)*0.45)] md:h-full rounded-xl overflow-hidden border border-border/50 shadow-lg bg-card shrink-0">
               {kakaoJsApiKey ? (
                 <MapCanvas workspaceId={workspace.id} categories={categories || []} focusedPlace={focusedPlace} />
@@ -223,8 +223,8 @@ const WorkspaceDetail = () => {
               )}
             </div>
 
-            {/* Categories Section - Scrollable on mobile, normal on desktop */}
-            {/* UserRequest: 카테고리 영역 패딩을 0.5배로 축소 (p-8 → p-4) */}
+            {/* 카테고리 영역 - 모바일에서는 스크롤 가능, 데스크톱에서는 일반 */}
+            {/* UserRequest: 카테고리 영역 패딩을 0.5배로 축소하여 공간 효율성 향상 (p-8 → p-4) */}
             <div className="flex-1 md:h-full overflow-y-auto rounded-xl border border-border/50 bg-card p-4 min-h-0">
               <CategoryList 
                 workspaceId={workspace.id} 

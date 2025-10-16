@@ -5,6 +5,9 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+// Sheet 컴포넌트 - 화면 측면에서 슬라이드되는 사이드 패널
+// 사용 위치: features/layout (navigation-drawer)
+
 // Sheet 루트 컴포넌트 - 사이드 패널 열림/닫힘 상태 관리
 const Sheet = SheetPrimitive.Root;
 

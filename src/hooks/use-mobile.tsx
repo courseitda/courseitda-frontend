@@ -4,6 +4,7 @@ import * as React from "react";
 const MOBILE_BREAKPOINT = 768;
 
 // 현재 화면이 모바일인지 감지하는 훅 - 반응형 UI 구현에 사용
+// 사용 위치: 현재 미사용 (필요 시 반응형 로직에 활용 가능)
 export function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined);
 

@@ -1,6 +1,9 @@
 import { db } from '../db';
 import type { Workspace } from '@/entities/types';
 
+// 워크스페이스 관련 Edge Functions
+// 사용 위치: features/workspaces (create-workspace-dialog, edit-workspace-dialog), features/layout (navigation-drawer), pages (Workspaces, WorkspaceDetail)
+
 // 워크스페이스 생성 Edge Function - 새로운 여행 계획/코스 컨테이너 생성
 export const createWorkspace = async (input: {
   ownerId: string;

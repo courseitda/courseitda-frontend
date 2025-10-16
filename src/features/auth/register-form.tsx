@@ -161,22 +161,20 @@ export const RegisterForm = () => {
     // Edge Function을 통해 회원가입 요청 수행
     const { user, error } = await registerUser({ email, password, nickname });
 
-    // UserRequest: Display error toast message when registration fails
-    // 회원가입 실패 시 사용자에게 오류 메시지 표시
+    // UserRequest: 회원가입 실패 시 에러 토스트 메시지 표시하여 사용자에게 실패 원인 안내
     if (error || !user) {
       toast.error(error || '회원가입에 실패했습니다.');
       setLoading(false);
       return;
     }
 
-    // UserRequest: Display success toast message when registration succeeds
+    // UserRequest: 회원가입 성공 시 성공 토스트 메시지 표시하여 사용자에게 피드백 제공
     toast.success('회원가입이 완료되었습니다!');
 
     // 회원가입 성공 후 자동 로그인 처리하여 사용자 경험 개선
     const loginResult = await loginUser({ email, password });
     
-    // UserRequest: Display error toast message when auto-login fails
-    // 자동 로그인 실패 시 로그인 페이지로 이동하여 수동 로그인 유도
+    // UserRequest: 자동 로그인 실패 시 에러 토스트 메시지 표시 후 로그인 페이지로 이동하여 수동 로그인 유도
     if (loginResult.error || !loginResult.user || !loginResult.token) {
       toast.error('자동 로그인에 실패했습니다. 다시 로그인해주세요.');
       setLoading(false);

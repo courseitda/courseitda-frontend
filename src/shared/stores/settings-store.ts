@@ -16,6 +16,7 @@ const JS_KEY = 'courseitda_kakao_js_key';
 const PALETTE_MODE_KEY = 'courseitda_color_palette_mode';
 
 // 설정 전역 스토어 - Kakao API 키와 색상 팔레트 모드를 관리하며 새로고침 시에도 유지
+// 사용 위치: pages/Settings, features/map (map-canvas), features/places (place-search-dialog), features/categories (add-category-dialog, edit-category-dialog)
 export const useSettingsStore = create<SettingsState>((set) => ({
   // 앱 시작 시 localStorage에서 저장된 설정 복원
   kakaoRestApiKey: localStorage.getItem(REST_KEY),

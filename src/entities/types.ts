@@ -1,3 +1,6 @@
+// 도메인 엔티티 타입 정의 파일
+// 사용 위치: 전체 애플리케이션 (stores, edge-functions, pages, features)
+
 // 사용자 타입 - 회원가입 및 로그인 정보를 저장
 export type User = {
   id: string;

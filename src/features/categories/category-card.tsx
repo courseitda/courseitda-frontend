@@ -62,7 +62,7 @@ export const CategoryCard = ({ category, workspaceId, index, onPlaceClick }: Cat
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <Card className="hover-lift">
           <CollapsibleTrigger asChild>
-            {/* UserRequest: 카테고리 색상 표시를 지도 마커처럼 동그란 색상 안에 순서 번호를 흰색 숫자로 표시 */}
+            {/* UserRequest: 카테고리 색상을 지도 마커처럼 동그란 색상 안에 순서 번호를 흰색 숫자로 표시하여 시각적 일관성 유지 */}
             <CardHeader className="flex-row items-center space-y-0 py-3 cursor-pointer hover:bg-accent/50 transition-colors">
               <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab mr-3" onClick={(e) => e.stopPropagation()} />
               <div

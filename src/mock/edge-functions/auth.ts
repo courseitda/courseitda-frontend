@@ -1,6 +1,9 @@
 import { db } from '../db';
 import type { User } from '@/entities/types';
 
+// 인증 관련 Edge Functions
+// 사용 위치: features/auth (login-form, register-form)
+
 // Mock 비밀번호 해싱 - 실제 운영에서는 bcrypt 등 보안 라이브러리 사용 필요
 const hashPassword = (password: string): string => {
   return btoa(password); // Base64 인코딩 (데모용)
@@ -23,8 +26,7 @@ export const registerUser = async (input: {
       return { error: '모든 필드를 입력해주세요.' };
     }
 
-    // UserRequest: Change password minimum length from 6 to 8 to match frontend validation
-    // 비밀번호 최소 길이 검증 - 프론트엔드 검증과 일치
+    // UserRequest: 비밀번호 최소 길이를 6자에서 8자로 변경하여 프론트엔드 검증과 일치시킴
     if (input.password.length < 8) {
       return { error: '비밀번호는 최소 8자 이상이어야 합니다.' };
     }

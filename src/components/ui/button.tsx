@@ -4,7 +4,10 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
-// 버튼 스타일 변형 정의 - 다양한 용도별 스타일(variant)과 크기(size)를 조합하여 일관된 버튼 디자인 제공
+// 버튼 컴포넌트 - 다양한 용도별 스타일(variant)과 크기(size)를 조합하여 일관된 버튼 디자인 제공
+// 사용 위치: features (전체), pages (전체), components/ui (alert-dialog 등)
+
+// 버튼 스타일 변형 정의
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {

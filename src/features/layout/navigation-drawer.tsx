@@ -93,14 +93,14 @@ export const NavigationDrawer = ({
           <Menu className="w-5 h-5" />
         </Button>
       </SheetTrigger>
-      {/* UserRequest: 모바일 뷰에서는 전체 화면 가로길이의 3/4 (75%), 데스크톱에서는 고정 너비 320px */}
+      {/* UserRequest: 모바일 뷰에서는 전체 화면 가로길이의 3/4 (75%)로 설정하고, 데스크톱에서는 고정 너비 320px로 설정하여 적절한 너비 제공 */}
       <SheetContent side="right" className="w-[75vw] md:w-80 p-0 flex flex-col">
-        {/* UserRequest: 네비게이션 드로우바 제목을 가운데 정렬 (!text-center) */}
+        {/* UserRequest: 네비게이션 드로어 제목을 가운데 정렬하여 시각적 균형 유지 (!text-center) */}
         <SheetHeader className="p-4 pb-3 !text-center">
           <SheetTitle>메뉴</SheetTitle>
         </SheetHeader>
 
-        {/* UserRequest: 스크롤 영역을 유연하게 확장하고 내부 여백 설정 (좌우 16px, 아래 16px, 자식 요소 간 세로 간격 16px) */}
+        {/* UserRequest: 스크롤 영역을 유연하게 확장하고 내부 여백 설정하여 가독성 향상 (좌우 16px, 아래 16px, 자식 요소 간 세로 간격 16px) */}
         <ScrollArea className="flex-1">
           <div className="px-4 pb-4 space-y-4">
             {/* 계정 정보 영역 */}

@@ -1,11 +1,12 @@
-// UserRequest: 카테고리 색상을 18개에서 14개로 축소 후 13개로 조정
-// UserRequest: 7개씩 2줄로 일정한 간격, 중앙 정렬
-// UserRequest: 마지막 칸을 색상 팔레트 모드 전환 버튼으로 활용
+// UserRequest: 카테고리 색상을 18개에서 14개로 축소 후 13개로 조정하여 7x2 그리드 배치
+// UserRequest: 7개씩 2줄로 일정한 간격, 중앙 정렬하여 시각적 균형 유지
+// UserRequest: 마지막 칸을 색상 팔레트 모드 전환 버튼으로 활용하여 다양한 색상 조합 제공
 // UserRequest: 5가지 색상 팔레트 모드 제공 (Vibrant, Pastel, Deep, Soft, Muted)
-// UserRequest: 팔레트 이름을 영어로 표기
-// UserRequest: 다이얼로그를 열 때마다 기본(Vibrant) 모드로 초기화
+// UserRequest: 팔레트 이름을 영어로 표기하여 국제화 대응
+// UserRequest: 다이얼로그를 열 때마다 기본(Vibrant) 모드로 초기화하여 일관성 유지
 
-// 카테고리 색상 팔레트 정의 - 5가지 모드(vibrant, pastel, deep, soft, muted)로 다양한 색상 조합 제공
+// 카테고리 색상 팔레트 상수 정의 - 5가지 모드로 다양한 색상 조합 제공
+// 사용 위치: features/categories (add-category-dialog, edit-category-dialog), shared/stores/settings-store
 export const COLOR_PALETTES = {
   vibrant: [
     // 첫 번째 줄 - 따뜻한 색상 (빨강 → 주황 → 노랑 → 초록) - 생동감 있는 색상

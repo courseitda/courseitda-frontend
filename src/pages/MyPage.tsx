@@ -32,12 +32,12 @@ const MyPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-card">
-      {/* UserRequest: 좌우 여백을 0.5배로 축소하여 통일 (px-8 → px-4) */}
+      {/* UserRequest: 좌우 여백을 0.5배로 축소하여 다른 페이지와 통일성 유지 (px-8 → px-4) */}
       <header className="border-b border-border/50 bg-background/95 backdrop-blur">
         <div className="container mx-auto px-4 py-4 md:py-3">
           <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
-            {/* Left: Back Button */}
-            {/* UserRequest: 마이페이지에 뒤로가기 버튼 추가 */}
+            {/* 좌측: 뒤로가기 버튼 */}
+            {/* UserRequest: 마이페이지에 뒤로가기 버튼 추가하여 이전 페이지로 쉽게 이동 */}
             <Button
               variant="ghost"
               size="icon"
@@ -47,11 +47,11 @@ const MyPage = () => {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             
-            {/* Center: Title */}
-            {/* UserRequest: 제목 가운데 정렬 */}
+            {/* 중앙: 제목 */}
+            {/* UserRequest: 제목을 가운데 정렬하여 시각적 균형 유지 */}
             <h1 className="text-lg font-bold text-center">마이페이지</h1>
             
-            {/* Right: Empty space for symmetry */}
+            {/* 우측: 대칭을 위한 빈 공간 */}
             <div className="w-10" />
           </div>
         </div>

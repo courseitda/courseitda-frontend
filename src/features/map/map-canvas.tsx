@@ -284,8 +284,7 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
           if (error) {
             toast.error(error);
           } else {
-            // UserRequest: 대표장소 설정 시 토스트 메시지 제거
-            // 성공 후 정보창 닫기
+            // UserRequest: 대표장소 설정 시 토스트 메시지를 제거하고 정보창만 닫아 불필요한 알림 방지
             if (currentInfoWindowRef.current) {
               currentInfoWindowRef.current.setMap(null);
               currentInfoWindowRef.current = null;
@@ -350,8 +349,7 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
         const current = representativeCategoriesWithPlaces[i]!;
         const next = representativeCategoriesWithPlaces[i + 1]!;
         
-        // UserRequest: 경로를 20개의 선분으로 분할하여 양 끝 마커 색상으로 그라데이션 구현
-        // 부드러운 그라데이션을 위해 각 경로를 20개의 작은 선분으로 분할
+        // UserRequest: 경로를 20개의 선분으로 분할하여 양 끝 마커 색상으로 부드러운 그라데이션 구현
         const numSegments = 20;
         
         for (let j = 0; j < numSegments; j++) {
@@ -372,7 +370,7 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
             new kakao.maps.LatLng(lat2, lng2),
           ];
 
-          // UserRequest: 점선 스타일 유지하면서 그라데이션 적용
+          // UserRequest: 점선 스타일을 유지하면서 그라데이션 적용하여 경로의 시각적 흐름 강화
           const polyline = new kakao.maps.Polyline({
             path: segmentPath,
             strokeWeight: 3,
@@ -390,8 +388,7 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
       polylinesRef.current = polylines;
     }
 
-    // UserRequest: 대표장소 변경 시 지도 위치 유지 - 최초 로딩이나 장소 개수 변경 시에만 bounds 재설정
-    // 장소 개수가 변경된 경우에만 지도 영역을 재조정하여 불필요한 이동 방지
+    // UserRequest: 대표장소 변경 시 지도 위치를 유지하고 최초 로딩이나 장소 개수 변경 시에만 bounds 재설정하여 사용자 경험 개선
     const currentPlacesCount = allPlacesData.size;
     const shouldUpdateBounds = !hasInitializedBounds.current || prevPlacesCountRef.current !== currentPlacesCount;
     

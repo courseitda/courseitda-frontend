@@ -3,7 +3,8 @@ import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
 
 import { cn } from "@/lib/utils";
 
-// 커스텀 스크롤바를 가진 스크롤 영역 컴포넌트 - 일관된 스크롤바 디자인 제공
+// 스크롤 영역 컴포넌트 - 일관된 스크롤바 디자인 제공
+// 사용 위치: features/layout (navigation-drawer)
 const ScrollArea = React.forwardRef<
   React.ElementRef<typeof ScrollAreaPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root>

@@ -1,6 +1,9 @@
 import { db } from '../db';
 import type { Place, CategoryPlace, KakaoPlace } from '@/entities/types';
 
+// 장소 관련 Edge Functions
+// 사용 위치: features/places (place-search-dialog, place-item), features/categories (category-card)
+
 // 카테고리에 장소 추가 Edge Function - Kakao 검색 결과를 카테고리에 연결
 export const addPlaceToCategory = async (input: {
   workspaceId: string;

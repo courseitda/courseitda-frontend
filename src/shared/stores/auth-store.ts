@@ -14,6 +14,7 @@ const TOKEN_KEY = 'courseitda_token';
 const USER_KEY = 'courseitda_user';
 
 // 인증 상태 전역 스토어 - 로그인 상태와 사용자 정보를 관리하며 새로고침 시에도 유지
+// 사용 위치: features/auth (login-form, register-form), features/workspaces (create-workspace-dialog), pages (전체 페이지)
 export const useAuthStore = create<AuthState>((set) => {
   // 앱 시작 시 localStorage에서 저장된 인증 정보 복원하여 자동 로그인
   const storedToken = localStorage.getItem(TOKEN_KEY);
