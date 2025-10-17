@@ -2,8 +2,8 @@ import type { Place } from '@/entities/types';
 import { Button } from '@/components/ui/button';
 import { MapPin, Trash2, Check } from 'lucide-react';
 import { toast } from 'sonner';
-import { removePlace } from '@/mock/edge-functions/place';
-import { setRepresentativePlace } from '@/mock/edge-functions/category';
+// API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
+import { placeApi, categoryApi } from '@/services/api';
 
 interface PlaceItemProps {
   place: Place;
@@ -16,9 +16,9 @@ interface PlaceItemProps {
 // 장소 아이템 컴포넌트 - 카테고리 내 장소 정보를 표시하며 대표 장소 설정 및 삭제 기능 제공
 // 사용 위치: features/categories/category-card
 export const PlaceItem = ({ place, categoryId, isRepresentative, hasRepresentative, onPlaceClick }: PlaceItemProps) => {
-  // 장소 삭제 처리 - Edge Function을 통해 카테고리와의 연결 제거
+  // 장소 삭제 처리 - API 서비스 레이어를 통해 카테고리와의 연결 제거 (백엔드 연동 시 placeApi만 수정)
   const handleDelete = async () => {
-    const { error } = await removePlace(place.id, categoryId);
+    const { error } = await placeApi.remove(place.id, categoryId);
     if (error) {
       toast.error(error);
     } else {
@@ -26,10 +26,10 @@ export const PlaceItem = ({ place, categoryId, isRepresentative, hasRepresentati
     }
   };
 
-  // 대표 장소 설정/해제 처리 - 이미 대표 장소면 해제, 아니면 설정
+  // 대표 장소 설정/해제 처리 - 이미 대표 장소면 해제, 아니면 설정 (API 서비스 레이어 사용)
   const handleSetRepresentative = async () => {
     const newPlaceId = isRepresentative ? null : place.id;
-    const { error } = await setRepresentativePlace(categoryId, newPlaceId);
+    const { error } = await categoryApi.setRepresentativePlace(categoryId, newPlaceId);
     
     if (error) {
       toast.error(error);

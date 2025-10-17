@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { registerUser, loginUser } from '@/mock/edge-functions/auth';
+// API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
+import { authApi } from '@/services/api';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { Check, X, AlertCircle, Eye, EyeOff, User, Mail, Lock } from 'lucide-react';
 
@@ -159,8 +160,8 @@ export const RegisterForm = () => {
       return;
     }
 
-    // Edge Function을 통해 회원가입 요청 수행
-    const { user, error } = await registerUser({ email, password, nickname });
+    // API 서비스 레이어를 통해 회원가입 요청 수행 (백엔드 연동 시 authApi만 수정)
+    const { user, error } = await authApi.register({ email, password, nickname });
 
     // UserRequest: 회원가입 실패 시 에러 토스트 메시지 표시하여 사용자에게 실패 원인 안내
     if (error || !user) {
@@ -172,8 +173,8 @@ export const RegisterForm = () => {
     // UserRequest: 회원가입 성공 시 성공 토스트 메시지 표시하여 사용자에게 피드백 제공
     toast.success('회원가입이 완료되었습니다!');
 
-    // 회원가입 성공 후 자동 로그인 처리하여 사용자 경험 개선
-    const loginResult = await loginUser({ email, password });
+    // 회원가입 성공 후 자동 로그인 처리하여 사용자 경험 개선 (API 서비스 레이어 사용)
+    const loginResult = await authApi.login({ email, password });
     
     // UserRequest: 자동 로그인 실패 시 에러 토스트 메시지 표시 후 로그인 페이지로 이동하여 수동 로그인 유도
     if (loginResult.error || !loginResult.user || !loginResult.token) {

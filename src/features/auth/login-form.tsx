@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { loginUser } from '@/mock/edge-functions/auth';
+// API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
+import { authApi } from '@/services/api';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 
@@ -22,8 +23,8 @@ export const LoginForm = () => {
     e.preventDefault();
     setLoading(true);
 
-    // Edge Function을 통해 로그인 인증 수행
-    const { user, token, error } = await loginUser({ email, password });
+    // API 서비스 레이어를 통해 로그인 인증 수행 (백엔드 연동 시 authApi만 수정)
+    const { user, token, error } = await authApi.login({ email, password });
 
     // 로그인 실패 시 에러 메시지 표시 후 종료
     if (error || !user || !token) {

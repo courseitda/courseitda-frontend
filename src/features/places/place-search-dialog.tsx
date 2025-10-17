@@ -12,7 +12,8 @@ import { Label } from '@/components/ui/label';
 import { Search, MapPin, Phone, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { searchPlaces } from '@/shared/lib/kakao';
-import { addPlaceToCategory } from '@/mock/edge-functions/place';
+// API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
+import { placeApi } from '@/services/api';
 import { useSettingsStore } from '@/shared/stores/settings-store';
 import type { KakaoPlace } from '@/entities/types';
 
@@ -74,8 +75,8 @@ export const PlaceSearchDialog = ({
   const handleAdd = async (place: KakaoPlace) => {
     setAdding(place.id);
 
-    // Edge Function을 통해 장소를 카테고리에 연결
-    const { error } = await addPlaceToCategory({
+    // API 서비스 레이어를 통해 장소를 카테고리에 연결 (백엔드 연동 시 placeApi만 수정)
+    const { error } = await placeApi.addToCategory({
       workspaceId,
       categoryId,
       kakaoPlace: place,

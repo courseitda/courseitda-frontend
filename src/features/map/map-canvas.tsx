@@ -4,8 +4,8 @@ import type { Category, Place } from '@/entities/types';
 import { useKakaoLoader } from '@/shared/hooks/use-kakao-loader';
 import { useSettingsStore } from '@/shared/stores/settings-store';
 import { db } from '@/mock/db';
-import { getPlacesByCategory } from '@/mock/edge-functions/place';
-import { setRepresentativePlace } from '@/mock/edge-functions/category';
+// API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
+import { placeApi, categoryApi } from '@/services/api';
 import { toast } from 'sonner';
 
 // 지도 캔버스 컴포넌트 - Kakao Maps SDK를 사용하여 장소 마커와 경로 표시
@@ -63,9 +63,9 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
   const allPlacesData = useLiveQuery(async () => {
     const placesMap = new Map();
     
-    // 각 카테고리의 장소들을 조회하여 Map으로 통합
+    // 각 카테고리의 장소들을 조회하여 Map으로 통합 (API 서비스 레이어 사용)
     for (const category of categories) {
-      const places = await getPlacesByCategory(category.id);
+      const places = await placeApi.getByCategory(category.id);
       for (const place of places) {
         placesMap.set(place.id, { place, category });
       }
@@ -281,8 +281,8 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
           // 이미 대표 장소면 해제, 아니면 설정
           const newPlaceId = currentIsRepresentative ? null : place.id;
           
-          // Edge Function을 통해 대표 장소 변경
-          const { error } = await setRepresentativePlace(category.id, newPlaceId);
+          // API 서비스 레이어를 통해 대표 장소 변경 (백엔드 연동 시 categoryApi만 수정)
+          const { error } = await categoryApi.setRepresentativePlace(category.id, newPlaceId);
           
           if (error) {
             toast.error(error);

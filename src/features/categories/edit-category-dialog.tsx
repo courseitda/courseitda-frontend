@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { updateCategory } from '@/mock/edge-functions/category';
+// API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
+import { categoryApi } from '@/services/api';
 import { getCategoryColors, PALETTE_NAMES, type PaletteMode } from '@/shared/constants/colors';
 import { useSettingsStore } from '@/shared/stores/settings-store';
 import { Check, Palette } from 'lucide-react';
@@ -105,8 +106,8 @@ export const EditCategoryDialog = ({ open, onOpenChange, category }: EditCategor
 
     setLoading(true);
 
-    // Edge Function을 통해 카테고리 정보 업데이트
-    const { error } = await updateCategory(category.id, {
+    // API 서비스 레이어를 통해 카테고리 정보 업데이트 (백엔드 연동 시 categoryApi만 수정)
+    const { error } = await categoryApi.update(category.id, {
       name: name.trim(),
       color: selectedColor,
     });

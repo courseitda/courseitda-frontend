@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { CategoryCard } from './category-card';
 import { AddCategoryDialog } from './add-category-dialog';
-import { reorderCategories } from '@/mock/edge-functions/category';
+// API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
+import { categoryApi } from '@/services/api';
 import { toast } from 'sonner';
 
 interface CategoryListProps {
@@ -29,9 +30,9 @@ export const CategoryList = ({ workspaceId, categories, onPlaceClick }: Category
     const [reorderedItem] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reorderedItem);
 
-    // 변경된 순서를 ID 배열로 변환하여 Edge Function을 통해 DB에 저장
+    // 변경된 순서를 ID 배열로 변환하여 API 서비스 레이어를 통해 DB에 저장 (백엔드 연동 시 categoryApi만 수정)
     const orderedIds = items.map((item) => item.id);
-    const { error } = await reorderCategories(workspaceId, orderedIds);
+    const { error } = await categoryApi.reorder(workspaceId, orderedIds);
 
     if (error) {
       toast.error(error);

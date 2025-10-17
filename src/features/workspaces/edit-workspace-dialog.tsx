@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { updateWorkspace } from '@/mock/edge-functions/workspace';
+// API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
+import { workspaceApi } from '@/services/api';
 import type { Workspace } from '@/entities/types';
 
 interface EditWorkspaceDialogProps {
@@ -74,8 +75,8 @@ export const EditWorkspaceDialog = ({ open, onOpenChange, workspace }: EditWorks
 
     setLoading(true);
 
-    // Edge Function을 통해 워크스페이스 정보 업데이트
-    const { error } = await updateWorkspace(workspace.id, {
+    // API 서비스 레이어를 통해 워크스페이스 정보 업데이트 (백엔드 연동 시 workspaceApi만 수정)
+    const { error } = await workspaceApi.update(workspace.id, {
       title,
     });
 

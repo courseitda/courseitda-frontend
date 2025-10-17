@@ -36,7 +36,8 @@ import logo from '@/assets/logo-no-background.png';
 import { CreateWorkspaceDialog } from '@/features/workspaces/create-workspace-dialog';
 import { EditWorkspaceDialog } from '@/features/workspaces/edit-workspace-dialog';
 import { toast } from 'sonner';
-import { deleteWorkspace } from '@/mock/edge-functions/workspace';
+// API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
+import { workspaceApi } from '@/services/api';
 import type { Workspace } from '@/entities/types';
 
 /**
@@ -90,12 +91,12 @@ const Workspaces = () => {
     setDeleteAlertOpen(true);
   };
   
-  // 워크스페이스 삭제 확정 - Edge Function을 통해 cascade delete 수행
+  // 워크스페이스 삭제 확정 - API 서비스 레이어를 통해 cascade delete 수행
   const handleDeleteConfirm = async () => {
     if (!selectedForDelete) return;
 
-    // Edge Function에서 워크스페이스와 관련된 모든 데이터(카테고리, 장소) 삭제
-    const { error } = await deleteWorkspace(selectedForDelete.id);
+    // API 서비스 레이어에서 워크스페이스와 관련된 모든 데이터(카테고리, 장소) 삭제 (백엔드 연동 시 workspaceApi만 수정)
+    const { error } = await workspaceApi.delete(selectedForDelete.id);
     if (error) {
       toast.error(error);
     } else {

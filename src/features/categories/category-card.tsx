@@ -15,11 +15,11 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { GripVertical, Plus, Trash2, ChevronDown, Pencil } from 'lucide-react';
-import { getPlacesByCategory } from '@/mock/edge-functions/place';
+// API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
+import { placeApi, categoryApi } from '@/services/api';
 import { PlaceSearchDialog } from '@/features/places/place-search-dialog';
 import { PlaceItem } from '@/features/places/place-item';
 import { EditCategoryDialog } from './edit-category-dialog';
-import { deleteCategory } from '@/mock/edge-functions/category';
 import { toast } from 'sonner';
 
 interface CategoryCardProps {
@@ -37,9 +37,9 @@ export const CategoryCard = ({ category, workspaceId, index, onPlaceClick }: Cat
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(true);
 
-  // 카테고리에 속한 장소 목록을 실시간으로 조회하여 변경사항 자동 반영
+  // 카테고리에 속한 장소 목록을 실시간으로 조회하여 변경사항 자동 반영 (API 서비스 레이어 사용)
   const places = useLiveQuery(async () => {
-    return await getPlacesByCategory(category.id);
+    return await placeApi.getByCategory(category.id);
   }, [category.id]);
 
   // 삭제 버튼 클릭 시 확인 다이얼로그 표시
@@ -47,9 +47,9 @@ export const CategoryCard = ({ category, workspaceId, index, onPlaceClick }: Cat
     setDeleteAlertOpen(true);
   };
   
-  // 삭제 확인 후 Edge Function을 통해 카테고리와 연결된 모든 장소 함께 삭제
+  // 삭제 확인 후 API 서비스 레이어를 통해 카테고리와 연결된 모든 장소 함께 삭제 (백엔드 연동 시 categoryApi만 수정)
   const handleDeleteConfirm = async () => {
-    const { error } = await deleteCategory(category.id);
+    const { error } = await categoryApi.delete(category.id);
     if (error) {
       toast.error(error);
     } else {

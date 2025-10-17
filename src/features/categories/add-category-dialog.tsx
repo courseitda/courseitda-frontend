@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { addCategory } from '@/mock/edge-functions/category';
+// API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
+import { categoryApi } from '@/services/api';
 import { getCategoryColors, PALETTE_NAMES, type PaletteMode } from '@/shared/constants/colors';
 import { useSettingsStore } from '@/shared/stores/settings-store';
 import { Check, Palette } from 'lucide-react';
@@ -134,8 +135,8 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceId }: AddCatego
 
     setLoading(true);
 
-    // Edge Function을 통해 카테고리 추가 (DB 로직은 Edge에서 처리)
-    const { category, error } = await addCategory({
+    // API 서비스 레이어를 통해 카테고리 추가 (백엔드 연동 시 categoryApi만 수정)
+    const { category, error } = await categoryApi.add({
       workspaceId,
       name: categoryName,
       color: selectedColor,

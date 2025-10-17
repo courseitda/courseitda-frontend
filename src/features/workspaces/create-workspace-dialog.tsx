@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { createWorkspace } from '@/mock/edge-functions/workspace';
+// API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
+import { workspaceApi } from '@/services/api';
 import { useAuthStore } from '@/shared/stores/auth-store';
 
 interface CreateWorkspaceDialogProps {
@@ -68,8 +69,8 @@ export const CreateWorkspaceDialog = ({ open, onOpenChange }: CreateWorkspaceDia
 
     setLoading(true);
 
-    // Edge Function을 통해 새 워크스페이스 생성
-    const { workspace, error } = await createWorkspace({
+    // API 서비스 레이어를 통해 새 워크스페이스 생성 (백엔드 연동 시 workspaceApi만 수정)
+    const { workspace, error } = await workspaceApi.create({
       ownerId: user.id,
       title,
     });
