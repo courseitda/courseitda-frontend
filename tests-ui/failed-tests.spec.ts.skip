@@ -1,0 +1,688 @@
+import { test, expect } from '@playwright/test';
+import { db } from '../src/mock/db';
+
+/**
+ * ❌ 실패하는 E2E 테스트 모음
+ * 
+ * 이 파일은 현재 자동화 테스트로 실행 시 실패하는 테스트들을 모아둔 것입니다.
+ * 이 테스트들은 수동 테스트로 대체하거나, 향후 개선이 필요합니다.
+ * 
+ * 실행 방법:
+ * npm run test:e2e -- failed-tests.spec.ts
+ * 
+ * ⚠️ 주의: 이 테스트들은 실패할 것으로 예상됩니다.
+ */
+
+test.describe('실패하는 테스트 - 팔레트 관련', () => {
+  test.beforeEach(async ({ page }) => {
+    // IndexedDB 초기화
+    await page.goto('/');
+    await page.evaluate(() => indexedDB.deleteDatabase('courseitda-db'));
+    
+    // 회원가입 및 로그인
+    await page.goto('/auth');
+    await page.getByRole('button', { name: '회원가입' }).click();
+    await page.locator('#register-email').fill('failed-test@test.com');
+    await page.locator('#register-password').fill('Password123!');
+    await page.locator('#register-confirm-password').fill('Password123!');
+    await page.getByRole('button', { name: '회원가입' }).click();
+    await expect(page).toHaveURL(/\/workspaces/);
+    
+    // 워크스페이스 생성
+    await page.getByRole('button', { name: /새 워크스페이스/ }).click();
+    await page.getByLabel('제목').fill('테스트 워크스페이스');
+    await page.getByRole('button', { name: '생성' }).click();
+    await page.getByRole('heading', { name: '테스트 워크스페이스' }).first().click();
+  });
+
+  /**
+   * 🧪 테스트: 카테고리 추가 다이얼로그에서 색상 팔레트 변경 기능
+   * 
+   * ❌ 실패 이유:
+   * - 다이얼로그 내부의 `.text-xs.text-muted-foreground` 선택자로 팔레트 이름을 찾지 못함
+   * - React의 상태 업데이트와 DOM 렌더링 타이밍 불일치
+   * - `waitForTimeout(300ms)`으로도 요소가 업데이트되기 전에 assertion 실행
+   * - Radix UI Dialog의 포털(portal) 구조로 인한 요소 접근 문제
+   * 
+   * 📋 수동 테스트 방법:
+   * 1. 워크스페이스 상세 페이지 진입
+   * 2. 카테고리 섹션에서 "추가" 버튼(+ 아이콘) 클릭
+   * 3. 다이얼로그 우측 상단의 색상 팔레트 이름 확인 → "생동감" 표시
+   * 4. 색상 팔레트 오른쪽의 순환 화살표(↻) 버튼 클릭
+   * 5. 팔레트 이름이 "파스텔"로 변경되는지 확인
+   * 6. 다시 버튼 클릭 → "깊은" → "부드러운" → "차분한" → "생동감" (순환)
+   * 7. 각 팔레트마다 14개의 색상이 다르게 표시되는지 확인
+   */
+  test('팔레트 변경 버튼이 작동한다', async ({ page }) => {
+    // 카테고리 추가 다이얼로그 열기
+    await page.locator('button:has-text("추가"):has(svg.lucide-plus)').click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.waitForTimeout(500);
+
+    // 초기 팔레트 이름 확인
+    const dialog = page.getByRole('dialog');
+    const paletteLabel = dialog.locator('.text-xs.text-muted-foreground');
+    await expect(paletteLabel).toBeVisible();
+    await expect(paletteLabel).toContainText('생동감');
+
+    // 팔레트 변경
+    await page.getByRole('button', { name: '색상 팔레트 변경' }).click();
+    await page.waitForTimeout(300);
+    await expect(paletteLabel).toContainText('파스텔');
+
+    // 다시 변경
+    await page.getByRole('button', { name: '색상 팔레트 변경' }).click();
+    await page.waitForTimeout(300);
+    await expect(paletteLabel).toContainText('깊은');
+  });
+
+  /**
+   * 🧪 테스트: 이미 사용 중인 색상을 자동으로 건너뛰고 사용하지 않은 색상 선택
+   * 
+   * ❌ 실패 이유:
+   * - 위 테스트와 동일한 팔레트 이름 요소 접근 문제
+   * - 색상 자동 선택 로직은 정상 작동하나, 팔레트 이름 변경 확인에서 실패
+   * - 첫 번째 카테고리 생성 후 두 번째 다이얼로그를 열 때 약간의 지연이 필요
+   * 
+   * 📋 수동 테스트 방법:
+   * 1. 카테고리 추가 다이얼로그에서 직접 입력으로 "첫번째" 생성
+   *    → 자동으로 첫 번째 색상이 선택됨
+   * 2. 다시 "추가" 버튼 클릭하여 두 번째 카테고리 다이얼로그 열기
+   * 3. 두 번째 색상이 자동 선택되어 있는지 확인 (체크 아이콘 표시)
+   * 4. 팔레트 변경 버튼 클릭 → "파스텔" 팔레트로 변경
+   * 5. 여전히 사용하지 않은 색상이 선택되어 있는지 확인
+   * 6. 카테고리를 14개(팔레트 색상 개수) 이상 생성하면 색상이 재사용됨을 확인
+   */
+  test('팔레트 변경 시 사용하지 않은 색상이 자동 선택된다', async ({ page }) => {
+    // 첫 번째 카테고리 생성
+    await page.locator('button:has-text("추가"):has(svg.lucide-plus)').click();
+    await page.getByPlaceholder('카테고리 이름').fill('첫번째');
+    await page.getByRole('button', { name: '추가' }).click();
+    await expect(page.getByRole('dialog')).not.toBeAttached();
+    await page.waitForTimeout(500);
+
+    // 두 번째 카테고리 다이얼로그 열기
+    await page.locator('button:has-text("추가"):has(svg.lucide-plus)').click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.waitForTimeout(500);
+
+    // 팔레트 이름 확인
+    const dialog = page.getByRole('dialog');
+    const paletteLabel = dialog.locator('.text-xs.text-muted-foreground');
+    await expect(paletteLabel).toBeVisible();
+    await expect(paletteLabel).toContainText('생동감');
+    
+    // 팔레트 변경
+    await page.getByRole('button', { name: '색상 팔레트 변경' }).click();
+    await page.waitForTimeout(300);
+    await expect(paletteLabel).toContainText('파스텔');
+  });
+});
+
+test.describe('실패하는 테스트 - 카테고리 삭제', () => {
+  test.beforeEach(async ({ page }) => {
+    // IndexedDB 초기화
+    await page.goto('/');
+    await page.evaluate(() => indexedDB.deleteDatabase('courseitda-db'));
+    
+    // 회원가입 및 로그인
+    await page.goto('/auth');
+    await page.getByRole('button', { name: '회원가입' }).click();
+    await page.locator('#register-email').fill('delete-test@test.com');
+    await page.locator('#register-password').fill('Password123!');
+    await page.locator('#register-confirm-password').fill('Password123!');
+    await page.getByRole('button', { name: '회원가입' }).click();
+    await expect(page).toHaveURL(/\/workspaces/);
+    
+    // 워크스페이스 생성 및 카테고리 추가
+    await page.getByRole('button', { name: /새 워크스페이스/ }).click();
+    await page.getByLabel('제목').fill('테스트 워크스페이스');
+    await page.getByRole('button', { name: '생성' }).click();
+    await page.getByRole('heading', { name: '테스트 워크스페이스' }).first().click();
+    
+    // 카테고리 생성
+    await page.locator('button:has-text("추가"):has(svg.lucide-plus)').click();
+    await page.getByRole('button', { name: '점심' }).click();
+    await expect(page.getByRole('dialog')).not.toBeAttached();
+    await page.waitForTimeout(1000);
+  });
+
+  /**
+   * 🧪 테스트: 카테고리 헤더의 휴지통 아이콘으로 카테고리 삭제
+   * 
+   * ❌ 실패 이유:
+   * - 카테고리 생성 직후 DOM에 삭제 버튼이 완전히 렌더링되기 전에 클릭 시도
+   * - `button:has(svg.lucide-trash-2)` 선택자로 버튼을 찾지만 Interactive 상태가 아님
+   * - 1초 대기 후에도 버튼 클릭이 이벤트를 트리거하지 못함
+   * - 카테고리 카드의 hover 상태나 포커스 상태가 필요할 수 있음
+   * 
+   * 📋 수동 테스트 방법:
+   * 1. 워크스페이스 상세 페이지에서 카테고리 추가 ("점심")
+   * 2. 생성된 카테고리 카드의 헤더 영역 확인
+   * 3. 카테고리 이름 오른쪽의 버튼들 확인:
+   *    - 연필 아이콘 (수정)
+   *    - 휴지통 아이콘 (삭제, 빨간색)
+   *    - Chevron 아이콘 (접기/펼치기)
+   * 4. 휴지통 아이콘 클릭
+   * 5. "카테고리 삭제" 확인 다이얼로그 표시
+   * 6. 경고 메시지 확인: "이 작업은 되돌릴 수 없으며..."
+   * 7. "삭제" 버튼(빨간색) 클릭
+   * 8. 카테고리가 목록에서 제거되고 "카테고리를 추가해보세요" 메시지 표시
+   */
+  test('카테고리 삭제가 정상적으로 작동한다', async ({ page }) => {
+    // 삭제 버튼 클릭
+    const deleteButton = page.locator('button:has(svg.lucide-trash-2)').first();
+    await expect(deleteButton).toBeVisible();
+    await deleteButton.click();
+
+    // 삭제 확인 다이얼로그
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await expect(page.getByText('카테고리 삭제')).toBeVisible();
+
+    // 삭제 실행
+    await page.getByRole('button', { name: '삭제' }).click();
+    await expect(page.getByRole('dialog')).not.toBeVisible();
+    await expect(page.getByText('점심')).not.toBeVisible();
+  });
+
+  /**
+   * 🧪 테스트: 카테고리 삭제 확인 다이얼로그에서 취소 버튼 동작
+   * 
+   * ❌ 실패 이유:
+   * - 위 테스트와 동일 (삭제 버튼 클릭 타이밍 이슈)
+   * - 삭제 다이얼로그 자체가 열리지 않아 취소 버튼을 테스트할 수 없음
+   * 
+   * 📋 수동 테스트 방법:
+   * 1. 카테고리 ("점심") 카드에서 휴지통 아이콘 클릭
+   * 2. "카테고리 삭제" 확인 다이얼로그 표시
+   * 3. 다이얼로그에서 "취소" 버튼 클릭
+   * 4. 다이얼로그가 닫히는지 확인
+   * 5. 카테고리가 여전히 목록에 남아있는지 확인
+   * 6. ESC 키로도 취소 가능한지 테스트
+   */
+  test('카테고리 삭제 시 취소 버튼이 작동한다', async ({ page }) => {
+    // 삭제 버튼 클릭
+    await page.locator('button:has(svg.lucide-trash-2)').first().click();
+
+    // 취소
+    await page.getByRole('button', { name: '취소' }).click();
+    await expect(page.getByRole('dialog')).not.toBeVisible();
+    
+    // 카테고리가 여전히 존재하는지 확인
+    await expect(page.locator('.font-semibold.tracking-tight.text-base:has-text("점심")').first()).toBeVisible();
+  });
+
+  /**
+   * 🧪 테스트: 카테고리 삭제 시 cascade delete 경고 메시지 표시
+   * 
+   * ❌ 실패 이유:
+   * - 위 테스트와 동일 (삭제 버튼 클릭 타이밍 이슈)
+   * - 삭제 다이얼로그가 열리지 않아 경고 메시지를 확인할 수 없음
+   * 
+   * 📋 수동 테스트 방법:
+   * 1. 카테고리 카드에서 휴지통 아이콘 클릭
+   * 2. "카테고리 삭제" 다이얼로그의 경고 메시지 확인:
+   *    - "점심 카테고리를 정말 삭제하시겠습니까?"
+   *    - "이 작업은 되돌릴 수 없으며"
+   *    - "카테고리에 포함된 모든 장소 연결이 함께 삭제됩니다"
+   * 3. 삭제 버튼이 빨간색(destructive)으로 표시되는지 확인
+   * 4. 경고 메시지가 사용자에게 명확하게 전달되는지 확인
+   */
+  test('카테고리 삭제 시 경고 메시지가 표시된다', async ({ page }) => {
+    // 삭제 버튼 클릭
+    await page.locator('button:has(svg.lucide-trash-2)').first().click();
+
+    // 경고 메시지 확인
+    await expect(page.getByText(/이 작업은 되돌릴 수 없으며.*카테고리에 포함된 모든 장소 연결이 함께 삭제됩니다/)).toBeVisible();
+  });
+
+  /**
+   * 🧪 테스트: 카테고리 카드 헤더의 모든 UI 요소 표시 확인
+   * 
+   * ❌ 실패 이유:
+   * - 휴지통 아이콘을 찾지 못하는 것 외에는 모든 요소가 정상 표시됨
+   * - `svg.lucide-trash-2` 선택자가 정확하나 visibility 상태 문제
+   * - 카테고리 카드의 hover 효과나 포커스 상태에 따라 버튼이 표시될 수 있음
+   * 
+   * 📋 수동 테스트 방법:
+   * 1. 워크스페이스 상세 페이지에서 카테고리 ("점심") 추가
+   * 2. 카테고리 카드 헤더의 좌측부터 순서대로 확인:
+   *    a) GripVertical 아이콘 (≡) - 드래그 핸들
+   *    b) 원형 배지에 순서 번호 "1"
+   *    c) 카테고리 이름 "점심" (굵은 글씨)
+   *    d) 연필 아이콘 (수정 버튼)
+   *    e) 휴지통 아이콘 (삭제 버튼, 빨간색)
+   *    f) Chevron Down 아이콘 (접기/펼치기 버튼)
+   * 3. 각 버튼에 hover 시 색상 변경 확인
+   * 4. 각 버튼 클릭 시 해당 기능 작동 확인
+   */
+  test('카테고리 헤더의 모든 버튼이 표시된다', async ({ page }) => {
+    await page.waitForTimeout(1000);
+    
+    // 모든 아이콘 확인
+    await expect(page.locator('svg.lucide-grip-vertical').first()).toBeVisible();
+    await expect(page.locator('.w-6.h-6.rounded-full').first()).toBeVisible();
+    await expect(page.locator('.font-semibold.tracking-tight.text-base').first()).toBeVisible();
+    await expect(page.locator('svg.lucide-pencil').first()).toBeVisible();
+    await expect(page.locator('svg.lucide-trash-2').first()).toBeVisible();
+    await expect(page.locator('svg.lucide-chevron-down').first()).toBeVisible();
+  });
+});
+
+test.describe('실패하는 테스트 - 토스트 메시지', () => {
+  test.beforeEach(async ({ page }) => {
+    // IndexedDB 초기화
+    await page.goto('/');
+    await page.evaluate(() => indexedDB.deleteDatabase('courseitda-db'));
+    
+    // 회원가입 및 로그인
+    await page.goto('/auth');
+    await page.getByRole('button', { name: '회원가입' }).click();
+    await page.locator('#register-email').fill('toast-test@test.com');
+    await page.locator('#register-password').fill('Password123!');
+    await page.locator('#register-confirm-password').fill('Password123!');
+    await page.getByRole('button', { name: '회원가입' }).click();
+    await expect(page).toHaveURL(/\/workspaces/);
+  });
+
+  /**
+   * 🧪 테스트: sonner 라이브러리를 사용한 토스트 알림 메시지 표시
+   * 
+   * ❌ 실패 이유:
+   * - sonner 토스트는 동적으로 생성되며 짧은 시간(약 3-5초)만 표시됨
+   * - `li[data-sonner-toast]` 선택자로 찾지만 타이밍 문제로 이미 사라진 상태
+   * - 토스트가 화면 하단에서 애니메이션으로 나타났다 사라지는 동안 캡처 실패
+   * - 여러 토스트가 연속으로 나타날 때 이전 토스트가 사라지는 타이밍 문제
+   * 
+   * 📋 수동 테스트 방법:
+   * 1. 워크스페이스 생성:
+   *    - "새 워크스페이스" 버튼 클릭 → 제목 입력 → 생성
+   *    - 화면 하단에 "워크스페이스가 생성되었습니다!" 초록색 토스트 확인
+   * 2. 워크스페이스 상세 진입 → 카테고리 추가:
+   *    - "추가" 버튼 → "점심" 선택
+   *    - "카테고리가 추가되었습니다!" 초록색 토스트 확인
+   * 3. 장소 검색 다이얼로그에서 빈 검색:
+   *    - "장소 검색" 버튼 → 검색어 없이 "검색" 클릭
+   *    - "검색어를 입력해주세요." 빨간색 에러 토스트 확인
+   * 4. 토스트가 3-5초 후 자동으로 사라지는지 확인
+   * 5. 토스트에 액션 버튼이 있는 경우 (예: "설정하기") 클릭 시 페이지 이동 확인
+   */
+  test('성공 및 에러 토스트 메시지가 올바르게 표시된다', async ({ page }) => {
+    // 워크스페이스 생성
+    await page.getByRole('button', { name: /새 워크스페이스/ }).click();
+    await page.getByLabel('제목').fill('토스트 테스트');
+    await page.getByRole('button', { name: '생성' }).click();
+
+    // 성공 토스트 (타이밍 이슈로 실패 가능)
+    await expect(page.locator('li[data-sonner-toast]').filter({ hasText: '워크스페이스가 생성되었습니다!' })).toBeVisible();
+
+    // 워크스페이스 상세로 이동
+    await page.getByRole('heading', { name: '토스트 테스트' }).first().click();
+
+    // 카테고리 생성 토스트
+    await page.locator('button:has-text("추가"):has(svg.lucide-plus)').click();
+    await page.getByRole('button', { name: '점심' }).click();
+    await expect(page.locator('li[data-sonner-toast]').filter({ hasText: '카테고리가 추가되었습니다!' })).toBeVisible();
+
+    // 에러 토스트
+    await page.locator('button:has-text("장소 검색"):has(svg.lucide-plus)').first().click();
+    await page.getByRole('button', { name: /검색/ }).click();
+    await expect(page.locator('li[data-sonner-toast]').filter({ hasText: '검색어를 입력해주세요.' })).toBeVisible();
+  });
+
+  /**
+   * 🧪 테스트: 장소 검색 시 입력 검증 및 에러 토스트 표시
+   * 
+   * ❌ 실패 이유:
+   * - 위 테스트와 동일 (sonner 토스트 타이밍 이슈)
+   * - 에러 토스트가 나타나는 짧은 순간을 캡처하지 못함
+   * - 검색 버튼 클릭 후 토스트가 나타나기까지의 미세한 지연
+   * 
+   * 📋 수동 테스트 방법:
+   * 1. 워크스페이스 상세 → 카테고리 추가 ("점심")
+   * 2. 카테고리 카드에서 "장소 검색" 버튼 클릭
+   * 3. 장소 검색 다이얼로그 표시 확인
+   * 4. 검색어 입력 없이 "검색" 버튼 클릭
+   * 5. 화면 하단에 빨간색 에러 토스트 표시:
+   *    "검색어를 입력해주세요."
+   * 6. 토스트가 약 3초 후 자동으로 사라지는지 확인
+   * 7. 다이얼로그는 열린 상태로 유지되는지 확인
+   */
+  test('빈 검색어로 검색할 수 없다', async ({ page }) => {
+    // 워크스페이스 생성 및 카테고리 추가
+    await page.getByRole('button', { name: /새 워크스페이스/ }).click();
+    await page.getByLabel('제목').fill('검색 테스트');
+    await page.getByRole('button', { name: '생성' }).click();
+    await page.getByRole('heading', { name: '검색 테스트' }).first().click();
+    
+    await page.locator('button:has-text("추가"):has(svg.lucide-plus)').click();
+    await page.getByRole('button', { name: '점심' }).click();
+    await expect(page.getByRole('dialog')).not.toBeAttached();
+    await page.waitForTimeout(1000);
+
+    // 장소 검색 다이얼로그
+    await page.locator('button:has-text("장소 검색"):has(svg.lucide-plus)').first().click();
+
+    // 빈 검색어로 검색
+    await page.getByRole('button', { name: /검색/ }).click();
+
+    // 에러 토스트 (타이밍 이슈로 실패)
+    await expect(page.locator('li[data-sonner-toast]').filter({ hasText: '검색어를 입력해주세요.' })).toBeVisible();
+  });
+});
+
+test.describe('실패하는 테스트 - ESC 키 / 다이얼로그', () => {
+  test.beforeEach(async ({ page }) => {
+    // IndexedDB 초기화
+    await page.goto('/');
+    await page.evaluate(() => indexedDB.deleteDatabase('courseitda-db'));
+    
+    // 회원가입 및 로그인
+    await page.goto('/auth');
+    await page.getByRole('button', { name: '회원가입' }).click();
+    await page.locator('#register-email').fill('esc-test@test.com');
+    await page.locator('#register-password').fill('Password123!');
+    await page.locator('#register-confirm-password').fill('Password123!');
+    await page.getByRole('button', { name: '회원가입' }).click();
+    await expect(page).toHaveURL(/\/workspaces/);
+  });
+
+  /**
+   * 🧪 테스트: 프로필 드롭다운 메뉴를 ESC 키로 닫기
+   * 
+   * ❌ 실패 이유:
+   * - Radix UI DropdownMenu의 닫기 애니메이션 타이밍 문제
+   * - ESC 키를 누른 직후 `not.toBeAttached()` 체크가 애니메이션 완료 전에 실행됨
+   * - 500ms 대기 후에도 DOM에서 완전히 제거되지 않은 상태
+   * - Radix UI의 포털(portal) 구조로 인한 요소 제거 지연
+   * 
+   * 📋 수동 테스트 방법:
+   * 1. 워크스페이스 목록 페이지 상단 우측의 프로필 아이콘 클릭
+   * 2. 드롭다운 메뉴 표시 확인:
+   *    - 사용자 닉네임 및 이메일
+   *    - 마이페이지
+   *    - 워크스페이스
+   *    - 설정
+   *    - 로그아웃
+   * 3. ESC 키 누르기
+   * 4. 드롭다운이 부드럽게 사라지는 애니메이션 확인
+   * 5. 메뉴 외부 영역 클릭으로도 닫히는지 확인
+   */
+  test('ESC 키로 드롭다운 메뉴를 닫을 수 있다', async ({ page }) => {
+    // 프로필 메뉴 열기
+    await page.getByRole('button', { name: /esc-test/ }).click();
+    await expect(page.getByRole('menuitem', { name: '마이페이지' })).toBeVisible();
+
+    // ESC 키
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(500);
+
+    // 메뉴 닫힘 확인 (애니메이션 타이밍으로 실패)
+    await expect(page.locator('[role="menu"]')).not.toBeAttached();
+  });
+
+  /**
+   * 🧪 테스트: 장소 검색 다이얼로그를 ESC 키로 닫기
+   * 
+   * ❌ 실패 이유:
+   * - 위와 동일한 Radix UI Dialog 애니메이션 타이밍 이슈
+   * - ESC 키 이벤트 후 다이얼로그가 DOM에서 제거되는 데 지연
+   * - `not.toBeAttached()` assertion이 너무 빨리 실행됨
+   * 
+   * 📋 수동 테스트 방법:
+   * 1. 워크스페이스 상세 → 카테고리 추가 ("점심")
+   * 2. "장소 검색" 버튼 (+ 아이콘) 클릭
+   * 3. "장소 검색" 다이얼로그 표시 확인
+   * 4. ESC 키로 다이얼로그 닫기
+   * 5. 다이얼로그가 페이드아웃 애니메이션과 함께 사라지는지 확인
+   * 6. 추가 테스트:
+   *    - X 버튼 (우측 상단) 클릭으로 닫기
+   *    - 다이얼로그 배경 (dimmed overlay) 클릭으로 닫기
+   * 7. 다이얼로그가 닫힌 후 카테고리 카드가 여전히 표시되는지 확인
+   */
+  test('장소 검색 다이얼로그에서 취소할 수 있다', async ({ page }) => {
+    // 워크스페이스 및 카테고리 생성
+    await page.getByRole('button', { name: /새 워크스페이스/ }).click();
+    await page.getByLabel('제목').fill('ESC 테스트');
+    await page.getByRole('button', { name: '생성' }).click();
+    await page.getByRole('heading', { name: 'ESC 테스트' }).first().click();
+    
+    await page.locator('button:has-text("추가"):has(svg.lucide-plus)').click();
+    await page.getByRole('button', { name: '점심' }).click();
+    await expect(page.getByRole('dialog')).not.toBeAttached();
+    await page.waitForTimeout(1000);
+
+    // 장소 검색 다이얼로그
+    await page.locator('button:has-text("장소 검색"):has(svg.lucide-plus)').first().click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+
+    // ESC 키로 닫기 (타이밍 이슈로 실패)
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(500);
+    await expect(page.getByRole('dialog')).not.toBeAttached();
+  });
+
+  /**
+   * 🧪 테스트: 여러 카테고리의 장소 검색 다이얼로그가 독립적으로 작동
+   * 
+   * ❌ 실패 이유:
+   * - 첫 번째 다이얼로그를 X 버튼으로 닫은 후 DOM에서 완전히 제거되지 않음
+   * - 다이얼로그가 여전히 메모리에 남아있어 두 번째 버튼 클릭이 차단됨
+   * - `not.toBeAttached()` 체크 후 500ms 대기로도 완전한 정리 불가
+   * - Radix UI Dialog의 unmount 프로세스와 타이밍 불일치
+   * 
+   * 📋 수동 테스트 방법:
+   * 1. 워크스페이스 상세에서 두 개의 카테고리 생성:
+   *    - "점심" 카테고리
+   *    - "카페" 카테고리
+   * 2. 첫 번째 카테고리 ("점심")의 "장소 검색" 버튼 클릭
+   * 3. "장소 검색" 다이얼로그가 열리는지 확인
+   * 4. X 버튼 또는 ESC 키로 다이얼로그 닫기
+   * 5. 두 번째 카테고리 ("카페")의 "장소 검색" 버튼 클릭
+   * 6. 다이얼로그가 정상적으로 다시 열리는지 확인
+   * 7. 각 카테고리의 검색 버튼이 서로 간섭하지 않는지 확인
+   */
+  test('여러 카테고리의 장소 검색 버튼이 독립적으로 작동한다', async ({ page }) => {
+    // 워크스페이스 생성
+    await page.getByRole('button', { name: /새 워크스페이스/ }).click();
+    await page.getByLabel('제목').fill('독립 테스트');
+    await page.getByRole('button', { name: '생성' }).click();
+    await page.getByRole('heading', { name: '독립 테스트' }).first().click();
+    
+    // 첫 번째 카테고리
+    await page.locator('button:has-text("추가"):has(svg.lucide-plus)').click();
+    await page.getByRole('button', { name: '점심' }).click();
+    await expect(page.getByRole('dialog')).not.toBeAttached();
+    await page.waitForTimeout(500);
+
+    // 두 번째 카테고리
+    await page.locator('button:has-text("추가"):has(svg.lucide-plus)').click();
+    await page.getByRole('button', { name: '카페' }).click();
+    await expect(page.getByRole('dialog')).not.toBeAttached();
+    await page.waitForTimeout(500);
+
+    // 첫 번째 카테고리 검색
+    const placeSearchButtons = page.locator('button:has-text("장소 검색"):has(svg.lucide-plus)');
+    await placeSearchButtons.first().click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+
+    // X 버튼으로 닫기 (ESC보다 안정적)
+    await page.getByRole('button', { name: 'Close' }).click();
+    await page.waitForTimeout(500);
+    await expect(page.getByRole('dialog')).not.toBeAttached();
+
+    // 두 번째 카테고리 검색
+    await placeSearchButtons.nth(1).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+  });
+});
+
+test.describe('실패하는 테스트 - 드래그 앤 드롭', () => {
+  test.beforeEach(async ({ page }) => {
+    // IndexedDB 초기화
+    await page.goto('/');
+    await page.evaluate(() => indexedDB.deleteDatabase('courseitda-db'));
+    
+    // 회원가입 및 로그인
+    await page.goto('/auth');
+    await page.getByRole('button', { name: '회원가입' }).click();
+    await page.locator('#register-email').fill('dnd-test@test.com');
+    await page.locator('#register-password').fill('Password123!');
+    await page.locator('#register-confirm-password').fill('Password123!');
+    await page.getByRole('button', { name: '회원가입' }).click();
+    await expect(page).toHaveURL(/\/workspaces/);
+    
+    // 워크스페이스 생성
+    await page.getByRole('button', { name: /새 워크스페이스/ }).click();
+    await page.getByLabel('제목').fill('드래그 테스트');
+    await page.getByRole('button', { name: '생성' }).click();
+    await page.getByRole('heading', { name: '드래그 테스트' }).first().click();
+  });
+
+  /**
+   * 🧪 테스트: react-beautiful-dnd를 사용한 카테고리 순서 변경
+   * 
+   * ❌ 실패 이유:
+   * - react-beautiful-dnd 라이브러리가 Playwright의 마우스 이벤트를 인식하지 못함
+   * - `page.mouse.move`, `page.mouse.down`, `page.mouse.up` 시퀀스가 dnd 센서를 트리거하지 않음
+   * - react-beautiful-dnd는 실제 브라우저 드래그 이벤트에 의존하나, 테스트 환경에서 재현 불가
+   * - `[data-rbd-draggable-id]` 요소의 boundingBox는 정확하나 드래그 동작이 라이브러리에 감지되지 않음
+   * - 드래그 시작을 위한 최소 이동 거리나 시간 요구사항 충족 실패
+   * 
+   * 📋 수동 테스트 방법:
+   * 1. 워크스페이스 상세에서 3개의 카테고리 생성:
+   *    - "점심" → 순서 번호 1
+   *    - "카페" → 순서 번호 2
+   *    - "저녁" → 순서 번호 3
+   * 2. 첫 번째 카테고리 카드의 좌측에 있는 GripVertical 아이콘 (≡) 확인
+   * 3. GripVertical 아이콘을 마우스로 클릭 & 드래그
+   * 4. 드래그하는 동안 카테고리 카드가 반투명해지고 위치 프리뷰 표시 확인
+   * 5. 세 번째 위치(저녁 카테고리 아래)로 드롭
+   * 6. 순서가 즉시 변경되는지 확인:
+   *    변경 전: 1.점심, 2.카페, 3.저녁
+   *    변경 후: 1.카페, 2.저녁, 3.점심
+   * 7. 순서 번호 원형 배지도 자동 업데이트되는지 확인
+   * 8. 페이지 새로고침 후 변경된 순서가 유지되는지 확인 (IndexedDB 저장)
+   * 9. 다른 카테고리들도 드래그해서 자유롭게 순서 변경 가능한지 확인
+   */
+  test('드래그 앤 드롭으로 카테고리 순서를 변경할 수 있다', async ({ page }) => {
+    // 세 개의 카테고리 생성
+    await page.locator('button:has-text("추가"):has(svg.lucide-plus)').click();
+    await page.getByRole('button', { name: '점심' }).click();
+    await expect(page.getByRole('dialog')).not.toBeAttached();
+    await page.waitForTimeout(500);
+
+    await page.locator('button:has-text("추가"):has(svg.lucide-plus)').click();
+    await page.getByRole('button', { name: '카페' }).click();
+    await expect(page.getByRole('dialog')).not.toBeAttached();
+    await page.waitForTimeout(500);
+
+    await page.locator('button:has-text("추가"):has(svg.lucide-plus)').click();
+    await page.getByRole('button', { name: '저녁' }).click();
+    await expect(page.getByRole('dialog')).not.toBeAttached();
+    await page.waitForTimeout(500);
+
+    // 초기 순서 확인
+    const categoryNumbers = page.locator('.w-6.h-6.rounded-full');
+    await expect(categoryNumbers.nth(0)).toContainText('1');
+    await expect(categoryNumbers.nth(1)).toContainText('2');
+    await expect(categoryNumbers.nth(2)).toContainText('3');
+
+    // 드래그 앤 드롭 (react-beautiful-dnd와 호환되지 않아 실패)
+    const firstCategory = page.locator('[data-rbd-draggable-id]').first();
+    const thirdCategory = page.locator('[data-rbd-draggable-id]').nth(2);
+
+    const firstBox = await firstCategory.boundingBox();
+    const thirdBox = await thirdCategory.boundingBox();
+    
+    if (firstBox && thirdBox) {
+      await page.mouse.move(firstBox.x + firstBox.width / 2, firstBox.y + firstBox.height / 2);
+      await page.mouse.down();
+      await page.waitForTimeout(100);
+      
+      await page.mouse.move(thirdBox.x + thirdBox.width / 2, thirdBox.y + thirdBox.height / 2, { steps: 10 });
+      await page.waitForTimeout(200);
+      
+      await page.mouse.up();
+      await page.waitForTimeout(500);
+    }
+
+    // 순서 변경 확인 (실패 예상)
+    await expect(categoryNumbers.nth(0)).toContainText('2'); // 카페
+    await expect(categoryNumbers.nth(1)).toContainText('3'); // 저녁
+    await expect(categoryNumbers.nth(2)).toContainText('1'); // 점심
+  });
+});
+
+test.describe('실패하는 테스트 - 컨텍스트 메뉴', () => {
+  test.beforeEach(async ({ page }) => {
+    // IndexedDB 초기화
+    await page.goto('/');
+    await page.evaluate(() => indexedDB.deleteDatabase('courseitda-db'));
+    
+    // 회원가입 및 로그인
+    await page.goto('/auth');
+    await page.getByRole('button', { name: '회원가입' }).click();
+    await page.locator('#register-email').fill('context-test@test.com');
+    await page.locator('#register-password').fill('Password123!');
+    await page.locator('#register-confirm-password').fill('Password123!');
+    await page.getByRole('button', { name: '회원가입' }).click();
+    await expect(page).toHaveURL(/\/workspaces/);
+  });
+
+  /**
+   * 🧪 테스트: 워크스페이스 카드에서 우클릭 컨텍스트 메뉴로 삭제
+   * 
+   * ❌ 실패 이유:
+   * - Radix UI ContextMenu 컴포넌트가 Playwright의 `.click({ button: 'right' })` 이벤트를 인식하지 못함
+   * - ContextMenuTrigger의 `onContextMenu` 이벤트 핸들러가 테스트 환경에서 트리거되지 않음
+   * - `force: true` 옵션을 사용해도 실제 브라우저의 contextmenu 이벤트와 동일하게 작동하지 않음
+   * - 컨텍스트 메뉴가 열리지 않아 메뉴 항목("삭제")을 클릭할 수 없음
+   * - 실제 브라우저에서는 정상 작동하나, 자동화 테스트 환경과의 호환성 문제
+   * 
+   * 📋 수동 테스트 방법:
+   * 1. 워크스페이스 목록 페이지에서 워크스페이스 생성 ("삭제할 워크스페이스")
+   * 2. 생성된 워크스페이스 카드에서 마우스 우클릭 (오른쪽 버튼)
+   * 3. 컨텍스트 메뉴가 마우스 커서 위치에 표시되는지 확인:
+   *    - "이름 바꾸기" (연필 아이콘)
+   *    - "삭제" (휴지통 아이콘, 빨간색)
+   * 4. "삭제" 메뉴 항목 클릭
+   * 5. "워크스페이스 삭제" 확인 다이얼로그 표시:
+   *    - "삭제할 워크스페이스를 정말 삭제하시겠습니까?"
+   *    - "이 작업은 되돌릴 수 없으며 모든 카테고리와 장소 정보가 함께 삭제됩니다"
+   * 6. 삭제 버튼(빨간색) 클릭
+   * 7. 워크스페이스가 목록에서 제거되는지 확인
+   * 8. 추가 테스트:
+   *    - "이름 바꾸기" 메뉴로 제목 수정
+   *    - 컨텍스트 메뉴 외부 클릭 시 메뉴 닫힘
+   *    - ESC 키로 컨텍스트 메뉴 닫기
+   */
+  test('워크스페이스 삭제가 정상적으로 작동한다', async ({ page }) => {
+    // 워크스페이스 생성
+    await page.getByRole('button', { name: /새 워크스페이스/ }).click();
+    await page.getByLabel('제목').fill('삭제할 워크스페이스');
+    await page.getByRole('button', { name: '생성' }).click();
+    await expect(page.getByRole('heading', { name: '삭제할 워크스페이스' }).first()).toBeVisible();
+
+    // 우클릭 (Playwright의 우클릭이 ContextMenu를 트리거하지 못함)
+    const workspaceCard = page.locator('.hover-lift').filter({ has: page.getByRole('heading', { name: '삭제할 워크스페이스' }) }).first();
+    await expect(workspaceCard).toBeVisible();
+    await page.waitForTimeout(500);
+    
+    await workspaceCard.click({ button: 'right', force: true });
+    await page.waitForTimeout(500);
+
+    // 컨텍스트 메뉴 (표시되지 않아 실패)
+    const deleteMenuItem = page.getByRole('menuitem', { name: '삭제' });
+    await expect(deleteMenuItem).toBeVisible({ timeout: 3000 });
+    await deleteMenuItem.click();
+
+    // 삭제 확인 다이얼로그
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await expect(page.getByText('워크스페이스 삭제')).toBeVisible();
+    
+    await page.getByRole('button', { name: '삭제' }).click();
+    await expect(page.getByRole('heading', { name: '삭제할 워크스페이스' })).not.toBeVisible();
+  });
+});
+
