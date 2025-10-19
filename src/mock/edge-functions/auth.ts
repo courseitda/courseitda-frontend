@@ -109,3 +109,44 @@ export const verifyToken = async (token: string): Promise<{ userId?: string; err
     return { error: '유효하지 않은 토큰입니다.' };
   }
 };
+
+// 이메일 중복 검증 Edge Function - 회원가입 전 이메일 중복 여부 확인
+export const checkEmailDuplicate = async (email: string): Promise<{ isDuplicate: boolean; error?: string }> => {
+  try {
+    // 이메일 형식 검증
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return { isDuplicate: false, error: '올바른 이메일 형식이 아닙니다.' };
+    }
+
+    // 이메일 중복 확인
+    const existing = await db.users.where('email').equals(email).first();
+    
+    return { isDuplicate: !!existing };
+  } catch (error) {
+    console.error('Email check error:', error);
+    return { isDuplicate: false, error: '이메일 확인 중 오류가 발생했습니다.' };
+  }
+};
+
+// 닉네임 중복 검증 Edge Function - 회원가입 전 닉네임 중복 여부 확인
+export const checkNicknameDuplicate = async (nickname: string): Promise<{ isDuplicate: boolean; error?: string }> => {
+  try {
+    // 닉네임 길이 검증
+    if (!nickname || nickname.trim().length < 2) {
+      return { isDuplicate: false, error: '닉네임은 최소 2자 이상이어야 합니다.' };
+    }
+
+    if (nickname.length > 20) {
+      return { isDuplicate: false, error: '닉네임은 최대 20자까지 가능합니다.' };
+    }
+
+    // 닉네임 중복 확인
+    const existing = await db.users.where('nickname').equals(nickname.trim()).first();
+    
+    return { isDuplicate: !!existing };
+  } catch (error) {
+    console.error('Nickname check error:', error);
+    return { isDuplicate: false, error: '닉네임 확인 중 오류가 발생했습니다.' };
+  }
+};
