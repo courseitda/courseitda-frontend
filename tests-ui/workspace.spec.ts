@@ -188,20 +188,24 @@ test.describe('워크스페이스 관리', () => {
     await page.getByRole('button', { name: '생성' }).click();
     await expect(page.getByRole('heading', { name: '삭제할 워크스페이스' }).first()).toBeVisible();
 
-    // 컨텍스트 메뉴 열기 (Card를 우클릭 - ContextMenuTrigger)
-    const workspaceCard = page.locator('.hover-lift').filter({ has: page.getByRole('heading', { name: '삭제할 워크스페이스' }) }).first();
+    // 컨텍스트 메뉴 열기 - 더 안정적인 방법
+    // 워크스페이스 제목을 찾아서 그 부모 Card를 우클릭
+    const workspaceTitle = page.getByRole('heading', { name: '삭제할 워크스페이스' }).first();
+    await expect(workspaceTitle).toBeVisible();
     
-    // 카드가 보일 때까지 대기
+    // 제목의 부모 Card 요소를 찾아서 우클릭
+    const workspaceCard = workspaceTitle.locator('xpath=ancestor::div[contains(@class, "hover-lift")]');
     await expect(workspaceCard).toBeVisible();
-    await page.waitForTimeout(500);
     
-    // 우클릭
-    await workspaceCard.click({ button: 'right', force: true });
-    await page.waitForTimeout(500); // 컨텍스트 메뉴 표시 대기
+    // 마우스를 카드 위에 올리고 우클릭
+    await workspaceCard.hover();
+    await page.waitForTimeout(300);
+    await workspaceCard.click({ button: 'right' });
+    await page.waitForTimeout(1000); // 컨텍스트 메뉴 표시 대기
 
     // "삭제" 메뉴가 보이는지 확인하고 클릭
     const deleteMenuItem = page.getByRole('menuitem', { name: '삭제' });
-    await expect(deleteMenuItem).toBeVisible({ timeout: 3000 });
+    await expect(deleteMenuItem).toBeVisible({ timeout: 5000 });
     await deleteMenuItem.click();
 
     // 삭제 확인 다이얼로그가 표시되는지 확인
