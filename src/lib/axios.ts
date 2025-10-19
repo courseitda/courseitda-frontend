@@ -9,10 +9,10 @@ import type { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse, AxiosErr
 
 // Axios 인스턴스 생성 - 모든 API 요청에 공통 설정 적용
 export const apiClient: AxiosInstance = axios.create({
-  // 백엔드 API 기본 URL (환경 변수로 관리 예정)
-  // 현재: Mock 데이터 사용으로 실제 요청은 발생하지 않음
-  // 추후: baseURL을 실제 Spring 백엔드 주소로 변경 (예: 'https://api.courseitda.com')
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  // 백엔드 API 기본 URL (환경 변수로 관리)
+  // 기본값: http://localhost:3000 (프론트엔드와 같은 서버)
+  // 백엔드 연동 시: VITE_API_BASE_URL을 백엔드 서버 주소로 변경 (예: https://dev.courseitda.me)
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
   
   // 요청 타임아웃 설정 (10초) - 느린 네트워크 환경 대응
   timeout: 10000,

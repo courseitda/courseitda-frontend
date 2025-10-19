@@ -49,7 +49,7 @@ export const authApi = {
     const mockResponse = await loginUser(data);
     
     // Mock 응답을 표준 API 응답 형식으로 변환
-    // 추후 백엔드 연동 시: return (await apiClient.post('/auth/login', data)).data
+    // 추후 백엔드 연동 시: return (await apiClient.post('/api/auth/login', data)).data
     if (mockResponse.error) {
       return {
         success: false,
@@ -82,7 +82,7 @@ export const authApi = {
     const mockResponse = await registerUser(data);
     
     // Mock 응답을 표준 API 응답 형식으로 변환
-    // 추후 백엔드 연동 시: return (await apiClient.post('/auth/register', data)).data
+    // 추후 백엔드 연동 시: return (await apiClient.post('/api/auth/register', data)).data
     if (mockResponse.error) {
       return {
         success: false,
@@ -114,7 +114,7 @@ export const authApi = {
     const mockResponse = await verifyToken(token);
     
     // Mock 응답을 표준 API 응답 형식으로 변환
-    // 추후 백엔드 연동 시: return (await apiClient.post('/auth/verify', { token })).data
+    // 추후 백엔드 연동 시: return (await apiClient.post('/api/auth/verify', { token })).data
     if (mockResponse.error) {
       return {
         success: false,
