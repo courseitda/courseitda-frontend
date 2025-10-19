@@ -17,10 +17,10 @@ export default defineConfig({
   },
   
   // 테스트 실행 설정
-  fullyParallel: true, // 병렬 실행 활성화
+  fullyParallel: false, // 순차 실행으로 테스트 간 간섭 방지
   forbidOnly: !!process.env.CI, // CI 환경에서는 .only 사용 금지
   retries: process.env.CI ? 2 : 0, // CI 환경에서는 실패 시 2번 재시도
-  workers: process.env.CI ? 1 : undefined, // CI 환경에서는 1개 워커, 로컬에서는 자동
+  workers: 1, // 단일 워커로 순차 실행
   
   // 테스트 리포터 설정
   reporter: 'html',
