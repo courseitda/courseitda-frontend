@@ -31,7 +31,7 @@ export default defineConfig({
     actionTimeout: 10 * 1000,
     
     // 베이스 URL - 모든 테스트에서 navigate('/') 형태로 사용 가능
-    baseURL: 'http://localhost:8080',
+    baseURL: 'http://localhost:3000',
     
     // 실패 시 스크린샷 캡처
     screenshot: 'only-on-failure',
@@ -60,7 +60,7 @@ export default defineConfig({
   // 로컬 개발 서버 자동 시작
   webServer: {
     command: 'npm run dev',
-    url: 'http://localhost:8080',
+    url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000, // 서버 시작 대기 시간 (2분)
     stdout: 'pipe',
