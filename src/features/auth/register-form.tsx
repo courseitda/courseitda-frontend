@@ -161,11 +161,11 @@ export const RegisterForm = () => {
     }
 
     // API 서비스 레이어를 통해 회원가입 요청 수행 (백엔드 연동 시 authApi만 수정)
-    const { user, error } = await authApi.register({ email, password, nickname });
+    const registerResponse = await authApi.register({ email, password, nickname });
 
     // UserRequest: 회원가입 실패 시 에러 토스트 메시지 표시하여 사용자에게 실패 원인 안내
-    if (error || !user) {
-      toast.error(error || '회원가입에 실패했습니다.');
+    if (!registerResponse.success || !registerResponse.data) {
+      toast.error(registerResponse.error?.message || '회원가입에 실패했습니다.');
       setLoading(false);
       return;
     }
@@ -174,10 +174,10 @@ export const RegisterForm = () => {
     toast.success('회원가입이 완료되었습니다!');
 
     // 회원가입 성공 후 자동 로그인 처리하여 사용자 경험 개선 (API 서비스 레이어 사용)
-    const loginResult = await authApi.login({ email, password });
+    const loginResponse = await authApi.login({ email, password });
     
     // UserRequest: 자동 로그인 실패 시 에러 토스트 메시지 표시 후 로그인 페이지로 이동하여 수동 로그인 유도
-    if (loginResult.error || !loginResult.user || !loginResult.token) {
+    if (!loginResponse.success || !loginResponse.data) {
       toast.error('자동 로그인에 실패했습니다. 다시 로그인해주세요.');
       setLoading(false);
       navigate('/auth?tab=login');
@@ -185,7 +185,7 @@ export const RegisterForm = () => {
     }
 
     // 자동 로그인 성공 시 전역 상태에 인증 정보 저장 후 워크스페이스로 이동
-    setAuth(loginResult.user, loginResult.token);
+    setAuth(loginResponse.data.user, loginResponse.data.token);
     navigate('/workspaces');
   };
 

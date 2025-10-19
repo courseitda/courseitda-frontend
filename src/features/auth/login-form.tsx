@@ -24,17 +24,17 @@ export const LoginForm = () => {
     setLoading(true);
 
     // API 서비스 레이어를 통해 로그인 인증 수행 (백엔드 연동 시 authApi만 수정)
-    const { user, token, error } = await authApi.login({ email, password });
+    const response = await authApi.login({ email, password });
 
     // 로그인 실패 시 에러 메시지 표시 후 종료
-    if (error || !user || !token) {
-      toast.error(error || '로그인에 실패했습니다.');
+    if (!response.success || !response.data) {
+      toast.error(response.error?.message || '로그인에 실패했습니다.');
       setLoading(false);
       return;
     }
 
     // 로그인 성공 시 전역 상태에 사용자 정보와 토큰 저장
-    setAuth(user, token);
+    setAuth(response.data.user, response.data.token);
     toast.success('로그인 성공!');
     navigate('/workspaces');
   };
