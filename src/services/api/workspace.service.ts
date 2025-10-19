@@ -6,6 +6,7 @@ import {
   updateWorkspace,
   deleteWorkspace,
   getWorkspacesByOwner,
+  checkWorkspaceTitleDuplicate,
 } from '@/mock/edge-functions/workspace';
 import type { Workspace } from '@/entities/types';
 
@@ -37,6 +38,12 @@ export interface UpdateWorkspaceResponse {
 
 // 워크스페이스 삭제 응답 타입
 export interface DeleteWorkspaceResponse {
+  error?: string;
+}
+
+// 워크스페이스 제목 중복 검증 응답 타입
+export interface CheckWorkspaceTitleDuplicateResponse {
+  isDuplicate: boolean;
   error?: string;
 }
 
@@ -86,6 +93,21 @@ export const workspaceApi = {
     // 현재: mock edge-function 호출
     // 추후: return axios.get(`/api/workspaces?ownerId=${ownerId}`)
     return await getWorkspacesByOwner(ownerId);
+  },
+
+  /**
+   * 워크스페이스 제목 중복 검증 API 호출
+   * @param ownerId 사용자 ID
+   * @param title 검증할 워크스페이스 제목
+   * @returns 중복 여부 및 에러 정보
+   */
+  checkTitleDuplicate: async (
+    ownerId: string, 
+    title: string
+  ): Promise<CheckWorkspaceTitleDuplicateResponse> => {
+    // 현재: mock edge-function 호출
+    // 추후: return axios.get(`/api/workspaces/check-title?ownerId=${ownerId}&title=${encodeURIComponent(title)}`)
+    return await checkWorkspaceTitleDuplicate(ownerId, title);
   },
 };
 

@@ -105,3 +105,32 @@ export const deleteWorkspace = async (id: string): Promise<{ error?: string }> =
 export const getWorkspacesByOwner = async (ownerId: string): Promise<Workspace[]> => {
   return await db.workspaces.where('ownerId').equals(ownerId).toArray();
 };
+
+// 워크스페이스 제목 중복 검증 Edge Function - 같은 사용자가 동일한 제목의 워크스페이스를 생성할 수 있는지 확인
+export const checkWorkspaceTitleDuplicate = async (
+  ownerId: string, 
+  title: string
+): Promise<{ isDuplicate: boolean; error?: string }> => {
+  try {
+    // 제목 길이 검증
+    if (!title || title.trim().length === 0) {
+      return { isDuplicate: false, error: '워크스페이스 제목을 입력해주세요.' };
+    }
+
+    if (title.trim().length > 50) {
+      return { isDuplicate: false, error: '워크스페이스 제목은 최대 50자까지 가능합니다.' };
+    }
+
+    // 같은 사용자가 동일한 제목의 워크스페이스를 가지고 있는지 확인
+    const existing = await db.workspaces
+      .where('ownerId')
+      .equals(ownerId)
+      .and(workspace => workspace.title.trim().toLowerCase() === title.trim().toLowerCase())
+      .first();
+    
+    return { isDuplicate: !!existing };
+  } catch (error) {
+    console.error('Workspace title check error:', error);
+    return { isDuplicate: false, error: '워크스페이스 제목 확인 중 오류가 발생했습니다.' };
+  }
+};
