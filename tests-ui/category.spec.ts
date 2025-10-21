@@ -246,14 +246,18 @@ test.describe('카테고리 관리', () => {
     // 카테고리 추가 다이얼로그 열기
     await page.locator('button:has-text("추가"):has(svg.lucide-plus)').click();
 
+    // 다이얼로그가 완전히 열릴 때까지 대기
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+
     // 카테고리 이름 입력
     await page.getByPlaceholder('카테고리 이름').fill('취소할 카테고리');
 
-    // 취소 버튼 클릭
-    await page.getByRole('button', { name: '취소' }).click();
+    // 다이얼로그 내의 취소 버튼을 명확하게 지정하여 클릭
+    await dialog.getByRole('button', { name: '취소' }).click();
 
     // 다이얼로그가 닫혔는지 확인
-    await expect(page.getByRole('dialog')).not.toBeVisible();
+    await expect(dialog).not.toBeVisible();
 
     // 카테고리가 생성되지 않았는지 확인
     await expect(page.getByText('취소할 카테고리')).not.toBeVisible();
