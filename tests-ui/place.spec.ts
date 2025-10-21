@@ -84,8 +84,15 @@ test.describe('장소 관리', () => {
 
     // 카테고리 생성
     await page.locator('button:has-text("추가"):has(svg.lucide-plus)').click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
     await page.getByRole('button', { name: '점심' }).click();
-    await expect(page.getByText('점심')).toBeVisible();
+
+    // 다이얼로그가 닫힐 때까지 대기
+    await expect(dialog).not.toBeVisible();
+
+    // 카테고리 카드가 표시되는지 확인
+    await expect(page.locator('.font-semibold.tracking-tight.text-base:has-text("점심")').first()).toBeVisible();
   });
 
   test('카테고리 카드가 올바르게 표시된다', async ({ page }) => {
@@ -182,11 +189,18 @@ test.describe('장소 관리', () => {
   test('여러 카테고리를 동시에 표시할 수 있다', async ({ page }) => {
     // 여러 카테고리 추가
     const categories = ['카페', '산책', '쇼핑'];
-    
+
     for (const category of categories) {
       await page.locator('button:has-text("추가"):has(svg.lucide-plus)').click();
+      const dialog = page.getByRole('dialog');
+      await expect(dialog).toBeVisible();
       await page.getByRole('button', { name: category }).click();
-      await expect(page.getByText(category)).toBeVisible();
+
+      // 다이얼로그가 닫힐 때까지 대기
+      await expect(dialog).not.toBeVisible();
+
+      // 카테고리 카드가 표시되는지 확인
+      await expect(page.locator(`.font-semibold.tracking-tight.text-base:has-text("${category}")`).first()).toBeVisible();
     }
 
     // 모든 카테고리가 표시되고 각각 장소 검색 버튼이 있는지 확인

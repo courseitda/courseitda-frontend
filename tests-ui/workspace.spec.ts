@@ -80,16 +80,21 @@ test.describe('워크스페이스 관리', () => {
     await page.getByRole('button', { name: /새 워크스페이스/ }).click();
 
     // 다이얼로그가 표시되는지 확인
-    await expect(page.getByRole('dialog')).toBeVisible();
-    await expect(page.getByRole('heading', { name: '새 워크스페이스' })).toBeVisible();
-    await expect(page.getByLabel('제목')).toBeVisible();
-    await expect(page.getByRole('button', { name: '취소' })).toBeVisible();
-    await expect(page.getByRole('button', { name: '생성' })).toBeVisible();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('heading', { name: '새 워크스페이스' })).toBeVisible();
+    await expect(dialog.getByLabel('제목')).toBeVisible();
+    await expect(dialog.getByRole('button', { name: '취소' })).toBeVisible();
+    await expect(dialog.getByRole('button', { name: '생성' })).toBeVisible();
   });
 
   test('워크스페이스 생성 시 폼 입력 후 제출하면 목록에 표시된다', async ({ page }) => {
     // 새 워크스페이스 버튼 클릭
     await page.getByRole('button', { name: /새 워크스페이스/ }).click();
+
+    // 다이얼로그 열림 확인
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
 
     // 제목 입력
     await page.getByLabel('제목').fill('서울 여행 코스');
@@ -98,11 +103,11 @@ test.describe('워크스페이스 관리', () => {
     await page.getByRole('button', { name: '생성' }).click();
 
     // 다이얼로그가 닫혔는지 확인
-    await expect(page.getByRole('dialog')).not.toBeVisible();
+    await expect(dialog).not.toBeVisible();
 
     // 생성된 워크스페이스가 목록에 표시되는지 확인
     await expect(page.getByRole('heading', { name: '서울 여행 코스' }).first()).toBeVisible();
-    
+
     // "아직 워크스페이스가 없습니다" 메시지가 사라졌는지 확인
     await expect(page.getByText('아직 워크스페이스가 없습니다').first()).not.toBeVisible();
   });
@@ -151,8 +156,11 @@ test.describe('워크스페이스 관리', () => {
   test('워크스페이스 수정이 정상적으로 작동한다', async ({ page }) => {
     // 워크스페이스 생성
     await page.getByRole('button', { name: /새 워크스페이스/ }).click();
+    let dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
     await page.getByLabel('제목').fill('수정 전 제목');
     await page.getByRole('button', { name: '생성' }).click();
+    await expect(dialog).not.toBeVisible();
     await expect(page.getByRole('heading', { name: '수정 전 제목' }).first()).toBeVisible();
 
     // 컨텍스트 메뉴 열기 (우클릭)
@@ -162,8 +170,9 @@ test.describe('워크스페이스 관리', () => {
     await page.getByRole('menuitem', { name: /이름 바꾸기/ }).click();
 
     // 수정 다이얼로그가 표시되는지 확인
-    await expect(page.getByRole('dialog')).toBeVisible();
-    await expect(page.getByText('워크스페이스 이름 바꾸기')).toBeVisible();
+    dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByText('워크스페이스 이름 바꾸기')).toBeVisible();
 
     // 제목 수정
     const titleInput = page.getByLabel('제목');
@@ -174,7 +183,7 @@ test.describe('워크스페이스 관리', () => {
     await page.getByRole('button', { name: '확인' }).click();
 
     // 다이얼로그가 닫혔는지 확인
-    await expect(page.getByRole('dialog')).not.toBeVisible();
+    await expect(dialog).not.toBeVisible();
 
     // 수정된 제목이 표시되는지 확인
     await expect(page.getByRole('heading', { name: '수정 후 제목' }).first()).toBeVisible();
@@ -184,44 +193,45 @@ test.describe('워크스페이스 관리', () => {
   test('워크스페이스 삭제가 정상적으로 작동한다', async ({ page }) => {
     // 워크스페이스 생성
     await page.getByRole('button', { name: /새 워크스페이스/ }).click();
+    let dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
     await page.getByLabel('제목').fill('삭제할 워크스페이스');
     await page.getByRole('button', { name: '생성' }).click();
+    await expect(dialog).not.toBeVisible();
     await expect(page.getByRole('heading', { name: '삭제할 워크스페이스' }).first()).toBeVisible();
 
-    // 컨텍스트 메뉴 열기 - 더 안정적인 방법
-    // 워크스페이스 제목을 찾아서 그 부모 Card를 우클릭
-    const workspaceTitle = page.getByRole('heading', { name: '삭제할 워크스페이스' }).first();
-    await expect(workspaceTitle).toBeVisible();
-    
-    // 제목의 부모 Card 요소를 찾아서 우클릭
-    const workspaceCard = workspaceTitle.locator('xpath=ancestor::div[contains(@class, "hover-lift")]');
+    // 워크스페이스 카드 찾기 (hover-lift 클래스를 가진 Card)
+    const workspaceCard = page.locator('.hover-lift', {
+      has: page.getByRole('heading', { name: '삭제할 워크스페이스' })
+    }).first();
     await expect(workspaceCard).toBeVisible();
-    
-    // 마우스를 카드 위에 올리고 우클릭
-    await workspaceCard.hover();
-    await page.waitForTimeout(300);
-    await workspaceCard.click({ button: 'right' });
-    await page.waitForTimeout(1000); // 컨텍스트 메뉴 표시 대기
 
-    // "삭제" 메뉴가 보이는지 확인하고 클릭
+    // 우클릭 전에 잠시 대기 (애니메이션 완료 대기)
+    await page.waitForTimeout(500);
+
+    // 카드 우클릭
+    await workspaceCard.click({ button: 'right', force: true });
+
+    // 컨텍스트 메뉴의 "삭제" 항목 대기 및 클릭
     const deleteMenuItem = page.getByRole('menuitem', { name: '삭제' });
-    await expect(deleteMenuItem).toBeVisible({ timeout: 5000 });
+    await expect(deleteMenuItem).toBeVisible({ timeout: 3000 });
     await deleteMenuItem.click();
 
     // 삭제 확인 다이얼로그가 표시되는지 확인
-    await expect(page.getByRole('dialog')).toBeVisible();
-    await expect(page.getByText('워크스페이스 삭제')).toBeVisible();
-    await expect(page.getByText(/삭제할 워크스페이스.*정말 삭제하시겠습니까/)).toBeVisible();
+    dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByText('워크스페이스 삭제')).toBeVisible();
+    await expect(dialog.getByText(/삭제할 워크스페이스.*정말 삭제하시겠습니까/)).toBeVisible();
 
     // 삭제 버튼 클릭
-    await page.getByRole('button', { name: '삭제' }).click();
+    await page.getByRole('button', { name: '삭제' }).last().click();
 
     // 다이얼로그가 닫혔는지 확인
-    await expect(page.getByRole('dialog')).not.toBeVisible();
+    await expect(dialog).not.toBeVisible();
 
     // 삭제된 워크스페이스가 목록에서 사라졌는지 확인
     await expect(page.getByText('삭제할 워크스페이스')).not.toBeVisible();
-    
+
     // 빈 목록 메시지가 다시 표시되는지 확인
     await expect(page.getByText('아직 워크스페이스가 없습니다').first()).toBeVisible();
   });
@@ -230,18 +240,22 @@ test.describe('워크스페이스 관리', () => {
     // 새 워크스페이스 버튼 클릭
     await page.getByRole('button', { name: /새 워크스페이스/ }).click();
 
+    // 다이얼로그 열림 확인
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+
     // 제목 입력
     await page.getByLabel('제목').fill('취소할 워크스페이스');
 
     // 취소 버튼 클릭
-    await page.getByRole('button', { name: '취소' }).click();
+    await dialog.getByRole('button', { name: '취소' }).click();
 
     // 다이얼로그가 닫혔는지 확인
-    await expect(page.getByRole('dialog')).not.toBeVisible();
+    await expect(dialog).not.toBeVisible();
 
     // 워크스페이스가 생성되지 않았는지 확인
     await expect(page.getByText('취소할 워크스페이스')).not.toBeVisible();
-    
+
     // 워크스페이스 목록에 없는지 확인
     await expect(page.getByRole('heading', { name: '취소할 워크스페이스' })).not.toBeVisible();
   });
@@ -249,19 +263,26 @@ test.describe('워크스페이스 관리', () => {
   test('워크스페이스 삭제 시 취소 버튼이 작동한다', async ({ page }) => {
     // 워크스페이스 생성
     await page.getByRole('button', { name: /새 워크스페이스/ }).click();
+    let dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
     await page.getByLabel('제목').fill('취소 테스트');
     await page.getByRole('button', { name: '생성' }).click();
+    await expect(dialog).not.toBeVisible();
     await expect(page.getByRole('heading', { name: '취소 테스트' }).first()).toBeVisible();
 
     // 컨텍스트 메뉴로 삭제 시도
     await page.getByRole('heading', { name: '취소 테스트' }).first().click({ button: 'right' });
     await page.getByRole('menuitem', { name: '삭제' }).click();
 
+    // 삭제 확인 다이얼로그 표시
+    dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+
     // 취소 버튼 클릭
-    await page.getByRole('button', { name: '취소' }).click();
+    await dialog.getByRole('button', { name: '취소' }).click();
 
     // 다이얼로그가 닫혔는지 확인
-    await expect(page.getByRole('dialog')).not.toBeVisible();
+    await expect(dialog).not.toBeVisible();
 
     // 워크스페이스가 여전히 존재하는지 확인
     await expect(page.getByRole('heading', { name: '취소 테스트' }).first()).toBeVisible();

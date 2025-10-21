@@ -148,8 +148,10 @@ test.describe('고급 기능', () => {
     const categories = ['점심', '카페', '산책', '쇼핑', '저녁'];
     for (const category of categories) {
       await page.locator('button:has-text("추가"):has(svg.lucide-plus)').click();
+      const dialog = page.getByRole('dialog');
+      await expect(dialog).toBeVisible();
       await page.getByRole('button', { name: category }).click();
-      await expect(page.getByRole('dialog')).not.toBeVisible(); // 다이얼로그가 닫힐 때까지 대기
+      await expect(dialog).not.toBeVisible(); // 다이얼로그가 닫힐 때까지 대기
       await page.waitForTimeout(300); // 애니메이션 대기
     }
 
@@ -202,7 +204,10 @@ test.describe('고급 기능', () => {
 
     // 첫 카테고리 만들기 버튼으로 카테고리 추가
     await page.getByRole('button', { name: '첫 카테고리 만들기' }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
     await page.getByRole('button', { name: '점심' }).click();
+    await expect(dialog).not.toBeVisible();
 
     // 빈 상태 메시지가 사라졌는지 확인
     await expect(page.getByText('카테고리를 추가해보세요')).not.toBeVisible();
@@ -222,8 +227,10 @@ test.describe('고급 기능', () => {
     const categories = ['점심', '카페', '저녁'];
     for (const category of categories) {
       await page.locator('button:has-text("추가"):has(svg.lucide-plus)').click();
+      const dialog = page.getByRole('dialog');
+      await expect(dialog).toBeVisible();
       await page.getByRole('button', { name: category }).click();
-      await expect(page.getByRole('dialog')).not.toBeVisible(); // 다이얼로그가 닫힐 때까지 대기
+      await expect(dialog).not.toBeVisible(); // 다이얼로그가 닫힐 때까지 대기
       await page.waitForTimeout(300); // 애니메이션 대기
     }
 

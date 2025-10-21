@@ -111,8 +111,13 @@ test.describe('네비게이션 및 메뉴', () => {
   test('워크스페이스 상세 페이지에서 뒤로가기 버튼이 작동한다', async ({ page }) => {
     // 워크스페이스 생성
     await page.getByRole('button', { name: /새 워크스페이스/ }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
     await page.getByLabel('제목').fill('테스트 워크스페이스');
     await page.getByRole('button', { name: '생성' }).click();
+
+    // 다이얼로그가 닫힐 때까지 대기
+    await expect(dialog).not.toBeVisible();
 
     // 워크스페이스 상세 페이지로 이동
     await page.getByRole('heading', { name: '테스트 워크스페이스' }).first().click();
@@ -123,17 +128,21 @@ test.describe('네비게이션 및 메뉴', () => {
 
     // 워크스페이스 목록 페이지로 돌아갔는지 확인
     await expect(page).toHaveURL('/workspaces');
-    await expect(page.getByRole('heading', { name: '워크스페이스' })).toBeVisible();
+    // 페이지 제목만 선택 (exact match 사용)
+    await expect(page.getByRole('heading', { name: '워크스페이스', exact: true })).toBeVisible();
   });
 
   test('워크스페이스 상세 페이지에서 워크스페이스 전환 드롭다운이 작동한다', async ({ page }) => {
     // 세 개의 워크스페이스 생성
     const workspaces = ['서울 여행', '부산 여행', '제주도 여행'];
-    
+
     for (const workspace of workspaces) {
       await page.getByRole('button', { name: /새 워크스페이스/ }).click();
+      const dialog = page.getByRole('dialog');
+      await expect(dialog).toBeVisible();
       await page.getByLabel('제목').fill(workspace);
       await page.getByRole('button', { name: '생성' }).click();
+      await expect(dialog).not.toBeVisible();
       await expect(page.getByRole('heading', { name: workspace }).first()).toBeVisible();
     }
 
@@ -164,8 +173,11 @@ test.describe('네비게이션 및 메뉴', () => {
   test('워크스페이스 전환 드롭다운에서 새 워크스페이스를 생성할 수 있다', async ({ page }) => {
     // 워크스페이스 생성
     await page.getByRole('button', { name: /새 워크스페이스/ }).click();
+    let dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
     await page.getByLabel('제목').fill('첫 번째 워크스페이스');
     await page.getByRole('button', { name: '생성' }).click();
+    await expect(dialog).not.toBeVisible();
 
     // 워크스페이스 상세 페이지로 이동
     await page.getByRole('heading', { name: '첫 번째 워크스페이스' }).first().click();
@@ -182,15 +194,16 @@ test.describe('네비게이션 및 메뉴', () => {
     await newWorkspaceButton.click();
 
     // 생성 다이얼로그가 열렸는지 확인
-    await expect(page.getByRole('dialog')).toBeVisible();
-    await expect(page.getByRole('heading', { name: '새 워크스페이스' })).toBeVisible();
+    dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('heading', { name: '새 워크스페이스' })).toBeVisible();
 
     // 워크스페이스 생성
     await page.getByLabel('제목').fill('드롭다운에서 생성');
     await page.getByRole('button', { name: '생성' }).click();
 
     // 다이얼로그가 닫혔는지 확인
-    await expect(page.getByRole('dialog')).not.toBeVisible();
+    await expect(dialog).not.toBeVisible();
 
     // 성공 토스트 확인
     await expect(page.getByText('워크스페이스가 생성되었습니다!').first()).toBeVisible();
@@ -207,8 +220,11 @@ test.describe('네비게이션 및 메뉴', () => {
   test('프로필 메뉴에서 워크스페이스 메뉴를 클릭하면 워크스페이스 목록으로 이동한다', async ({ page }) => {
     // 워크스페이스 생성
     await page.getByRole('button', { name: /새 워크스페이스/ }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
     await page.getByLabel('제목').fill('테스트');
     await page.getByRole('button', { name: '생성' }).click();
+    await expect(dialog).not.toBeVisible();
 
     // 워크스페이스 상세 페이지로 이동
     await page.getByRole('heading', { name: '테스트' }).first().click();
@@ -222,7 +238,7 @@ test.describe('네비게이션 및 메뉴', () => {
 
     // 워크스페이스 목록 페이지로 이동했는지 확인
     await expect(page).toHaveURL('/workspaces');
-    await expect(page.getByRole('heading', { name: '워크스페이스' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '워크스페이스', exact: true })).toBeVisible();
   });
 
 });
