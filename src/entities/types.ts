@@ -15,8 +15,6 @@ export type Workspace = {
   id: string;
   ownerId: string; // 워크스페이스를 생성한 사용자 ID
   title: string; // 워크스페이스 제목 (예: "홍대 데이트 코스")
-  headcount?: number; // 인원수 (선택 사항)
-  date?: string; // 예정 날짜 (선택 사항)
   createdAt: string;
   updatedAt: string;
 };

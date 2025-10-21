@@ -56,14 +56,11 @@ Create a new workspace.
 createWorkspace(input: {
   ownerId: string;
   title: string;
-  headcount: number;
-  date: string;
 }): Promise<{ workspace?: Workspace; error?: string }>
 ```
 
 **Business Logic:**
 - Title validation (non-empty)
-- Headcount minimum 1
 
 ### updateWorkspace
 
@@ -72,7 +69,7 @@ Update workspace details.
 ```typescript
 updateWorkspace(
   id: string,
-  updates: Partial<Pick<Workspace, 'title' | 'headcount' | 'date'>>
+  updates: Partial<Pick<Workspace, 'title'>>
 ): Promise<{ error?: string }>
 ```
 

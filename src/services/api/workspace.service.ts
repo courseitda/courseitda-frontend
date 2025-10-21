@@ -14,8 +14,6 @@ import type { Workspace } from '@/entities/types';
 export interface CreateWorkspaceRequest {
   ownerId: string;
   title: string;
-  headcount?: number;
-  date?: string;
 }
 
 // 워크스페이스 생성 응답 타입
@@ -27,8 +25,6 @@ export interface CreateWorkspaceResponse {
 // 워크스페이스 수정 요청 파라미터 타입
 export interface UpdateWorkspaceRequest {
   title?: string;
-  headcount?: number;
-  date?: string;
 }
 
 // 워크스페이스 수정 응답 타입
@@ -52,7 +48,7 @@ export interface CheckWorkspaceTitleDuplicateResponse {
 export const workspaceApi = {
   /**
    * 워크스페이스 생성 API 호출
-   * @param data 소유자 ID, 제목, 인원수, 날짜
+   * @param data 소유자 ID, 제목
    * @returns 생성된 워크스페이스 또는 에러 메시지
    */
   create: async (data: CreateWorkspaceRequest): Promise<CreateWorkspaceResponse> => {
@@ -64,7 +60,7 @@ export const workspaceApi = {
   /**
    * 워크스페이스 수정 API 호출
    * @param id 워크스페이스 ID
-   * @param data 수정할 필드 (제목, 인원수, 날짜)
+   * @param data 수정할 필드 (제목)
    * @returns 에러 메시지 (없으면 성공)
    */
   update: async (id: string, data: UpdateWorkspaceRequest): Promise<UpdateWorkspaceResponse> => {

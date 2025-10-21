@@ -40,8 +40,6 @@ All business logic MUST be in Edge Functions.
   id: string (primary key)
   ownerId: string (indexed, foreign key to users)
   title: string
-  headcount: number
-  date: string (ISO date)
   createdAt: string (ISO timestamp)
   updatedAt: string (ISO timestamp)
 }

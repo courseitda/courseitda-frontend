@@ -8,8 +8,6 @@ import type { Workspace } from '@/entities/types';
 export const createWorkspace = async (input: {
   ownerId: string;
   title: string;
-  headcount?: number;
-  date?: string;
 }): Promise<{ workspace?: Workspace; error?: string }> => {
   try {
     // 워크스페이스 제목 필수 입력 검증
@@ -17,18 +15,12 @@ export const createWorkspace = async (input: {
       return { error: '워크스페이스 제목을 입력해주세요.' };
     }
 
-    // 인원수 유효성 검증 - 1명 이상이어야 함
-    if (input.headcount !== undefined && input.headcount < 1) {
-      return { error: '인원은 최소 1명 이상이어야 합니다.' };
-    }
 
     // 워크스페이스 생성 및 DB 저장
     const workspace: Workspace = {
       id: crypto.randomUUID(),
       ownerId: input.ownerId,
       title: input.title.trim(),
-      headcount: input.headcount,
-      date: input.date,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -42,10 +34,10 @@ export const createWorkspace = async (input: {
   }
 };
 
-// 워크스페이스 수정 Edge Function - 제목, 인원수, 날짜 변경
+// 워크스페이스 수정 Edge Function - 제목 변경
 export const updateWorkspace = async (
   id: string,
-  updates: Partial<Pick<Workspace, 'title' | 'headcount' | 'date'>>
+  updates: Partial<Pick<Workspace, 'title'>>
 ): Promise<{ error?: string }> => {
   try {
     // 워크스페이스 존재 여부 확인
@@ -59,10 +51,6 @@ export const updateWorkspace = async (
       return { error: '워크스페이스 제목을 입력해주세요.' };
     }
 
-    // 인원수 유효성 검증
-    if (updates.headcount !== undefined && updates.headcount < 1) {
-      return { error: '인원은 최소 1명 이상이어야 합니다.' };
-    }
 
     // 워크스페이스 정보 업데이트
     await db.workspaces.update(id, {
