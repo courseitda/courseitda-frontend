@@ -48,7 +48,7 @@ const WorkspaceDetail = () => {
 
   // 현재 워크스페이스의 카테고리 목록을 정렬 순서대로 실시간 조회
   const categories = useLiveQuery(
-    () => (id ? db.categories.where('workspaceId').equals(id).sortBy('sortOrder') : []),
+    () => (id ? db.categories.where('workspaceId').equals(id).sortBy('sequence') : []),
     [id]
   );
 

@@ -19,11 +19,11 @@ export const addPlaceToCategory = async (input: {
       return { error: '유효하지 않은 카테고리입니다.' };
     }
 
-    // Kakao 장소 ID로 기존 장소 검색 - 중복 저장 방지
-    const existingPlace = await db.places
-      .where('kakaoPlaceId')
-      .equals(kakaoPlace.id)
-      .first();
+    // 장소 이름과 주소로 기존 장소 검색 - 중복 저장 방지
+    const allPlaces = await db.places.toArray();
+    const existingPlace = allPlaces.find(
+      (p) => p.name === kakaoPlace.place_name && p.addressName === kakaoPlace.address_name
+    );
 
     let place: Place;
 
@@ -44,15 +44,14 @@ export const addPlaceToCategory = async (input: {
       // 새 장소 생성 - Kakao API 응답을 Place 타입으로 변환
       place = {
         id: crypto.randomUUID(),
-        kakaoPlaceId: kakaoPlace.id,
         name: kakaoPlace.place_name,
-        address: kakaoPlace.address_name,
-        roadAddress: kakaoPlace.road_address_name,
-        lat: parseFloat(kakaoPlace.y),
-        lng: parseFloat(kakaoPlace.x),
-        phone: kakaoPlace.phone || undefined,
-        url: kakaoPlace.place_url || undefined,
+        addressName: kakaoPlace.address_name,
+        roadAddressName: kakaoPlace.road_address_name || null,
+        latitude: parseFloat(kakaoPlace.y),
+        longitude: parseFloat(kakaoPlace.x),
+        placeUrl: kakaoPlace.place_url || null,
         createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
 
       await db.places.add(place);
@@ -61,9 +60,10 @@ export const addPlaceToCategory = async (input: {
     // 장소와 카테고리 연결 생성 (다대다 관계)
     const categoryPlace: CategoryPlace = {
       id: crypto.randomUUID(),
-      placeId: place.id,
       categoryId,
+      placeId: place.id,
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
     await db.categoryPlaces.add(categoryPlace);

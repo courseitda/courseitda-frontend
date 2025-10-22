@@ -13,13 +13,95 @@ export class CourseitdaDB extends Dexie {
   constructor() {
     super('CourseitdaDB');
     
-    // 데이터베이스 스키마 정의 - 테이블별 인덱스 설정으로 쿼리 성능 최적화
+    // 버전 1: 초기 스키마 (레거시)
     this.version(1).stores({
-      users: 'id, email', // 이메일로 사용자 검색
-      workspaces: 'id, ownerId', // 소유자별 워크스페이스 조회
-      categories: 'id, workspaceId, sortOrder', // 워크스페이스별, 순서별 조회
-      places: 'id, kakaoPlaceId', // Kakao 장소 ID로 중복 검사
+      users: 'id, email, nickname',
+      workspaces: 'id, ownerId',
+      categories: 'id, workspaceId, sortOrder',
+      places: 'id, kakaoPlaceId',
+      categoryPlaces: 'id, [categoryId+placeId], categoryId, placeId',
+    });
+
+    // 버전 2: 백엔드 도메인과 동기화 - 스키마 변경 및 필드명 수정
+    this.version(2).stores({
+      users: 'id, email, nickname', // 이메일, 닉네임으로 사용자 검색
+      workspaces: 'id, identifier, ownerId', // UUID 식별자, 소유자별 워크스페이스 조회
+      categories: 'id, workspaceId, sequence', // 워크스페이스별, 순서별 조회
+      places: 'id, name, addressName', // 이름, 주소로 검색
       categoryPlaces: 'id, [categoryId+placeId], categoryId, placeId', // 복합 키로 중복 방지
+    }).upgrade(async (tx) => {
+      // 기존 데이터 마이그레이션 - 필드명 변경
+      // Categories: sortOrder -> sequence
+      await tx.table('categories').toCollection().modify((category: any) => {
+        if ('sortOrder' in category) {
+          category.sequence = category.sortOrder;
+          delete category.sortOrder;
+        }
+        // Timestamp 필드 추가
+        if (!category.createdAt) {
+          category.createdAt = new Date().toISOString();
+          category.updatedAt = new Date().toISOString();
+        }
+      });
+
+      // Places: 필드명 변경 (lat -> latitude, lng -> longitude, address -> addressName 등)
+      await tx.table('places').toCollection().modify((place: any) => {
+        if ('lat' in place) {
+          place.latitude = place.lat;
+          delete place.lat;
+        }
+        if ('lng' in place) {
+          place.longitude = place.lng;
+          delete place.lng;
+        }
+        if ('address' in place) {
+          place.addressName = place.address;
+          delete place.address;
+        }
+        if ('roadAddress' in place) {
+          place.roadAddressName = place.roadAddress;
+          delete place.roadAddress;
+        }
+        if ('url' in place) {
+          place.placeUrl = place.url;
+          delete place.url;
+        }
+        // 불필요한 필드 제거
+        if ('kakaoPlaceId' in place) {
+          delete place.kakaoPlaceId;
+        }
+        if ('phone' in place) {
+          delete place.phone;
+        }
+        // Timestamp 필드 추가
+        if (!place.createdAt) {
+          place.createdAt = new Date().toISOString();
+          place.updatedAt = new Date().toISOString();
+        }
+      });
+
+      // Workspaces: identifier 추가
+      await tx.table('workspaces').toCollection().modify((workspace: any) => {
+        if (!workspace.identifier) {
+          workspace.identifier = crypto.randomUUID();
+        }
+      });
+
+      // Users: Timestamp 추가
+      await tx.table('users').toCollection().modify((user: any) => {
+        if (!user.createdAt) {
+          user.createdAt = new Date().toISOString();
+          user.updatedAt = new Date().toISOString();
+        }
+      });
+
+      // CategoryPlaces: Timestamp 추가
+      await tx.table('categoryPlaces').toCollection().modify((cp: any) => {
+        if (!cp.createdAt) {
+          cp.createdAt = new Date().toISOString();
+          cp.updatedAt = new Date().toISOString();
+        }
+      });
     });
   }
 }

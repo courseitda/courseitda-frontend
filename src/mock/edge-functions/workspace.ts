@@ -19,6 +19,7 @@ export const createWorkspace = async (input: {
     // 워크스페이스 생성 및 DB 저장
     const workspace: Workspace = {
       id: crypto.randomUUID(),
+      identifier: crypto.randomUUID(), // UUID 고유 식별자
       ownerId: input.ownerId,
       title: input.title.trim(),
       createdAt: new Date().toISOString(),

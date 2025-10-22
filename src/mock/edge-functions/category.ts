@@ -19,7 +19,7 @@ export const addCategory = async (input: {
       .equals(input.workspaceId)
       .toArray();
 
-    const sortOrder = existingCategories.length;
+    const sequence = existingCategories.length;
 
     // 카테고리 생성 및 DB 저장
     const category: Category = {
@@ -27,7 +27,7 @@ export const addCategory = async (input: {
       workspaceId: input.workspaceId,
       name: input.name.trim(),
       color: input.color,
-      sortOrder,
+      sequence,
       representativePlaceId: null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -114,10 +114,10 @@ export const reorderCategories = async (
   orderedIds: string[]
 ): Promise<{ error?: string }> => {
   try {
-    // 새로운 순서대로 각 카테고리의 sortOrder 업데이트
+    // 새로운 순서대로 각 카테고리의 sequence 업데이트
     const updates = orderedIds.map((id, index) =>
       db.categories.update(id, {
-        sortOrder: index,
+        sequence: index,
         updatedAt: new Date().toISOString(),
       })
     );

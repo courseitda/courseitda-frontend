@@ -145,7 +145,7 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
 
     // 모든 장소에 대해 마커 생성 - 대표 장소는 크고 번호 표시, 일반 장소는 작은 마커
     allPlacesData.forEach(({ place, category }) => {
-      const position = new kakao.maps.LatLng(place.lat, place.lng);
+      const position = new kakao.maps.LatLng(place.latitude, place.longitude);
       bounds.extend(position);
 
       const isRepresentative = category.representativePlaceId === place.id;
@@ -360,10 +360,10 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
           const ratio2 = (j + 1) / numSegments;
           
           // 선분의 시작점과 끝점 좌표를 비율에 따라 계산
-          const lat1 = current.place.lat + (next.place.lat - current.place.lat) * ratio1;
-          const lng1 = current.place.lng + (next.place.lng - current.place.lng) * ratio1;
-          const lat2 = current.place.lat + (next.place.lat - current.place.lat) * ratio2;
-          const lng2 = current.place.lng + (next.place.lng - current.place.lng) * ratio2;
+          const lat1 = current.place.latitude + (next.place.latitude - current.place.latitude) * ratio1;
+          const lng1 = current.place.longitude + (next.place.longitude - current.place.longitude) * ratio1;
+          const lat2 = current.place.latitude + (next.place.latitude - current.place.latitude) * ratio2;
+          const lng2 = current.place.longitude + (next.place.longitude - current.place.longitude) * ratio2;
           
           // 각 선분의 색상을 두 카테고리 색상 사이의 보간 값으로 계산
           const segmentColor = interpolateColor(current.category.color, next.category.color, ratio1);
@@ -410,7 +410,7 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
     const kakao = window.kakao;
 
     // panTo를 사용하여 부드러운 애니메이션과 함께 지도 중심 이동
-    const moveLatLon = new kakao.maps.LatLng(focusedPlace.lat, focusedPlace.lng);
+    const moveLatLon = new kakao.maps.LatLng(focusedPlace.latitude, focusedPlace.longitude);
     map.panTo(moveLatLon);
     
     // 이동 후 줌 레벨을 3으로 설정하여 장소 상세 확인 가능하도록 확대

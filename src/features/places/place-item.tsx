@@ -45,7 +45,7 @@ export const PlaceItem = ({ place, categoryId, isRepresentative, hasRepresentati
         onClick={() => onPlaceClick?.(place)}
       >
         <p className={`text-sm truncate ${isRepresentative ? 'font-semibold' : 'font-medium'}`}>{place.name}</p>
-        <p className="text-xs text-muted-foreground truncate">{place.address}</p>
+        <p className="text-xs text-muted-foreground truncate">{place.addressName}</p>
       </div>
       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <Button

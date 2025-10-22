@@ -50,6 +50,7 @@ export const registerUser = async (input: {
       password: hashPassword(input.password),
       nickname: input.nickname,
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
     await db.users.add(user);
