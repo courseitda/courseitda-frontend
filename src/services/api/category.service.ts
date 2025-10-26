@@ -2,6 +2,7 @@
 // 목적: 컴포넌트와 실제 API 구현체를 분리하여, 백엔드 전환 시 이 파일만 수정하면 되도록 구조화
 
 import {
+  getCategoryById,
   addCategory,
   updateCategory,
   deleteCategory,
@@ -10,6 +11,12 @@ import {
   unsetRepresentativePlace,
 } from '@/mock/edge-functions/category';
 import type { Category } from '@/entities/types';
+
+// 카테고리 조회 응답 타입
+export interface GetCategoryResponse {
+  category?: Category;
+  error?: string;
+}
 
 // 카테고리 추가 요청 파라미터 타입
 export interface AddCategoryRequest {
@@ -58,6 +65,17 @@ export interface UnsetRepresentativePlaceResponse {
 // 카테고리 API 서비스 객체 - 모든 카테고리 관련 API 호출을 중앙 관리
 // 백엔드 연동 시: 이 객체의 메서드 구현만 axios 호출로 변경하면 됨
 export const categoryApi = {
+  /**
+   * 카테고리 단일 조회 API 호출
+   * @param categoryId 카테고리 ID
+   * @returns 카테고리 정보 또는 에러 메시지
+   */
+  getById: async (categoryId: string): Promise<GetCategoryResponse> => {
+    // 현재: mock edge-function 호출
+    // 백엔드 연동 시: return axios.get(`/api/categories/${categoryId}`)
+    return await getCategoryById(categoryId);
+  },
+
   /**
    * 카테고리 추가 API 호출
    * @param data 워크스페이스 ID, 이름, 색상

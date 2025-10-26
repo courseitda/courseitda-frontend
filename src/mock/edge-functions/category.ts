@@ -1,6 +1,26 @@
 import { db } from '../db';
 import type { Category } from '@/entities/types';
 
+// 카테고리 단일 조회 Edge Function - ID로 카테고리 상세 정보 조회
+// 백엔드 연동 시: GET /api/categories/{categoryId}
+export const getCategoryById = async (
+  categoryId: string
+): Promise<{ category?: Category; error?: string }> => {
+  try {
+    // 카테고리 조회
+    const category = await db.categories.get(categoryId);
+    
+    if (!category) {
+      return { error: '카테고리를 찾을 수 없습니다.' };
+    }
+    
+    return { category };
+  } catch (error) {
+    console.error('Get category by id error:', error);
+    return { error: '카테고리 조회 중 오류가 발생했습니다.' };
+  }
+};
+
 // 카테고리 추가 Edge Function - 워크스페이스에 새 카테고리 생성
 export const addCategory = async (input: {
   workspaceId: string;
