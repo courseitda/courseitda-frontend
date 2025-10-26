@@ -158,6 +158,25 @@ createWorkspace(input: {
 **Business Logic:**
 - Title validation (non-empty)
 
+**Backend API Mapping:**
+- Mock: Direct Edge Function call
+- Backend: `POST /api/workspaces`
+- Request: `{ title: string }`
+- Response: `{ identifier: string, title: string, modifiedAt: string }`
+
+### getWorkspaceByIdentifier
+
+Get a single workspace by its identifier.
+
+```typescript
+getWorkspaceByIdentifier(identifier: string): Promise<{ workspace?: Workspace; error?: string }>
+```
+
+**Backend API Mapping:**
+- Mock: Direct Edge Function call (queries IndexedDB by `identifier` field)
+- Backend: `GET /api/workspaces/{identifier}`
+- Response: `{ identifier: string, title: string, modifiedAt: string }`
+
 ### updateWorkspace
 
 Update workspace details.

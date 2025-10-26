@@ -5,6 +5,7 @@ import {
   createWorkspace,
   updateWorkspace,
   deleteWorkspace,
+  getWorkspaceByIdentifier,
   getWorkspacesByOwner,
   checkWorkspaceTitleDuplicate,
 } from '@/mock/edge-functions/workspace';
@@ -34,6 +35,12 @@ export interface UpdateWorkspaceResponse {
 
 // 워크스페이스 삭제 응답 타입
 export interface DeleteWorkspaceResponse {
+  error?: string;
+}
+
+// 워크스페이스 조회 응답 타입
+export interface GetWorkspaceResponse {
+  workspace?: Workspace;
   error?: string;
 }
 
@@ -78,6 +85,17 @@ export const workspaceApi = {
     // 현재: mock edge-function 호출
     // 추후: return axios.delete(`/api/workspaces/${id}`)
     return await deleteWorkspace(id);
+  },
+
+  /**
+   * 워크스페이스 단일 조회 API 호출
+   * @param identifier 워크스페이스 식별자
+   * @returns 워크스페이스 정보 또는 에러 메시지
+   */
+  getByIdentifier: async (identifier: string): Promise<GetWorkspaceResponse> => {
+    // 현재: mock edge-function 호출
+    // 추후: return axios.get(`/api/workspaces/${identifier}`)
+    return await getWorkspaceByIdentifier(identifier);
   },
 
   /**

@@ -4,6 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/mock/db';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useUserId, useUserNickname, useUserDropdown } from '@/shared/hooks/use-user-info';
+import { useWorkspace, useWorkspacesByOwner } from '@/shared/hooks/use-workspace';
 import { Button } from '@/components/ui/button';
 import { CategoryList } from '@/features/categories/category-list';
 import { MapCanvas } from '@/features/map/map-canvas';
@@ -43,19 +44,19 @@ const WorkspaceDetail = () => {
   const [createWorkspaceOpen, setCreateWorkspaceOpen] = useState(false);
 
   // URL 파라미터로부터 현재 워크스페이스 정보를 실시간으로 조회
-  const workspace = useLiveQuery(() => (id ? db.workspaces.get(id) : undefined), [id]);
+  // 백엔드 연동 시: useWorkspace 내부가 API 호출로 변경됨
+  const workspace = useWorkspace(id);
 
   // 현재 워크스페이스의 카테고리 목록을 정렬 순서대로 실시간 조회
+  // 백엔드 연동 시: GET /api/workspaces/{identifier}/categories 호출로 변경
   const categories = useLiveQuery(
     () => (id ? db.categories.where('workspaceId').equals(id).sortBy('sequence') : []),
     [id]
   );
 
   // 헤더의 워크스페이스 전환 드롭다운을 위해 모든 워크스페이스 목록 조회
-  const workspaces = useLiveQuery(
-    () => (userId ? db.workspaces.where('ownerId').equals(userId).toArray() : []),
-    [userId]
-  );
+  // 백엔드 연동 시: useWorkspacesByOwner 내부가 API 호출로 변경됨
+  const workspaces = useWorkspacesByOwner(userId);
 
   // 미인증 사용자 접근 차단 - 로그인 페이지로 리다이렉트하여 보안 유지
   useEffect(() => {

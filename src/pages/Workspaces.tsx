@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -31,7 +30,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useWorkspaceStore } from '@/shared/stores/workspace-store';
 import { useUserId, useUserNickname, useUserDropdown } from '@/shared/hooks/use-user-info';
-import { db } from '@/mock/db';
+import { useWorkspacesByOwner } from '@/shared/hooks/use-workspace';
 import { Plus, LogOut, Settings, Pencil, Trash2, Clock, User as UserIcon, LayoutGrid, MapPin } from 'lucide-react';
 import logo from '@/assets/logo-no-background.png';
 import { CreateWorkspaceDialog } from '@/features/workspaces/create-workspace-dialog';
@@ -68,10 +67,8 @@ const Workspaces = () => {
   }, [isAuthenticated, navigate]);
 
   // 현재 사용자가 소유한 모든 워크스페이스를 실시간으로 조회
-  const workspaces = useLiveQuery(
-    () => (userId ? db.workspaces.where('ownerId').equals(userId).toArray() : []),
-    [userId]
-  );
+  // 백엔드 연동 시: useWorkspacesByOwner 내부가 API 호출로 변경됨
+  const workspaces = useWorkspacesByOwner(userId);
 
   // 로그아웃 처리 후 인증 상태 초기화 및 랜딩 페이지로 이동
   const handleLogout = () => {
