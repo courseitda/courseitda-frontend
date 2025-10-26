@@ -210,6 +210,21 @@ getWorkspacesByOwner(ownerId: string): Promise<Workspace[]>
 
 ## Category Management
 
+### getCategoryById
+
+Get a single category by its ID.
+
+```typescript
+getCategoryById(categoryId: string): Promise<{ category?: Category; error?: string }>
+```
+
+**Backend API Mapping:**
+- Mock: Direct Edge Function call (queries IndexedDB by category ID)
+- Backend: `GET /api/categories/{categoryId}`
+- Response: Includes category details, sequence, representativePlaceId, and categoryPlaces list
+
+---
+
 ### addCategory
 
 Add a new category to a workspace.
@@ -218,12 +233,18 @@ Add a new category to a workspace.
 addCategory(input: {
   workspaceId: string;
   name: string;
+  color: string;
 }): Promise<{ category?: Category; error?: string }>
 ```
 
 **Business Logic:**
-- Automatic color assignment (round-robin from palette)
 - Automatic sortOrder calculation (based on existing count)
+
+**Backend API Mapping:**
+- Mock: Direct Edge Function call
+- Backend: `POST /api/categories`
+- Request: `{ name: string, color: string }`
+- Response: `{ id: number, name: string, color: string, sequence: number }`
 
 ### updateCategory
 
@@ -254,13 +275,23 @@ Update the sort order of categories.
 ```typescript
 reorderCategories(
   workspaceId: string,
-  orderedIds: string[]
-): Promise<{ error?: string }>
+  categories: Array<{ id: string; sequence: number }>
+): Promise<{ 
+  categories?: Array<{ id: string; sequence: number }>; 
+  error?: string 
+}>
 ```
 
 **Business Logic:**
-- Calculates new sortOrder values (0, 1, 2, ...)
+- Updates sequence for each category
 - Updates all categories in workspace
+
+**Backend API Mapping:**
+- Mock: Direct Edge Function call
+- Backend: `POST /api/workspaces/{identifier}/categories/sequence`
+- Request: `{ categories: Array<{ id: number, sequence: number }> }`
+- Response: `{ categories: Array<{ id: number, sequence: number }> }`
+- Note: Backend sequence starts from 1, frontend uses 0-based index
 
 ### setRepresentativePlace
 

@@ -129,15 +129,16 @@ export const deleteCategory = async (id: string): Promise<{ error?: string }> =>
 };
 
 // 카테고리 순서 변경 Edge Function - 드래그앤드롭 후 새 순서를 DB에 반영
+// 백엔드 연동 시: POST /api/workspaces/{identifier}/categories/sequence
 export const reorderCategories = async (
   workspaceId: string,
-  orderedIds: string[]
-): Promise<{ error?: string }> => {
+  categories: Array<{ id: string; sequence: number }>
+): Promise<{ categories?: Array<{ id: string; sequence: number }>; error?: string }> => {
   try {
-    // 새로운 순서대로 각 카테고리의 sequence 업데이트
-    const updates = orderedIds.map((id, index) =>
-      db.categories.update(id, {
-        sequence: index,
+    // 각 카테고리의 sequence 업데이트
+    const updates = categories.map((category) =>
+      db.categories.update(category.id, {
+        sequence: category.sequence,
         updatedAt: new Date().toISOString(),
       })
     );
@@ -150,7 +151,8 @@ export const reorderCategories = async (
       updatedAt: new Date().toISOString(),
     });
 
-    return {};
+    // 백엔드 API 스펙에 맞춰 변경된 순서 반환
+    return { categories };
   } catch (error) {
     console.error('Reorder categories error:', error);
     return { error: '카테고리 순서 변경 중 오류가 발생했습니다.' };

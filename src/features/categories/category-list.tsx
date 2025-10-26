@@ -30,9 +30,16 @@ export const CategoryList = ({ workspaceId, categories, onPlaceClick }: Category
     const [reorderedItem] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reorderedItem);
 
-    // 변경된 순서를 ID 배열로 변환하여 API 서비스 레이어를 통해 DB에 저장 (백엔드 연동 시 categoryApi만 수정)
-    const orderedIds = items.map((item) => item.id);
-    const { error } = await categoryApi.reorder(workspaceId, orderedIds);
+    // 백엔드 API 스펙에 맞춰 { id, sequence } 객체 배열로 변환
+    // 현재 Mock: 0부터 시작 (0, 1, 2, ...)
+    // 백엔드 연동 시: 1부터 시작 (1, 2, 3, ...) - API 서비스 레이어에서 변환
+    const reorderedCategories = items.map((item, index) => ({
+      id: item.id,
+      sequence: index,
+    }));
+
+    // API 서비스 레이어를 통해 DB에 저장 (백엔드 연동 시 categoryApi만 수정)
+    const { error } = await categoryApi.reorder(workspaceId, reorderedCategories);
 
     if (error) {
       toast.error(error);
