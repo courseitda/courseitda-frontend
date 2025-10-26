@@ -2,7 +2,17 @@
 // 목적: 컴포넌트와 실제 API 구현체를 분리하여, 백엔드 전환 시 이 파일만 수정하면 되도록 구조화
 // 현재는 mock edge-function을 래핑하지만, 추후 Axios 기반 HTTP 요청으로 전환 예정
 
-import { loginUser, registerUser, verifyToken, checkEmailDuplicate, checkNicknameDuplicate } from '@/mock/edge-functions/auth';
+import { 
+  loginUser, 
+  registerUser, 
+  verifyToken, 
+  checkEmailDuplicate, 
+  checkNicknameDuplicate,
+  getUserById,
+  getNavigatorInfo,
+  getDropdownInfo,
+  getProfileInfo
+} from '@/mock/edge-functions/auth';
 import type { User } from '@/entities/types';
 import type { ApiResponse } from '@/types/api';
 import { adaptMockResponse } from '@/types/api';
@@ -13,10 +23,10 @@ export interface LoginRequest {
   password: string;
 }
 
-// 로그인 응답 데이터 타입 - user 정보와 인증 토큰을 포함
+// 로그인 응답 데이터 타입 - 토큰만 포함 (백엔드 API 스펙과 일치)
 export interface LoginData {
-  user: User;
-  token: string;
+  tokenType: string;    // 토큰 타입 (항상 "Bearer")
+  accessToken: string;  // JWT 액세스 토큰
 }
 
 // 회원가입 요청 파라미터 타입
@@ -46,13 +56,35 @@ export interface CheckNicknameDuplicateData {
   isDuplicate: boolean;
 }
 
+// 사용자 정보 조회 응답 데이터 타입
+export interface UserInfoData {
+  user: User;
+}
+
+// 네비게이터 정보 조회 응답 데이터 타입 - 헤더 네비게이터용
+export interface NavigatorInfoData {
+  nickname: string;
+}
+
+// 드롭다운 정보 조회 응답 데이터 타입 - 드롭다운 메뉴용
+export interface DropdownInfoData {
+  nickname: string;
+  email: string;
+}
+
+// 프로필 정보 조회 응답 데이터 타입 - 마이페이지용
+export interface ProfileInfoData {
+  nickname: string;
+  email: string;
+}
+
 // 인증 API 서비스 객체 - 모든 인증 관련 API 호출을 중앙 관리
 // 백엔드 연동 시: 이 객체의 메서드 구현만 axios 호출로 변경하면 됨
 export const authApi = {
   /**
    * 로그인 API 호출
    * @param data 이메일과 비밀번호
-   * @returns API 응답 (성공 시 사용자 정보와 토큰, 실패 시 에러 정보)
+   * @returns API 응답 (성공 시 토큰, 실패 시 에러 정보)
    */
   login: async (data: LoginRequest): Promise<ApiResponse<LoginData>> => {
     // 현재: mock edge-function 호출 후 표준 응답 형식으로 변환
@@ -72,11 +104,12 @@ export const authApi = {
       };
     }
     
+    // 백엔드 API 스펙에 맞춰 토큰만 반환 (사용자 정보는 별도 API로 조회)
     return {
       success: true,
       data: {
-        user: mockResponse.user!,
-        token: mockResponse.token!,
+        tokenType: 'Bearer',
+        accessToken: mockResponse.token!,
       },
       timestamp: new Date().toISOString(),
     };
@@ -205,6 +238,136 @@ export const authApi = {
       success: true,
       data: {
         isDuplicate: mockResponse.isDuplicate,
+      },
+      timestamp: new Date().toISOString(),
+    };
+  },
+
+  /**
+   * 사용자 ID로 사용자 정보 조회 API 호출
+   * @param userId 사용자 ID
+   * @returns API 응답 (성공 시 사용자 정보, 실패 시 에러 정보)
+   */
+  getUserById: async (userId: string): Promise<ApiResponse<UserInfoData>> => {
+    // 현재: mock edge-function 호출 후 표준 응답 형식으로 변환
+    const mockResponse = await getUserById(userId);
+    
+    // Mock 응답을 표준 API 응답 형식으로 변환
+    // 추후 백엔드 연동 시: return (await apiClient.get(`/api/users/${userId}`)).data
+    if (mockResponse.error) {
+      return {
+        success: false,
+        error: {
+          code: 'USER_NOT_FOUND',
+          message: mockResponse.error,
+          status: 404,
+        },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    
+    return {
+      success: true,
+      data: {
+        user: mockResponse.user!,
+      },
+      timestamp: new Date().toISOString(),
+    };
+  },
+
+  /**
+   * 네비게이터 정보 조회 API 호출 - 헤더 네비게이터에 표시할 닉네임
+   * @param token 인증 토큰
+   * @returns API 응답 (성공 시 닉네임만, 실패 시 에러 정보)
+   */
+  getNavigatorInfo: async (token: string): Promise<ApiResponse<NavigatorInfoData>> => {
+    // 현재: mock edge-function 호출 후 표준 응답 형식으로 변환
+    const mockResponse = await getNavigatorInfo(token);
+    
+    // Mock 응답을 표준 API 응답 형식으로 변환
+    // 추후 백엔드 연동 시: return (await apiClient.get('/api/me/navigator', { headers: { Authorization: `Bearer ${token}` } })).data
+    if (mockResponse.error) {
+      return {
+        success: false,
+        error: {
+          code: 'UNAUTHORIZED',
+          message: mockResponse.error,
+          status: 401,
+        },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    
+    return {
+      success: true,
+      data: {
+        nickname: mockResponse.nickname!,
+      },
+      timestamp: new Date().toISOString(),
+    };
+  },
+
+  /**
+   * 드롭다운 정보 조회 API 호출 - 사용자 드롭다운 메뉴에 표시할 정보
+   * @param token 인증 토큰
+   * @returns API 응답 (성공 시 닉네임 + 이메일, 실패 시 에러 정보)
+   */
+  getDropdownInfo: async (token: string): Promise<ApiResponse<DropdownInfoData>> => {
+    // 현재: mock edge-function 호출 후 표준 응답 형식으로 변환
+    const mockResponse = await getDropdownInfo(token);
+    
+    // Mock 응답을 표준 API 응답 형식으로 변환
+    // 추후 백엔드 연동 시: return (await apiClient.get('/api/me/dropdown', { headers: { Authorization: `Bearer ${token}` } })).data
+    if (mockResponse.error) {
+      return {
+        success: false,
+        error: {
+          code: 'UNAUTHORIZED',
+          message: mockResponse.error,
+          status: 401,
+        },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    
+    return {
+      success: true,
+      data: {
+        nickname: mockResponse.nickname!,
+        email: mockResponse.email!,
+      },
+      timestamp: new Date().toISOString(),
+    };
+  },
+
+  /**
+   * 프로필 정보 조회 API 호출 - 마이페이지에 표시할 사용자 정보
+   * @param token 인증 토큰
+   * @returns API 응답 (성공 시 닉네임 + 이메일, 실패 시 에러 정보)
+   */
+  getProfileInfo: async (token: string): Promise<ApiResponse<ProfileInfoData>> => {
+    // 현재: mock edge-function 호출 후 표준 응답 형식으로 변환
+    const mockResponse = await getProfileInfo(token);
+    
+    // Mock 응답을 표준 API 응답 형식으로 변환
+    // 추후 백엔드 연동 시: return (await apiClient.get('/api/me/profile', { headers: { Authorization: `Bearer ${token}` } })).data
+    if (mockResponse.error) {
+      return {
+        success: false,
+        error: {
+          code: 'UNAUTHORIZED',
+          message: mockResponse.error,
+          status: 401,
+        },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    
+    return {
+      success: true,
+      data: {
+        nickname: mockResponse.nickname!,
+        email: mockResponse.email!,
       },
       timestamp: new Date().toISOString(),
     };

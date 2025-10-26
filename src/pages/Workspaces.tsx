@@ -30,6 +30,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useWorkspaceStore } from '@/shared/stores/workspace-store';
+import { useUserId, useUserNickname, useUserDropdown } from '@/shared/hooks/use-user-info';
 import { db } from '@/mock/db';
 import { Plus, LogOut, Settings, Pencil, Trash2, Clock, User as UserIcon, LayoutGrid, MapPin } from 'lucide-react';
 import logo from '@/assets/logo-no-background.png';
@@ -39,14 +40,19 @@ import { toast } from 'sonner';
 // API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
 import { workspaceApi } from '@/services/api';
 import type { Workspace } from '@/entities/types';
+import { Spinner } from '@/components/ui/spinner';
 
 /**
  * 워크스페이스 목록 페이지 컴포넌트
  * 사용자의 모든 워크스페이스를 카드 형태로 표시하며, 생성/수정/삭제 기능 제공
+ * UserRequest: 백엔드 API 연동을 위해 토큰 기반 인증으로 변경, 사용자 정보는 API 호출로 조회
  */
 const Workspaces = () => {
   const navigate = useNavigate();
-  const { user, logout, isAuthenticated } = useAuthStore();
+  const { logout, isAuthenticated } = useAuthStore();
+  const { userId, loading: userLoading } = useUserId(); // 토큰에서 사용자 ID 추출
+  const { nickname: navNickname } = useUserNickname(); // 네비게이터용 닉네임
+  const { nickname: dropdownNickname, email } = useUserDropdown(); // 드롭다운용 닉네임 + 이메일
   const setSelectedWorkspace = useWorkspaceStore((state) => state.setSelectedWorkspace);
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -63,8 +69,8 @@ const Workspaces = () => {
 
   // 현재 사용자가 소유한 모든 워크스페이스를 실시간으로 조회
   const workspaces = useLiveQuery(
-    () => (user ? db.workspaces.where('ownerId').equals(user.id).toArray() : []),
-    [user]
+    () => (userId ? db.workspaces.where('ownerId').equals(userId).toArray() : []),
+    [userId]
   );
 
   // 로그아웃 처리 후 인증 상태 초기화 및 랜딩 페이지로 이동
@@ -108,8 +114,17 @@ const Workspaces = () => {
     setSelectedForDelete(null);
   };
 
-  // 사용자 정보 로딩 전까지 컴포넌트 렌더링 방지
-  if (!user) return null;
+  // 사용자 ID 로딩 중 스피너 표시
+  if (userLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Spinner className="w-8 h-8" />
+      </div>
+    );
+  }
+
+  // 사용자 ID 로딩 전까지 컴포넌트 렌더링 방지
+  if (!userId) return null;
 
   return (
     <div className="min-h-screen bg-gradient-card">
@@ -138,15 +153,15 @@ const Workspaces = () => {
                       <UserIcon className="w-4 h-4" />
                     </AvatarFallback>
                   </Avatar>
-                  <span className="hidden sm:inline font-medium">{user.nickname}</span>
+                  <span className="hidden sm:inline font-medium">{navNickname}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user.nickname}</p>
+                    <p className="text-sm font-medium leading-none">{dropdownNickname}</p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      {user.email}
+                      {email}
                     </p>
                   </div>
                 </DropdownMenuLabel>

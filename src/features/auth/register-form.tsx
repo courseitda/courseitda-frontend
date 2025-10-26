@@ -9,10 +9,11 @@ import { useAuthStore } from '@/shared/stores/auth-store';
 import { Check, X, AlertCircle, Eye, EyeOff, User, Mail, Lock } from 'lucide-react';
 
 // 회원가입 폼 컴포넌트 - 닉네임, 이메일, 비밀번호 입력 및 검증 후 회원 등록
+// UserRequest: 백엔드 API 연동을 위해 토큰만 저장하도록 변경
 // 사용 위치: pages/Auth
 export const RegisterForm = () => {
   const navigate = useNavigate();
-  const setAuth = useAuthStore((state) => state.setAuth);
+  const setToken = useAuthStore((state) => state.setToken);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -184,8 +185,8 @@ export const RegisterForm = () => {
       return;
     }
 
-    // 자동 로그인 성공 시 전역 상태에 인증 정보 저장 후 워크스페이스로 이동
-    setAuth(loginResponse.data.user, loginResponse.data.token);
+    // 자동 로그인 성공 시 전역 상태에 토큰만 저장 후 워크스페이스로 이동
+    setToken(loginResponse.data.accessToken);
     navigate('/workspaces');
   };
 

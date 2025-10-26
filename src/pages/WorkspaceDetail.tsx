@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/mock/db';
 import { useAuthStore } from '@/shared/stores/auth-store';
+import { useUserId, useUserNickname, useUserDropdown } from '@/shared/hooks/use-user-info';
 import { Button } from '@/components/ui/button';
 import { CategoryList } from '@/features/categories/category-list';
 import { MapCanvas } from '@/features/map/map-canvas';
@@ -21,27 +22,25 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CreateWorkspaceDialog } from '@/features/workspaces/create-workspace-dialog';
 import type { Place } from '@/entities/types';
+import { Spinner } from '@/components/ui/spinner';
 
 /**
  * 워크스페이스 상세 페이지 - 카테고리 관리 및 지도 표시
  * 지도와 카테고리 목록을 동시에 보여주며, 장소 클릭 시 지도에서 강조 표시
+ * UserRequest: 백엔드 API 연동을 위해 토큰 기반 인증으로 변경, 사용자 정보는 API 호출로 조회
  */
 const WorkspaceDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
+  const { userId, loading: userLoading } = useUserId(); // 토큰에서 사용자 ID 추출
+  const { nickname: navNickname } = useUserNickname(); // 네비게이터용 닉네임
+  const { nickname: dropdownNickname, email } = useUserDropdown(); // 드롭다운용 닉네임 + 이메일
+  const logout = useAuthStore((state) => state.logout);
   const kakaoJsApiKey = useSettingsStore((state) => state.kakaoJsApiKey);
   const kakaoRestApiKey = useSettingsStore((state) => state.kakaoRestApiKey);
   const [focusedPlace, setFocusedPlace] = useState<Place | null>(null);
   const [createWorkspaceOpen, setCreateWorkspaceOpen] = useState(false);
-  const logout = useAuthStore((state) => state.logout);
-
-  // 미인증 사용자 접근 차단 - 로그인 페이지로 리다이렉트하여 보안 유지
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/auth');
-    }
-  }, [isAuthenticated, navigate]);
 
   // URL 파라미터로부터 현재 워크스페이스 정보를 실시간으로 조회
   const workspace = useLiveQuery(() => (id ? db.workspaces.get(id) : undefined), [id]);
@@ -54,9 +53,16 @@ const WorkspaceDetail = () => {
 
   // 헤더의 워크스페이스 전환 드롭다운을 위해 모든 워크스페이스 목록 조회
   const workspaces = useLiveQuery(
-    () => (user ? db.workspaces.where('ownerId').equals(user.id).toArray() : []),
-    [user]
+    () => (userId ? db.workspaces.where('ownerId').equals(userId).toArray() : []),
+    [userId]
   );
+
+  // 미인증 사용자 접근 차단 - 로그인 페이지로 리다이렉트하여 보안 유지
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/auth');
+    }
+  }, [isAuthenticated, navigate]);
 
   // API 키 미설정 시 사용자에게 안내 토스트 표시하여 설정 페이지로 이동 유도
   useEffect(() => {
@@ -81,8 +87,17 @@ const WorkspaceDetail = () => {
     navigate('/');
   };
 
-  // 워크스페이스 또는 사용자 정보가 로드되지 않았으면 에러 화면 표시
-  if (!workspace || !user) {
+  // 사용자 ID 로딩 중 스피너 표시
+  if (userLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Spinner className="w-8 h-8" />
+      </div>
+    );
+  }
+
+  // 워크스페이스 또는 사용자 ID가 로드되지 않았으면 에러 화면 표시
+  if (!workspace || !userId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>워크스페이스를 찾을 수 없습니다.</p>
@@ -160,20 +175,20 @@ const WorkspaceDetail = () => {
                     <Avatar className="w-8 h-8">
                       <AvatarFallback className="bg-primary text-primary-foreground">
                         <UserIcon className="w-4 h-4" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="hidden sm:inline font-medium">{user.nickname}</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user.nickname}</p>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        {user.email}
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="hidden sm:inline font-medium">{navNickname}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{dropdownNickname}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => navigate('/mypage')} className="gap-2">
                     <UserIcon className="w-4 h-4" />

@@ -151,3 +151,87 @@ export const checkNicknameDuplicate = async (nickname: string): Promise<{ isDupl
     return { isDuplicate: false, error: '닉네임 확인 중 오류가 발생했습니다.' };
   }
 };
+
+// 사용자 ID로 사용자 정보 조회 Edge Function
+// 백엔드 연동 시: GET /api/me/profile 등으로 변경
+export const getUserById = async (userId: string): Promise<{ user?: User; error?: string }> => {
+  try {
+    // 사용자 ID로 조회
+    const user = await db.users.get(userId);
+    
+    if (!user) {
+      return { error: '사용자를 찾을 수 없습니다.' };
+    }
+
+    return { user };
+  } catch (error) {
+    console.error('Get user error:', error);
+    return { error: '사용자 정보 조회 중 오류가 발생했습니다.' };
+  }
+};
+
+// 네비게이터 정보 조회 Edge Function - 헤더 네비게이터에 표시할 사용자 닉네임
+// 백엔드 연동 시: GET /api/me/navigator
+export const getNavigatorInfo = async (token: string): Promise<{ nickname?: string; error?: string }> => {
+  try {
+    // 토큰 검증 및 사용자 조회
+    const decoded = JSON.parse(atob(token));
+    const user = await db.users.get(decoded.userId);
+    
+    if (!user) {
+      return { error: '유효하지 않은 토큰입니다.' };
+    }
+
+    // 백엔드 API 스펙: { nickname: string }
+    return { nickname: user.nickname };
+  } catch (error) {
+    console.error('Get navigator info error:', error);
+    return { error: '사용자 정보 조회 중 오류가 발생했습니다.' };
+  }
+};
+
+// 드롭다운 정보 조회 Edge Function - 사용자 드롭다운 메뉴에 표시할 정보
+// 백엔드 연동 시: GET /api/me/dropdown
+export const getDropdownInfo = async (token: string): Promise<{ nickname?: string; email?: string; error?: string }> => {
+  try {
+    // 토큰 검증 및 사용자 조회
+    const decoded = JSON.parse(atob(token));
+    const user = await db.users.get(decoded.userId);
+    
+    if (!user) {
+      return { error: '유효하지 않은 토큰입니다.' };
+    }
+
+    // 백엔드 API 스펙: { nickname: string, email: string }
+    return { 
+      nickname: user.nickname,
+      email: user.email 
+    };
+  } catch (error) {
+    console.error('Get dropdown info error:', error);
+    return { error: '사용자 정보 조회 중 오류가 발생했습니다.' };
+  }
+};
+
+// 프로필 정보 조회 Edge Function - 마이페이지에 표시할 사용자 정보
+// 백엔드 연동 시: GET /api/me/profile
+export const getProfileInfo = async (token: string): Promise<{ nickname?: string; email?: string; error?: string }> => {
+  try {
+    // 토큰 검증 및 사용자 조회
+    const decoded = JSON.parse(atob(token));
+    const user = await db.users.get(decoded.userId);
+    
+    if (!user) {
+      return { error: '유효하지 않은 토큰입니다.' };
+    }
+
+    // 백엔드 API 스펙: { nickname: string, email: string }
+    return { 
+      nickname: user.nickname,
+      email: user.email 
+    };
+  } catch (error) {
+    console.error('Get profile info error:', error);
+    return { error: '사용자 정보 조회 중 오류가 발생했습니다.' };
+  }
+};

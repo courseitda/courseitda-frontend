@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { MapPin, Calendar, Route, LogOut, User as UserIcon, LayoutGrid, Settings } from 'lucide-react';
 import { useAuthStore } from '@/shared/stores/auth-store';
+import { useUserDropdown, useUserNickname } from '@/shared/hooks/use-user-info';
 import logo from '@/assets/logo-no-background.png';
 import {
   DropdownMenu,
@@ -16,12 +17,14 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 /**
  * 애플리케이션의 랜딩 페이지 컴포넌트
  * 서비스 소개와 주요 기능을 안내하며, 인증 상태에 따라 다른 액션 버튼 제공
+ * UserRequest: 백엔드 API 연동을 위해 토큰 기반 인증으로 변경, 사용자 정보는 API 호출로 조회
  */
 const Index = () => {
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const { nickname: navNickname } = useUserNickname(); // 네비게이터용 닉네임
+  const { nickname: dropdownNickname, email } = useUserDropdown(); // 드롭다운용 닉네임 + 이메일
 
   // 로그아웃 처리 후 전역 인증 상태 초기화
   const handleLogout = () => {
@@ -49,7 +52,7 @@ const Index = () => {
             {/* UserRequest: 데스크톱 뷰에서 아바타와 닉네임을 함께 표시하고 모바일은 아이콘만 표시하여 공간 효율성 향상 */}
             {/* UserRequest: 모든 사용자 메뉴를 마이페이지 / 워크스페이스 / 설정 / 로그아웃 순서로 통일하여 일관된 네비게이션 제공 */}
             <div className="flex items-center">
-            {isAuthenticated && user ? (
+            {isAuthenticated && navNickname ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="gap-2 h-10">
@@ -58,15 +61,15 @@ const Index = () => {
                         <UserIcon className="w-4 h-4" />
                       </AvatarFallback>
                     </Avatar>
-                    <span className="hidden sm:inline font-medium">{user.nickname}</span>
+                    <span className="hidden sm:inline font-medium">{navNickname}</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user.nickname}</p>
+                      <p className="text-sm font-medium leading-none">{dropdownNickname}</p>
                       <p className="text-xs leading-none text-muted-foreground">
-                        {user.email}
+                        {email}
                       </p>
                     </div>
                   </DropdownMenuLabel>

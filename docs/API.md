@@ -24,8 +24,14 @@ registerUser(input: {
 
 **Validation:**
 - Email format validation
-- Password minimum 6 characters
+- Password minimum 8 characters
 - Check for duplicate email
+
+**Backend API Mapping:**
+- Mock: Direct Edge Function call
+- Backend: `POST /api/members`
+
+---
 
 ### loginUser
 
@@ -38,6 +44,18 @@ loginUser(input: {
 }): Promise<{ user?: User; token?: string; error?: string }>
 ```
 
+**Returns:**
+- Mock: `{ user, token }`
+- Backend: `{ tokenType: "Bearer", accessToken }`
+
+**Backend API Mapping:**
+- Mock: Direct Edge Function call
+- Backend: `POST /api/auth/login`
+
+**Note:** In production, user information is NOT returned in login response. Use `getProfileInfo` or `getNavigatorInfo` to fetch user data.
+
+---
+
 ### verifyToken
 
 Verify a session token and return the user ID.
@@ -45,6 +63,84 @@ Verify a session token and return the user ID.
 ```typescript
 verifyToken(token: string): Promise<{ userId?: string; error?: string }>
 ```
+
+**Backend API Mapping:**
+- Mock: Direct Edge Function call
+- Backend: Not available (token validation happens on each API call)
+
+---
+
+### getUserById
+
+Get user information by user ID.
+
+```typescript
+getUserById(userId: string): Promise<{ user?: User; error?: string }>
+```
+
+**Backend API Mapping:**
+- Mock: Direct Edge Function call
+- Backend: `GET /api/users/{userId}` (internal use only)
+
+---
+
+### getNavigatorInfo
+
+Get user nickname for display in navigation header.
+
+```typescript
+getNavigatorInfo(token: string): Promise<{ nickname?: string; error?: string }>
+```
+
+**Backend API Mapping:**
+- Mock: Direct Edge Function call
+- Backend: `GET /api/me/navigator`
+- Headers: `Authorization: Bearer {token}`
+
+---
+
+### getProfileInfo
+
+Get full user profile information.
+
+```typescript
+getProfileInfo(token: string): Promise<{ user?: User; error?: string }>
+```
+
+**Backend API Mapping:**
+- Mock: Direct Edge Function call
+- Backend: `GET /api/me/profile`
+- Headers: `Authorization: Bearer {token}`
+
+---
+
+### checkEmailDuplicate
+
+Check if an email is already registered.
+
+```typescript
+checkEmailDuplicate(email: string): Promise<{ isDuplicate: boolean; error?: string }>
+```
+
+**Backend API Mapping:**
+- Mock: Direct Edge Function call
+- Backend: `GET /api/members/validations/email?value={email}`
+- Response field: `isDuplicated` (note the 'd' at the end)
+
+---
+
+### checkNicknameDuplicate
+
+Check if a nickname is already taken.
+
+```typescript
+checkNicknameDuplicate(nickname: string): Promise<{ isDuplicate: boolean; error?: string }>
+```
+
+**Backend API Mapping:**
+- Mock: Direct Edge Function call
+- Backend: `GET /api/members/validations/nickname?value={nickname}`
+- Response field: `isDuplicated` (note the 'd' at the end)
 
 ## Workspace Management
 
@@ -207,14 +303,21 @@ getPlacesByCategory(categoryId: string): Promise<Place[]>
 
 ## Usage Flow
 
-### User Registration & Login
+### User Registration & Login (Token-Based Authentication)
 
+**Current Implementation (Mock):**
 1. User submits registration form
 2. `registerUser` validates and creates user
 3. User submits login form
-4. `loginUser` validates credentials and returns token
-5. Token stored in localStorage
-6. `verifyToken` used on app load to restore session
+4. `loginUser` validates credentials and returns `{ tokenType, accessToken }`
+5. **Only token** stored in localStorage (no user object)
+6. User information fetched when needed via `getProfileInfo` or `getNavigatorInfo`
+
+**Backend Migration Notes:**
+- Change `isDuplicate` to `isDuplicated` in duplicate check responses
+- Login response changes from `{ user, token }` to `{ tokenType: "Bearer", accessToken }`
+- Remove `verifyToken` calls (backend validates token on each request)
+- User info is fetched on-demand, not stored in localStorage
 
 ### Creating a Course
 
@@ -245,3 +348,38 @@ Common error messages:
 - "이미 사용 중인 이메일입니다." - Duplicate email
 - "유효하지 않은 카테고리입니다." - Invalid category
 - "이미 이 카테고리에 추가된 장소입니다." - Duplicate place in category
+
+## Backend Migration Checklist
+
+### Authentication Changes
+- [ ] Update login response handling: `{ tokenType, accessToken }` instead of `{ user, token }`
+- [ ] Change duplicate check response field: `isDuplicated` instead of `isDuplicate`
+- [ ] Replace `verifyToken` with on-demand user info fetching
+- [ ] Update `auth-store` to only store token (no user object)
+- [ ] Add `getNavigatorInfo` and `getProfileInfo` API calls
+
+### API Endpoint Mapping
+- [ ] `POST /api/auth/login` → Login
+- [ ] `POST /api/members` → Register
+- [ ] `GET /api/members/validations/email` → Check email
+- [ ] `GET /api/members/validations/nickname` → Check nickname
+- [ ] `GET /api/me/navigator` → Get user nickname
+- [ ] `GET /api/me/profile` → Get user profile
+- [ ] `GET /api/me/workspaces` → Get user's workspaces
+
+### Data Structure Changes
+- [ ] Workspace ID: `id` (UUID) → `identifier` (string)
+- [ ] Updated timestamp: `updatedAt` → `modifiedAt`
+- [ ] Category: Add `sequence`, `representativePlaceId` fields
+- [ ] Place API: Move from `/api/places` to `/api/categories/{id}/places`
+
+### Authentication Flow
+**Before (Mock):**
+```
+Login → { user, token } → Store both in localStorage → Use user object directly
+```
+
+**After (Backend):**
+```
+Login → { tokenType, accessToken } → Store token only → Fetch user info when needed
+```

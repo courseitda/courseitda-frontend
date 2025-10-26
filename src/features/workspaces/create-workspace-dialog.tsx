@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 // API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
 import { workspaceApi } from '@/services/api';
-import { useAuthStore } from '@/shared/stores/auth-store';
+import { useUserId } from '@/shared/hooks/use-user-info';
 
 interface CreateWorkspaceDialogProps {
   open: boolean;
@@ -19,9 +19,10 @@ interface CreateWorkspaceDialogProps {
 }
 
 // 워크스페이스 생성 다이얼로그 - 새로운 워크스페이스를 생성
+// UserRequest: 백엔드 API 연동을 위해 토큰 기반 인증으로 변경, 사용자 정보는 API 호출로 조회
 // 사용 위치: features/layout/navigation-drawer, pages/WorkspaceDetail, pages/Workspaces
 export const CreateWorkspaceDialog = ({ open, onOpenChange }: CreateWorkspaceDialogProps) => {
-  const user = useAuthStore((state) => state.user);
+  const { userId } = useUserId(); // 토큰에서 사용자 ID 추출
   const [title, setTitle] = useState('');
   const [loading, setLoading] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -65,13 +66,13 @@ export const CreateWorkspaceDialog = ({ open, onOpenChange }: CreateWorkspaceDia
   // 워크스페이스 생성 요청 처리
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!userId) return;
 
     setLoading(true);
 
     // API 서비스 레이어를 통해 새 워크스페이스 생성 (백엔드 연동 시 workspaceApi만 수정)
     const { workspace, error } = await workspaceApi.create({
-      ownerId: user.id,
+      ownerId: userId,
       title,
     });
 
