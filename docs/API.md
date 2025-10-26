@@ -264,18 +264,39 @@ reorderCategories(
 
 ### setRepresentativePlace
 
-Set or unset the representative place for a category.
+Set the representative place for a category.
 
 ```typescript
 setRepresentativePlace(
   categoryId: string,
-  placeId: string | null
+  placeId: string
 ): Promise<{ error?: string }>
 ```
 
 **Business Logic:**
 - Validates place belongs to category
 - Triggers route recalculation
+
+**Backend API Mapping:**
+- Mock: Direct Edge Function call
+- Backend: `PUT /api/categories/{categoryId}/representative-place`
+- Request: `{ categoryPlaceId: number }`
+- Response: `{ id: number, representativeCategoryPlaceId: number }`
+
+### unsetRepresentativePlace
+
+Unset the representative place for a category.
+
+```typescript
+unsetRepresentativePlace(
+  categoryId: string
+): Promise<{ error?: string }>
+```
+
+**Backend API Mapping:**
+- Mock: Direct Edge Function call
+- Backend: `DELETE /api/categories/{categoryId}/representative-place`
+- Response: 204 No Content
 
 ## Place Management
 

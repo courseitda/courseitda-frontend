@@ -7,6 +7,7 @@ import {
   deleteCategory,
   reorderCategories,
   setRepresentativePlace,
+  unsetRepresentativePlace,
 } from '@/mock/edge-functions/category';
 import type { Category } from '@/entities/types';
 
@@ -46,6 +47,11 @@ export interface ReorderCategoriesResponse {
 
 // 대표 장소 설정 응답 타입
 export interface SetRepresentativePlaceResponse {
+  error?: string;
+}
+
+// 대표 장소 해제 응답 타입
+export interface UnsetRepresentativePlaceResponse {
   error?: string;
 }
 
@@ -101,16 +107,28 @@ export const categoryApi = {
   /**
    * 대표 장소 설정 API 호출 (경로 생성용)
    * @param categoryId 카테고리 ID
-   * @param placeId 장소 ID (null이면 해제)
+   * @param placeId 장소 ID
    * @returns 에러 메시지 (없으면 성공)
    */
   setRepresentativePlace: async (
     categoryId: string,
-    placeId: string | null
+    placeId: string
   ): Promise<SetRepresentativePlaceResponse> => {
     // 현재: mock edge-function 호출
-    // 추후: return axios.patch(`/api/categories/${categoryId}/representative-place`, { placeId })
+    // 백엔드 연동 시: return axios.put(`/api/categories/${categoryId}/representative-place`, { categoryPlaceId: placeId })
     return await setRepresentativePlace(categoryId, placeId);
   },
-};
 
+  /**
+   * 대표 장소 해제 API 호출
+   * @param categoryId 카테고리 ID
+   * @returns 에러 메시지 (없으면 성공)
+   */
+  unsetRepresentativePlace: async (
+    categoryId: string
+  ): Promise<UnsetRepresentativePlaceResponse> => {
+    // 현재: mock edge-function 호출
+    // 백엔드 연동 시: return axios.delete(`/api/categories/${categoryId}/representative-place`)
+    return await unsetRepresentativePlace(categoryId);
+  },
+};

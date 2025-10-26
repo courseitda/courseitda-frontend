@@ -278,11 +278,10 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
           e.preventDefault();
           e.stopPropagation();
           
-          // 이미 대표 장소면 해제, 아니면 설정
-          const newPlaceId = currentIsRepresentative ? null : place.id;
-          
-          // API 서비스 레이어를 통해 대표 장소 변경 (백엔드 연동 시 categoryApi만 수정)
-          const { error } = await categoryApi.setRepresentativePlace(category.id, newPlaceId);
+          // 대표 장소면 해제 API, 아니면 설정 API 호출 (백엔드 연동 시 categoryApi만 수정)
+          const { error } = currentIsRepresentative
+            ? await categoryApi.unsetRepresentativePlace(category.id)
+            : await categoryApi.setRepresentativePlace(category.id, place.id);
           
           if (error) {
             toast.error(error);

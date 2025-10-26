@@ -138,9 +138,10 @@ export const reorderCategories = async (
 };
 
 // 대표 장소 설정 Edge Function - 경로 생성에 사용할 장소를 카테고리별로 지정
+// 백엔드 연동 시: PUT /api/categories/{categoryId}/representative-place
 export const setRepresentativePlace = async (
   categoryId: string,
-  placeId: string | null
+  placeId: string
 ): Promise<{ error?: string }> => {
   try {
     // 카테고리 존재 여부 확인
@@ -149,19 +150,17 @@ export const setRepresentativePlace = async (
       return { error: '카테고리를 찾을 수 없습니다.' };
     }
 
-    // 장소 ID가 제공된 경우 해당 장소가 카테고리에 속하는지 검증
-    if (placeId) {
-      const categoryPlace = await db.categoryPlaces
-        .where('[categoryId+placeId]')
-        .equals([categoryId, placeId])
-        .first();
+    // 장소가 카테고리에 속하는지 검증
+    const categoryPlace = await db.categoryPlaces
+      .where('[categoryId+placeId]')
+      .equals([categoryId, placeId])
+      .first();
 
-      if (!categoryPlace) {
-        return { error: '해당 카테고리에 속하지 않은 장소입니다.' };
-      }
+    if (!categoryPlace) {
+      return { error: '해당 카테고리에 속하지 않은 장소입니다.' };
     }
 
-    // 대표 장소 설정 (null이면 해제)
+    // 대표 장소 설정
     await db.categories.update(categoryId, {
       representativePlaceId: placeId,
       updatedAt: new Date().toISOString(),
@@ -176,5 +175,35 @@ export const setRepresentativePlace = async (
   } catch (error) {
     console.error('Set representative place error:', error);
     return { error: '대표 장소 설정 중 오류가 발생했습니다.' };
+  }
+};
+
+// 대표 장소 해제 Edge Function - 카테고리의 대표 장소 지정 해제
+// 백엔드 연동 시: DELETE /api/categories/{categoryId}/representative-place
+export const unsetRepresentativePlace = async (
+  categoryId: string
+): Promise<{ error?: string }> => {
+  try {
+    // 카테고리 존재 여부 확인
+    const category = await db.categories.get(categoryId);
+    if (!category) {
+      return { error: '카테고리를 찾을 수 없습니다.' };
+    }
+
+    // 대표 장소 해제 (null로 설정)
+    await db.categories.update(categoryId, {
+      representativePlaceId: null,
+      updatedAt: new Date().toISOString(),
+    });
+
+    // 워크스페이스 수정 시각 업데이트 - 변경 이력 추적
+    await db.workspaces.update(category.workspaceId, {
+      updatedAt: new Date().toISOString(),
+    });
+
+    return {};
+  } catch (error) {
+    console.error('Unset representative place error:', error);
+    return { error: '대표 장소 해제 중 오류가 발생했습니다.' };
   }
 };

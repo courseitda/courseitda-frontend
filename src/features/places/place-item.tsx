@@ -28,8 +28,10 @@ export const PlaceItem = ({ place, categoryId, isRepresentative, hasRepresentati
 
   // 대표 장소 설정/해제 처리 - 이미 대표 장소면 해제, 아니면 설정 (API 서비스 레이어 사용)
   const handleSetRepresentative = async () => {
-    const newPlaceId = isRepresentative ? null : place.id;
-    const { error } = await categoryApi.setRepresentativePlace(categoryId, newPlaceId);
+    // 대표 장소면 해제 API, 아니면 설정 API 호출
+    const { error } = isRepresentative 
+      ? await categoryApi.unsetRepresentativePlace(categoryId)
+      : await categoryApi.setRepresentativePlace(categoryId, place.id);
     
     if (error) {
       toast.error(error);
