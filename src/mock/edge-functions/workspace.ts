@@ -111,10 +111,15 @@ export const deleteWorkspace = async (id: string): Promise<{ error?: string }> =
 };
 
 // 워크스페이스 단일 조회 Edge Function - identifier로 워크스페이스 상세 정보 조회
-// 백엔드 연동 시: GET /api/workspaces/{identifier}
+// 백엔드 연동 시: GET /api/workspaces/{workspaceIdentifier}
 export const getWorkspaceByIdentifier = async (
   identifier: string
-): Promise<{ workspace?: Workspace; error?: string }> => {
+): Promise<{ 
+  identifier?: string;
+  title?: string;
+  modifiedAt?: string;
+  error?: string;
+}> => {
   try {
     // identifier로 워크스페이스 조회
     const workspace = await db.workspaces.where('identifier').equals(identifier).first();
@@ -123,7 +128,13 @@ export const getWorkspaceByIdentifier = async (
       return { error: '워크스페이스를 찾을 수 없습니다.' };
     }
     
-    return { workspace };
+    // 백엔드 API 스펙에 맞춰 응답: { identifier, title, modifiedAt }
+    // 필드 선택: identifier, title, modifiedAt만 반환 (id, ownerId, createdAt 제외)
+    return { 
+      identifier: workspace.identifier,
+      title: workspace.title,
+      modifiedAt: workspace.updatedAt,
+    };
   } catch (error) {
     console.error('Get workspace by identifier error:', error);
     return { error: '워크스페이스 조회 중 오류가 발생했습니다.' };

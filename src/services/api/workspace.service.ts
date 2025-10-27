@@ -41,10 +41,11 @@ export interface DeleteWorkspaceResponse {
   error?: string;
 }
 
-// 워크스페이스 조회 응답 타입
-export interface GetWorkspaceResponse {
-  workspace?: Workspace;
-  error?: string;
+// 워크스페이스 조회 응답 데이터 타입 - 백엔드 API 스펙과 일치
+export interface GetWorkspaceData {
+  identifier: string;   // 워크스페이스 식별자
+  title: string;        // 워크스페이스 제목
+  modifiedAt: string;   // 수정일시 (yyyy-MM-dd'T'HH:mm:ss)
 }
 
 // 워크스페이스 제목 중복 검증 응답 타입
@@ -136,12 +137,41 @@ export const workspaceApi = {
   /**
    * 워크스페이스 단일 조회 API 호출
    * @param identifier 워크스페이스 식별자
-   * @returns 워크스페이스 정보 또는 에러 메시지
+   * @returns API 응답 (성공 시 워크스페이스 정보, 실패 시 에러 정보)
+   * 
+   * 백엔드 엔드포인트: GET /api/workspaces/{workspaceIdentifier}
+   * 백엔드 응답 예시: { identifier: "abc123", title: "서울 여행 계획", modifiedAt: "2024-10-22T14:30:00" }
    */
-  getByIdentifier: async (identifier: string): Promise<GetWorkspaceResponse> => {
-    // 현재: mock edge-function 호출
-    // 추후: return axios.get(`/api/workspaces/${identifier}`)
-    return await getWorkspaceByIdentifier(identifier);
+  getByIdentifier: async (identifier: string): Promise<ApiResponse<GetWorkspaceData>> => {
+    // 현재: mock edge-function 호출 후 표준 응답 형식으로 변환
+    const mockResponse = await getWorkspaceByIdentifier(identifier);
+    
+    // Mock 응답을 표준 API 응답 형식으로 변환
+    // 추후 백엔드 연동 시:
+    // const response = await apiClient.get(`/api/workspaces/${identifier}`);
+    // return { success: true, data: response.data, timestamp: new Date().toISOString() };
+    if (mockResponse.error) {
+      return {
+        success: false,
+        error: {
+          code: 'GET_WORKSPACE_FAILED',
+          message: mockResponse.error,
+          status: 404,
+        },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    
+    // 백엔드 API 스펙에 맞춰 응답: { identifier, title, modifiedAt }
+    return {
+      success: true,
+      data: {
+        identifier: mockResponse.identifier!,
+        title: mockResponse.title!,
+        modifiedAt: mockResponse.modifiedAt!,
+      },
+      timestamp: new Date().toISOString(),
+    };
   },
 
   /**
