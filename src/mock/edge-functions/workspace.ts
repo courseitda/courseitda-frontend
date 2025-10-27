@@ -103,10 +103,17 @@ export const updateWorkspace = async (
 };
 
 // 워크스페이스 삭제 Edge Function - 워크스페이스와 하위 모든 데이터 삭제
-export const deleteWorkspace = async (id: string): Promise<{ error?: string }> => {
+// 백엔드 연동 시: DELETE /api/workspaces/{workspaceIdentifier}
+export const deleteWorkspace = async (workspaceIdentifier: string): Promise<{ error?: string }> => {
   try {
+    // identifier로 워크스페이스 조회
+    const workspace = await db.workspaces.where('identifier').equals(workspaceIdentifier).first();
+    if (!workspace) {
+      return { error: '워크스페이스를 찾을 수 없습니다.' };
+    }
+
     // 워크스페이스에 속한 카테고리 조회
-    const categories = await db.categories.where('workspaceId').equals(id).toArray();
+    const categories = await db.categories.where('workspaceId').equals(workspace.id).toArray();
     
     // 각 카테고리의 장소 연결 정보 삭제 (cascade delete)
     for (const category of categories) {
@@ -114,9 +121,9 @@ export const deleteWorkspace = async (id: string): Promise<{ error?: string }> =
     }
     
     // 워크스페이스의 모든 카테고리 삭제
-    await db.categories.where('workspaceId').equals(id).delete();
+    await db.categories.where('workspaceId').equals(workspace.id).delete();
     // 워크스페이스 자체 삭제
-    await db.workspaces.delete(id);
+    await db.workspaces.delete(workspace.id);
 
     return {};
   } catch (error) {

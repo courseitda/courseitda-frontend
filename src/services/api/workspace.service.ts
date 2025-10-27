@@ -157,13 +157,15 @@ export const workspaceApi = {
 
   /**
    * 워크스페이스 삭제 API 호출 (cascade delete 포함)
-   * @param id 워크스페이스 ID
+   * @param workspaceIdentifier 워크스페이스 식별자
    * @returns 에러 메시지 (없으면 성공)
+   * 
+   * 백엔드 엔드포인트: DELETE /api/workspaces/{workspaceIdentifier}
    */
-  delete: async (id: string): Promise<DeleteWorkspaceResponse> => {
+  delete: async (workspaceIdentifier: string): Promise<DeleteWorkspaceResponse> => {
     // 현재: mock edge-function 호출
-    // 추후: return axios.delete(`/api/workspaces/${id}`)
-    return await deleteWorkspace(id);
+    // 추후: return axios.delete(`/api/workspaces/${workspaceIdentifier}`)
+    return await deleteWorkspace(workspaceIdentifier);
   },
 
   /**
