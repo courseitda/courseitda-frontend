@@ -110,7 +110,41 @@ export const getWorkspaceByIdentifier = async (
   }
 };
 
+// 내 워크스페이스 목록 조회 Edge Function - 토큰에서 사용자를 추출하여 워크스페이스 목록 반환
+// 백엔드 연동 시: GET /api/me/workspaces
+export const getMyWorkspaces = async (token: string): Promise<{ 
+  workspaces: Array<{
+    identifier: string;
+    title: string;
+    modifiedAt: string;
+  }>;
+  error?: string;
+}> => {
+  try {
+    // 토큰에서 사용자 ID 추출
+    const decoded = JSON.parse(atob(token));
+    const userId = decoded.userId;
+    
+    // 사용자 소유 워크스페이스 조회
+    const allWorkspaces = await db.workspaces.where('ownerId').equals(userId).toArray();
+    
+    // 백엔드 API 스펙에 맞춰 응답 변환: { workspaces: [{ identifier, title, modifiedAt }] }
+    // 필드 선택: identifier, title, modifiedAt만 반환 (id, ownerId, createdAt 제외)
+    const workspaces = allWorkspaces.map(w => ({
+      identifier: w.identifier,
+      title: w.title,
+      modifiedAt: w.updatedAt, // 백엔드는 modifiedAt, 프론트는 updatedAt 사용
+    }));
+    
+    return { workspaces };
+  } catch (error) {
+    console.error('Get my workspaces error:', error);
+    return { workspaces: [], error: '워크스페이스 목록 조회 중 오류가 발생했습니다.' };
+  }
+};
+
 // 소유자별 워크스페이스 조회 - 사용자가 생성한 모든 워크스페이스 목록 반환
+// 내부 사용 또는 관리자용 API로 유지 (getMyWorkspaces 사용 권장)
 export const getWorkspacesByOwner = async (ownerId: string): Promise<Workspace[]> => {
   return await db.workspaces.where('ownerId').equals(ownerId).toArray();
 };

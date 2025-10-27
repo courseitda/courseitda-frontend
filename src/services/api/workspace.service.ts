@@ -7,9 +7,11 @@ import {
   deleteWorkspace,
   getWorkspaceByIdentifier,
   getWorkspacesByOwner,
+  getMyWorkspaces,
   checkWorkspaceTitleDuplicate,
 } from '@/mock/edge-functions/workspace';
 import type { Workspace } from '@/entities/types';
+import type { ApiResponse } from '@/types/api';
 
 // 워크스페이스 생성 요청 파라미터 타입
 export interface CreateWorkspaceRequest {
@@ -48,6 +50,15 @@ export interface GetWorkspaceResponse {
 export interface CheckWorkspaceTitleDuplicateResponse {
   isDuplicate: boolean;
   error?: string;
+}
+
+// 내 워크스페이스 목록 조회 응답 타입 - 백엔드 API 스펙과 일치
+export interface MyWorkspacesData {
+  workspaces: Array<{
+    identifier: string;   // 워크스페이스 고유 식별자
+    title: string;        // 워크스페이스 제목
+    modifiedAt: string;   // 수정일시 (yyyy-MM-dd'T'HH:mm:ss)
+  }>;
 }
 
 // 워크스페이스 API 서비스 객체 - 모든 워크스페이스 관련 API 호출을 중앙 관리
@@ -99,7 +110,49 @@ export const workspaceApi = {
   },
 
   /**
-   * 소유자별 워크스페이스 목록 조회 API 호출
+   * 내 워크스페이스 목록 조회 API 호출 (권장)
+   * 토큰에서 사용자를 추출하여 워크스페이스 목록 반환
+   * @param token 인증 토큰
+   * @returns API 응답 (성공 시 워크스페이스 목록, 실패 시 에러 정보)
+   * 
+   * 백엔드 엔드포인트: GET /api/me/workspaces
+   * 백엔드 응답 예시: { workspaces: [{ identifier, title, modifiedAt }] }
+   */
+  getMyWorkspaces: async (token: string): Promise<ApiResponse<MyWorkspacesData>> => {
+    // 현재: mock edge-function 호출 후 표준 응답 형식으로 변환
+    const mockResponse = await getMyWorkspaces(token);
+    
+    // Mock 응답을 표준 API 응답 형식으로 변환
+    // 추후 백엔드 연동 시:
+    // const response = await apiClient.get('/api/me/workspaces', {
+    //   headers: { Authorization: `Bearer ${token}` }
+    // });
+    // return { success: true, data: response.data, timestamp: new Date().toISOString() };
+    if (mockResponse.error) {
+      return {
+        success: false,
+        error: {
+          code: 'GET_WORKSPACES_FAILED',
+          message: mockResponse.error,
+          status: 400,
+        },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    
+    // 백엔드 API 스펙에 맞춰 응답: { workspaces: [{ identifier, title, modifiedAt }] }
+    return {
+      success: true,
+      data: {
+        workspaces: mockResponse.workspaces,
+      },
+      timestamp: new Date().toISOString(),
+    };
+  },
+
+  /**
+   * 소유자별 워크스페이스 목록 조회 API 호출 (레거시)
+   * @deprecated getMyWorkspaces 사용 권장
    * @param ownerId 사용자 ID
    * @returns 워크스페이스 배열
    */
