@@ -22,21 +22,39 @@ export const getCategoryById = async (
 };
 
 // 카테고리 추가 Edge Function - 워크스페이스에 새 카테고리 생성
+// 백엔드 연동 시: POST /api/workspaces/{workspaceIdentifier}/categories
 export const addCategory = async (input: {
-  workspaceId: string;
+  workspaceIdentifier: string;
   name: string;
   color: string;
 }): Promise<{ category?: Category; error?: string }> => {
   try {
+    // 워크스페이스 존재 여부 확인
+    const workspace = await db.workspaces.where('identifier').equals(input.workspaceIdentifier).first();
+    if (!workspace) {
+      return { error: '워크스페이스를 찾을 수 없습니다.' };
+    }
+
     // 카테고리 이름 필수 입력 검증
     if (!input.name || input.name.trim().length === 0) {
       return { error: '카테고리 이름을 입력해주세요.' };
     }
 
+    // 백엔드 검증: 이름 최대 10자
+    if (input.name.trim().length > 10) {
+      return { error: '카테고리 이름은 최대 10자까지 가능합니다.' };
+    }
+
+    // 색상 형식 검증 (#RRGGBB)
+    const colorRegex = /^#[0-9A-Fa-f]{6}$/;
+    if (!colorRegex.test(input.color)) {
+      return { error: '색상은 #RRGGBB 형식이어야 합니다.' };
+    }
+
     // 현재 카테고리 개수 조회하여 새 카테고리의 순서 결정
     const existingCategories = await db.categories
       .where('workspaceId')
-      .equals(input.workspaceId)
+      .equals(workspace.id)
       .toArray();
 
     const sequence = existingCategories.length;
@@ -44,7 +62,7 @@ export const addCategory = async (input: {
     // 카테고리 생성 및 DB 저장
     const category: Category = {
       id: crypto.randomUUID(),
-      workspaceId: input.workspaceId,
+      workspaceId: workspace.id,
       name: input.name.trim(),
       color: input.color,
       sequence,
@@ -56,7 +74,7 @@ export const addCategory = async (input: {
     await db.categories.add(category);
 
     // 워크스페이스 수정 시각 업데이트 - 변경 이력 추적
-    await db.workspaces.update(input.workspaceId, {
+    await db.workspaces.update(workspace.id, {
       updatedAt: new Date().toISOString(),
     });
 
@@ -129,12 +147,18 @@ export const deleteCategory = async (id: string): Promise<{ error?: string }> =>
 };
 
 // 카테고리 순서 변경 Edge Function - 드래그앤드롭 후 새 순서를 DB에 반영
-// 백엔드 연동 시: POST /api/workspaces/{identifier}/categories/sequence
+// 백엔드 연동 시: POST /api/workspaces/{workspaceIdentifier}/categories/sequence
 export const reorderCategories = async (
-  workspaceId: string,
+  workspaceIdentifier: string,
   categories: Array<{ id: string; sequence: number }>
 ): Promise<{ categories?: Array<{ id: string; sequence: number }>; error?: string }> => {
   try {
+    // 워크스페이스 존재 여부 확인
+    const workspace = await db.workspaces.where('identifier').equals(workspaceIdentifier).first();
+    if (!workspace) {
+      return { error: '워크스페이스를 찾을 수 없습니다.' };
+    }
+
     // 각 카테고리의 sequence 업데이트
     const updates = categories.map((category) =>
       db.categories.update(category.id, {
@@ -147,7 +171,7 @@ export const reorderCategories = async (
     await Promise.all(updates);
 
     // 워크스페이스 수정 시각 업데이트 - 변경 이력 추적
-    await db.workspaces.update(workspaceId, {
+    await db.workspaces.update(workspace.id, {
       updatedAt: new Date().toISOString(),
     });
 
@@ -227,5 +251,142 @@ export const unsetRepresentativePlace = async (
   } catch (error) {
     console.error('Unset representative place error:', error);
     return { error: '대표 장소 해제 중 오류가 발생했습니다.' };
+  }
+};
+
+// 워크스페이스별 카테고리 목록 조회 Edge Function - 워크스페이스의 모든 카테고리와 장소 정보 조회
+// 백엔드 연동 시: GET /api/workspaces/{workspaceIdentifier}/categories
+export const getCategoriesByWorkspace = async (
+  workspaceIdentifier: string
+): Promise<{ 
+  categories: Array<{
+    id: string;
+    name: string;
+    color: string;
+    sequence: number;
+    representativePlaceId: string | null;
+    categoryPlaces: {
+      categoryPlaces: Array<{
+        id: string;
+        name: string;
+        addressName: string;
+        roadAddressName: string | null;
+        latitude: number;
+        longitude: number;
+        isRepresentative: boolean;
+      }>;
+    };
+  }>;
+  error?: string;
+}> => {
+  try {
+    // 워크스페이스 존재 여부 확인
+    const workspace = await db.workspaces.where('identifier').equals(workspaceIdentifier).first();
+    if (!workspace) {
+      return { categories: [], error: '워크스페이스를 찾을 수 없습니다.' };
+    }
+
+    // 워크스페이스의 모든 카테고리 조회 (sequence 순으로 정렬)
+    const categories = await db.categories
+      .where('workspaceId')
+      .equals(workspace.id)
+      .sortBy('sequence');
+
+    // 각 카테고리의 장소 정보 조회
+    const categoriesWithPlaces = await Promise.all(
+      categories.map(async (category) => {
+        // 카테고리에 속한 장소 연결 정보 조회
+        const categoryPlaces = await db.categoryPlaces
+          .where('categoryId')
+          .equals(category.id)
+          .toArray();
+
+        // 장소 정보 조회
+        const placeIds = categoryPlaces.map(cp => cp.placeId);
+        const places = await db.places.bulkGet(placeIds);
+
+        // 백엔드 API 스펙에 맞춰 응답 형식 변환
+        const categoryPlaceResponses = places
+          .filter((place): place is NonNullable<typeof place> => place !== undefined)
+          .map(place => ({
+            id: categoryPlaces.find(cp => cp.placeId === place.id)?.id || '',
+            name: place.name,
+            addressName: place.addressName,
+            roadAddressName: place.roadAddressName,
+            latitude: place.latitude,
+            longitude: place.longitude,
+            isRepresentative: category.representativePlaceId === place.id,
+          }));
+
+        return {
+          id: category.id,
+          name: category.name,
+          color: category.color,
+          sequence: category.sequence,
+          representativePlaceId: category.representativePlaceId,
+          categoryPlaces: {
+            categoryPlaces: categoryPlaceResponses,
+          },
+        };
+      })
+    );
+
+    return { categories: categoriesWithPlaces };
+  } catch (error) {
+    console.error('Get categories by workspace error:', error);
+    return { categories: [], error: '카테고리 목록 조회 중 오류가 발생했습니다.' };
+  }
+};
+
+// 카테고리 장소 목록 조회 Edge Function - 백엔드 API 스펙에 맞는 응답 형식
+// 백엔드 연동 시: GET /api/categories/{categoryId}/places
+export const getCategoryPlaces = async (
+  categoryId: string
+): Promise<{ 
+  categoryPlaceResponses: Array<{
+    id: string;
+    name: string;
+    addressName: string;
+    roadAddressName: string | null;
+    latitude: number;
+    longitude: number;
+    isRepresentative: boolean;
+  }>;
+  error?: string;
+}> => {
+  try {
+    // 카테고리 존재 여부 확인
+    const category = await db.categories.get(categoryId);
+    if (!category) {
+      return { categoryPlaceResponses: [], error: '카테고리를 찾을 수 없습니다.' };
+    }
+
+    // 카테고리에 속한 장소 연결 정보 조회
+    const categoryPlaces = await db.categoryPlaces
+      .where('categoryId')
+      .equals(categoryId)
+      .toArray();
+
+    // 장소 정보 조회
+    const placeIds = categoryPlaces.map(cp => cp.placeId);
+    const places = await db.places.bulkGet(placeIds);
+
+    // 백엔드 API 스펙에 맞춰 응답 형식 변환
+    const categoryPlaceResponses = places
+      .filter((place): place is NonNullable<typeof place> => place !== undefined)
+      .map(place => ({
+        id: categoryPlaces.find(cp => cp.placeId === place.id)?.id || '',
+        name: place.name,
+        addressName: place.addressName,
+        roadAddressName: place.roadAddressName,
+        latitude: place.latitude,
+        longitude: place.longitude,
+        isRepresentative: category.representativePlaceId === place.id,
+      }));
+
+    return { categoryPlaceResponses };
+  } catch (error) {
+    console.error('Get category places error:', error);
+    return { categoryPlaceResponses: [], error: '카테고리 장소 목록 조회 중 오류가 발생했습니다.' };
   }
 };

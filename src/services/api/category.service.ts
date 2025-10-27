@@ -9,6 +9,8 @@ import {
   reorderCategories,
   setRepresentativePlace,
   unsetRepresentativePlace,
+  getCategoriesByWorkspace,
+  getCategoryPlaces,
 } from '@/mock/edge-functions/category';
 import type { Category } from '@/entities/types';
 
@@ -20,7 +22,7 @@ export interface GetCategoryResponse {
 
 // 카테고리 추가 요청 파라미터 타입
 export interface AddCategoryRequest {
-  workspaceId: string;
+  workspaceIdentifier: string;
   name: string;
   color: string;
 }
@@ -74,6 +76,43 @@ export interface UnsetRepresentativePlaceResponse {
   error?: string;
 }
 
+// 워크스페이스별 카테고리 목록 조회 응답 타입
+export interface GetCategoriesByWorkspaceResponse {
+  categories: Array<{
+    id: string;
+    name: string;
+    color: string;
+    sequence: number;
+    representativePlaceId: string | null;
+    categoryPlaces: {
+      categoryPlaces: Array<{
+        id: string;
+        name: string;
+        addressName: string;
+        roadAddressName: string | null;
+        latitude: number;
+        longitude: number;
+        isRepresentative: boolean;
+      }>;
+    };
+  }>;
+  error?: string;
+}
+
+// 카테고리 장소 목록 조회 응답 타입
+export interface GetCategoryPlacesResponse {
+  categoryPlaceResponses: Array<{
+    id: string;
+    name: string;
+    addressName: string;
+    roadAddressName: string | null;
+    latitude: number;
+    longitude: number;
+    isRepresentative: boolean;
+  }>;
+  error?: string;
+}
+
 // 카테고리 API 서비스 객체 - 모든 카테고리 관련 API 호출을 중앙 관리
 // 백엔드 연동 시: 이 객체의 메서드 구현만 axios 호출로 변경하면 됨
 export const categoryApi = {
@@ -124,19 +163,19 @@ export const categoryApi = {
 
   /**
    * 카테고리 순서 변경 API 호출 (드래그앤드롭 후)
-   * @param workspaceId 워크스페이스 ID (또는 identifier)
+   * @param workspaceIdentifier 워크스페이스 식별자
    * @param categories 카테고리 ID와 새 순서 배열 (0-based)
    * @returns 변경된 카테고리 순서 또는 에러 메시지
    */
   reorder: async (
-    workspaceId: string, 
+    workspaceIdentifier: string, 
     categories: Array<{ id: string; sequence: number }>
   ): Promise<ReorderCategoriesResponse> => {
     // 현재: mock edge-function 호출 (0-based sequence)
     // 백엔드 연동 시:
     // const backendCategories = categories.map(c => ({ id: Number(c.id), sequence: c.sequence + 1 }));
-    // return axios.post(`/api/workspaces/${workspaceId}/categories/sequence`, { categories: backendCategories });
-    return await reorderCategories(workspaceId, categories);
+    // return axios.post(`/api/workspaces/${workspaceIdentifier}/categories/sequence`, { categories: backendCategories });
+    return await reorderCategories(workspaceIdentifier, categories);
   },
 
   /**
@@ -165,5 +204,31 @@ export const categoryApi = {
     // 현재: mock edge-function 호출
     // 백엔드 연동 시: return axios.delete(`/api/categories/${categoryId}/representative-place`)
     return await unsetRepresentativePlace(categoryId);
+  },
+
+  /**
+   * 워크스페이스별 카테고리 목록 조회 API 호출
+   * @param workspaceIdentifier 워크스페이스 식별자
+   * @returns 카테고리 목록과 장소 정보 또는 에러 메시지
+   */
+  getByWorkspace: async (
+    workspaceIdentifier: string
+  ): Promise<GetCategoriesByWorkspaceResponse> => {
+    // 현재: mock edge-function 호출
+    // 백엔드 연동 시: return axios.get(`/api/workspaces/${workspaceIdentifier}/categories`)
+    return await getCategoriesByWorkspace(workspaceIdentifier);
+  },
+
+  /**
+   * 카테고리 장소 목록 조회 API 호출
+   * @param categoryId 카테고리 ID
+   * @returns 카테고리에 속한 장소 목록 또는 에러 메시지
+   */
+  getPlaces: async (
+    categoryId: string
+  ): Promise<GetCategoryPlacesResponse> => {
+    // 현재: mock edge-function 호출
+    // 백엔드 연동 시: return axios.get(`/api/categories/${categoryId}/places`)
+    return await getCategoryPlaces(categoryId);
   },
 };
