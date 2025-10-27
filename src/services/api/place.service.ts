@@ -118,14 +118,16 @@ export const placeApi = {
 
   /**
    * 카테고리에서 장소 제거 API 호출 (고아 장소 자동 삭제)
-   * @param placeId 장소 ID
    * @param categoryId 카테고리 ID
+   * @param categoryPlaceId 카테고리 장소 ID
    * @returns 에러 메시지 (없으면 성공)
+   * 
+   * 백엔드 엔드포인트: DELETE /api/categories/{categoryId}/places/{categoryPlaceId}
    */
-  remove: async (placeId: string, categoryId: string): Promise<RemovePlaceResponse> => {
+  remove: async (categoryId: string, categoryPlaceId: string): Promise<RemovePlaceResponse> => {
     // 현재: mock edge-function 호출
-    // 추후: return axios.delete(`/api/categories/${categoryId}/places/${placeId}`)
-    return await removePlace(placeId, categoryId);
+    // 추후: return axios.delete(`/api/categories/${categoryId}/places/${categoryPlaceId}`)
+    return await removePlace(categoryId, categoryPlaceId);
   },
 
   /**

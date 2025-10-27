@@ -175,36 +175,45 @@ export const addPlaceToCategory = async (input: {
 };
 
 // 카테고리에서 장소 제거 Edge Function - 연결 해제 및 고아 장소 정리
+// 백엔드 연동 시: DELETE /api/categories/{categoryId}/places/{categoryPlaceId}
 export const removePlace = async (
-  placeId: string,
-  categoryId: string
+  categoryId: string,
+  categoryPlaceId: string
 ): Promise<{ error?: string }> => {
   try {
-    // 워크스페이스 ID 조회를 위한 카테고리 정보 가져오기
+    // 카테고리 존재 여부 확인
     const category = await db.categories.get(categoryId);
     if (!category) {
       return { error: '카테고리를 찾을 수 없습니다.' };
     }
 
+    // 카테고리-장소 연결 정보 조회
+    const categoryPlace = await db.categoryPlaces.get(categoryPlaceId);
+    if (!categoryPlace) {
+      return { error: '카테고리 장소를 찾을 수 없습니다.' };
+    }
+
+    // 연결이 해당 카테고리에 속하는지 검증
+    if (categoryPlace.categoryId !== categoryId) {
+      return { error: '해당 카테고리에 속하지 않은 장소입니다.' };
+    }
+
     // 카테고리와 장소 연결 제거
-    await db.categoryPlaces
-      .where('[categoryId+placeId]')
-      .equals([categoryId, placeId])
-      .delete();
+    await db.categoryPlaces.delete(categoryPlaceId);
 
     // 다른 카테고리에서도 사용 중인지 확인
     const otherCategories = await db.categoryPlaces
       .where('placeId')
-      .equals(placeId)
+      .equals(categoryPlace.placeId)
       .count();
 
     // 어떤 카테고리에도 속하지 않은 고아 장소는 삭제하여 DB 정리
     if (otherCategories === 0) {
-      await db.places.delete(placeId);
+      await db.places.delete(categoryPlace.placeId);
     }
 
     // 대표 장소였다면 해제 처리
-    if (category.representativePlaceId === placeId) {
+    if (category.representativePlaceId === categoryPlace.placeId) {
       await db.categories.update(categoryId, {
         representativePlaceId: null,
         updatedAt: new Date().toISOString(),
