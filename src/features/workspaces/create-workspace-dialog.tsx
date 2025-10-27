@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 // API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
 import { workspaceApi } from '@/services/api';
-import { useUserId } from '@/shared/hooks/use-user-info';
+import { useAuthStore } from '@/shared/stores/auth-store';
 
 interface CreateWorkspaceDialogProps {
   open: boolean;
@@ -22,7 +22,7 @@ interface CreateWorkspaceDialogProps {
 // UserRequest: 백엔드 API 연동을 위해 토큰 기반 인증으로 변경, 사용자 정보는 API 호출로 조회
 // 사용 위치: features/layout/navigation-drawer, pages/WorkspaceDetail, pages/Workspaces
 export const CreateWorkspaceDialog = ({ open, onOpenChange }: CreateWorkspaceDialogProps) => {
-  const { userId } = useUserId(); // 토큰에서 사용자 ID 추출
+  const token = useAuthStore((state) => state.token); // 인증 토큰 추출
   const [title, setTitle] = useState('');
   const [loading, setLoading] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -66,19 +66,17 @@ export const CreateWorkspaceDialog = ({ open, onOpenChange }: CreateWorkspaceDia
   // 워크스페이스 생성 요청 처리
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userId) return;
+    if (!token) return;
 
     setLoading(true);
 
     // API 서비스 레이어를 통해 새 워크스페이스 생성 (백엔드 연동 시 workspaceApi만 수정)
-    const { workspace, error } = await workspaceApi.create({
-      ownerId: userId,
-      title,
-    });
+    // 백엔드 API 스펙: 토큰에서 사용자 추출, 제목만 요청
+    const response = await workspaceApi.create(token, { title });
 
     // 생성 실패 시 에러 메시지 표시
-    if (error || !workspace) {
-      toast.error(error || '워크스페이스 생성에 실패했습니다.');
+    if (!response.success || !response.data) {
+      toast.error(response.error?.message || '워크스페이스 생성에 실패했습니다.');
       setLoading(false);
       return;
     }

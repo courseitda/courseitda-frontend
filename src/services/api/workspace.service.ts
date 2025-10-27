@@ -13,16 +13,17 @@ import {
 import type { Workspace } from '@/entities/types';
 import type { ApiResponse } from '@/types/api';
 
-// 워크스페이스 생성 요청 파라미터 타입
+// 워크스페이스 생성 요청 파라미터 타입 - 백엔드 API 스펙과 일치
 export interface CreateWorkspaceRequest {
-  ownerId: string;
-  title: string;
+  title: string;  // 워크스페이스 제목 (최대 20자)
+  // ownerId는 토큰에서 추출되므로 요청에 포함하지 않음
 }
 
-// 워크스페이스 생성 응답 타입
-export interface CreateWorkspaceResponse {
-  workspace?: Workspace;
-  error?: string;
+// 워크스페이스 생성 응답 데이터 타입 - 백엔드 API 스펙과 일치
+export interface CreateWorkspaceData {
+  identifier: string;   // 워크스페이스 식별자
+  title: string;        // 워크스페이스 제목
+  modifiedAt: string;   // 수정일시 (yyyy-MM-dd'T'HH:mm:ss)
 }
 
 // 워크스페이스 수정 요청 파라미터 타입
@@ -66,13 +67,47 @@ export interface MyWorkspacesData {
 export const workspaceApi = {
   /**
    * 워크스페이스 생성 API 호출
-   * @param data 소유자 ID, 제목
-   * @returns 생성된 워크스페이스 또는 에러 메시지
+   * @param token 인증 토큰 (사용자 식별용)
+   * @param data 워크스페이스 제목
+   * @returns API 응답 (성공 시 생성된 워크스페이스 정보, 실패 시 에러 정보)
+   * 
+   * 백엔드 엔드포인트: POST /api/workspaces
+   * 백엔드 요청 예시: { title: "서울 여행 계획" }
+   * 백엔드 응답 예시: { identifier: "abc123", title: "서울 여행 계획", modifiedAt: "2024-10-22T14:30:00" }
+   * 백엔드 Location Header: /api/workspaces/{identifier}
    */
-  create: async (data: CreateWorkspaceRequest): Promise<CreateWorkspaceResponse> => {
-    // 현재: mock edge-function 호출
-    // 추후: return axios.post('/api/workspaces', data)
-    return await createWorkspace(data);
+  create: async (token: string, data: CreateWorkspaceRequest): Promise<ApiResponse<CreateWorkspaceData>> => {
+    // 현재: mock edge-function 호출 후 표준 응답 형식으로 변환
+    const mockResponse = await createWorkspace({ token, title: data.title });
+    
+    // Mock 응답을 표준 API 응답 형식으로 변환
+    // 추후 백엔드 연동 시:
+    // const response = await apiClient.post('/api/workspaces', data, {
+    //   headers: { Authorization: `Bearer ${token}` }
+    // });
+    // return { success: true, data: response.data, timestamp: new Date().toISOString() };
+    if (mockResponse.error) {
+      return {
+        success: false,
+        error: {
+          code: 'CREATE_WORKSPACE_FAILED',
+          message: mockResponse.error,
+          status: 400,
+        },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    
+    // 백엔드 API 스펙에 맞춰 응답: { identifier, title, modifiedAt }
+    return {
+      success: true,
+      data: {
+        identifier: mockResponse.identifier!,
+        title: mockResponse.title!,
+        modifiedAt: mockResponse.modifiedAt!,
+      },
+      timestamp: new Date().toISOString(),
+    };
   },
 
   /**

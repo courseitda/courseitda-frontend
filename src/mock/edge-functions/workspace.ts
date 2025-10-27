@@ -5,22 +5,36 @@ import type { Workspace } from '@/entities/types';
 // 사용 위치: features/workspaces (create-workspace-dialog, edit-workspace-dialog), features/layout (navigation-drawer), pages (Workspaces, WorkspaceDetail)
 
 // 워크스페이스 생성 Edge Function - 새로운 여행 계획/코스 컨테이너 생성
+// 백엔드 연동 시: POST /api/workspaces
 export const createWorkspace = async (input: {
-  ownerId: string;
+  token: string;
   title: string;
-}): Promise<{ workspace?: Workspace; error?: string }> => {
+}): Promise<{ 
+  identifier?: string;
+  title?: string;
+  modifiedAt?: string;
+  error?: string;
+}> => {
   try {
+    // 토큰에서 사용자 ID 추출
+    const decoded = JSON.parse(atob(input.token));
+    const ownerId = decoded.userId;
+
     // 워크스페이스 제목 필수 입력 검증
     if (!input.title || input.title.trim().length === 0) {
       return { error: '워크스페이스 제목을 입력해주세요.' };
     }
 
+    // 백엔드 검증: 제목 최대 20자
+    if (input.title.trim().length > 20) {
+      return { error: '워크스페이스 제목은 최대 20자까지 가능합니다.' };
+    }
 
     // 워크스페이스 생성 및 DB 저장
     const workspace: Workspace = {
       id: crypto.randomUUID(),
       identifier: crypto.randomUUID(), // UUID 고유 식별자
-      ownerId: input.ownerId,
+      ownerId: ownerId,
       title: input.title.trim(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -28,7 +42,13 @@ export const createWorkspace = async (input: {
 
     await db.workspaces.add(workspace);
 
-    return { workspace };
+    // 백엔드 API 스펙에 맞춰 응답: { identifier, title, modifiedAt }
+    // Location Header: /api/workspaces/{identifier}
+    return { 
+      identifier: workspace.identifier,
+      title: workspace.title,
+      modifiedAt: workspace.updatedAt,
+    };
   } catch (error) {
     console.error('Create workspace error:', error);
     return { error: '워크스페이스 생성 중 오류가 발생했습니다.' };
