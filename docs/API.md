@@ -331,6 +331,33 @@ unsetRepresentativePlace(
 
 ## Place Management
 
+### searchPlaces
+
+Search places using Kakao Local API.
+
+```typescript
+searchPlaces(input: {
+  keyword: string;
+  restApiKey: string;
+}): Promise<{ searchedPlaces?: KakaoPlace[]; error?: string }>
+```
+
+**Business Logic:**
+- Keyword validation (non-empty)
+- REST API key validation
+- Calls Kakao Local API
+
+**Backend API Mapping:**
+- Mock: Direct Kakao API call from edge function
+- Backend: `GET /api/places/search?keyword={keyword}`
+- Note: Backend removes `restApiKey` parameter (managed server-side)
+
+**Response:**
+- Mock: `{ searchedPlaces: KakaoPlace[] }` from Kakao API
+- Backend: `{ searchedPlaces: Array<{ name, roadAddressName, addressName, latitude, longitude }> }`
+
+---
+
 ### addPlaceToCategory
 
 Add a Kakao place to a category.
@@ -394,7 +421,7 @@ getPlacesByCategory(categoryId: string): Promise<Place[]>
 
 1. User creates workspace via `createWorkspace`
 2. User adds categories via `addCategory` (colors assigned automatically)
-3. User searches places via Kakao Local API (client-side)
+3. User searches places via `searchPlaces` (Kakao Local API)
 4. User adds places via `addPlaceToCategory`
 5. User sets representative places via `setRepresentativePlace`
 6. Route automatically updates on map
@@ -437,6 +464,7 @@ Common error messages:
 - [ ] `GET /api/me/navigator` → Get user nickname
 - [ ] `GET /api/me/profile` → Get user profile
 - [ ] `GET /api/me/workspaces` → Get user's workspaces
+- [ ] `GET /api/places/search?keyword={keyword}` → Search places
 
 ### Data Structure Changes
 - [ ] Workspace ID: `id` (UUID) → `identifier` (string)

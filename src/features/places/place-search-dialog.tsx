@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Search, MapPin, Phone, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
-import { searchPlaces } from '@/shared/lib/kakao';
 // API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
 import { placeApi } from '@/services/api';
 import { useSettingsStore } from '@/shared/stores/settings-store';
@@ -38,7 +37,7 @@ export const PlaceSearchDialog = ({
   const [loading, setLoading] = useState(false);
   const [adding, setAdding] = useState<string | null>(null);
 
-  // Kakao Local API를 통해 장소 검색 수행
+  // API 서비스 레이어를 통해 장소 검색 수행 (백엔드 연동 시 placeApi.search만 수정)
   const handleSearch = async () => {
     // API 키 미설정 시 사용자에게 안내
     if (!kakaoRestApiKey) {
@@ -54,21 +53,25 @@ export const PlaceSearchDialog = ({
 
     setLoading(true);
 
-    try {
-      // Kakao REST API로 장소 검색 요청
-      const data = await searchPlaces(query, kakaoRestApiKey);
-      setResults(data.documents);
+    // API 서비스 레이어를 통해 장소 검색 요청
+    const { searchedPlaces, error } = await placeApi.search({
+      keyword: query,
+      restApiKey: kakaoRestApiKey,
+    });
 
+    if (error) {
+      toast.error(error);
+      setResults([]);
+    } else if (searchedPlaces) {
+      setResults(searchedPlaces);
+      
       // 검색 결과가 없을 경우 안내
-      if (data.documents.length === 0) {
+      if (searchedPlaces.length === 0) {
         toast.info('검색 결과가 없습니다.');
       }
-    } catch (error) {
-      toast.error('장소 검색에 실패했습니다.');
-      console.error(error);
-    } finally {
-      setLoading(false);
     }
+
+    setLoading(false);
   };
 
   // 검색된 장소를 카테고리에 추가

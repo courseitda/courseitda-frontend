@@ -1,8 +1,49 @@
 import { db } from '../db';
-import type { Place, CategoryPlace, KakaoPlace } from '@/entities/types';
+import type { Place, CategoryPlace, KakaoPlace, KakaoSearchResponse } from '@/entities/types';
 
 // 장소 관련 Edge Functions
 // 사용 위치: features/places (place-search-dialog, place-item), features/categories (category-card)
+
+// 장소 검색 Edge Function - Kakao Local API를 통한 장소 검색
+// 백엔드 연동 시: 백엔드 API 엔드포인트로 변경되며, 백엔드에서 Kakao API를 프록시
+export const searchPlaces = async (input: {
+  keyword: string;
+  restApiKey: string;
+}): Promise<{ searchedPlaces?: KakaoPlace[]; error?: string }> => {
+  try {
+    const { keyword, restApiKey } = input;
+
+    // 빈 키워드 검증
+    if (!keyword.trim()) {
+      return { error: '검색어를 입력해주세요.' };
+    }
+
+    // Kakao REST API 키 검증
+    if (!restApiKey) {
+      return { error: 'Kakao REST API 키를 설정해주세요.' };
+    }
+
+    // Kakao Local API 엔드포인트 호출 - REST API 키 사용
+    const KAKAO_API_URL = 'https://dapi.kakao.com/v2/local/search/keyword.json';
+    const response = await fetch(`${KAKAO_API_URL}?query=${encodeURIComponent(keyword)}`, {
+      headers: {
+        Authorization: `KakaoAK ${restApiKey}`,
+      },
+    });
+
+    // API 호출 실패 시 에러 반환
+    if (!response.ok) {
+      return { error: '장소 검색에 실패했습니다.' };
+    }
+
+    // 응답 파싱 및 검색 결과 반환
+    const data: KakaoSearchResponse = await response.json();
+    return { searchedPlaces: data.documents };
+  } catch (error) {
+    console.error('Search places error:', error);
+    return { error: '장소 검색 중 오류가 발생했습니다.' };
+  }
+};
 
 // 카테고리에 장소 추가 Edge Function - Kakao 검색 결과를 카테고리에 연결
 export const addPlaceToCategory = async (input: {
