@@ -58,9 +58,9 @@ export interface CheckEmailDuplicateData {
   isDuplicated: boolean;  // 중복 여부 (true: 중복/사용불가, false: 사용가능)
 }
 
-// 닉네임 중복 검증 응답 데이터 타입
+// 닉네임 중복 검증 응답 데이터 타입 - 백엔드 API 스펙과 일치
 export interface CheckNicknameDuplicateData {
-  isDuplicate: boolean;
+  isDuplicated: boolean;  // 중복 여부 (true: 중복/사용불가, false: 사용가능)
 }
 
 // 사용자 정보 조회 응답 데이터 타입
@@ -237,13 +237,18 @@ export const authApi = {
    * 닉네임 중복 검증 API 호출
    * @param nickname 검증할 닉네임
    * @returns API 응답 (성공 시 중복 여부, 실패 시 에러 정보)
+   * 
+   * 백엔드 엔드포인트: GET /api/members/validations/nickname?value={nickname}
+   * 백엔드 응답 예시: { isDuplicated: false } (false = 사용 가능, true = 중복)
    */
   checkNicknameDuplicate: async (nickname: string): Promise<ApiResponse<CheckNicknameDuplicateData>> => {
     // 현재: mock edge-function 호출 후 표준 응답 형식으로 변환
     const mockResponse = await checkNicknameDuplicate(nickname);
     
     // Mock 응답을 표준 API 응답 형식으로 변환
-    // 추후 백엔드 연동 시: return (await apiClient.get(`/api/auth/check-nickname?nickname=${nickname}`)).data
+    // 추후 백엔드 연동 시:
+    // const response = await apiClient.get(`/api/members/validations/nickname?value=${encodeURIComponent(nickname)}`);
+    // return { success: true, data: response.data, timestamp: new Date().toISOString() };
     if (mockResponse.error) {
       return {
         success: false,
@@ -256,10 +261,11 @@ export const authApi = {
       };
     }
     
+    // 백엔드 API 스펙에 맞춰 응답: { isDuplicated: boolean }
     return {
       success: true,
       data: {
-        isDuplicate: mockResponse.isDuplicate,
+        isDuplicated: mockResponse.isDuplicated,
       },
       timestamp: new Date().toISOString(),
     };

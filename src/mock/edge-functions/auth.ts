@@ -151,24 +151,32 @@ export const checkEmailDuplicate = async (email: string): Promise<{ isDuplicated
 };
 
 // 닉네임 중복 검증 Edge Function - 회원가입 전 닉네임 중복 여부 확인
-export const checkNicknameDuplicate = async (nickname: string): Promise<{ isDuplicate: boolean; error?: string }> => {
+// 백엔드 연동 시: GET /api/members/validations/nickname?value={nickname}
+export const checkNicknameDuplicate = async (nickname: string): Promise<{ isDuplicated: boolean; error?: string }> => {
   try {
-    // 닉네임 길이 검증
-    if (!nickname || nickname.trim().length < 2) {
-      return { isDuplicate: false, error: '닉네임은 최소 2자 이상이어야 합니다.' };
+    // 빈 값 처리 - 백엔드는 선택적 파라미터로 빈 값도 검증
+    if (!nickname || nickname.trim().length === 0) {
+      return { isDuplicated: false };
+    }
+
+    // 닉네임 길이 검증 (백엔드는 필수 검증 조건)
+    if (nickname.trim().length < 2) {
+      return { isDuplicated: false, error: '닉네임은 최소 2자 이상이어야 합니다.' };
     }
 
     if (nickname.length > 20) {
-      return { isDuplicate: false, error: '닉네임은 최대 20자까지 가능합니다.' };
+      return { isDuplicated: false, error: '닉네임은 최대 20자까지 가능합니다.' };
     }
 
     // 닉네임 중복 확인
     const existing = await db.users.where('nickname').equals(nickname.trim()).first();
     
-    return { isDuplicate: !!existing };
+    // 백엔드 API 스펙에 맞춰 응답: { isDuplicated: boolean }
+    // isDuplicated: true = 중복(사용 불가), false = 사용 가능
+    return { isDuplicated: !!existing };
   } catch (error) {
     console.error('Nickname check error:', error);
-    return { isDuplicate: false, error: '닉네임 확인 중 오류가 발생했습니다.' };
+    return { isDuplicated: false, error: '닉네임 확인 중 오류가 발생했습니다.' };
   }
 };
 

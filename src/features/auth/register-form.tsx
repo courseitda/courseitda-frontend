@@ -64,7 +64,7 @@ export const RegisterForm = () => {
     setNicknameError('');
   };
 
-  // 닉네임 중복 확인을 서버 API를 통해 검증 (현재는 Mock 데이터로 시뮬레이션)
+  // 닉네임 중복 확인을 API 서비스 레이어를 통해 검증
   const handleNicknameCheck = async () => {
     // 최소 길이 검증 - 2자 미만은 서버 요청 없이 클라이언트에서 차단
     if (nickname.length < 2) {
@@ -74,18 +74,26 @@ export const RegisterForm = () => {
 
     setNicknameCheckLoading(true);
     
-    // TODO: 실제 서버 API 연동 시 이 부분을 Edge Function 호출로 교체 필요
-    setTimeout(() => {
-      const usedNicknames = ['admin', 'user', 'test', 'manager', 'guest'];
-      if (usedNicknames.includes(nickname.toLowerCase())) {
-        setNicknameError('사용중인 닉네임입니다');
-        setNicknameChecked(false);
-      } else {
-        setNicknameError('');
-        setNicknameChecked(true);
-      }
-      setNicknameCheckLoading(false);
-    }, 1000);
+    // API 서비스 레이어를 통해 닉네임 중복 확인 (백엔드 연동 시 authApi만 수정)
+    const response = await authApi.checkNicknameDuplicate(nickname);
+    
+    setNicknameCheckLoading(false);
+    
+    // API 호출 실패 시 에러 처리
+    if (!response.success || !response.data) {
+      setNicknameError(response.error?.message || '닉네임 확인 중 오류가 발생했습니다');
+      setNicknameChecked(false);
+      return;
+    }
+    
+    // 백엔드 API 스펙: isDuplicated = true(중복), false(사용가능)
+    if (response.data.isDuplicated) {
+      setNicknameError('사용중인 닉네임입니다');
+      setNicknameChecked(false);
+    } else {
+      setNicknameError('');
+      setNicknameChecked(true);
+    }
   };
 
   // 이메일 입력 시 형식을 실시간 검증하고 중복 확인 상태 초기화
