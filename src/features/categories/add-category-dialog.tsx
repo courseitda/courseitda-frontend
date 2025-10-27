@@ -19,7 +19,7 @@ import { db } from '@/mock/db';
 interface AddCategoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  workspaceId: string;
+  workspaceIdentifier: string;
 }
 
 // 자주 사용하는 카테고리를 제안하여 빠른 입력 지원
@@ -27,7 +27,7 @@ const SUGGESTED_CATEGORIES = ['점심', '카페', '산책', '쇼핑', '저녁'];
 
 // 카테고리 추가 다이얼로그 - 색상 선택과 이름 입력을 통해 새 카테고리 생성
 // 사용 위치: features/categories/category-list
-export const AddCategoryDialog = ({ open, onOpenChange, workspaceId }: AddCategoryDialogProps) => {
+export const AddCategoryDialog = ({ open, onOpenChange, workspaceIdentifier }: AddCategoryDialogProps) => {
   const { colorPaletteMode, setColorPaletteMode } = useSettingsStore();
   const colors = getCategoryColors(colorPaletteMode);
   const [name, setName] = useState('');
@@ -40,10 +40,16 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceId }: AddCatego
   const getNextAvailableColor = async (paletteMode: PaletteMode) => {
     const colors = getCategoryColors(paletteMode);
     
+    // workspaceIdentifier로 워크스페이스 조회
+    const workspace = await db.workspaces.where('identifier').equals(workspaceIdentifier).first();
+    if (!workspace) {
+      return colors[0]; // 워크스페이스를 찾을 수 없으면 첫 번째 색상 사용
+    }
+    
     // 워크스페이스의 기존 카테고리 목록 조회
     const existingCategories = await db.categories
       .where('workspaceId')
-      .equals(workspaceId)
+      .equals(workspace.id)
       .toArray();
     
     // 이미 사용 중인 색상들을 Set으로 추출하여 빠른 검색
@@ -64,14 +70,14 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceId }: AddCatego
         setSelectedColor(color);
       });
     }
-  }, [open, setColorPaletteMode, workspaceId]);
+  }, [open, setColorPaletteMode, workspaceIdentifier]);
 
   // 팔레트 변경 시 해당 팔레트에서 사용하지 않은 색상으로 자동 업데이트
   useEffect(() => {
     getNextAvailableColor(colorPaletteMode).then(color => {
       setSelectedColor(color);
     });
-  }, [colorPaletteMode, workspaceId]);
+  }, [colorPaletteMode, workspaceIdentifier]);
 
   // 팔레트 버튼 클릭 시 다음 팔레트 모드로 순환 전환
   const handleTogglePalette = () => {
@@ -137,7 +143,7 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceId }: AddCatego
 
     // API 서비스 레이어를 통해 카테고리 추가 (백엔드 연동 시 categoryApi만 수정)
     const { category, error } = await categoryApi.add({
-      workspaceId,
+      workspaceIdentifier,
       name: categoryName,
       color: selectedColor,
     });

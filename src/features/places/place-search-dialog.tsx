@@ -20,7 +20,7 @@ interface PlaceSearchDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   categoryId: string;
-  workspaceId: string;
+  workspaceIdentifier: string;
 }
 
 // 장소 검색 다이얼로그 - Kakao Local API를 사용하여 장소를 검색하고 카테고리에 추가
@@ -29,7 +29,7 @@ export const PlaceSearchDialog = ({
   open,
   onOpenChange,
   categoryId,
-  workspaceId,
+  workspaceIdentifier,
 }: PlaceSearchDialogProps) => {
   const token = useAuthStore((state) => state.token); // 인증 토큰 추출
   const kakaoRestApiKey = useSettingsStore((state) => state.kakaoRestApiKey);

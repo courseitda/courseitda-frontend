@@ -76,10 +76,10 @@ const Workspaces = () => {
     navigate('/');
   };
 
-  // 워크스페이스 선택 - 전역 상태에 저장하고 상세 페이지로 이동
-  const handleSelectWorkspace = (id: string) => {
-    setSelectedWorkspace(id);
-    navigate(`/workspace/${id}`);
+  // 워크스페이스 선택 - identifier 기반으로 상세 페이지 이동
+  const handleSelectWorkspace = (identifier: string) => {
+    setSelectedWorkspace(identifier);
+    navigate(`/workspace/${identifier}`);
   };
   
   // 워크스페이스 수정 다이얼로그 열기
@@ -99,7 +99,7 @@ const Workspaces = () => {
     if (!selectedForDelete) return;
 
     // API 서비스 레이어에서 워크스페이스와 관련된 모든 데이터(카테고리, 장소) 삭제 (백엔드 연동 시 workspaceApi만 수정)
-    const { error } = await workspaceApi.delete(selectedForDelete.id);
+    const { error } = await workspaceApi.delete(selectedForDelete.identifier);
     if (error) {
       toast.error(error);
     } else {
@@ -213,7 +213,7 @@ const Workspaces = () => {
                 <ContextMenuTrigger asChild>
                   <Card
                     className="hover-lift cursor-pointer"
-                    onClick={() => handleSelectWorkspace(workspace.id)}
+                    onClick={() => handleSelectWorkspace(workspace.identifier)}
                   >
                     <CardHeader>
                       <div className="space-y-1">
@@ -290,7 +290,7 @@ const Workspaces = () => {
                     <ContextMenuTrigger asChild>
                       <Card
                         className="hover-lift cursor-pointer"
-                        onClick={() => handleSelectWorkspace(workspace.id)}
+                        onClick={() => handleSelectWorkspace(workspace.identifier)}
                       >
                         <CardHeader>
                           <div className="space-y-1">

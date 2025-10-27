@@ -48,10 +48,11 @@ const WorkspaceDetail = () => {
   const workspace = useWorkspace(id);
 
   // 현재 워크스페이스의 카테고리 목록을 정렬 순서대로 실시간 조회
+  // 주의: categories.workspaceId는 워크스페이스의 PK(id)를 참조하므로 identifier로 직접 비교하면 안 됨
   // 백엔드 연동 시: GET /api/workspaces/{identifier}/categories 호출로 변경
   const categories = useLiveQuery(
-    () => (id ? db.categories.where('workspaceId').equals(id).sortBy('sequence') : []),
-    [id]
+    () => (workspace ? db.categories.where('workspaceId').equals(workspace.id).sortBy('sequence') : []),
+    [workspace?.id]
   );
 
   // 헤더의 워크스페이스 전환 드롭다운을 위해 모든 워크스페이스 목록 조회
@@ -77,9 +78,9 @@ const WorkspaceDetail = () => {
     }
   }, [kakaoJsApiKey, kakaoRestApiKey, navigate]);
 
-  // 워크스페이스 전환 - 다른 워크스페이스의 상세 페이지로 이동
-  const handleSelectWorkspace = (workspaceId: string) => {
-    navigate(`/workspace/${workspaceId}`);
+  // 워크스페이스 전환 - 다른 워크스페이스의 상세 페이지로 이동 (identifier 사용)
+  const handleSelectWorkspace = (workspaceIdentifier: string) => {
+    navigate(`/workspace/${workspaceIdentifier}`);
   };
 
   // 로그아웃 처리 후 인증 상태 초기화 및 랜딩 페이지로 이동
@@ -143,7 +144,7 @@ const WorkspaceDetail = () => {
                     {workspaces?.map((ws) => (
                       <DropdownMenuItem
                         key={ws.id}
-                        onClick={() => handleSelectWorkspace(ws.id)}
+                        onClick={() => handleSelectWorkspace(ws.identifier)}
                         className={`cursor-pointer justify-center font-semibold ${
                           ws.id === workspace.id 
                             ? 'bg-primary/10' 
@@ -243,8 +244,8 @@ const WorkspaceDetail = () => {
             {/* UserRequest: 카테고리 영역 패딩을 0.5배로 축소하여 공간 효율성 향상 (p-8 → p-4) */}
             <div className="flex-1 md:h-full overflow-y-auto rounded-xl border border-border/50 bg-card p-4 min-h-0">
               <CategoryList 
-                workspaceId={workspace.id} 
-                categories={categories || []} 
+                workspaceIdentifier={workspace.identifier}
+                categories={categories || []}
                 onPlaceClick={setFocusedPlace}
               />
             </div>

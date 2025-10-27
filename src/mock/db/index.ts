@@ -103,6 +103,32 @@ export class CourseitdaDB extends Dexie {
         }
       });
     });
+
+    // 버전 3: 레거시 데이터 보정 - identifier 누락된 워크스페이스에 UUID 채움
+    this.version(3).stores({
+      users: 'id, email, nickname',
+      workspaces: 'id, identifier, ownerId',
+      categories: 'id, workspaceId, sequence',
+      places: 'id, name, addressName',
+      categoryPlaces: 'id, [categoryId+placeId], categoryId, placeId',
+    }).upgrade(async (tx) => {
+      // 워크스페이스의 identifier가 비어있는 레코드를 찾아 UUID로 채움
+      let fixedCount = 0;
+      await tx.table('workspaces').toCollection().modify((workspace: any) => {
+        if (!workspace.identifier || typeof workspace.identifier !== 'string' || workspace.identifier.trim().length === 0) {
+          workspace.identifier = crypto.randomUUID();
+          fixedCount += 1;
+        }
+        // updatedAt 누락 시 최소한의 타임스탬프 보정
+        if (!workspace.updatedAt) {
+          workspace.updatedAt = workspace.createdAt || new Date().toISOString();
+        }
+      });
+      // 보정 결과 로그 출력 (개발자 진단용)
+      if (fixedCount > 0) {
+        console.info(`[DB v3] Backfilled workspace.identifier for ${fixedCount} record(s).`);
+      }
+    });
   }
 }
 

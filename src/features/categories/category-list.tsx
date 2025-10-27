@@ -10,14 +10,14 @@ import { categoryApi } from '@/services/api';
 import { toast } from 'sonner';
 
 interface CategoryListProps {
-  workspaceId: string;
+  workspaceIdentifier: string;
   categories: Category[];
   onPlaceClick?: (place: Place) => void;
 }
 
 // 카테고리 목록 컴포넌트 - 드래그 앤 드롭으로 순서 변경 가능한 카테고리 카드 목록 표시
 // 사용 위치: pages/WorkspaceDetail
-export const CategoryList = ({ workspaceId, categories, onPlaceClick }: CategoryListProps) => {
+export const CategoryList = ({ workspaceIdentifier, categories, onPlaceClick }: CategoryListProps) => {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
 
   // 드래그 앤 드롭으로 카테고리 순서 변경 시 새로운 순서를 DB에 저장
@@ -39,7 +39,7 @@ export const CategoryList = ({ workspaceId, categories, onPlaceClick }: Category
     }));
 
     // API 서비스 레이어를 통해 DB에 저장 (백엔드 연동 시 categoryApi만 수정)
-    const { error } = await categoryApi.reorder(workspaceId, reorderedCategories);
+    const { error } = await categoryApi.reorder(workspaceIdentifier, reorderedCategories);
 
     if (error) {
       toast.error(error);
@@ -78,7 +78,7 @@ export const CategoryList = ({ workspaceId, categories, onPlaceClick }: Category
                       >
                         <CategoryCard 
                           category={category} 
-                          workspaceId={workspaceId} 
+                          workspaceIdentifier={workspaceIdentifier} 
                           index={index}
                           onPlaceClick={onPlaceClick} 
                         />
@@ -96,7 +96,7 @@ export const CategoryList = ({ workspaceId, categories, onPlaceClick }: Category
       <AddCategoryDialog
         open={addDialogOpen}
         onOpenChange={setAddDialogOpen}
-        workspaceId={workspaceId}
+        workspaceIdentifier={workspaceIdentifier}
       />
     </div>
   );
