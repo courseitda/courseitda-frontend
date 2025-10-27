@@ -53,9 +53,9 @@ export interface VerifyTokenData {
   userId: string;
 }
 
-// 이메일 중복 검증 응답 데이터 타입
+// 이메일 중복 검증 응답 데이터 타입 - 백엔드 API 스펙과 일치
 export interface CheckEmailDuplicateData {
-  isDuplicate: boolean;
+  isDuplicated: boolean;  // 중복 여부 (true: 중복/사용불가, false: 사용가능)
 }
 
 // 닉네임 중복 검증 응답 데이터 타입
@@ -199,13 +199,18 @@ export const authApi = {
    * 이메일 중복 검증 API 호출
    * @param email 검증할 이메일 주소
    * @returns API 응답 (성공 시 중복 여부, 실패 시 에러 정보)
+   * 
+   * 백엔드 엔드포인트: GET /api/members/validations/email?value={email}
+   * 백엔드 응답 예시: { isDuplicated: false } (false = 사용 가능, true = 중복)
    */
   checkEmailDuplicate: async (email: string): Promise<ApiResponse<CheckEmailDuplicateData>> => {
     // 현재: mock edge-function 호출 후 표준 응답 형식으로 변환
     const mockResponse = await checkEmailDuplicate(email);
     
     // Mock 응답을 표준 API 응답 형식으로 변환
-    // 추후 백엔드 연동 시: return (await apiClient.get(`/api/auth/check-email?email=${email}`)).data
+    // 추후 백엔드 연동 시:
+    // const response = await apiClient.get(`/api/members/validations/email?value=${encodeURIComponent(email)}`);
+    // return { success: true, data: response.data, timestamp: new Date().toISOString() };
     if (mockResponse.error) {
       return {
         success: false,
@@ -218,10 +223,11 @@ export const authApi = {
       };
     }
     
+    // 백엔드 API 스펙에 맞춰 응답: { isDuplicated: boolean }
     return {
       success: true,
       data: {
-        isDuplicate: mockResponse.isDuplicate,
+        isDuplicated: mockResponse.isDuplicated,
       },
       timestamp: new Date().toISOString(),
     };

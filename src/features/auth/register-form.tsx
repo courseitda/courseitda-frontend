@@ -103,7 +103,7 @@ export const RegisterForm = () => {
     }
   };
 
-  // 이메일 중복 확인을 서버 API를 통해 검증 (현재는 Mock 데이터로 시뮬레이션)
+  // 이메일 중복 확인을 API 서비스 레이어를 통해 검증
   const handleEmailCheck = async () => {
     // 형식 검증 후 서버 요청 - 불필요한 API 호출 방지
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -114,18 +114,26 @@ export const RegisterForm = () => {
 
     setEmailCheckLoading(true);
     
-    // TODO: 실제 서버 API 연동 시 이 부분을 Edge Function 호출로 교체 필요
-    setTimeout(() => {
-      const usedEmails = ['test@example.com', 'admin@example.com', 'user@example.com'];
-      if (usedEmails.includes(email.toLowerCase())) {
-        setEmailError('이미 사용중인 이메일입니다');
-        setEmailChecked(false);
-      } else {
-        setEmailError('');
-        setEmailChecked(true);
-      }
-      setEmailCheckLoading(false);
-    }, 1000);
+    // API 서비스 레이어를 통해 이메일 중복 확인 (백엔드 연동 시 authApi만 수정)
+    const response = await authApi.checkEmailDuplicate(email);
+    
+    setEmailCheckLoading(false);
+    
+    // API 호출 실패 시 에러 처리
+    if (!response.success || !response.data) {
+      setEmailError(response.error?.message || '이메일 확인 중 오류가 발생했습니다');
+      setEmailChecked(false);
+      return;
+    }
+    
+    // 백엔드 API 스펙: isDuplicated = true(중복), false(사용가능)
+    if (response.data.isDuplicated) {
+      setEmailError('이미 사용중인 이메일입니다');
+      setEmailChecked(false);
+    } else {
+      setEmailError('');
+      setEmailChecked(true);
+    }
   };
 
   // 회원가입 폼 제출 - 모든 검증을 통과한 경우에만 회원 등록 진행
