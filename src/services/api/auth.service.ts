@@ -1,6 +1,11 @@
 // 인증 관련 API 서비스 레이어
 // 목적: 컴포넌트와 실제 API 구현체를 분리하여, 백엔드 전환 시 이 파일만 수정하면 되도록 구조화
 // 현재는 mock edge-function을 래핑하지만, 추후 Axios 기반 HTTP 요청으로 전환 예정
+//
+// 백엔드 연동 시 변경 방법:
+// 1. import 부분에서 mock edge-function 제거
+// 2. axios 인스턴스 import 추가: import { apiClient } from '@/lib/axios';
+// 3. 각 메서드의 구현부를 주석에 있는 axios 코드로 교체
 
 import { 
   loginUser, 
@@ -29,16 +34,18 @@ export interface LoginData {
   accessToken: string;  // JWT 액세스 토큰
 }
 
-// 회원가입 요청 파라미터 타입
+// 회원가입 요청 파라미터 타입 - 백엔드 API 스펙과 일치하도록 순서 정의
 export interface RegisterRequest {
-  email: string;
-  password: string;
-  nickname: string;
+  nickname: string;   // 사용자 닉네임
+  email: string;      // 이메일
+  password: string;   // 비밀번호 (6자 이상 20자 이하)
 }
 
-// 회원가입 응답 데이터 타입
+// 회원가입 응답 데이터 타입 - 백엔드 API 스펙과 일치
 export interface RegisterData {
-  user: User;
+  id: string;         // 회원 ID (백엔드는 number이지만 JSON에서 string으로 처리)
+  nickname: string;   // 닉네임
+  email: string;      // 이메일 (비밀번호는 응답에 포함되지 않음)
 }
 
 // 토큰 검증 응답 데이터 타입
@@ -117,15 +124,21 @@ export const authApi = {
 
   /**
    * 회원가입 API 호출
-   * @param data 이메일, 비밀번호, 닉네임
+   * @param data 닉네임, 이메일, 비밀번호 (백엔드 API 스펙 순서)
    * @returns API 응답 (성공 시 생성된 사용자 정보, 실패 시 에러 정보)
+   * 
+   * 백엔드 엔드포인트: POST /api/members
+   * 백엔드 응답 예시: { id: 1, nickname: "홍길동", email: "user@example.com" }
+   * 백엔드 Location Header: /api/members/{id}
    */
   register: async (data: RegisterRequest): Promise<ApiResponse<RegisterData>> => {
     // 현재: mock edge-function 호출 후 표준 응답 형식으로 변환
     const mockResponse = await registerUser(data);
     
     // Mock 응답을 표준 API 응답 형식으로 변환
-    // 추후 백엔드 연동 시: return (await apiClient.post('/api/auth/register', data)).data
+    // 추후 백엔드 연동 시: 
+    // const response = await apiClient.post('/api/members', data);
+    // return { success: true, data: response.data, timestamp: new Date().toISOString() };
     if (mockResponse.error) {
       return {
         success: false,
@@ -138,10 +151,13 @@ export const authApi = {
       };
     }
     
+    // 백엔드 API 스펙에 맞춰 응답: { id, nickname, email }
     return {
       success: true,
       data: {
-        user: mockResponse.user!,
+        id: mockResponse.id!,
+        nickname: mockResponse.nickname!,
+        email: mockResponse.email!,
       },
       timestamp: new Date().toISOString(),
     };

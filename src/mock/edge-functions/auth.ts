@@ -15,26 +15,32 @@ const verifyPassword = (password: string, hash: string): boolean => {
 };
 
 // 회원가입 Edge Function - 입력 검증 후 사용자 생성
+// 백엔드 연동 시: POST /api/members
 export const registerUser = async (input: {
+  nickname: string;
   email: string;
   password: string;
-  nickname: string;
-}): Promise<{ user?: User; error?: string }> => {
+}): Promise<{ id?: string; nickname?: string; email?: string; error?: string }> => {
   try {
     // 필수 입력값 검증
     if (!input.email || !input.password || !input.nickname) {
       return { error: '모든 필드를 입력해주세요.' };
     }
 
-    // UserRequest: 비밀번호 최소 길이를 6자에서 8자로 변경하여 프론트엔드 검증과 일치시킴
-    if (input.password.length < 8) {
-      return { error: '비밀번호는 최소 8자 이상이어야 합니다.' };
+    // 백엔드 API 스펙: 비밀번호 6자 이상 20자 이하
+    if (input.password.length < 6 || input.password.length > 20) {
+      return { error: '비밀번호는 6자 이상 20자 이하여야 합니다.' };
     }
 
     // 이메일 형식 검증
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(input.email)) {
       return { error: '올바른 이메일 형식이 아닙니다.' };
+    }
+
+    // 닉네임 검증 (백엔드 필수 검증)
+    if (!input.nickname.trim()) {
+      return { error: '닉네임을 입력해주세요.' };
     }
 
     // 이메일 중복 확인 - 동일한 이메일로 가입 방지
@@ -55,7 +61,13 @@ export const registerUser = async (input: {
 
     await db.users.add(user);
 
-    return { user };
+    // 백엔드 API 스펙에 맞춰 응답: { id: number, nickname: string, email: string }
+    // Mock에서는 id를 string(UUID)으로 사용하지만, 백엔드 연동 시 number로 변환됨
+    return { 
+      id: user.id,
+      nickname: user.nickname,
+      email: user.email
+    };
   } catch (error) {
     console.error('Registration error:', error);
     return { error: '회원가입 중 오류가 발생했습니다.' };

@@ -162,7 +162,8 @@ export const RegisterForm = () => {
     }
 
     // API 서비스 레이어를 통해 회원가입 요청 수행 (백엔드 연동 시 authApi만 수정)
-    const registerResponse = await authApi.register({ email, password, nickname });
+    // 백엔드 API 스펙에 맞춰 파라미터 순서: nickname, email, password
+    const registerResponse = await authApi.register({ nickname, email, password });
 
     // UserRequest: 회원가입 실패 시 에러 토스트 메시지 표시하여 사용자에게 실패 원인 안내
     if (!registerResponse.success || !registerResponse.data) {
