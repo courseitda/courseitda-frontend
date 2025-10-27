@@ -26,14 +26,16 @@ export interface CreateWorkspaceData {
   modifiedAt: string;   // 수정일시 (yyyy-MM-dd'T'HH:mm:ss)
 }
 
-// 워크스페이스 수정 요청 파라미터 타입
+// 워크스페이스 수정 요청 파라미터 타입 - 백엔드 API 스펙과 일치
 export interface UpdateWorkspaceRequest {
-  title?: string;
+  title: string;  // 워크스페이스 제목 (필수, 최대 20자)
 }
 
-// 워크스페이스 수정 응답 타입
-export interface UpdateWorkspaceResponse {
-  error?: string;
+// 워크스페이스 수정 응답 데이터 타입 - 백엔드 API 스펙과 일치
+export interface UpdateWorkspaceData {
+  identifier: string;   // 워크스페이스 식별자
+  title: string;        // 워크스페이스 제목
+  modifiedAt: string;   // 수정일시 (yyyy-MM-dd'T'HH:mm:ss)
 }
 
 // 워크스페이스 삭제 응답 타입
@@ -113,14 +115,44 @@ export const workspaceApi = {
 
   /**
    * 워크스페이스 수정 API 호출
-   * @param id 워크스페이스 ID
+   * @param identifier 워크스페이스 식별자
    * @param data 수정할 필드 (제목)
-   * @returns 에러 메시지 (없으면 성공)
+   * @returns API 응답 (성공 시 수정된 워크스페이스 정보, 실패 시 에러 정보)
+   * 
+   * 백엔드 엔드포인트: PATCH /api/workspaces/{workspaceIdentifier}
+   * 백엔드 요청 예시: { title: "부산 여행 계획" }
+   * 백엔드 응답 예시: { identifier: "abc123", title: "부산 여행 계획", modifiedAt: "2024-10-22T15:00:00" }
    */
-  update: async (id: string, data: UpdateWorkspaceRequest): Promise<UpdateWorkspaceResponse> => {
-    // 현재: mock edge-function 호출
-    // 추후: return axios.patch(`/api/workspaces/${id}`, data)
-    return await updateWorkspace(id, data);
+  update: async (identifier: string, data: UpdateWorkspaceRequest): Promise<ApiResponse<UpdateWorkspaceData>> => {
+    // 현재: mock edge-function 호출 후 표준 응답 형식으로 변환
+    const mockResponse = await updateWorkspace(identifier, data);
+    
+    // Mock 응답을 표준 API 응답 형식으로 변환
+    // 추후 백엔드 연동 시:
+    // const response = await apiClient.patch(`/api/workspaces/${identifier}`, data);
+    // return { success: true, data: response.data, timestamp: new Date().toISOString() };
+    if (mockResponse.error) {
+      return {
+        success: false,
+        error: {
+          code: 'UPDATE_WORKSPACE_FAILED',
+          message: mockResponse.error,
+          status: 400,
+        },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    
+    // 백엔드 API 스펙에 맞춰 응답: { identifier, title, modifiedAt }
+    return {
+      success: true,
+      data: {
+        identifier: mockResponse.identifier!,
+        title: mockResponse.title!,
+        modifiedAt: mockResponse.modifiedAt!,
+      },
+      timestamp: new Date().toISOString(),
+    };
   },
 
   /**

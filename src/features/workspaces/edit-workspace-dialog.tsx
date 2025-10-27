@@ -76,13 +76,14 @@ export const EditWorkspaceDialog = ({ open, onOpenChange, workspace }: EditWorks
     setLoading(true);
 
     // API 서비스 레이어를 통해 워크스페이스 정보 업데이트 (백엔드 연동 시 workspaceApi만 수정)
-    const { error } = await workspaceApi.update(workspace.id, {
+    // 백엔드 API 스펙: identifier로 조회, 제목만 요청
+    const response = await workspaceApi.update(workspace.identifier, {
       title,
     });
 
     // 수정 실패 시 에러 메시지 표시
-    if (error) {
-      toast.error(error);
+    if (!response.success || !response.data) {
+      toast.error(response.error?.message || '워크스페이스 수정에 실패했습니다.');
       setLoading(false);
       return;
     }

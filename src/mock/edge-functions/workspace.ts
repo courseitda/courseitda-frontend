@@ -56,31 +56,46 @@ export const createWorkspace = async (input: {
 };
 
 // 워크스페이스 수정 Edge Function - 제목 변경
+// 백엔드 연동 시: PATCH /api/workspaces/{workspaceIdentifier}
 export const updateWorkspace = async (
-  id: string,
-  updates: Partial<Pick<Workspace, 'title'>>
-): Promise<{ error?: string }> => {
+  identifier: string,
+  updates: { title: string }
+): Promise<{ 
+  identifier?: string;
+  title?: string;
+  modifiedAt?: string;
+  error?: string;
+}> => {
   try {
-    // 워크스페이스 존재 여부 확인
-    const workspace = await db.workspaces.get(id);
+    // identifier로 워크스페이스 조회
+    const workspace = await db.workspaces.where('identifier').equals(identifier).first();
     if (!workspace) {
       return { error: '워크스페이스를 찾을 수 없습니다.' };
     }
 
-    // 제목 변경 시 빈 문자열 방지
-    if (updates.title !== undefined && updates.title.trim().length === 0) {
+    // 제목 필수 입력 검증
+    if (!updates.title || updates.title.trim().length === 0) {
       return { error: '워크스페이스 제목을 입력해주세요.' };
     }
 
+    // 백엔드 검증: 제목 최대 20자
+    if (updates.title.trim().length > 20) {
+      return { error: '워크스페이스 제목은 최대 20자까지 가능합니다.' };
+    }
 
     // 워크스페이스 정보 업데이트
-    await db.workspaces.update(id, {
-      ...updates,
-      title: updates.title?.trim(),
-      updatedAt: new Date().toISOString(),
+    const updatedAt = new Date().toISOString();
+    await db.workspaces.update(workspace.id, {
+      title: updates.title.trim(),
+      updatedAt: updatedAt,
     });
 
-    return {};
+    // 백엔드 API 스펙에 맞춰 응답: { identifier, title, modifiedAt }
+    return {
+      identifier: workspace.identifier,
+      title: updates.title.trim(),
+      modifiedAt: updatedAt,
+    };
   } catch (error) {
     console.error('Update workspace error:', error);
     return { error: '워크스페이스 수정 중 오류가 발생했습니다.' };
