@@ -40,9 +40,9 @@ export const addCategory = async (input: {
       return { error: '카테고리 이름을 입력해주세요.' };
     }
 
-    // 백엔드 검증: 이름 최대 10자
-    if (input.name.trim().length > 10) {
-      return { error: '카테고리 이름은 최대 10자까지 가능합니다.' };
+    // 백엔드 검증: 이름 최대 20자
+    if (input.name.trim().length > 20) {
+      return { error: '카테고리 이름은 최대 20자까지 가능합니다.' };
     }
 
     // 색상 형식 검증 (#RRGGBB)
@@ -100,6 +100,11 @@ export const updateCategory = async (
     // 이름 변경 시 빈 문자열 방지
     if (updates.name !== undefined && updates.name.trim().length === 0) {
       return { error: '카테고리 이름을 입력해주세요.' };
+    }
+
+    // 백엔드 검증: 이름 최대 20자
+    if (updates.name !== undefined && updates.name.trim().length > 20) {
+      return { error: '카테고리 이름은 최대 20자까지 가능합니다.' };
     }
 
     // 카테고리 정보 업데이트
