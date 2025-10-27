@@ -8,12 +8,12 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Search, MapPin, Phone, ExternalLink } from 'lucide-react';
+import { Search, MapPin, Phone } from 'lucide-react';
 import { toast } from 'sonner';
 // API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
 import { placeApi } from '@/services/api';
 import { useSettingsStore } from '@/shared/stores/settings-store';
+import { useAuthStore } from '@/shared/stores/auth-store';
 import type { KakaoPlace } from '@/entities/types';
 
 interface PlaceSearchDialogProps {
@@ -31,6 +31,7 @@ export const PlaceSearchDialog = ({
   categoryId,
   workspaceId,
 }: PlaceSearchDialogProps) => {
+  const token = useAuthStore((state) => state.token); // 인증 토큰 추출
   const kakaoRestApiKey = useSettingsStore((state) => state.kakaoRestApiKey);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<KakaoPlace[]>([]);
@@ -76,21 +77,32 @@ export const PlaceSearchDialog = ({
 
   // 검색된 장소를 카테고리에 추가
   const handleAdd = async (place: KakaoPlace) => {
-    setAdding(place.id);
-
-    // API 서비스 레이어를 통해 장소를 카테고리에 연결 (백엔드 연동 시 placeApi만 수정)
-    const { error } = await placeApi.addToCategory({
-      workspaceId,
-      categoryId,
-      kakaoPlace: place,
-    });
-
-    if (error) {
-      toast.error(error);
-    } else {
-      toast.success('장소가 추가되었습니다!');
+    if (!token) {
+      toast.error('로그인이 필요합니다.');
+      return;
     }
 
+    setAdding(place.id);
+
+    // Kakao 장소 정보를 백엔드 API 요청 형식으로 변환
+    // 백엔드 API 스펙: { name, roadAddressName, addressName, lat, lng }
+    const response = await placeApi.addToCategory(token, categoryId, {
+      name: place.place_name,
+      roadAddressName: place.road_address_name || null,
+      addressName: place.address_name,
+      lat: parseFloat(place.y), // Kakao API의 y = 위도
+      lng: parseFloat(place.x), // Kakao API의 x = 경도
+    });
+
+    // API 호출 실패 시 에러 메시지 표시
+    if (!response.success || !response.data) {
+      toast.error(response.error?.message || '장소 추가에 실패했습니다.');
+      setAdding(null);
+      return;
+    }
+
+    // 성공 메시지 표시
+    toast.success('장소가 추가되었습니다!');
     setAdding(null);
   };
 

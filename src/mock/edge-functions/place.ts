@@ -46,24 +46,68 @@ export const searchPlaces = async (input: {
 };
 
 // 카테고리에 장소 추가 Edge Function - Kakao 검색 결과를 카테고리에 연결
+// 백엔드 연동 시: POST /api/categories/{categoryId}/places
 export const addPlaceToCategory = async (input: {
-  workspaceId: string;
+  token: string;
   categoryId: string;
-  kakaoPlace: KakaoPlace;
-}): Promise<{ place?: Place; error?: string }> => {
+  placeData: {
+    name: string;
+    roadAddressName: string | null;
+    addressName: string;
+    lat: number;
+    lng: number;
+  };
+}): Promise<{ 
+  id?: string; 
+  placeId?: string; 
+  name?: string;
+  roadAddressName?: string | null;
+  addressName?: string;
+  latitude?: number;
+  longitude?: number;
+  error?: string;
+}> => {
   try {
-    const { kakaoPlace, categoryId, workspaceId } = input;
+    const { token, categoryId, placeData } = input;
 
-    // 카테고리가 워크스페이스에 속하는지 검증
+    // 토큰에서 사용자 ID 추출 (실제 백엔드는 JWT 파싱)
+    if (!token) {
+      return { error: '인증이 필요합니다.' };
+    }
+
+    // 요청 데이터 검증 (백엔드 스펙)
+    if (!placeData.name || placeData.name.trim().length === 0) {
+      return { error: '장소 이름은 필수입니다.' };
+    }
+
+    if (!placeData.addressName || placeData.addressName.trim().length === 0) {
+      return { error: '지번 주소는 필수입니다.' };
+    }
+
+    if (placeData.lat < -90 || placeData.lat > 90) {
+      return { error: '위도는 -90 이상 90 이하여야 합니다.' };
+    }
+
+    if (placeData.lng < -180 || placeData.lng > 180) {
+      return { error: '경도는 -180 이상 180 이하여야 합니다.' };
+    }
+
+    // 카테고리 조회 및 권한 검증
     const category = await db.categories.get(categoryId);
-    if (!category || category.workspaceId !== workspaceId) {
+    if (!category) {
       return { error: '유효하지 않은 카테고리입니다.' };
+    }
+
+    // 워크스페이스 조회
+    const workspace = await db.workspaces.get(category.workspaceId);
+    if (!workspace) {
+      return { error: '워크스페이스를 찾을 수 없습니다.' };
     }
 
     // 장소 이름과 주소로 기존 장소 검색 - 중복 저장 방지
     const allPlaces = await db.places.toArray();
     const existingPlace = allPlaces.find(
-      (p) => p.name === kakaoPlace.place_name && p.addressName === kakaoPlace.address_name
+      (p) => p.name === placeData.name && p.addressName === placeData.addressName
     );
 
     let place: Place;
@@ -82,15 +126,15 @@ export const addPlaceToCategory = async (input: {
 
       place = existingPlace;
     } else {
-      // 새 장소 생성 - Kakao API 응답을 Place 타입으로 변환
+      // 새 장소 생성 - 백엔드 API 요청 형식으로 변환
       place = {
         id: crypto.randomUUID(),
-        name: kakaoPlace.place_name,
-        addressName: kakaoPlace.address_name,
-        roadAddressName: kakaoPlace.road_address_name || null,
-        latitude: parseFloat(kakaoPlace.y),
-        longitude: parseFloat(kakaoPlace.x),
-        placeUrl: kakaoPlace.place_url || null,
+        name: placeData.name,
+        addressName: placeData.addressName,
+        roadAddressName: placeData.roadAddressName || null,
+        latitude: placeData.lat,
+        longitude: placeData.lng,
+        placeUrl: null, // 백엔드 API에는 없는 필드
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -110,11 +154,20 @@ export const addPlaceToCategory = async (input: {
     await db.categoryPlaces.add(categoryPlace);
 
     // 워크스페이스 수정 시각 업데이트 - 변경 이력 추적
-    await db.workspaces.update(workspaceId, {
+    await db.workspaces.update(category.workspaceId, {
       updatedAt: new Date().toISOString(),
     });
 
-    return { place };
+    // 백엔드 API 응답 형식으로 반환
+    return { 
+      id: categoryPlace.id,
+      placeId: place.id,
+      name: place.name,
+      roadAddressName: place.roadAddressName,
+      addressName: place.addressName,
+      latitude: place.latitude,
+      longitude: place.longitude,
+    };
   } catch (error) {
     console.error('Add place to category error:', error);
     return { error: '장소 추가 중 오류가 발생했습니다.' };

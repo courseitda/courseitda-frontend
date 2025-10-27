@@ -8,6 +8,7 @@ import {
   getPlacesByCategory,
 } from '@/mock/edge-functions/place';
 import type { Place, KakaoPlace } from '@/entities/types';
+import type { ApiResponse } from '@/types/api';
 
 // 장소 검색 요청 파라미터 타입
 export interface SearchPlacesRequest {
@@ -21,17 +22,24 @@ export interface SearchPlacesResponse {
   error?: string;                 // 에러 메시지
 }
 
-// 장소 추가 요청 파라미터 타입
+// 장소 추가 요청 파라미터 타입 - 백엔드 API 스펙과 일치
 export interface AddPlaceToCategoryRequest {
-  workspaceId: string;
-  categoryId: string;
-  kakaoPlace: KakaoPlace;
+  name: string;
+  roadAddressName: string | null;
+  addressName: string;
+  lat: number;
+  lng: number;
 }
 
-// 장소 추가 응답 타입
-export interface AddPlaceToCategoryResponse {
-  place?: Place;
-  error?: string;
+// 장소 추가 응답 데이터 타입 - 백엔드 API 스펙과 일치
+export interface AddPlaceToCategoryData {
+  id: string;              // 카테고리 장소 ID
+  placeId: string;         // 장소 ID
+  name: string;            // 장소 이름
+  roadAddressName: string | null; // 도로명 주소
+  addressName: string;     // 지번 주소
+  latitude: number;        // 위도
+  longitude: number;       // 경도
 }
 
 // 장소 제거 응답 타입
@@ -56,13 +64,56 @@ export const placeApi = {
 
   /**
    * 카테고리에 장소 추가 API 호출
-   * @param data 워크스페이스 ID, 카테고리 ID, Kakao 장소 정보
-   * @returns 추가된 장소 또는 에러 메시지
+   * @param token 인증 토큰
+   * @param categoryId 카테고리 ID
+   * @param data 장소 정보 (name, roadAddressName, addressName, lat, lng)
+   * @returns API 응답 (성공 시 카테고리 장소 정보, 실패 시 에러 정보)
+   * 
+   * 백엔드 엔드포인트: POST /api/categories/{categoryId}/places
+   * 백엔드 요청 예시: { name, roadAddressName, addressName, lat, lng }
+   * 백엔드 응답 예시: { id, placeId, name, roadAddressName, addressName, latitude, longitude }
    */
-  addToCategory: async (data: AddPlaceToCategoryRequest): Promise<AddPlaceToCategoryResponse> => {
-    // 현재: mock edge-function 호출
-    // 추후: return axios.post('/api/places', data)
-    return await addPlaceToCategory(data);
+  addToCategory: async (
+    token: string,
+    categoryId: string, 
+    data: AddPlaceToCategoryRequest
+  ): Promise<ApiResponse<AddPlaceToCategoryData>> => {
+    // 현재: mock edge-function 호출 후 표준 응답 형식으로 변환
+    const mockResponse = await addPlaceToCategory({
+      token,
+      categoryId,
+      placeData: data,
+    });
+
+    // Mock 응답을 표준 API 응답 형식으로 변환
+    // 추후 백엔드 연동 시:
+    // const response = await apiClient.post(`/api/categories/${categoryId}/places`, data, {
+    //   headers: { Authorization: `Bearer ${token}` }
+    // });
+    // return { success: true, data: response.data };
+
+    if (mockResponse.error) {
+      return {
+        success: false,
+        error: {
+          code: 'ADD_PLACE_FAILED',
+          message: mockResponse.error,
+        },
+      };
+    }
+
+    return {
+      success: true,
+      data: {
+        id: mockResponse.id!,
+        placeId: mockResponse.placeId!,
+        name: mockResponse.name!,
+        roadAddressName: mockResponse.roadAddressName!,
+        addressName: mockResponse.addressName!,
+        latitude: mockResponse.latitude!,
+        longitude: mockResponse.longitude!,
+      },
+    };
   },
 
   /**
