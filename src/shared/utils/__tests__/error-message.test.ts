@@ -15,15 +15,6 @@ describe("resolveErrorMessage", () => {
     expect(unmappedCodes).toHaveLength(0);
   });
 
-  it("요청 검증 실패는 필드 에러 메시지를 우선한다", () => {
-    const message = resolveErrorMessage(
-      BackendErrorCode.REQUEST_VALIDATION_FAILED,
-      "닉네임은 공백일 수 없습니다."
-    );
-
-    expect(message).toBe("닉네임은 공백일 수 없습니다.");
-  });
-
   it("명시적인 메시지가 있어도 매핑된 메시지를 우선한다", () => {
     const message = resolveErrorMessage(
       BackendErrorCode.WORKSPACE_NOT_FOUND,

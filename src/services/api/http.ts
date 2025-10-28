@@ -62,14 +62,9 @@ const fromAxiosError = (
   const payload = (error.response?.data ?? {}) as ErrorPayload;
   const code = payload.code || fallbackCode;
   const explicitMessage = payload.detail ?? payload.message;
-  const fieldErrors = payload.fieldErrors;
-  const fieldErrorMessage = fieldErrors
-    ? Object.values(fieldErrors)[0]
-    : undefined;
-  const prioritizedExplicitMessage = fieldErrorMessage ?? explicitMessage;
   const message = resolveErrorMessage(
     code,
-    prioritizedExplicitMessage,
+    explicitMessage,
     fallbackMessage
   );
 
@@ -78,7 +73,7 @@ const fromAxiosError = (
     explicitMessage ||
     payload.title ||
     payload.type ||
-    fieldErrors
+    payload.fieldErrors
       ? Object.fromEntries(
           Object.entries({
             title: payload.title,

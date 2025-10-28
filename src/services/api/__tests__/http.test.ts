@@ -59,7 +59,9 @@ describe("toError", () => {
     expect(response.error?.code).toBe(
       BackendErrorCode.REQUEST_VALIDATION_FAILED
     );
-    expect(response.error?.message).toBe("공백일 수 없습니다.");
+    expect(response.error?.message).toBe(
+      "입력값이 올바르지 않습니다. 다시 확인해주세요."
+    );
     expect(response.error?.details).toMatchObject({
       fieldErrors: {
         nickname: "공백일 수 없습니다.",

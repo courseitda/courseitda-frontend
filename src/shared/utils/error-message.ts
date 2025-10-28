@@ -201,14 +201,6 @@ export const resolveErrorMessage = (
   const trimmedFallback = fallbackMessage?.trim();
 
   if (
-    normalizedCode === BackendErrorCode.REQUEST_VALIDATION_FAILED &&
-    trimmedExplicit &&
-    trimmedExplicit.length > 0
-  ) {
-    return trimmedExplicit;
-  }
-
-  if (
     normalizedCode &&
     Object.prototype.hasOwnProperty.call(ERROR_MESSAGES, normalizedCode)
   ) {
