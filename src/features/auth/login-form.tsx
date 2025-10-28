@@ -35,7 +35,8 @@ export const LoginForm = () => {
     }
 
     // 로그인 성공 시 전역 상태에 토큰만 저장 (사용자 정보는 필요할 때 API 호출)
-    setToken(response.data.accessToken);
+    // UserRequest: Step 3 — 백엔드 토큰 타입을 함께 저장하여 axios 인터셉터가 Authorization 헤더를 구성
+    setToken(response.data.accessToken, response.data.tokenType);
     toast.success('로그인 성공!');
     navigate('/workspaces');
   };

@@ -153,27 +153,45 @@ export const useUserId = () => {
   const token = useAuthStore((state) => state.token);
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token) {
       setUserId(null);
+      setError(null);
       setLoading(false);
       return;
     }
 
-    try {
-      // Mock: 토큰 디코딩하여 userId 추출
-      const decoded = JSON.parse(atob(token));
-      setUserId(decoded.userId);
-    } catch (error) {
-      console.error('Token decode error:', error);
-      setUserId(null);
-    }
+    let isMounted = true;
 
-    setLoading(false);
+    const fetchUserId = async () => {
+      setLoading(true);
+      setError(null);
+
+      // UserRequest: Step 3 — JWT 토큰을 백엔드 verify API로 검증하여 사용자 ID를 확보
+      const response = await authApi.verifyToken(token);
+
+      if (!isMounted) return;
+
+      if (!response.success || !response.data) {
+        setError(response.error?.message || '사용자 인증에 실패했습니다.');
+        setUserId(null);
+      } else {
+        setUserId(response.data.userId);
+      }
+
+      setLoading(false);
+    };
+
+    fetchUserId();
+
+    return () => {
+      isMounted = false;
+    };
   }, [token]);
 
-  return { userId, loading };
+  return { userId, loading, error };
 };
 
 /**
