@@ -28,7 +28,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { useWorkspaceStore } from '@/shared/stores/workspace-store';
 import { useUserNickname, useUserDropdown } from '@/shared/hooks/use-user-info';
 import { useWorkspacesByOwner } from '@/shared/hooks/use-workspace';
 import { Plus, LogOut, Settings, Pencil, Trash2, Clock, User as UserIcon, LayoutGrid, MapPin } from 'lucide-react';
@@ -52,7 +51,6 @@ const Workspaces = () => {
   const { logout, isAuthenticated } = useAuthStore();
   const { nickname: navNickname } = useUserNickname(); // 네비게이터용 닉네임
   const { nickname: dropdownNickname, email } = useUserDropdown(); // 드롭다운용 닉네임 + 이메일
-  const setSelectedWorkspace = useWorkspaceStore((state) => state.setSelectedWorkspace);
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [selectedForEdit, setSelectedForEdit] = useState<Workspace | null>(null);
@@ -112,7 +110,6 @@ const Workspaces = () => {
 
   // 워크스페이스 선택 - identifier 기반으로 상세 페이지 이동
   const handleSelectWorkspace = (identifier: string) => {
-    setSelectedWorkspace(identifier);
     navigate(`/workspace/${identifier}`);
   };
   
