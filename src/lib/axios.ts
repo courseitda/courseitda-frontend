@@ -7,12 +7,19 @@
 import axios from 'axios';
 import type { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 
+const TOKEN_KEY = 'courseitda_token';
+const TOKEN_TYPE_KEY = 'courseitda_token_type';
+const DEFAULT_BASE_URL = 'http://localhost:8080';
+
+type UnauthorizedHandler = () => void;
+let unauthorizedHandler: UnauthorizedHandler | null = null;
+
 // Axios 인스턴스 생성 - 모든 API 요청에 공통 설정 적용
 export const apiClient: AxiosInstance = axios.create({
   // 백엔드 API 기본 URL (환경 변수로 관리)
-  // 기본값: http://localhost:3000 (프론트엔드와 같은 서버)
-  // 백엔드 연동 시: VITE_API_BASE_URL을 백엔드 서버 주소로 변경 (예: https://dev.courseitda.me)
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
+  // 기본값: http://localhost:8080 (백엔드 서버)
+  // 환경 변수 미설정 시에도 로컬 백엔드로 연결되도록 기본 URL 유지
+  baseURL: import.meta.env.VITE_API_BASE_URL || DEFAULT_BASE_URL,
   
   // 요청 타임아웃 설정 (10초) - 느린 네트워크 환경 대응
   timeout: 10000,
@@ -20,6 +27,7 @@ export const apiClient: AxiosInstance = axios.create({
   // 기본 헤더 설정 - JSON 형식으로 데이터 송수신
   headers: {
     'Content-Type': 'application/json',
+    Accept: 'application/json',
   },
 });
 
@@ -29,11 +37,12 @@ apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     // localStorage에서 인증 토큰 조회
     // 토큰 키는 auth-store.ts와 동일하게 유지 (courseitda_token)
-    const token = localStorage.getItem('courseitda_token');
+    const token = localStorage.getItem(TOKEN_KEY);
+    const tokenType = localStorage.getItem(TOKEN_TYPE_KEY) || 'Bearer';
     
     // 토큰이 존재하면 Authorization 헤더에 Bearer 방식으로 추가
     if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers.Authorization = `${tokenType} ${token}`;
     }
     
     return config;
@@ -57,12 +66,16 @@ apiClient.interceptors.response.use(
     // 401 Unauthorized - 인증 토큰 만료 또는 유효하지 않음
     if (error.response?.status === 401) {
       // localStorage에서 인증 정보 제거하여 로그아웃 처리
-      localStorage.removeItem('courseitda_token');
-      localStorage.removeItem('courseitda_user');
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(TOKEN_TYPE_KEY);
       
-      // 로그인 페이지로 강제 리다이렉트
-      // 현재 페이지 정보는 유지하지 않음 (보안상 이유)
-      window.location.href = '/auth';
+      if (unauthorizedHandler) {
+        unauthorizedHandler();
+      } else {
+        // 로그인 페이지로 강제 리다이렉트
+        // 현재 페이지 정보는 유지하지 않음 (보안상 이유)
+        window.location.href = '/auth';
+      }
       
       // 에러 메시지를 더 명확하게 변경
       return Promise.reject(new Error('인증이 만료되었습니다. 다시 로그인해주세요.'));
@@ -107,5 +120,10 @@ export const setApiBaseUrl = (url: string): void => {
 // 추가 유틸리티 함수: 요청 타임아웃 동적 변경
 export const setApiTimeout = (timeout: number): void => {
   apiClient.defaults.timeout = timeout;
+};
+
+// 추가 유틸리티 함수: 401 Unauthorized 대응 핸들러 등록
+export const setUnauthorizedHandler = (handler: UnauthorizedHandler | null): void => {
+  unauthorizedHandler = handler;
 };
 

@@ -1,5 +1,9 @@
 # Edge Functions API Documentation
 
+> ⚙️ **Integration Note**  
+> Backend HTTP requests are routed through the shared Axios client (`src/lib/axios.ts`).  
+> The base URL is configured via `VITE_API_BASE_URL` (default: `http://localhost:8080`) and all protected endpoints must receive an `Authorization: Bearer {accessToken}` header.
+
 This document describes the mock Edge Functions API for 코스잇다 (Courseitda).
 
 ## Principles
