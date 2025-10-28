@@ -4,10 +4,9 @@ import { test, expect } from '@playwright/test';
  * ⚡ 고급 UI 기능 테스트
  * 
  * ✅ 테스트하는 것 (프론트엔드 UI/UX):
- * - API 키 없을 때 설정 안내 표시
- * - 지도 영역에 "설정하기" 버튼 표시
- * - 토스트 메시지 표시 (성공/에러)
- * - 토스트 액션 버튼 (설정하기) 동작
+ * - Kakao 지도 로딩 실패 시 사용자 안내 메시지
+ * - API 키 입력 없이 지도 영역 표시
+ * - 설정 페이지에서 API 키 자동 관리 안내
  * - 모바일 반응형 레이아웃 (390x844)
  *   - 지도 상단 고정
  *   - 카테고리 영역 스크롤 가능
@@ -30,9 +29,9 @@ import { test, expect } from '@playwright/test';
  * - 반응형 브레이크포인트 계산 로직
  * 
  * 📝 총 9개 테스트 (성공하는 테스트만):
- * 1. API 키가 없을 때 지도 대신 설정 안내가 표시된다
- * 2. 지도 영역의 설정 버튼 클릭 시 설정 페이지로 이동한다
- * 3. 토스트의 설정 버튼으로 설정 페이지로 이동할 수 있다
+ * 1. 지도 로딩 실패 시 안내 메시지가 표시된다
+ * 2. 지도 영역에는 설정 안내 대신 지도 콘텐츠가 표시된다
+ * 3. 설정 페이지에서 API 키 자동 관리 메시지를 확인할 수 있다
  * 4. 모바일 뷰에서 지도가 상단에 고정되고 카테고리가 스크롤 가능하다
  * 5. 데스크톱 뷰에서 지도와 카테고리가 좌우로 분할되어 표시된다
  * 6. 카테고리와 워크스페이스 빈 상태 메시지가 올바르게 표시된다
@@ -77,53 +76,36 @@ test.describe('고급 기능', () => {
     await expect(page).toHaveURL(/\/workspaces/);
   });
 
-  test('API 키가 없을 때 지도 대신 설정 안내가 표시된다', async ({ page }) => {
+  test('지도 로딩 실패 시 안내 메시지가 표시된다', async ({ page }) => {
     // 워크스페이스 생성 및 이동
     await page.getByRole('button', { name: /새 워크스페이스/ }).click();
     await page.getByLabel('제목').fill('지도 테스트');
     await page.getByRole('button', { name: '생성' }).click();
     await page.getByRole('heading', { name: '지도 테스트' }).first().click();
 
-    // API 키 설정 안내 토스트가 표시되는지 확인 (정확한 텍스트 매칭)
-    await expect(page.getByText('Kakao API 키를 설정해주세요.').first()).toBeVisible();
-
-    // 지도 영역에 설정 안내가 표시되는지 확인
-    await expect(page.getByText('지도를 표시하려면 Kakao API 키를 설정해주세요.')).toBeVisible();
-    await expect(page.getByRole('button', { name: '설정하기' }).first()).toBeVisible();
+    // 지도 로딩 실패 안내 메시지가 표시되는지 확인
+    await expect(
+      page.getByText('Kakao Maps SDK 로딩에 실패했습니다.')
+    ).toBeVisible();
   });
 
-  test('지도 영역의 설정 버튼 클릭 시 설정 페이지로 이동한다', async ({ page }) => {
+  test('지도 영역에는 설정 안내 대신 지도 콘텐츠가 표시된다', async ({ page }) => {
     // 워크스페이스 생성 및 이동
     await page.getByRole('button', { name: /새 워크스페이스/ }).click();
     await page.getByLabel('제목').fill('설정 테스트');
     await page.getByRole('button', { name: '생성' }).click();
     await page.getByRole('heading', { name: '설정 테스트' }).first().click();
 
-    // 토스트의 설정하기 버튼 대기
-    await page.waitForTimeout(1000);
-
-    // 지도 영역의 설정 버튼 클릭
-    const mapSettingButton = page.getByRole('button', { name: '설정하기' }).first();
-    await mapSettingButton.click();
-
-    // 설정 페이지로 이동했는지 확인
-    await expect(page).toHaveURL('/settings');
+    // 지도 영역에 설정 안내 버튼이 표시되지 않는지 확인
+    await expect(page.getByRole('button', { name: '설정하기' })).toHaveCount(0);
+    await expect(page.getByText('Kakao API 키를 설정해주세요.')).toHaveCount(0);
   });
 
-  test('토스트의 설정 버튼으로 설정 페이지로 이동할 수 있다', async ({ page }) => {
-    // 워크스페이스 생성 및 이동
-    await page.getByRole('button', { name: /새 워크스페이스/ }).click();
-    await page.getByLabel('제목').fill('토스트 테스트');
-    await page.getByRole('button', { name: '생성' }).click();
-    await page.getByRole('heading', { name: '토스트 테스트' }).first().click();
-
-    // 토스트의 설정하기 버튼 클릭
-    const toastButton = page.getByRole('button', { name: '설정하기' }).last();
-    await expect(toastButton).toBeVisible();
-    await toastButton.click();
-
-    // 설정 페이지로 이동했는지 확인
-    await expect(page).toHaveURL('/settings');
+  test('설정 페이지에서 API 키 자동 관리 메시지를 확인할 수 있다', async ({ page }) => {
+    await page.goto('/settings');
+    await expect(
+      page.getByText('REST API 키는 백엔드에서 관리되고, JavaScript 키는 환경 변수에서 자동으로 주입됩니다.')
+    ).toBeVisible();
   });
 
   test('모바일 뷰에서 지도가 상단에 고정되고 카테고리가 스크롤 가능하다', async ({ page }) => {

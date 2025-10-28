@@ -1,38 +1,20 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { ArrowLeft } from 'lucide-react';
-import { toast } from 'sonner';
 import { useSettingsStore } from '@/shared/stores/settings-store';
 
 /**
- * Kakao API 키를 설정하는 페이지 컴포넌트
- * REST API 키와 JavaScript 키를 입력받아 로컬 스토리지에 저장
+ * Kakao API 키 상태를 안내하는 페이지 컴포넌트
+ * 키는 환경 변수 및 백엔드에서 자동으로 관리되므로 사용자 입력이 필요하지 않음
  */
 const Settings = () => {
   const navigate = useNavigate();
-  const { kakaoRestApiKey, kakaoJsApiKey, setKakaoRestApiKey, setKakaoJsApiKey } = useSettingsStore();
-  
-  // 기존에 저장된 API 키를 초기값으로 설정하여 수정 시 편의성 제공
-  const [restKey, setRestKey] = useState(kakaoRestApiKey || '');
-  const [jsKey, setJsKey] = useState(kakaoJsApiKey || '');
-
-  // API 키 유효성 검증 후 저장 처리
-  const handleSave = () => {
-    // 두 키 모두 입력되어야 저장 가능하도록 검증
-    if (!restKey || !jsKey) {
-      toast.error('모든 API 키를 입력해주세요.');
-      return;
-    }
-
-    // 검증 통과 시 스토어에 저장하여 전역 상태 업데이트
-    setKakaoRestApiKey(restKey);
-    setKakaoJsApiKey(jsKey);
-    toast.success('API 키가 저장되었습니다.');
-  };
+  const kakaoJsApiKey = useSettingsStore((state) => state.kakaoJsApiKey);
+  const maskedJsKey =
+    kakaoJsApiKey && kakaoJsApiKey.length > 8
+      ? `${kakaoJsApiKey.slice(0, 6)}****${kakaoJsApiKey.slice(-2)}`
+      : kakaoJsApiKey ?? '환경 변수에서 키를 찾을 수 없습니다';
 
   return (
     <div className="min-h-screen bg-gradient-card">
@@ -67,47 +49,23 @@ const Settings = () => {
           <CardHeader>
             <CardTitle>Kakao API 키</CardTitle>
             <CardDescription>
-              장소 검색 및 지도 기능을 사용하려면 Kakao API 키가 필요합니다.
-              <br />
-              <a
-                href="https://developers.kakao.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                Kakao Developers
-              </a>
-              에서 키를 발급받으세요.
+              REST API 키는 백엔드에서 관리되고, JavaScript 키는 환경 변수에서 자동으로 주입됩니다.
+              사용자는 별도로 입력할 필요가 없습니다.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="rest-key">REST API 키</Label>
-              <Input
-                id="rest-key"
-                type="password"
-                placeholder="REST API 키 입력"
-                value={restKey}
-                onChange={(e) => setRestKey(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">장소 검색에 사용됩니다.</p>
+          <CardContent className="space-y-6">
+            <div className="rounded-lg border border-border/60 bg-muted/30 p-4">
+              <p className="text-sm text-muted-foreground">
+                JavaScript 키는 빌드 시 <code className="text-xs">VITE_KAKAO_JS_KEY</code> 환경 변수에서
+                자동으로 설정됩니다.
+              </p>
+              <p className="mt-3 text-sm font-mono break-all">
+                {maskedJsKey}
+              </p>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="js-key">JavaScript 키</Label>
-              <Input
-                id="js-key"
-                type="password"
-                placeholder="JavaScript 키 입력"
-                value={jsKey}
-                onChange={(e) => setJsKey(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">지도 표시에 사용됩니다.</p>
-            </div>
-
-            <Button onClick={handleSave} className="w-full">
-              저장
-            </Button>
+            <p className="text-sm text-muted-foreground">
+              키 설정을 변경해야 한다면 관리자 또는 운영 팀에 문의해주세요.
+            </p>
           </CardContent>
         </Card>
       </main>

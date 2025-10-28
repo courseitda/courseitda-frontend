@@ -11,7 +11,6 @@ const CATEGORY_PLACES_ENDPOINT = (categoryId: string) => `/api/categories/${cate
 // 장소 검색 요청 파라미터 타입
 export interface SearchPlacesRequest {
   keyword: string;      // 검색 키워드
-  restApiKey?: string;  // Kakao REST API 키 (백엔드 연동 시 사용하지 않음)
 }
 
 // 장소 검색 응답 타입

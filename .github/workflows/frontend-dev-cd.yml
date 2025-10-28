@@ -7,6 +7,9 @@ env:
   AWS_REGION: ap-northeast-2
   NODE_VERSION: 18
   ENVIRONMENT: dev
+  VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+  VITE_DEV_MODE: ${{ vars.VITE_DEV_MODE }}
+  VITE_KAKAO_JS_KEY: ${{ secrets.VITE_KAKAO_JS_KEY }}
 
 jobs:
   deploy:

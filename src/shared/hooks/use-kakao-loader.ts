@@ -8,10 +8,10 @@ export const useKakaoLoader = (jsKey: string | null) => {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    // API 키가 없으면 에러 상태로 설정하여 사용자에게 키 설정 안내
+    // API 키가 없으면 에러 상태로 설정하여 관리자 문의를 안내
     if (!jsKey) {
       setReady(false);
-      setError(new Error('Kakao Maps API 키가 설정되지 않았습니다.'));
+      setError(new Error('Kakao Maps 환경 변수를 찾을 수 없습니다. 관리자에게 문의해주세요.'));
       return;
     }
 

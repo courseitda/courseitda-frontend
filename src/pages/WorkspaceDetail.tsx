@@ -37,7 +37,6 @@ const WorkspaceDetail = () => {
   const { nickname: dropdownNickname, email } = useUserDropdown(); // 드롭다운용 닉네임 + 이메일
   const logout = useAuthStore((state) => state.logout);
   const kakaoJsApiKey = useSettingsStore((state) => state.kakaoJsApiKey);
-  const kakaoRestApiKey = useSettingsStore((state) => state.kakaoRestApiKey);
   const [focusedPlace, setFocusedPlace] = useState<Place | null>(null);
   const [createWorkspaceOpen, setCreateWorkspaceOpen] = useState(false);
 
@@ -88,18 +87,6 @@ const WorkspaceDetail = () => {
       toast.error(categoriesError.message);
     }
   }, [categoriesError]);
-
-  // API 키 미설정 시 사용자에게 안내 토스트 표시하여 설정 페이지로 이동 유도
-  useEffect(() => {
-    if (!kakaoJsApiKey || !kakaoRestApiKey) {
-      toast.info('Kakao API 키를 설정해주세요.', {
-        action: {
-          label: '설정하기',
-          onClick: () => navigate('/settings'),
-        },
-      });
-    }
-  }, [kakaoJsApiKey, kakaoRestApiKey, navigate]);
 
   // 워크스페이스 전환 - 다른 워크스페이스의 상세 페이지로 이동 (identifier 사용)
   const handleSelectWorkspace = (workspaceIdentifier: string) => {
@@ -257,12 +244,9 @@ const WorkspaceDetail = () => {
               ) : (
                 <div className="h-full flex items-center justify-center p-6 text-center">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      지도를 표시하려면 Kakao API 키를 설정해주세요.
+                    <p className="text-sm text-muted-foreground">
+                      카카오 지도 설정이 완료되지 않았습니다. 관리자에게 문의해주세요.
                     </p>
-                    <Button size="sm" onClick={() => navigate('/settings')}>
-                      설정하기
-                    </Button>
                   </div>
                 </div>
               )}

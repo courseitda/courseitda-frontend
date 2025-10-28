@@ -1,31 +1,3 @@
-import type { KakaoSearchResponse } from '@/entities/types';
-
-// Kakao API 통신 관련 함수들
-// 사용 위치: features/places (place-search-dialog), features/map (map-canvas), shared/hooks (use-kakao-loader)
-
-// Kakao Local API 엔드포인트 - 키워드로 장소 검색
-export const KAKAO_API_URL = 'https://dapi.kakao.com/v2/local/search/keyword.json';
-
-// Kakao Local API를 통해 장소 검색 수행 - REST API 키를 사용한 키워드 검색
-export const searchPlaces = async (
-  query: string,
-  restApiKey: string
-): Promise<KakaoSearchResponse> => {
-  // REST API 키를 헤더에 포함하여 검색 요청
-  const response = await fetch(`${KAKAO_API_URL}?query=${encodeURIComponent(query)}`, {
-    headers: {
-      Authorization: `KakaoAK ${restApiKey}`,
-    },
-  });
-
-  // 요청 실패 시 에러 발생시켜 호출 측에서 처리
-  if (!response.ok) {
-    throw new Error('장소 검색에 실패했습니다.');
-  }
-
-  return await response.json();
-};
-
 // Window 객체에 kakao SDK 타입 추가 - TypeScript 타입 에러 방지
 declare global {
   interface Window {

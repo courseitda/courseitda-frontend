@@ -12,7 +12,6 @@ import { Search, MapPin, Phone } from 'lucide-react';
 import { toast } from 'sonner';
 // API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
 import { placeApi } from '@/services/api';
-import { useSettingsStore } from '@/shared/stores/settings-store';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import type { KakaoPlace } from '@/entities/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -33,7 +32,6 @@ export const PlaceSearchDialog = ({
   workspaceIdentifier,
 }: PlaceSearchDialogProps) => {
   const token = useAuthStore((state) => state.token); // 인증 토큰 추출
-  const kakaoRestApiKey = useSettingsStore((state) => state.kakaoRestApiKey);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<KakaoPlace[]>([]);
   const [loading, setLoading] = useState(false);
@@ -43,12 +41,6 @@ export const PlaceSearchDialog = ({
 
   // API 서비스 레이어를 통해 장소 검색 수행 (백엔드 연동 시 placeApi.search만 수정)
   const handleSearch = async () => {
-    // API 키 미설정 시 사용자에게 안내
-    if (!kakaoRestApiKey) {
-      toast.error('Kakao REST API 키를 설정해주세요.');
-      return;
-    }
-
     // 빈 검색어 입력 방지
     if (!query.trim()) {
       toast.error('검색어를 입력해주세요.');
@@ -60,7 +52,6 @@ export const PlaceSearchDialog = ({
     // API 서비스 레이어를 통해 장소 검색 요청
     const { searchedPlaces, error } = await placeApi.search({
       keyword: query,
-      restApiKey: kakaoRestApiKey,
     });
 
     if (error) {
