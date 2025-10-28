@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/test';
-import { db } from '../src/mock/db';
 
 /**
  * ❌ 실패하는 E2E 테스트 모음

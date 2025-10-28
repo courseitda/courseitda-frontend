@@ -30,8 +30,9 @@ import type { Workspace, User } from '@/entities/types';
 import { CreateWorkspaceDialog } from '@/features/workspaces/create-workspace-dialog';
 import { EditWorkspaceDialog } from '@/features/workspaces/edit-workspace-dialog';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { deleteWorkspace } from '@/mock/edge-functions/workspace';
 import { toast } from 'sonner';
+import { workspaceApi } from '@/services/api';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface NavigationDrawerProps {
   workspaces: Workspace[];
@@ -54,6 +55,28 @@ export const NavigationDrawer = ({
   const [selectedWorkspace, setSelectedWorkspace] = useState<Workspace | null>(null);
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState<Workspace | null>(null);
+  const queryClient = useQueryClient();
+  const queryKey = ['workspaces', 'me'];
+  const deleteWorkspaceMutation = useMutation({
+    mutationFn: async (identifier: string) => {
+      const { error } = await workspaceApi.delete(identifier);
+      if (error) {
+        throw new Error(error);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      toast.success('워크스페이스가 삭제되었습니다.');
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : '워크스페이스 삭제에 실패했습니다.';
+      toast.error(message);
+    },
+    onSettled: () => {
+      setDeleteAlertOpen(false);
+      setSelectedForDelete(null);
+    },
+  });
   
   // 워크스페이스 수정 다이얼로그 열기
   const handleEdit = (workspace: Workspace) => {
@@ -67,20 +90,11 @@ export const NavigationDrawer = ({
     setDeleteAlertOpen(true);
   };
   
-  // 워크스페이스 삭제 확인 후 Edge Function을 통해 워크스페이스와 관련 데이터 모두 삭제
-  const handleDeleteConfirm = async () => {
-    if (!selectedForDelete) return;
+  // 워크스페이스 삭제 확인 후 백엔드 API를 호출하여 워크스페이스와 관련 데이터 모두 삭제
+  const handleDeleteConfirm = () => {
+    if (!selectedForDelete || deleteWorkspaceMutation.isPending) return;
 
-    // Edge Function에서 워크스페이스와 연결된 카테고리, 장소도 함께 삭제
-    const { error } = await deleteWorkspace(selectedForDelete.id);
-    if (error) {
-      toast.error(error);
-    } else {
-      toast.success('워크스페이스가 삭제되었습니다.');
-    }
-    
-    setDeleteAlertOpen(false);
-    setSelectedForDelete(null);
+    deleteWorkspaceMutation.mutate(selectedForDelete.identifier);
   };
   
   return (
@@ -209,8 +223,12 @@ export const NavigationDrawer = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>취소</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive hover:bg-destructive/90">
-              삭제
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive hover:bg-destructive/90"
+              disabled={deleteWorkspaceMutation.isPending}
+            >
+              {deleteWorkspaceMutation.isPending ? '삭제 중...' : '삭제'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

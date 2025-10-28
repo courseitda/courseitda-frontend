@@ -160,42 +160,6 @@ export interface ApiRequestConfig {
 }
 
 /**
- * Mock 응답을 API 응답 형식으로 변환하는 어댑터 함수
- * 현재 mock edge-function의 { data?, error? } 형식을 표준 형식으로 변환
- * 
- * @param mockResponse - Mock API 응답 (현재 형식)
- * @returns 표준 API 응답 형식
- */
-export function adaptMockResponse<T>(mockResponse: { 
-  error?: string; 
-  [key: string]: any 
-}): ApiResponse<T> {
-  // 에러가 있는 경우
-  if (mockResponse.error) {
-    return {
-      success: false,
-      error: {
-        code: 'MOCK_ERROR',
-        message: mockResponse.error,
-        status: 400,
-      },
-      timestamp: new Date().toISOString(),
-    };
-  }
-  
-  // 성공한 경우 - error 키를 제외한 나머지를 data로 변환
-  const { error, ...data } = mockResponse;
-  
-  return {
-    success: true,
-    data: (Object.keys(data).length === 1 && data[Object.keys(data)[0]]) 
-      ? data[Object.keys(data)[0]] as T  // 단일 필드면 그 값을 data로
-      : data as T,  // 여러 필드면 전체 객체를 data로
-    timestamp: new Date().toISOString(),
-  };
-}
-
-/**
  * Spring 백엔드 응답을 프론트엔드 형식으로 변환하는 어댑터 함수
  * 백엔드 연동 시 사용 예정
  * 
