@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
 import type { Category, Place } from '@/entities/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,14 +15,17 @@ import {
 } from '@/components/ui/alert-dialog';
 import { GripVertical, Plus, Trash2, ChevronDown, Pencil } from 'lucide-react';
 // API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
-import { placeApi, categoryApi } from '@/services/api';
+import { categoryApi } from '@/services/api';
 import { PlaceSearchDialog } from '@/features/places/place-search-dialog';
 import { PlaceItem } from '@/features/places/place-item';
 import { EditCategoryDialog } from './edit-category-dialog';
 import { toast } from 'sonner';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { CategoryPlaceView } from '@/services/api/category.service';
 
 interface CategoryCardProps {
   category: Category;
+  places: CategoryPlaceView[];
   workspaceIdentifier: string;
   index: number;
   onPlaceClick?: (place: Place) => void;
@@ -31,16 +33,33 @@ interface CategoryCardProps {
 
 // 카테고리 카드 컴포넌트 - 카테고리 정보와 포함된 장소 목록을 표시하며 접기/펼치기 가능
 // 사용 위치: features/categories/category-list
-export const CategoryCard = ({ category, workspaceIdentifier, index, onPlaceClick }: CategoryCardProps) => {
+export const CategoryCard = ({ category, places, workspaceIdentifier, index, onPlaceClick }: CategoryCardProps) => {
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(true);
+  const queryClient = useQueryClient();
+  const queryKey = ['workspace', workspaceIdentifier, 'categories'];
 
-  // 카테고리에 속한 장소 목록을 실시간으로 조회하여 변경사항 자동 반영 (API 서비스 레이어 사용)
-  const places = useLiveQuery(async () => {
-    return await placeApi.getByCategory(category.id);
-  }, [category.id]);
+  const deleteCategoryMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await categoryApi.delete(category.id);
+      if (error) {
+        throw new Error(error);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      toast.success('카테고리가 삭제되었습니다.');
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : '카테고리 삭제에 실패했습니다.';
+      toast.error(message);
+    },
+    onSettled: () => {
+      setDeleteAlertOpen(false);
+    },
+  });
 
   // 삭제 버튼 클릭 시 확인 다이얼로그 표시
   const handleDeleteClick = () => {
@@ -48,15 +67,12 @@ export const CategoryCard = ({ category, workspaceIdentifier, index, onPlaceClic
   };
   
   // 삭제 확인 후 API 서비스 레이어를 통해 카테고리와 연결된 모든 장소 함께 삭제 (백엔드 연동 시 categoryApi만 수정)
-  const handleDeleteConfirm = async () => {
-    const { error } = await categoryApi.delete(category.id);
-    if (error) {
-      toast.error(error);
-    } else {
-      toast.success('카테고리가 삭제되었습니다.');
-    }
-    setDeleteAlertOpen(false);
+  const handleDeleteConfirm = () => {
+    if (deleteCategoryMutation.isPending) return;
+    deleteCategoryMutation.mutate();
   };
+
+  const hasRepresentative = !!category.representativePlaceId;
 
   return (
     <>
@@ -101,15 +117,17 @@ export const CategoryCard = ({ category, workspaceIdentifier, index, onPlaceClic
 
           <CollapsibleContent>
             <CardContent className="space-y-2">
-              {places && places.length > 0 ? (
+              {places.length > 0 ? (
                 <div className="space-y-2">
-                  {places.map((place) => (
+                  {places.map((item) => (
                     <PlaceItem
-                      key={place.id}
-                      place={place}
+                      key={item.id}
+                      categoryPlaceId={item.id}
+                      place={item.place}
                       categoryId={category.id}
-                      isRepresentative={place.id === category.representativePlaceId}
-                      hasRepresentative={!!category.representativePlaceId}
+                      workspaceIdentifier={workspaceIdentifier}
+                      isRepresentative={item.isRepresentative}
+                      hasRepresentative={hasRepresentative}
                       onPlaceClick={onPlaceClick}
                     />
                   ))}
@@ -145,6 +163,7 @@ export const CategoryCard = ({ category, workspaceIdentifier, index, onPlaceClic
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
         category={category}
+        workspaceIdentifier={workspaceIdentifier}
       />
       
       <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
@@ -159,8 +178,12 @@ export const CategoryCard = ({ category, workspaceIdentifier, index, onPlaceClic
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>취소</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive hover:bg-destructive/90">
-              삭제
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive hover:bg-destructive/90"
+              disabled={deleteCategoryMutation.isPending}
+            >
+              {deleteCategoryMutation.isPending ? '삭제 중...' : '삭제'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

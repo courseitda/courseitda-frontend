@@ -15,23 +15,48 @@ import { getCategoryColors, PALETTE_NAMES, type PaletteMode } from '@/shared/con
 import { useSettingsStore } from '@/shared/stores/settings-store';
 import { Check, Palette } from 'lucide-react';
 import type { Category } from '@/entities/types';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface EditCategoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   category: Category;
+  workspaceIdentifier: string;
 }
 
 // 카테고리 수정 다이얼로그 - 카테고리의 이름과 색상을 변경
 // 사용 위치: features/categories/category-card
-export const EditCategoryDialog = ({ open, onOpenChange, category }: EditCategoryDialogProps) => {
+export const EditCategoryDialog = ({ open, onOpenChange, category, workspaceIdentifier }: EditCategoryDialogProps) => {
   const { colorPaletteMode, setColorPaletteMode } = useSettingsStore();
   const colors = getCategoryColors(colorPaletteMode);
   const [name, setName] = useState(category.name);
   const [selectedColor, setSelectedColor] = useState(category.color);
-  const [loading, setLoading] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const [keyboardOffset, setKeyboardOffset] = useState(0);
+  const queryClient = useQueryClient();
+  const queryKey = ['workspace', workspaceIdentifier, 'categories'];
+
+  const updateCategoryMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await categoryApi.update(category.id, {
+        name: name.trim(),
+        color: selectedColor,
+      });
+
+      if (error) {
+        throw new Error(error);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      toast.success('카테고리가 수정되었습니다!');
+      onOpenChange(false);
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : '카테고리 수정에 실패했습니다.';
+      toast.error(message);
+    },
+  });
 
   // 팔레트 버튼 클릭 시 다음 팔레트 모드로 순환 전환
   const handleTogglePalette = () => {
@@ -104,25 +129,9 @@ export const EditCategoryDialog = ({ open, onOpenChange, category }: EditCategor
       return;
     }
 
-    setLoading(true);
+    if (updateCategoryMutation.isPending) return;
 
-    // API 서비스 레이어를 통해 카테고리 정보 업데이트 (백엔드 연동 시 categoryApi만 수정)
-    const { error } = await categoryApi.update(category.id, {
-      name: name.trim(),
-      color: selectedColor,
-    });
-
-    // 수정 실패 시 에러 메시지 표시
-    if (error) {
-      toast.error(error);
-      setLoading(false);
-      return;
-    }
-
-    // 수정 성공 후 다이얼로그 닫기
-    toast.success('카테고리가 수정되었습니다!');
-    onOpenChange(false);
-    setLoading(false);
+    updateCategoryMutation.mutate();
   };
 
   return (
@@ -188,8 +197,8 @@ export const EditCategoryDialog = ({ open, onOpenChange, category }: EditCategor
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               취소
             </Button>
-            <Button type="submit" disabled={loading || !name.trim()}>
-              {loading ? '수정 중...' : '확인'}
+            <Button type="submit" disabled={updateCategoryMutation.isPending || !name.trim()}>
+              {updateCategoryMutation.isPending ? '수정 중...' : '확인'}
             </Button>
           </div>
         </form>

@@ -75,25 +75,19 @@ export interface UnsetRepresentativePlaceResponse {
 }
 
 // 워크스페이스별 카테고리 목록 조회 응답 타입
+export interface CategoryPlaceView {
+  id: string; // CategoryPlace ID
+  place: Place;
+  isRepresentative: boolean;
+}
+
+export interface WorkspaceCategory {
+  category: Category;
+  places: CategoryPlaceView[];
+}
+
 export interface GetCategoriesByWorkspaceResponse {
-  categories: Array<{
-    id: string;
-    name: string;
-    color: string;
-    sequence: number;
-    representativePlaceId: string | null;
-    categoryPlaces: {
-      categoryPlaces: Array<{
-        id: string;
-        name: string;
-        addressName: string;
-        roadAddressName: string | null;
-        latitude: number;
-        longitude: number;
-        isRepresentative: boolean;
-      }>;
-    };
-  }>;
+  categories: WorkspaceCategory[];
   error?: string;
 }
 
@@ -132,6 +126,7 @@ type CategoryListApiResponse = {
     categoryPlaces: {
       categoryPlaces: Array<{
         id: number | string;
+        placeId?: number | string | null;
         name: string;
         addressName: string;
         roadAddressName: string | null;
@@ -311,11 +306,11 @@ export const categoryApi = {
    */
   setRepresentativePlace: async (
     categoryId: string,
-    placeId: string,
+    categoryPlaceId: string,
   ): Promise<SetRepresentativePlaceResponse> => {
     try {
       await apiClient.put(REPRESENTATIVE_PLACE_ENDPOINT(categoryId), {
-        categoryPlaceId: placeId,
+        categoryPlaceId,
       });
       return {};
     } catch (error) {
@@ -360,27 +355,37 @@ export const categoryApi = {
         WORKSPACE_CATEGORIES_ENDPOINT(workspaceIdentifier),
       );
 
-      return {
-        categories: response.data.categories.map((category) => ({
-          id: String(category.id),
-          name: category.name,
-          color: category.color,
-          sequence: category.sequence,
-          representativePlaceId:
-            category.representativePlaceId !== null ? String(category.representativePlaceId) : null,
-          categoryPlaces: {
-            categoryPlaces: category.categoryPlaces.categoryPlaces.map((place) => ({
-              id: String(place.id),
+      const categories = response.data.categories
+        .map((category) => {
+          const baseCategory = adaptCategory(workspaceIdentifier, {
+            id: category.id,
+            name: category.name,
+            color: category.color,
+            sequence: category.sequence,
+            representativePlaceId: category.representativePlaceId,
+          });
+
+          const places: CategoryPlaceView[] = category.categoryPlaces.categoryPlaces.map((place) => ({
+            id: String(place.id),
+            place: adaptPlace({
+              id: place.placeId ?? place.id,
               name: place.name,
               addressName: place.addressName,
               roadAddressName: place.roadAddressName,
               latitude: place.latitude,
               longitude: place.longitude,
-              isRepresentative: place.isRepresentative,
-            })),
-          },
-        })),
-      };
+            }),
+            isRepresentative: place.isRepresentative,
+          }));
+
+          return {
+            category: baseCategory,
+            places,
+          };
+        })
+        .sort((a, b) => a.category.sequence - b.category.sequence);
+
+      return { categories };
     } catch (error) {
       const apiError = toError(error, 'GET_CATEGORIES_FAILED', '카테고리 목록을 불러올 수 없습니다.');
       return {

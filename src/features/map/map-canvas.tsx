@@ -1,12 +1,12 @@
-import { useEffect, useRef } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useEffect, useMemo, useRef } from 'react';
 import type { Category, Place } from '@/entities/types';
 import { useKakaoLoader } from '@/shared/hooks/use-kakao-loader';
 import { useSettingsStore } from '@/shared/stores/settings-store';
-import { db } from '@/mock/db';
 // API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
-import { placeApi, categoryApi } from '@/services/api';
+import { categoryApi } from '@/services/api';
 import { toast } from 'sonner';
+import type { WorkspaceCategory } from '@/services/api/category.service';
+import { useQueryClient } from '@tanstack/react-query';
 
 // 지도 캔버스 컴포넌트 - Kakao Maps SDK를 사용하여 장소 마커와 경로 표시
 // 사용 위치: pages/WorkspaceDetail
@@ -37,12 +37,13 @@ const interpolateColor = (color1: string, color2: string, ratio: number = 0.5): 
 
 interface MapCanvasProps {
   workspaceId: string;
-  categories: Category[];
+  workspaceIdentifier: string;
+  categories: WorkspaceCategory[];
   focusedPlace?: Place | null;
 }
 
 // 지도 캔버스 컴포넌트 - Kakao Maps SDK를 사용하여 장소 마커와 경로를 표시
-export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasProps) => {
+export const MapCanvas = ({ workspaceId, workspaceIdentifier, categories, focusedPlace }: MapCanvasProps) => {
   const kakaoJsApiKey = useSettingsStore((state) => state.kakaoJsApiKey);
   const { ready, error } = useKakaoLoader(kakaoJsApiKey);
   const mapRef = useRef<HTMLDivElement>(null);
@@ -52,6 +53,7 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
   const currentInfoWindowRef = useRef<any>(null);
   const hasInitializedBounds = useRef<boolean>(false);
   const prevPlacesCountRef = useRef<number>(0);
+  const queryClient = useQueryClient();
 
   // 워크스페이스 변경 시 지도 초기화 플래그 리셋하여 새로운 경계값 적용
   useEffect(() => {
@@ -59,20 +61,18 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
     prevPlacesCountRef.current = 0;
   }, [workspaceId]);
 
-  // 모든 카테고리의 장소 목록을 실시간으로 조회하여 지도에 표시
-  const allPlacesData = useLiveQuery(async () => {
-    const placesMap = new Map();
-    
-    // 각 카테고리의 장소들을 조회하여 Map으로 통합 (API 서비스 레이어 사용)
-    for (const category of categories) {
-      const places = await placeApi.getByCategory(category.id);
-      for (const place of places) {
-        placesMap.set(place.id, { place, category });
-      }
-    }
-    
-    return placesMap;
-  }, [categories]);
+  const placeEntries = useMemo(
+    () =>
+      categories.flatMap(({ category, places }) =>
+        places.map((item) => ({
+          category,
+          place: item.place,
+          categoryPlaceId: item.id,
+          isRepresentative: item.isRepresentative,
+        })),
+      ),
+    [categories],
+  );
 
   // Kakao Maps SDK를 사용하여 지도 초기화 및 기본 이벤트 설정
   useEffect(() => {
@@ -119,41 +119,52 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
 
   // 장소 데이터 변경 시 마커와 경로를 업데이트하여 지도에 실시간 반영
   useEffect(() => {
-    if (!ready || !mapInstance.current || !allPlacesData) return;
+    if (!ready || !mapInstance.current) return;
 
     const kakao = window.kakao;
     const map = mapInstance.current;
 
-    // 기존 마커들을 지도에서 모두 제거하여 중복 방지
     markersRef.current.forEach((marker) => marker.setMap(null));
     markersRef.current = [];
 
-    // 기존 경로선들을 지도에서 모두 제거
     polylinesRef.current.forEach((polyline) => polyline.setMap(null));
     polylinesRef.current = [];
+
+    if (placeEntries.length === 0) {
+      prevPlacesCountRef.current = 0;
+      return;
+    }
 
     const bounds = new kakao.maps.LatLngBounds();
     const markers: any[] = [];
 
-    // 대표 장소와 카테고리 순서를 매핑하여 마커에 번호 표시
     const representativeMap = new Map<string, number>();
-    categories.forEach((cat, index) => {
-      if (cat.representativePlaceId) {
-        representativeMap.set(cat.representativePlaceId, index + 1);
+    categories.forEach(({ category }, index) => {
+      if (category.representativePlaceId) {
+        representativeMap.set(category.representativePlaceId, index + 1);
       }
     });
 
-    // 모든 장소에 대해 마커 생성 - 대표 장소는 크고 번호 표시, 일반 장소는 작은 마커
-    allPlacesData.forEach(({ place, category }) => {
+    const placesMap = new Map<
+      string,
+      { category: Category; place: Place; categoryPlaceId: string; isRepresentative: boolean }
+    >();
+
+    placeEntries.forEach((entry) => {
+      const { category, place, categoryPlaceId, isRepresentative } = entry;
+
+      if (!Number.isFinite(place.latitude) || !Number.isFinite(place.longitude)) {
+        return;
+      }
+
+      placesMap.set(categoryPlaceId, entry);
       const position = new kakao.maps.LatLng(place.latitude, place.longitude);
       bounds.extend(position);
 
-      const isRepresentative = category.representativePlaceId === place.id;
-      const categoryOrder = representativeMap.get(place.id);
+      const categoryOrder = representativeMap.get(categoryPlaceId);
 
       const markerContent = document.createElement('div');
-      
-      // 대표 장소 마커는 카테고리 순서 번호를 포함한 큰 원형 마커로 표시
+
       if (isRepresentative && categoryOrder) {
         markerContent.style.cssText = `
           width: 32px;
@@ -173,7 +184,6 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
         `;
         markerContent.textContent = String(categoryOrder);
       } else {
-        // 일반 장소 마커는 번호 없이 작은 원형 마커로 표시
         markerContent.style.cssText = `
           width: 20px;
           height: 20px;
@@ -198,7 +208,7 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
 
       // 마커 클릭 시 표시할 정보창 DOM 요소 생성 - 장소명과 대표 장소 설정 버튼 포함
       const createInfoWindowElement = () => {
-        const currentIsRepresentative = category.representativePlaceId === place.id;
+        const currentIsRepresentative = category.representativePlaceId === categoryPlaceId;
         
         const container = document.createElement('div');
         container.style.cssText = `
@@ -278,19 +288,18 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
           e.preventDefault();
           e.stopPropagation();
           
-          // 대표 장소면 해제 API, 아니면 설정 API 호출 (백엔드 연동 시 categoryApi만 수정)
           const { error } = currentIsRepresentative
             ? await categoryApi.unsetRepresentativePlace(category.id)
-            : await categoryApi.setRepresentativePlace(category.id, place.id);
+            : await categoryApi.setRepresentativePlace(category.id, categoryPlaceId);
           
           if (error) {
             toast.error(error);
           } else {
-            // UserRequest: 대표장소 설정 시 토스트 메시지를 제거하고 정보창만 닫아 불필요한 알림 방지
             if (currentInfoWindowRef.current) {
               currentInfoWindowRef.current.setMap(null);
               currentInfoWindowRef.current = null;
             }
+            queryClient.invalidateQueries({ queryKey: ['workspace', workspaceIdentifier, 'categories'] });
           }
         };
         
@@ -335,10 +344,10 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
 
     // 대표 장소들을 연결하는 경로선 그리기 - 카테고리 색상으로 그라데이션 적용
     const representativeCategoriesWithPlaces = categories
-      .filter((cat) => cat.representativePlaceId)
-      .map((cat) => {
-        const data = allPlacesData.get(cat.representativePlaceId!);
-        return data ? { category: cat, place: data.place } : null;
+      .filter(({ category }) => category.representativePlaceId)
+      .map(({ category }) => {
+        const data = placesMap.get(category.representativePlaceId!);
+        return data ? { category, place: data.place } : null;
       })
       .filter((item) => item !== null);
 
@@ -391,7 +400,7 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
     }
 
     // UserRequest: 대표장소 변경 시 지도 위치를 유지하고 최초 로딩이나 장소 개수 변경 시에만 bounds 재설정하여 사용자 경험 개선
-    const currentPlacesCount = allPlacesData.size;
+    const currentPlacesCount = placeEntries.length;
     const shouldUpdateBounds = !hasInitializedBounds.current || prevPlacesCountRef.current !== currentPlacesCount;
     
     if (markers.length > 0 && shouldUpdateBounds) {
@@ -399,7 +408,7 @@ export const MapCanvas = ({ workspaceId, categories, focusedPlace }: MapCanvasPr
       hasInitializedBounds.current = true;
       prevPlacesCountRef.current = currentPlacesCount;
     }
-  }, [ready, allPlacesData, categories]);
+  }, [ready, categories, placeEntries, queryClient, workspaceIdentifier]);
 
   // 사용자가 장소 아이템 클릭 시 해당 장소로 지도를 부드럽게 이동하고 확대
   useEffect(() => {

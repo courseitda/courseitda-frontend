@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/mock/db';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useUserNickname, useUserDropdown } from '@/shared/hooks/use-user-info';
 import { useWorkspace, useWorkspacesByOwner } from '@/shared/hooks/use-workspace';
+import { useWorkspaceCategories } from '@/shared/hooks/use-categories';
 import { Button } from '@/components/ui/button';
 import { CategoryList } from '@/features/categories/category-list';
 import { MapCanvas } from '@/features/map/map-canvas';
@@ -49,14 +48,6 @@ const WorkspaceDetail = () => {
     error: workspaceError,
   } = useWorkspace(id);
 
-  // 현재 워크스페이스의 카테고리 목록을 정렬 순서대로 실시간 조회
-  // 주의: categories.workspaceId는 워크스페이스의 PK(id)를 참조하므로 identifier로 직접 비교하면 안 됨
-  // 백엔드 연동 시: GET /api/workspaces/{identifier}/categories 호출로 변경
-  const categories = useLiveQuery(
-    () => (workspace ? db.categories.where('workspaceId').equals(workspace.id).sortBy('sequence') : []),
-    [workspace?.id]
-  );
-
   // UserRequest: Step 4 — 내 워크스페이스 목록을 React Query로 가져와 전환 드롭다운에 활용
   const token = useAuthStore((state) => state.token);
   const {
@@ -64,6 +55,12 @@ const WorkspaceDetail = () => {
     isLoading: workspacesLoading,
     error: workspacesError,
   } = useWorkspacesByOwner(token);
+
+  const {
+    data: workspaceCategories,
+    isLoading: categoriesLoading,
+    error: categoriesError,
+  } = useWorkspaceCategories(workspace?.identifier);
 
   // 미인증 사용자 접근 차단 - 로그인 페이지로 리다이렉트하여 보안 유지
   useEffect(() => {
@@ -85,6 +82,12 @@ const WorkspaceDetail = () => {
       toast.error(workspacesError.message);
     }
   }, [workspacesError]);
+
+  useEffect(() => {
+    if (categoriesError) {
+      toast.error(categoriesError.message);
+    }
+  }, [categoriesError]);
 
   // API 키 미설정 시 사용자에게 안내 토스트 표시하여 설정 페이지로 이동 유도
   useEffect(() => {
@@ -110,7 +113,7 @@ const WorkspaceDetail = () => {
   };
 
   // 데이터 로딩 중에는 스피너를 표시하여 진행 상황 안내
-  if (workspaceLoading || workspacesLoading) {
+  if (workspaceLoading || workspacesLoading || categoriesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Spinner className="w-8 h-8" />
@@ -245,7 +248,12 @@ const WorkspaceDetail = () => {
             {/* UserRequest: 모바일 지도 높이를 화면의 약 45% 비율로 설정하여 카테고리 영역과 균형 유지 (기존 5/9 ≈ 0.55에서 조정) */}
             <div className="h-[calc((100vh-64px)*0.45)] md:h-full rounded-xl overflow-hidden border border-border/50 shadow-lg bg-card shrink-0">
               {kakaoJsApiKey ? (
-                <MapCanvas workspaceId={workspace.id} categories={categories || []} focusedPlace={focusedPlace} />
+                <MapCanvas
+                  workspaceId={workspace.id}
+                  workspaceIdentifier={workspace.identifier}
+                  categories={workspaceCategories ?? []}
+                  focusedPlace={focusedPlace}
+                />
               ) : (
                 <div className="h-full flex items-center justify-center p-6 text-center">
                   <div>
@@ -265,7 +273,7 @@ const WorkspaceDetail = () => {
             <div className="flex-1 md:h-full overflow-y-auto rounded-xl border border-border/50 bg-card p-4 min-h-0">
               <CategoryList 
                 workspaceIdentifier={workspace.identifier}
-                categories={categories || []}
+                categories={workspaceCategories ?? []}
                 onPlaceClick={setFocusedPlace}
               />
             </div>

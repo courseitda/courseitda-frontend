@@ -14,12 +14,14 @@ import { categoryApi } from '@/services/api';
 import { getCategoryColors, PALETTE_NAMES, type PaletteMode } from '@/shared/constants/colors';
 import { useSettingsStore } from '@/shared/stores/settings-store';
 import { Check, Palette } from 'lucide-react';
-import { db } from '@/mock/db';
+import type { Category } from '@/entities/types';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface AddCategoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   workspaceIdentifier: string;
+  categories: Category[];
 }
 
 // 자주 사용하는 카테고리를 제안하여 빠른 입력 지원
@@ -27,57 +29,70 @@ const SUGGESTED_CATEGORIES = ['점심', '카페', '산책', '쇼핑', '저녁'];
 
 // 카테고리 추가 다이얼로그 - 색상 선택과 이름 입력을 통해 새 카테고리 생성
 // 사용 위치: features/categories/category-list
-export const AddCategoryDialog = ({ open, onOpenChange, workspaceIdentifier }: AddCategoryDialogProps) => {
+export const AddCategoryDialog = ({ open, onOpenChange, workspaceIdentifier, categories }: AddCategoryDialogProps) => {
   const { colorPaletteMode, setColorPaletteMode } = useSettingsStore();
   const colors = getCategoryColors(colorPaletteMode);
   const [name, setName] = useState('');
   const [selectedColor, setSelectedColor] = useState<string>(colors[0]);
-  const [loading, setLoading] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const [keyboardOffset, setKeyboardOffset] = useState(0);
+  const queryClient = useQueryClient();
+  const queryKey = ['workspace', workspaceIdentifier, 'categories'];
 
-  // UserRequest: 카테고리 생성 시 사용하지 않은 색상으로 자동 선택하여 중복 방지 및 시각적 구분성 향상
-  const getNextAvailableColor = async (paletteMode: PaletteMode) => {
-    const colors = getCategoryColors(paletteMode);
-    
-    // workspaceIdentifier로 워크스페이스 조회
-    const workspace = await db.workspaces.where('identifier').equals(workspaceIdentifier).first();
-    if (!workspace) {
-      return colors[0]; // 워크스페이스를 찾을 수 없으면 첫 번째 색상 사용
-    }
-    
-    // 워크스페이스의 기존 카테고리 목록 조회
-    const existingCategories = await db.categories
-      .where('workspaceId')
-      .equals(workspace.id)
-      .toArray();
-    
-    // 이미 사용 중인 색상들을 Set으로 추출하여 빠른 검색
-    const usedColors = new Set(existingCategories.map(cat => cat.color));
-    
-    // 팔레트에서 사용하지 않은 첫 번째 색상 찾기
-    const availableColor = colors.find(color => !usedColors.has(color));
-    
-    // 사용 가능한 색상이 있으면 반환, 없으면 첫 번째 색상 사용
-    return availableColor || colors[0];
+  const computeNextAvailableColor = (paletteMode: PaletteMode, usedCategories: Category[]) => {
+    const palette = getCategoryColors(paletteMode);
+    const usedColors = new Set(usedCategories.map((category) => category.color));
+    return palette.find((color) => !usedColors.has(color)) ?? palette[0];
   };
+
+  const addCategoryMutation = useMutation({
+    mutationFn: async (payload: { name: string; color: string }) => {
+      const { category, error } = await categoryApi.add({
+        workspaceIdentifier,
+        name: payload.name,
+        color: payload.color,
+      });
+
+      if (!category || error) {
+        throw new Error(error || '카테고리 추가에 실패했습니다.');
+      }
+
+      return category;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      toast.success('카테고리가 추가되었습니다!');
+      setName('');
+      onOpenChange(false);
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : '카테고리 추가에 실패했습니다.';
+      toast.error(message);
+    },
+  });
 
   // 다이얼로그 열릴 때마다 기본 팔레트(vibrant)로 초기화하고 사용하지 않은 색상 자동 선택
   useEffect(() => {
     if (open) {
       setColorPaletteMode('vibrant');
-      getNextAvailableColor('vibrant').then(color => {
-        setSelectedColor(color);
-      });
+      setSelectedColor(computeNextAvailableColor('vibrant', categories));
+      setName('');
     }
-  }, [open, setColorPaletteMode, workspaceIdentifier]);
+  }, [open, categories, setColorPaletteMode]);
 
   // 팔레트 변경 시 해당 팔레트에서 사용하지 않은 색상으로 자동 업데이트
   useEffect(() => {
-    getNextAvailableColor(colorPaletteMode).then(color => {
-      setSelectedColor(color);
+    if (!open) return;
+    const nextColor = computeNextAvailableColor(colorPaletteMode, categories);
+    setSelectedColor((currentColor) => {
+      const isColorInPalette = colors.includes(currentColor);
+      const isColorUnused = !categories.some((category) => category.color === currentColor);
+      if (isColorInPalette && isColorUnused) {
+        return currentColor;
+      }
+      return nextColor;
     });
-  }, [colorPaletteMode, workspaceIdentifier]);
+  }, [open, colorPaletteMode, categories, colors]);
 
   // 팔레트 버튼 클릭 시 다음 팔레트 모드로 순환 전환
   const handleTogglePalette = () => {
@@ -132,36 +147,31 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceIdentifier }: A
   }, [open]);
 
   // 카테고리 추가 요청 처리 - 유효성 검증 후 Edge Function을 통해 DB에 저장
-  const handleSubmit = async (categoryName: string) => {
+  const handleSubmit = (categoryName: string) => {
     // 빈 문자열이나 공백만 있는 경우 추가 방지
     if (!categoryName.trim()) {
       toast.error('카테고리 이름을 입력해주세요.');
       return;
     }
 
-    setLoading(true);
+    if (addCategoryMutation.isPending) return;
 
-    // API 서비스 레이어를 통해 카테고리 추가 (백엔드 연동 시 categoryApi만 수정)
-    const { category, error } = await categoryApi.add({
-      workspaceIdentifier,
-      name: categoryName,
+    addCategoryMutation.mutate({
+      name: categoryName.trim(),
       color: selectedColor,
     });
+  };
 
-    // 추가 실패 시 에러 메시지 표시
-    if (error || !category) {
-      toast.error(error || '카테고리 추가에 실패했습니다.');
-      setLoading(false);
-      return;
-    }
+  const isSubmitting = addCategoryMutation.isPending;
 
-    // 추가 성공 후 입력 필드 초기화 및 다음 사용 가능한 색상으로 자동 설정
-    toast.success('카테고리가 추가되었습니다!');
-    setName('');
-    const nextColor = await getNextAvailableColor(colorPaletteMode);
-    setSelectedColor(nextColor);
-    onOpenChange(false);
-    setLoading(false);
+  const handleSuggestedClick = (categoryName: string) => {
+    if (isSubmitting) return;
+    handleSubmit(categoryName);
+  };
+
+  const handleManualSubmit = () => {
+    if (isSubmitting) return;
+    handleSubmit(name);
   };
 
   return (
@@ -220,8 +230,8 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceIdentifier }: A
                   key={category}
                   variant="outline"
                   size="sm"
-                  onClick={() => handleSubmit(category)}
-                  disabled={loading}
+                  onClick={() => handleSuggestedClick(category)}
+                  disabled={isSubmitting}
                 >
                   {category}
                 </Button>
@@ -239,7 +249,7 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceIdentifier }: A
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
-                  handleSubmit(name);
+                  handleManualSubmit();
                 }
               }}
             />
@@ -249,8 +259,8 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceIdentifier }: A
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               취소
             </Button>
-            <Button onClick={() => handleSubmit(name)} disabled={loading || !name.trim()}>
-              {loading ? '추가 중...' : '추가'}
+            <Button onClick={handleManualSubmit} disabled={isSubmitting || !name.trim()}>
+              {isSubmitting ? '추가 중...' : '추가'}
             </Button>
           </div>
         </div>

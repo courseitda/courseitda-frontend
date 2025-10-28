@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import type { Category, Place } from '@/entities/types';
+import type { Place } from '@/entities/types';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { CategoryCard } from './category-card';
@@ -8,10 +8,12 @@ import { AddCategoryDialog } from './add-category-dialog';
 // API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
 import { categoryApi } from '@/services/api';
 import { toast } from 'sonner';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { WorkspaceCategory } from '@/services/api/category.service';
 
 interface CategoryListProps {
   workspaceIdentifier: string;
-  categories: Category[];
+  categories: WorkspaceCategory[];
   onPlaceClick?: (place: Place) => void;
 }
 
@@ -19,31 +21,47 @@ interface CategoryListProps {
 // 사용 위치: pages/WorkspaceDetail
 export const CategoryList = ({ workspaceIdentifier, categories, onPlaceClick }: CategoryListProps) => {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const queryKey = ['workspace', workspaceIdentifier, 'categories'];
+
+  const reorderMutation = useMutation({
+    mutationFn: async (items: Array<{ id: string; sequence: number }>) => {
+      const { error } = await categoryApi.reorder(workspaceIdentifier, items);
+      if (error) {
+        throw new Error(error);
+      }
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : '카테고리 순서 변경에 실패했습니다.';
+      toast.error(message);
+      queryClient.invalidateQueries({ queryKey });
+    },
+  });
 
   // 드래그 앤 드롭으로 카테고리 순서 변경 시 새로운 순서를 DB에 저장
   const handleDragEnd = async (result: DropResult) => {
     // 드롭 위치가 유효하지 않으면 아무것도 하지 않음
     if (!result.destination) return;
 
-    // 배열을 복사하여 순서 변경 작업 수행
-    const items = Array.from(categories);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
+    if (result.destination.index === result.source.index) return;
 
-    // 백엔드 API 스펙에 맞춰 { id, sequence } 객체 배열로 변환
-    // 현재 Mock: 0부터 시작 (0, 1, 2, ...)
-    // 백엔드 연동 시: 1부터 시작 (1, 2, 3, ...) - API 서비스 레이어에서 변환
-    const reorderedCategories = items.map((item, index) => ({
-      id: item.id,
+    const updatedOrder = Array.from(categories);
+    const [removed] = updatedOrder.splice(result.source.index, 1);
+    updatedOrder.splice(result.destination.index, 0, removed);
+
+    const withUpdatedSequence = updatedOrder.map((item, index) => ({
+      category: { ...item.category, sequence: index },
+      places: item.places,
+    }));
+
+    queryClient.setQueryData<WorkspaceCategory[]>(queryKey, withUpdatedSequence);
+
+    const payload = withUpdatedSequence.map(({ category }, index) => ({
+      id: category.id,
       sequence: index,
     }));
 
-    // API 서비스 레이어를 통해 DB에 저장 (백엔드 연동 시 categoryApi만 수정)
-    const { error } = await categoryApi.reorder(workspaceIdentifier, reorderedCategories);
-
-    if (error) {
-      toast.error(error);
-    }
+    reorderMutation.mutate(payload);
   };
 
   return (
@@ -67,8 +85,8 @@ export const CategoryList = ({ workspaceIdentifier, categories, onPlaceClick }: 
           <Droppable droppableId="categories">
             {(provided) => (
               <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-1.5">
-                {categories.map((category, index) => (
-                  <Draggable key={category.id} draggableId={category.id} index={index}>
+                {categories.map((item, index) => (
+                  <Draggable key={item.category.id} draggableId={item.category.id} index={index}>
                     {(provided, snapshot) => (
                       <div
                         ref={provided.innerRef}
@@ -77,7 +95,8 @@ export const CategoryList = ({ workspaceIdentifier, categories, onPlaceClick }: 
                         className={snapshot.isDragging ? 'opacity-50' : ''}
                       >
                         <CategoryCard 
-                          category={category} 
+                          category={item.category}
+                          places={item.places}
                           workspaceIdentifier={workspaceIdentifier} 
                           index={index}
                           onPlaceClick={onPlaceClick} 
@@ -97,6 +116,7 @@ export const CategoryList = ({ workspaceIdentifier, categories, onPlaceClick }: 
         open={addDialogOpen}
         onOpenChange={setAddDialogOpen}
         workspaceIdentifier={workspaceIdentifier}
+        categories={categories.map((item) => item.category)}
       />
     </div>
   );

@@ -15,6 +15,7 @@ import { placeApi } from '@/services/api';
 import { useSettingsStore } from '@/shared/stores/settings-store';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import type { KakaoPlace } from '@/entities/types';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface PlaceSearchDialogProps {
   open: boolean;
@@ -37,6 +38,8 @@ export const PlaceSearchDialog = ({
   const [results, setResults] = useState<KakaoPlace[]>([]);
   const [loading, setLoading] = useState(false);
   const [adding, setAdding] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const queryKey = ['workspace', workspaceIdentifier, 'categories'];
 
   // API 서비스 레이어를 통해 장소 검색 수행 (백엔드 연동 시 placeApi.search만 수정)
   const handleSearch = async () => {
@@ -76,34 +79,47 @@ export const PlaceSearchDialog = ({
   };
 
   // 검색된 장소를 카테고리에 추가
-  const handleAdd = async (place: KakaoPlace) => {
+  const addPlaceMutation = useMutation({
+    mutationFn: async (payload: { place: KakaoPlace; token: string }) => {
+      const { place, token } = payload;
+
+      const response = await placeApi.addToCategory(token, categoryId, {
+        name: place.place_name,
+        roadAddressName: place.road_address_name || null,
+        addressName: place.address_name,
+        lat: parseFloat(place.y),
+        lng: parseFloat(place.x),
+      });
+
+      if (!response.success || !response.data) {
+        throw new Error(response.error?.message || '장소 추가에 실패했습니다.');
+      }
+
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      toast.success('장소가 추가되었습니다!');
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : '장소 추가에 실패했습니다.';
+      toast.error(message);
+    },
+    onSettled: () => {
+      setAdding(null);
+    },
+  });
+
+  const handleAdd = (place: KakaoPlace) => {
     if (!token) {
       toast.error('로그인이 필요합니다.');
       return;
     }
 
+    if (addPlaceMutation.isPending) return;
+
     setAdding(place.id);
-
-    // Kakao 장소 정보를 백엔드 API 요청 형식으로 변환
-    // 백엔드 API 스펙: { name, roadAddressName, addressName, lat, lng }
-    const response = await placeApi.addToCategory(token, categoryId, {
-      name: place.place_name,
-      roadAddressName: place.road_address_name || null,
-      addressName: place.address_name,
-      lat: parseFloat(place.y), // Kakao API의 y = 위도
-      lng: parseFloat(place.x), // Kakao API의 x = 경도
-    });
-
-    // API 호출 실패 시 에러 메시지 표시
-    if (!response.success || !response.data) {
-      toast.error(response.error?.message || '장소 추가에 실패했습니다.');
-      setAdding(null);
-      return;
-    }
-
-    // 성공 메시지 표시
-    toast.success('장소가 추가되었습니다!');
-    setAdding(null);
+    addPlaceMutation.mutate({ place, token });
   };
 
   return (
