@@ -123,7 +123,7 @@ getProfileInfo(token: string): Promise<{ user?: User; error?: string }>
 Check if an email is already registered.
 
 ```typescript
-checkEmailDuplicate(email: string): Promise<{ isDuplicate: boolean; error?: string }>
+checkEmailDuplicate(email: string): Promise<{ isDuplicated: boolean; error?: string }>
 ```
 
 **Backend API Mapping:**
@@ -138,7 +138,7 @@ checkEmailDuplicate(email: string): Promise<{ isDuplicate: boolean; error?: stri
 Check if a nickname is already taken.
 
 ```typescript
-checkNicknameDuplicate(nickname: string): Promise<{ isDuplicate: boolean; error?: string }>
+checkNicknameDuplicate(nickname: string): Promise<{ isDuplicated: boolean; error?: string }>
 ```
 
 **Backend API Mapping:**
@@ -416,7 +416,7 @@ getPlacesByCategory(categoryId: string): Promise<Place[]>
 6. User information fetched when needed via `getProfileInfo` or `getNavigatorInfo`
 
 **Backend Migration Notes:**
-- Change `isDuplicate` to `isDuplicated` in duplicate check responses
+- Duplicate check responses now use the `isDuplicated` field
 - Login response changes from `{ user, token }` to `{ tokenType: "Bearer", accessToken }`
 - Remove `verifyToken` calls (backend validates token on each request)
 - User info is fetched on-demand, not stored in localStorage
@@ -455,7 +455,7 @@ Common error messages:
 
 ### Authentication Changes
 - [ ] Update login response handling: `{ tokenType, accessToken }` instead of `{ user, token }`
-- [ ] Change duplicate check response field: `isDuplicated` instead of `isDuplicate`
+- [x] Change duplicate check response field: `isDuplicated` instead of `isDuplicate`
 - [ ] Replace `verifyToken` with on-demand user info fetching
 - [ ] Update `auth-store` to only store token (no user object)
 - [ ] Add `getNavigatorInfo` and `getProfileInfo` API calls

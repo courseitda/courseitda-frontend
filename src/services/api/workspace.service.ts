@@ -1,23 +1,24 @@
-// 워크스페이스 관련 API 서비스 레이어
-// 목적: 컴포넌트와 실제 API 구현체를 분리하여, 백엔드 전환 시 이 파일만 수정하면 되도록 구조화
-
-import {
-  createWorkspace,
-  updateWorkspace,
-  deleteWorkspace,
-  getWorkspaceByIdentifier,
-  getWorkspacesByOwner,
-  getMyWorkspaces,
-  checkWorkspaceTitleDuplicate,
-} from '@/mock/edge-functions/workspace';
+import { apiClient } from '@/lib/axios';
 import type { Workspace } from '@/entities/types';
 import type { ApiResponse } from '@/types/api';
+import { toSuccess, toError } from './http';
+
+// 워크스페이스 관련 백엔드 엔드포인트 상수 정의
+const WORKSPACES_ENDPOINT = '/api/workspaces';
+const MY_WORKSPACES_ENDPOINT = '/api/me/workspaces';
+const TITLE_VALIDATION_ENDPOINT = '/api/workspaces/validations/title';
 
 // 워크스페이스 생성 요청 파라미터 타입 - 백엔드 API 스펙과 일치
 export interface CreateWorkspaceRequest {
   title: string;  // 워크스페이스 제목 (최대 20자)
   // ownerId는 토큰에서 추출되므로 요청에 포함하지 않음
 }
+
+type CreateWorkspaceApiResponse = {
+  identifier: string;
+  title: string;
+  modifiedAt: string;
+};
 
 // 워크스페이스 생성 응답 데이터 타입 - 백엔드 API 스펙과 일치
 export interface CreateWorkspaceData {
@@ -30,6 +31,12 @@ export interface CreateWorkspaceData {
 export interface UpdateWorkspaceRequest {
   title: string;  // 워크스페이스 제목 (필수, 최대 20자)
 }
+
+type UpdateWorkspaceApiResponse = {
+  identifier: string;
+  title: string;
+  modifiedAt: string;
+};
 
 // 워크스페이스 수정 응답 데이터 타입 - 백엔드 API 스펙과 일치
 export interface UpdateWorkspaceData {
@@ -50,11 +57,21 @@ export interface GetWorkspaceData {
   modifiedAt: string;   // 수정일시 (yyyy-MM-dd'T'HH:mm:ss)
 }
 
+type GetWorkspaceApiResponse = {
+  identifier: string;
+  title: string;
+  modifiedAt: string;
+};
+
 // 워크스페이스 제목 중복 검증 응답 타입
 export interface CheckWorkspaceTitleDuplicateResponse {
-  isDuplicate: boolean;
+  isDuplicated: boolean;
   error?: string;
 }
+
+type TitleDuplicateApiResponse = {
+  isDuplicated: boolean;
+};
 
 // 내 워크스페이스 목록 조회 응답 타입 - 백엔드 API 스펙과 일치
 export interface MyWorkspacesData {
@@ -65,52 +82,43 @@ export interface MyWorkspacesData {
   }>;
 }
 
+type MyWorkspaceApiResponse = {
+  workspaces: Array<{
+    identifier: string;
+    title: string;
+    modifiedAt: string;
+  }>;
+};
+
 // 워크스페이스 API 서비스 객체 - 모든 워크스페이스 관련 API 호출을 중앙 관리
-// 백엔드 연동 시: 이 객체의 메서드 구현만 axios 호출로 변경하면 됨
 export const workspaceApi = {
   /**
    * 워크스페이스 생성 API 호출
    * @param token 인증 토큰 (사용자 식별용)
    * @param data 워크스페이스 제목
    * @returns API 응답 (성공 시 생성된 워크스페이스 정보, 실패 시 에러 정보)
-   * 
+   *
    * 백엔드 엔드포인트: POST /api/workspaces
    * 백엔드 요청 예시: { title: "서울 여행 계획" }
    * 백엔드 응답 예시: { identifier: "abc123", title: "서울 여행 계획", modifiedAt: "2024-10-22T14:30:00" }
    * 백엔드 Location Header: /api/workspaces/{identifier}
    */
   create: async (token: string, data: CreateWorkspaceRequest): Promise<ApiResponse<CreateWorkspaceData>> => {
-    // 현재: mock edge-function 호출 후 표준 응답 형식으로 변환
-    const mockResponse = await createWorkspace({ token, title: data.title });
-    
-    // Mock 응답을 표준 API 응답 형식으로 변환
-    // 추후 백엔드 연동 시:
-    // const response = await apiClient.post('/api/workspaces', data, {
-    //   headers: { Authorization: `Bearer ${token}` }
-    // });
-    // return { success: true, data: response.data, timestamp: new Date().toISOString() };
-    if (mockResponse.error) {
-      return {
-        success: false,
-        error: {
-          code: 'CREATE_WORKSPACE_FAILED',
-          message: mockResponse.error,
-          status: 400,
-        },
-        timestamp: new Date().toISOString(),
-      };
+    try {
+      const response = await apiClient.post<CreateWorkspaceApiResponse>(
+        WORKSPACES_ENDPOINT,
+        data,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      return toSuccess<CreateWorkspaceData>({
+        identifier: response.data.identifier,
+        title: response.data.title,
+        modifiedAt: response.data.modifiedAt,
+      });
+    } catch (error) {
+      return toError(error, 'CREATE_WORKSPACE_FAILED', '워크스페이스 생성에 실패했습니다.');
     }
-    
-    // 백엔드 API 스펙에 맞춰 응답: { identifier, title, modifiedAt }
-    return {
-      success: true,
-      data: {
-        identifier: mockResponse.identifier!,
-        title: mockResponse.title!,
-        modifiedAt: mockResponse.modifiedAt!,
-      },
-      timestamp: new Date().toISOString(),
-    };
   },
 
   /**
@@ -118,94 +126,58 @@ export const workspaceApi = {
    * @param identifier 워크스페이스 식별자
    * @param data 수정할 필드 (제목)
    * @returns API 응답 (성공 시 수정된 워크스페이스 정보, 실패 시 에러 정보)
-   * 
-   * 백엔드 엔드포인트: PATCH /api/workspaces/{workspaceIdentifier}
-   * 백엔드 요청 예시: { title: "부산 여행 계획" }
-   * 백엔드 응답 예시: { identifier: "abc123", title: "부산 여행 계획", modifiedAt: "2024-10-22T15:00:00" }
    */
   update: async (identifier: string, data: UpdateWorkspaceRequest): Promise<ApiResponse<UpdateWorkspaceData>> => {
-    // 현재: mock edge-function 호출 후 표준 응답 형식으로 변환
-    const mockResponse = await updateWorkspace(identifier, data);
-    
-    // Mock 응답을 표준 API 응답 형식으로 변환
-    // 추후 백엔드 연동 시:
-    // const response = await apiClient.patch(`/api/workspaces/${identifier}`, data);
-    // return { success: true, data: response.data, timestamp: new Date().toISOString() };
-    if (mockResponse.error) {
-      return {
-        success: false,
-        error: {
-          code: 'UPDATE_WORKSPACE_FAILED',
-          message: mockResponse.error,
-          status: 400,
-        },
-        timestamp: new Date().toISOString(),
-      };
+    try {
+      const response = await apiClient.patch<UpdateWorkspaceApiResponse>(
+        `${WORKSPACES_ENDPOINT}/${identifier}`,
+        data,
+      );
+
+      return toSuccess<UpdateWorkspaceData>({
+        identifier: response.data.identifier,
+        title: response.data.title,
+        modifiedAt: response.data.modifiedAt,
+      });
+    } catch (error) {
+      return toError(error, 'UPDATE_WORKSPACE_FAILED', '워크스페이스 수정에 실패했습니다.');
     }
-    
-    // 백엔드 API 스펙에 맞춰 응답: { identifier, title, modifiedAt }
-    return {
-      success: true,
-      data: {
-        identifier: mockResponse.identifier!,
-        title: mockResponse.title!,
-        modifiedAt: mockResponse.modifiedAt!,
-      },
-      timestamp: new Date().toISOString(),
-    };
   },
 
   /**
    * 워크스페이스 삭제 API 호출 (cascade delete 포함)
    * @param workspaceIdentifier 워크스페이스 식별자
    * @returns 에러 메시지 (없으면 성공)
-   * 
+   *
    * 백엔드 엔드포인트: DELETE /api/workspaces/{workspaceIdentifier}
    */
   delete: async (workspaceIdentifier: string): Promise<DeleteWorkspaceResponse> => {
-    // 현재: mock edge-function 호출
-    // 추후: return axios.delete(`/api/workspaces/${workspaceIdentifier}`)
-    return await deleteWorkspace(workspaceIdentifier);
+    try {
+      await apiClient.delete(`${WORKSPACES_ENDPOINT}/${workspaceIdentifier}`);
+      return {};
+    } catch (error) {
+      const response = toError(error, 'DELETE_WORKSPACE_FAILED', '워크스페이스 삭제에 실패했습니다.');
+      return { error: response.error?.message ?? '워크스페이스 삭제에 실패했습니다.' };
+    }
   },
 
   /**
    * 워크스페이스 단일 조회 API 호출
    * @param identifier 워크스페이스 식별자
    * @returns API 응답 (성공 시 워크스페이스 정보, 실패 시 에러 정보)
-   * 
-   * 백엔드 엔드포인트: GET /api/workspaces/{workspaceIdentifier}
-   * 백엔드 응답 예시: { identifier: "abc123", title: "서울 여행 계획", modifiedAt: "2024-10-22T14:30:00" }
    */
   getByIdentifier: async (identifier: string): Promise<ApiResponse<GetWorkspaceData>> => {
-    // 현재: mock edge-function 호출 후 표준 응답 형식으로 변환
-    const mockResponse = await getWorkspaceByIdentifier(identifier);
-    
-    // Mock 응답을 표준 API 응답 형식으로 변환
-    // 추후 백엔드 연동 시:
-    // const response = await apiClient.get(`/api/workspaces/${identifier}`);
-    // return { success: true, data: response.data, timestamp: new Date().toISOString() };
-    if (mockResponse.error) {
-      return {
-        success: false,
-        error: {
-          code: 'GET_WORKSPACE_FAILED',
-          message: mockResponse.error,
-          status: 404,
-        },
-        timestamp: new Date().toISOString(),
-      };
+    try {
+      const response = await apiClient.get<GetWorkspaceApiResponse>(`${WORKSPACES_ENDPOINT}/${identifier}`);
+
+      return toSuccess<GetWorkspaceData>({
+        identifier: response.data.identifier,
+        title: response.data.title,
+        modifiedAt: response.data.modifiedAt,
+      });
+    } catch (error) {
+      return toError(error, 'GET_WORKSPACE_FAILED', '워크스페이스를 불러올 수 없습니다.');
     }
-    
-    // 백엔드 API 스펙에 맞춰 응답: { identifier, title, modifiedAt }
-    return {
-      success: true,
-      data: {
-        identifier: mockResponse.identifier!,
-        title: mockResponse.title!,
-        modifiedAt: mockResponse.modifiedAt!,
-      },
-      timestamp: new Date().toISOString(),
-    };
   },
 
   /**
@@ -213,40 +185,21 @@ export const workspaceApi = {
    * 토큰에서 사용자를 추출하여 워크스페이스 목록 반환
    * @param token 인증 토큰
    * @returns API 응답 (성공 시 워크스페이스 목록, 실패 시 에러 정보)
-   * 
+   *
    * 백엔드 엔드포인트: GET /api/me/workspaces
-   * 백엔드 응답 예시: { workspaces: [{ identifier, title, modifiedAt }] }
    */
   getMyWorkspaces: async (token: string): Promise<ApiResponse<MyWorkspacesData>> => {
-    // 현재: mock edge-function 호출 후 표준 응답 형식으로 변환
-    const mockResponse = await getMyWorkspaces(token);
-    
-    // Mock 응답을 표준 API 응답 형식으로 변환
-    // 추후 백엔드 연동 시:
-    // const response = await apiClient.get('/api/me/workspaces', {
-    //   headers: { Authorization: `Bearer ${token}` }
-    // });
-    // return { success: true, data: response.data, timestamp: new Date().toISOString() };
-    if (mockResponse.error) {
-      return {
-        success: false,
-        error: {
-          code: 'GET_WORKSPACES_FAILED',
-          message: mockResponse.error,
-          status: 400,
-        },
-        timestamp: new Date().toISOString(),
-      };
+    try {
+      const response = await apiClient.get<MyWorkspaceApiResponse>(MY_WORKSPACES_ENDPOINT, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      return toSuccess<MyWorkspacesData>({
+        workspaces: response.data.workspaces,
+      });
+    } catch (error) {
+      return toError(error, 'GET_WORKSPACES_FAILED', '워크스페이스 목록을 불러올 수 없습니다.');
     }
-    
-    // 백엔드 API 스펙에 맞춰 응답: { workspaces: [{ identifier, title, modifiedAt }] }
-    return {
-      success: true,
-      data: {
-        workspaces: mockResponse.workspaces,
-      },
-      timestamp: new Date().toISOString(),
-    };
   },
 
   /**
@@ -256,24 +209,40 @@ export const workspaceApi = {
    * @returns 워크스페이스 배열
    */
   getByOwner: async (ownerId: string): Promise<Workspace[]> => {
-    // 현재: mock edge-function 호출
-    // 추후: return axios.get(`/api/workspaces?ownerId=${ownerId}`)
-    return await getWorkspacesByOwner(ownerId);
+    try {
+      const response = await apiClient.get<Workspace[]>(WORKSPACES_ENDPOINT, {
+        params: { ownerId },
+      });
+      return response.data;
+    } catch (error) {
+      const response = toError(error, 'GET_WORKSPACES_FAILED', '워크스페이스 목록을 불러올 수 없습니다.');
+      throw new Error(response.error?.message ?? '워크스페이스 목록을 불러올 수 없습니다.');
+    }
   },
 
   /**
    * 워크스페이스 제목 중복 검증 API 호출
-   * @param ownerId 사용자 ID
+   * @param ownerId 사용자 ID (백엔드 스펙에 따라 사용 여부 결정)
    * @param title 검증할 워크스페이스 제목
    * @returns 중복 여부 및 에러 정보
    */
   checkTitleDuplicate: async (
-    ownerId: string, 
-    title: string
+    ownerId: string,
+    title: string,
   ): Promise<CheckWorkspaceTitleDuplicateResponse> => {
-    // 현재: mock edge-function 호출
-    // 추후: return axios.get(`/api/workspaces/check-title?ownerId=${ownerId}&title=${encodeURIComponent(title)}`)
-    return await checkWorkspaceTitleDuplicate(ownerId, title);
+    try {
+      const response = await apiClient.get<TitleDuplicateApiResponse>(TITLE_VALIDATION_ENDPOINT, {
+        params: { value: title, ownerId },
+      });
+      return {
+        isDuplicated: response.data.isDuplicated,
+      };
+    } catch (error) {
+      const response = toError(error, 'CHECK_WORKSPACE_TITLE_DUPLICATE_FAILED', '워크스페이스 제목 중복 확인에 실패했습니다.');
+      return {
+        isDuplicated: false,
+        error: response.error?.message,
+      };
+    }
   },
 };
-

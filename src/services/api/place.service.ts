@@ -1,19 +1,16 @@
-// 장소 관련 API 서비스 레이어
-// 목적: 컴포넌트와 실제 API 구현체를 분리하여, 백엔드 전환 시 이 파일만 수정하면 되도록 구조화
-
-import {
-  searchPlaces as searchPlacesMock,
-  addPlaceToCategory,
-  removePlace,
-  getPlacesByCategory,
-} from '@/mock/edge-functions/place';
+import { apiClient } from '@/lib/axios';
 import type { Place, KakaoPlace } from '@/entities/types';
 import type { ApiResponse } from '@/types/api';
+import { toSuccess, toError } from './http';
+
+// 장소 관련 백엔드 엔드포인트 상수 정의
+const PLACE_SEARCH_ENDPOINT = '/api/places/search';
+const CATEGORY_PLACES_ENDPOINT = (categoryId: string) => `/api/categories/${categoryId}/places`;
 
 // 장소 검색 요청 파라미터 타입
 export interface SearchPlacesRequest {
   keyword: string;      // 검색 키워드
-  restApiKey: string;   // Kakao REST API 키 (현재 Mock에서만 필요, 백엔드 연동 시 제거)
+  restApiKey?: string;  // Kakao REST API 키 (백엔드 연동 시 사용하지 않음)
 }
 
 // 장소 검색 응답 타입
@@ -21,6 +18,16 @@ export interface SearchPlacesResponse {
   searchedPlaces?: KakaoPlace[];  // 검색된 장소 목록
   error?: string;                 // 에러 메시지
 }
+
+type SearchPlacesApiResponse = {
+  searchedPlaces: Array<{
+    name: string;
+    roadAddressName: string | null;
+    addressName: string;
+    latitude: number;
+    longitude: number;
+  }>;
+};
 
 // 장소 추가 요청 파라미터 타입 - 백엔드 API 스펙과 일치
 export interface AddPlaceToCategoryRequest {
@@ -30,6 +37,14 @@ export interface AddPlaceToCategoryRequest {
   lat: number;
   lng: number;
 }
+
+type AddPlaceApiRequest = {
+  name: string;
+  roadAddressName?: string | null;
+  addressName: string;
+  latitude: number;
+  longitude: number;
+};
 
 // 장소 추가 응답 데이터 타입 - 백엔드 API 스펙과 일치
 export interface AddPlaceToCategoryData {
@@ -42,24 +57,83 @@ export interface AddPlaceToCategoryData {
   longitude: number;       // 경도
 }
 
+type AddPlaceApiResponse = {
+  id: number | string;
+  placeId: number | string;
+  name: string;
+  roadAddressName: string | null;
+  addressName: string;
+  latitude: number;
+  longitude: number;
+};
+
 // 장소 제거 응답 타입
 export interface RemovePlaceResponse {
   error?: string;
 }
 
+type CategoryPlacesApiResponse = {
+  categoryPlaceResponses: Array<{
+    id: number | string;
+    name: string;
+    addressName: string;
+    roadAddressName: string | null;
+    latitude: number;
+    longitude: number;
+    isRepresentative: boolean;
+  }>;
+};
+
+const fallbackTimestamp = () => new Date().toISOString();
+
+const adaptPlace = (payload: {
+  id: number | string;
+  name: string;
+  addressName: string;
+  roadAddressName: string | null;
+  latitude: number;
+  longitude: number;
+}): Place => ({
+  id: String(payload.id),
+  name: payload.name,
+  addressName: payload.addressName,
+  roadAddressName: payload.roadAddressName,
+  latitude: payload.latitude,
+  longitude: payload.longitude,
+  placeUrl: null,
+  createdAt: fallbackTimestamp(),
+  updatedAt: fallbackTimestamp(),
+});
+
 // 장소 API 서비스 객체 - 모든 장소 관련 API 호출을 중앙 관리
-// 백엔드 연동 시: 이 객체의 메서드 구현만 axios 호출로 변경하면 됨
 export const placeApi = {
   /**
-   * 장소 검색 API 호출 - Kakao Local API를 통한 키워드 검색
-   * @param data 검색 키워드, REST API 키
+   * 장소 검색 API 호출 - 백엔드 프록시를 통한 Kakao 검색
+   * @param data 검색 키워드
    * @returns 검색된 장소 목록 또는 에러 메시지
    */
   search: async (data: SearchPlacesRequest): Promise<SearchPlacesResponse> => {
-    // 현재: mock edge-function 호출 (클라이언트에서 직접 Kakao API 호출)
-    // 추후 백엔드 연동 시: return axios.get(`/api/places/search?keyword=${encodeURIComponent(data.keyword)}`)
-    // 백엔드 연동 시에는 restApiKey 파라미터 제거 (백엔드에서 관리)
-    return await searchPlacesMock(data);
+    try {
+      const response = await apiClient.get<SearchPlacesApiResponse>(PLACE_SEARCH_ENDPOINT, {
+        params: { keyword: data.keyword },
+      });
+
+      return {
+        searchedPlaces: response.data.searchedPlaces.map((place, index) => ({
+          id: String(index),
+          place_name: place.name,
+          address_name: place.addressName,
+          road_address_name: place.roadAddressName ?? '',
+          phone: '',
+          place_url: '',
+          x: String(place.longitude),
+          y: String(place.latitude),
+        })),
+      };
+    } catch (error) {
+      const apiError = toError(error, 'SEARCH_PLACE_FAILED', '장소 검색에 실패했습니다.');
+      return { error: apiError.error?.message };
+    }
   },
 
   /**
@@ -68,52 +142,41 @@ export const placeApi = {
    * @param categoryId 카테고리 ID
    * @param data 장소 정보 (name, roadAddressName, addressName, lat, lng)
    * @returns API 응답 (성공 시 카테고리 장소 정보, 실패 시 에러 정보)
-   * 
+   *
    * 백엔드 엔드포인트: POST /api/categories/{categoryId}/places
-   * 백엔드 요청 예시: { name, roadAddressName, addressName, lat, lng }
-   * 백엔드 응답 예시: { id, placeId, name, roadAddressName, addressName, latitude, longitude }
    */
   addToCategory: async (
     token: string,
-    categoryId: string, 
-    data: AddPlaceToCategoryRequest
+    categoryId: string,
+    data: AddPlaceToCategoryRequest,
   ): Promise<ApiResponse<AddPlaceToCategoryData>> => {
-    // 현재: mock edge-function 호출 후 표준 응답 형식으로 변환
-    const mockResponse = await addPlaceToCategory({
-      token,
-      categoryId,
-      placeData: data,
-    });
-
-    // Mock 응답을 표준 API 응답 형식으로 변환
-    // 추후 백엔드 연동 시:
-    // const response = await apiClient.post(`/api/categories/${categoryId}/places`, data, {
-    //   headers: { Authorization: `Bearer ${token}` }
-    // });
-    // return { success: true, data: response.data };
-
-    if (mockResponse.error) {
-      return {
-        success: false,
-        error: {
-          code: 'ADD_PLACE_FAILED',
-          message: mockResponse.error,
-        },
-      };
-    }
-
-    return {
-      success: true,
-      data: {
-        id: mockResponse.id!,
-        placeId: mockResponse.placeId!,
-        name: mockResponse.name!,
-        roadAddressName: mockResponse.roadAddressName!,
-        addressName: mockResponse.addressName!,
-        latitude: mockResponse.latitude!,
-        longitude: mockResponse.longitude!,
-      },
+    const requestBody: AddPlaceApiRequest = {
+      name: data.name,
+      roadAddressName: data.roadAddressName,
+      addressName: data.addressName,
+      latitude: data.lat,
+      longitude: data.lng,
     };
+
+    try {
+      const response = await apiClient.post<AddPlaceApiResponse>(
+        CATEGORY_PLACES_ENDPOINT(categoryId),
+        requestBody,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      return toSuccess<AddPlaceToCategoryData>({
+        id: String(response.data.id),
+        placeId: String(response.data.placeId),
+        name: response.data.name,
+        roadAddressName: response.data.roadAddressName,
+        addressName: response.data.addressName,
+        latitude: response.data.latitude,
+        longitude: response.data.longitude,
+      });
+    } catch (error) {
+      return toError(error, 'ADD_PLACE_FAILED', '장소 추가에 실패했습니다.');
+    }
   },
 
   /**
@@ -121,13 +184,17 @@ export const placeApi = {
    * @param categoryId 카테고리 ID
    * @param categoryPlaceId 카테고리 장소 ID
    * @returns 에러 메시지 (없으면 성공)
-   * 
+   *
    * 백엔드 엔드포인트: DELETE /api/categories/{categoryId}/places/{categoryPlaceId}
    */
   remove: async (categoryId: string, categoryPlaceId: string): Promise<RemovePlaceResponse> => {
-    // 현재: mock edge-function 호출
-    // 추후: return axios.delete(`/api/categories/${categoryId}/places/${categoryPlaceId}`)
-    return await removePlace(categoryId, categoryPlaceId);
+    try {
+      await apiClient.delete(`${CATEGORY_PLACES_ENDPOINT(categoryId)}/${categoryPlaceId}`);
+      return {};
+    } catch (error) {
+      const apiError = toError(error, 'REMOVE_PLACE_FAILED', '장소 삭제에 실패했습니다.');
+      return { error: apiError.error?.message };
+    }
   },
 
   /**
@@ -136,9 +203,24 @@ export const placeApi = {
    * @returns 장소 배열
    */
   getByCategory: async (categoryId: string): Promise<Place[]> => {
-    // 현재: mock edge-function 호출
-    // 추후: return axios.get(`/api/categories/${categoryId}/places`)
-    return await getPlacesByCategory(categoryId);
+    try {
+      const response = await apiClient.get<CategoryPlacesApiResponse>(
+        CATEGORY_PLACES_ENDPOINT(categoryId),
+      );
+
+      return response.data.categoryPlaceResponses.map((place) =>
+        adaptPlace({
+          id: place.id,
+          name: place.name,
+          addressName: place.addressName,
+          roadAddressName: place.roadAddressName,
+          latitude: place.latitude,
+          longitude: place.longitude,
+        }),
+      );
+    } catch (error) {
+      const apiError = toError(error, 'GET_PLACES_FAILED', '장소 목록을 불러올 수 없습니다.');
+      throw new Error(apiError.error?.message ?? '장소 목록을 불러올 수 없습니다.');
+    }
   },
 };
-

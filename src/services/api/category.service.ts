@@ -1,18 +1,16 @@
-// 카테고리 관련 API 서비스 레이어
-// 목적: 컴포넌트와 실제 API 구현체를 분리하여, 백엔드 전환 시 이 파일만 수정하면 되도록 구조화
+import { apiClient } from '@/lib/axios';
+import type { Category, Place } from '@/entities/types';
+import { toError } from './http';
 
-import {
-  getCategoryById,
-  addCategory,
-  updateCategory,
-  deleteCategory,
-  reorderCategories,
-  setRepresentativePlace,
-  unsetRepresentativePlace,
-  getCategoriesByWorkspace,
-  getCategoryPlaces,
-} from '@/mock/edge-functions/category';
-import type { Category } from '@/entities/types';
+// 카테고리 관련 백엔드 엔드포인트 상수 정의
+const WORKSPACE_CATEGORIES_ENDPOINT = (workspaceIdentifier: string) =>
+  `/api/workspaces/${workspaceIdentifier}/categories`;
+const CATEGORY_ENDPOINT = (categoryId: string) => `/api/categories/${categoryId}`;
+const CATEGORY_SEQUENCE_ENDPOINT = (workspaceIdentifier: string) =>
+  `/api/workspaces/${workspaceIdentifier}/categories/sequence`;
+const REPRESENTATIVE_PLACE_ENDPOINT = (categoryId: string) =>
+  `/api/categories/${categoryId}/representative-place`;
+const CATEGORY_PLACES_ENDPOINT = (categoryId: string) => `/api/categories/${categoryId}/places`;
 
 // 카테고리 조회 응답 타입
 export interface GetCategoryResponse {
@@ -113,8 +111,96 @@ export interface GetCategoryPlacesResponse {
   error?: string;
 }
 
+type CategoryApiResponse = {
+  id: number | string;
+  workspaceId?: number | string;
+  name: string;
+  color: string;
+  sequence?: number;
+  representativePlaceId?: number | string | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+type CategoryListApiResponse = {
+  categories: Array<{
+    id: number | string;
+    name: string;
+    color: string;
+    sequence: number;
+    representativePlaceId: number | string | null;
+    categoryPlaces: {
+      categoryPlaces: Array<{
+        id: number | string;
+        name: string;
+        addressName: string;
+        roadAddressName: string | null;
+        latitude: number;
+        longitude: number;
+        isRepresentative: boolean;
+      }>;
+    };
+  }>;
+};
+
+type CategoryPlacesApiResponse = {
+  categoryPlaceResponses: Array<{
+    id: number | string;
+    name: string;
+    addressName: string;
+    roadAddressName: string | null;
+    latitude: number;
+    longitude: number;
+    isRepresentative: boolean;
+  }>;
+};
+
+type ReorderApiRequest = {
+  categories: Array<{
+    id: number | string;
+    sequence: number;
+  }>;
+};
+
+const fallbackTimestamp = () => new Date().toISOString();
+
+const adaptCategory = (
+  workspaceIdentifier: string | null,
+  payload: CategoryApiResponse,
+): Category => ({
+  id: String(payload.id),
+  workspaceId: workspaceIdentifier ? String(workspaceIdentifier) : String(payload.workspaceId ?? ''),
+  name: payload.name,
+  color: payload.color,
+  sequence: payload.sequence ?? 0,
+  representativePlaceId:
+    payload.representativePlaceId !== undefined && payload.representativePlaceId !== null
+      ? String(payload.representativePlaceId)
+      : null,
+  createdAt: payload.createdAt ?? fallbackTimestamp(),
+  updatedAt: payload.updatedAt ?? fallbackTimestamp(),
+});
+
+const adaptPlace = (payload: {
+  id: number | string;
+  name: string;
+  addressName: string;
+  roadAddressName: string | null;
+  latitude: number;
+  longitude: number;
+}): Place => ({
+  id: String(payload.id),
+  name: payload.name,
+  addressName: payload.addressName,
+  roadAddressName: payload.roadAddressName,
+  latitude: payload.latitude,
+  longitude: payload.longitude,
+  placeUrl: null,
+  createdAt: fallbackTimestamp(),
+  updatedAt: fallbackTimestamp(),
+});
+
 // 카테고리 API 서비스 객체 - 모든 카테고리 관련 API 호출을 중앙 관리
-// 백엔드 연동 시: 이 객체의 메서드 구현만 axios 호출로 변경하면 됨
 export const categoryApi = {
   /**
    * 카테고리 단일 조회 API 호출
@@ -122,9 +208,13 @@ export const categoryApi = {
    * @returns 카테고리 정보 또는 에러 메시지
    */
   getById: async (categoryId: string): Promise<GetCategoryResponse> => {
-    // 현재: mock edge-function 호출
-    // 백엔드 연동 시: return axios.get(`/api/categories/${categoryId}`)
-    return await getCategoryById(categoryId);
+    try {
+      const response = await apiClient.get<CategoryApiResponse>(CATEGORY_ENDPOINT(categoryId));
+      return { category: adaptCategory(null, response.data) };
+    } catch (error) {
+      const apiError = toError(error, 'GET_CATEGORY_FAILED', '카테고리를 불러올 수 없습니다.');
+      return { error: apiError.error?.message };
+    }
   },
 
   /**
@@ -133,9 +223,18 @@ export const categoryApi = {
    * @returns 생성된 카테고리 또는 에러 메시지
    */
   add: async (data: AddCategoryRequest): Promise<AddCategoryResponse> => {
-    // 현재: mock edge-function 호출
-    // 추후: return axios.post('/api/categories', data)
-    return await addCategory(data);
+    try {
+      const { workspaceIdentifier, ...payload } = data;
+      const response = await apiClient.post<CategoryApiResponse>(
+        WORKSPACE_CATEGORIES_ENDPOINT(workspaceIdentifier),
+        payload,
+      );
+
+      return { category: adaptCategory(workspaceIdentifier, response.data) };
+    } catch (error) {
+      const apiError = toError(error, 'CREATE_CATEGORY_FAILED', '카테고리 생성에 실패했습니다.');
+      return { error: apiError.error?.message };
+    }
   },
 
   /**
@@ -145,9 +244,13 @@ export const categoryApi = {
    * @returns 에러 메시지 (없으면 성공)
    */
   update: async (id: string, data: UpdateCategoryRequest): Promise<UpdateCategoryResponse> => {
-    // 현재: mock edge-function 호출
-    // 추후: return axios.patch(`/api/categories/${id}`, data)
-    return await updateCategory(id, data);
+    try {
+      await apiClient.patch(CATEGORY_ENDPOINT(id), data);
+      return {};
+    } catch (error) {
+      const apiError = toError(error, 'UPDATE_CATEGORY_FAILED', '카테고리 수정에 실패했습니다.');
+      return { error: apiError.error?.message };
+    }
   },
 
   /**
@@ -156,9 +259,13 @@ export const categoryApi = {
    * @returns 에러 메시지 (없으면 성공)
    */
   delete: async (id: string): Promise<DeleteCategoryResponse> => {
-    // 현재: mock edge-function 호출
-    // 추후: return axios.delete(`/api/categories/${id}`)
-    return await deleteCategory(id);
+    try {
+      await apiClient.delete(CATEGORY_ENDPOINT(id));
+      return {};
+    } catch (error) {
+      const apiError = toError(error, 'DELETE_CATEGORY_FAILED', '카테고리 삭제에 실패했습니다.');
+      return { error: apiError.error?.message };
+    }
   },
 
   /**
@@ -168,29 +275,57 @@ export const categoryApi = {
    * @returns 변경된 카테고리 순서 또는 에러 메시지
    */
   reorder: async (
-    workspaceIdentifier: string, 
-    categories: Array<{ id: string; sequence: number }>
+    workspaceIdentifier: string,
+    categories: Array<{ id: string; sequence: number }>,
   ): Promise<ReorderCategoriesResponse> => {
-    // 현재: mock edge-function 호출 (0-based sequence)
-    // 백엔드 연동 시:
-    // const backendCategories = categories.map(c => ({ id: Number(c.id), sequence: c.sequence + 1 }));
-    // return axios.post(`/api/workspaces/${workspaceIdentifier}/categories/sequence`, { categories: backendCategories });
-    return await reorderCategories(workspaceIdentifier, categories);
+    try {
+      const requestBody: ReorderApiRequest = {
+        categories: categories.map((category) => ({
+          id: category.id,
+          sequence: category.sequence + 1, // 백엔드 스펙: 1부터 시작
+        })),
+      };
+
+      const response = await apiClient.post<{ categories: Array<{ id: number | string; sequence: number }> }>(
+        CATEGORY_SEQUENCE_ENDPOINT(workspaceIdentifier),
+        requestBody,
+      );
+
+      return {
+        categories: response.data.categories.map((category) => ({
+          id: String(category.id),
+          sequence: category.sequence - 1, // 프론트에서는 0부터 사용
+        })),
+      };
+    } catch (error) {
+      const apiError = toError(error, 'REORDER_CATEGORY_FAILED', '카테고리 순서 변경에 실패했습니다.');
+      return { error: apiError.error?.message };
+    }
   },
 
   /**
    * 대표 장소 설정 API 호출 (경로 생성용)
    * @param categoryId 카테고리 ID
-   * @param placeId 장소 ID
+   * @param placeId 카테고리 장소 ID
    * @returns 에러 메시지 (없으면 성공)
    */
   setRepresentativePlace: async (
     categoryId: string,
-    placeId: string
+    placeId: string,
   ): Promise<SetRepresentativePlaceResponse> => {
-    // 현재: mock edge-function 호출
-    // 백엔드 연동 시: return axios.put(`/api/categories/${categoryId}/representative-place`, { categoryPlaceId: placeId })
-    return await setRepresentativePlace(categoryId, placeId);
+    try {
+      await apiClient.put(REPRESENTATIVE_PLACE_ENDPOINT(categoryId), {
+        categoryPlaceId: placeId,
+      });
+      return {};
+    } catch (error) {
+      const apiError = toError(
+        error,
+        'SET_REPRESENTATIVE_PLACE_FAILED',
+        '대표 장소 설정에 실패했습니다.',
+      );
+      return { error: apiError.error?.message };
+    }
   },
 
   /**
@@ -198,12 +333,18 @@ export const categoryApi = {
    * @param categoryId 카테고리 ID
    * @returns 에러 메시지 (없으면 성공)
    */
-  unsetRepresentativePlace: async (
-    categoryId: string
-  ): Promise<UnsetRepresentativePlaceResponse> => {
-    // 현재: mock edge-function 호출
-    // 백엔드 연동 시: return axios.delete(`/api/categories/${categoryId}/representative-place`)
-    return await unsetRepresentativePlace(categoryId);
+  unsetRepresentativePlace: async (categoryId: string): Promise<UnsetRepresentativePlaceResponse> => {
+    try {
+      await apiClient.delete(REPRESENTATIVE_PLACE_ENDPOINT(categoryId));
+      return {};
+    } catch (error) {
+      const apiError = toError(
+        error,
+        'UNSET_REPRESENTATIVE_PLACE_FAILED',
+        '대표 장소 해제에 실패했습니다.',
+      );
+      return { error: apiError.error?.message };
+    }
   },
 
   /**
@@ -212,11 +353,41 @@ export const categoryApi = {
    * @returns 카테고리 목록과 장소 정보 또는 에러 메시지
    */
   getByWorkspace: async (
-    workspaceIdentifier: string
+    workspaceIdentifier: string,
   ): Promise<GetCategoriesByWorkspaceResponse> => {
-    // 현재: mock edge-function 호출
-    // 백엔드 연동 시: return axios.get(`/api/workspaces/${workspaceIdentifier}/categories`)
-    return await getCategoriesByWorkspace(workspaceIdentifier);
+    try {
+      const response = await apiClient.get<CategoryListApiResponse>(
+        WORKSPACE_CATEGORIES_ENDPOINT(workspaceIdentifier),
+      );
+
+      return {
+        categories: response.data.categories.map((category) => ({
+          id: String(category.id),
+          name: category.name,
+          color: category.color,
+          sequence: category.sequence,
+          representativePlaceId:
+            category.representativePlaceId !== null ? String(category.representativePlaceId) : null,
+          categoryPlaces: {
+            categoryPlaces: category.categoryPlaces.categoryPlaces.map((place) => ({
+              id: String(place.id),
+              name: place.name,
+              addressName: place.addressName,
+              roadAddressName: place.roadAddressName,
+              latitude: place.latitude,
+              longitude: place.longitude,
+              isRepresentative: place.isRepresentative,
+            })),
+          },
+        })),
+      };
+    } catch (error) {
+      const apiError = toError(error, 'GET_CATEGORIES_FAILED', '카테고리 목록을 불러올 수 없습니다.');
+      return {
+        categories: [],
+        error: apiError.error?.message,
+      };
+    }
   },
 
   /**
@@ -224,11 +395,59 @@ export const categoryApi = {
    * @param categoryId 카테고리 ID
    * @returns 카테고리에 속한 장소 목록 또는 에러 메시지
    */
-  getPlaces: async (
-    categoryId: string
-  ): Promise<GetCategoryPlacesResponse> => {
-    // 현재: mock edge-function 호출
-    // 백엔드 연동 시: return axios.get(`/api/categories/${categoryId}/places`)
-    return await getCategoryPlaces(categoryId);
+  getPlaces: async (categoryId: string): Promise<GetCategoryPlacesResponse> => {
+    try {
+      const response = await apiClient.get<CategoryPlacesApiResponse>(
+        CATEGORY_PLACES_ENDPOINT(categoryId),
+      );
+
+      return {
+        categoryPlaceResponses: response.data.categoryPlaceResponses.map((place) => ({
+          id: String(place.id),
+          name: place.name,
+          addressName: place.addressName,
+          roadAddressName: place.roadAddressName,
+          latitude: place.latitude,
+          longitude: place.longitude,
+          isRepresentative: place.isRepresentative,
+        })),
+      };
+    } catch (error) {
+      const apiError = toError(error, 'GET_CATEGORY_PLACES_FAILED', '카테고리 장소를 불러올 수 없습니다.');
+      return {
+        categoryPlaceResponses: [],
+        error: apiError.error?.message,
+      };
+    }
+  },
+
+  /**
+   * 카테고리와 연관된 장소를 Place 타입으로 변환 (지도 등 재사용 목적)
+   * @param categoryId 카테고리 ID
+   * @returns Place 배열 또는 에러 메시지
+   */
+  getPlacesAsEntities: async (categoryId: string): Promise<{ places: Place[]; error?: string }> => {
+    try {
+      const { categoryPlaceResponses, error } = await categoryApi.getPlaces(categoryId);
+      if (error) {
+        return { places: [], error };
+      }
+
+      return {
+        places: categoryPlaceResponses.map((place) =>
+          adaptPlace({
+            id: place.id,
+            name: place.name,
+            addressName: place.addressName,
+            roadAddressName: place.roadAddressName,
+            latitude: place.latitude,
+            longitude: place.longitude,
+          }),
+        ),
+      };
+    } catch (error) {
+      const apiError = toError(error, 'GET_CATEGORY_PLACES_FAILED', '카테고리 장소를 불러올 수 없습니다.');
+      return { places: [], error: apiError.error?.message };
+    }
   },
 };
