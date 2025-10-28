@@ -1,53 +1,85 @@
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/mock/db';
+import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { workspaceApi } from '@/services/api';
 import type { Workspace } from '@/entities/types';
+
+type WorkspacePayload = {
+  identifier: string;
+  title: string;
+  modifiedAt: string;
+  ownerId?: string;
+  createdAt?: string;
+};
+
+// UserRequest: Step 4 — 백엔드 워크스페이스 응답을 화면에서 사용하는 Workspace 타입으로 보정
+const toWorkspaceEntity = (payload: WorkspacePayload): Workspace => ({
+  id: payload.identifier,
+  identifier: payload.identifier,
+  ownerId: payload.ownerId ?? '',
+  title: payload.title,
+  createdAt: payload.createdAt ?? payload.modifiedAt,
+  updatedAt: payload.modifiedAt,
+});
 
 /**
  * 워크스페이스 단일 조회 커스텀 훅
- * 현재: useLiveQuery로 IndexedDB에서 실시간 조회
- * 백엔드 연동 시: workspaceApi.getByIdentifier() 호출로 변경하고 useQuery 등으로 캐싱
- * 
- * @param workspaceIdentifier - 워크스페이스 식별자 (URL 파라미터로 전달되는 identifier)
- * @returns 워크스페이스 객체 (없으면 undefined)
+ * UserRequest: Step 4 — React Query로 백엔드 데이터를 캐싱하고 Dexie 의존성을 제거
  */
-export const useWorkspace = (workspaceIdentifier?: string): Workspace | undefined => {
-  // 현재: IndexedDB에서 실시간 조회 (useLiveQuery)
-  // 백엔드 연동 시: 아래와 같이 변경
-  // const { data, isLoading, error } = useQuery({
-  //   queryKey: ['workspace', workspaceIdentifier],
-  //   queryFn: () => workspaceApi.getByIdentifier(workspaceIdentifier),
-  //   enabled: !!workspaceIdentifier,
-  // });
-  // return data?.workspace;
-  
-  return useLiveQuery(
-    () => (workspaceIdentifier ? db.workspaces.where('identifier').equals(workspaceIdentifier).first() : undefined),
-    [workspaceIdentifier]
-  );
+export const useWorkspace = (workspaceIdentifier?: string): UseQueryResult<Workspace, Error> => {
+  // 백엔드 연동을 위해 identifier 기반으로 워크스페이스를 조회하고 캐싱
+  return useQuery<Workspace, Error>({
+    queryKey: ['workspace', workspaceIdentifier],
+    enabled: !!workspaceIdentifier,
+    queryFn: async () => {
+      if (!workspaceIdentifier) {
+        throw new Error('워크스페이스 식별자가 필요합니다.');
+      }
+
+      const response = await workspaceApi.getByIdentifier(workspaceIdentifier);
+
+      if (!response.success || !response.data) {
+        throw new Error(response.error?.message ?? '워크스페이스를 불러올 수 없습니다.');
+      }
+
+      return toWorkspaceEntity({
+        identifier: response.data.identifier,
+        title: response.data.title,
+        modifiedAt: response.data.modifiedAt,
+      });
+    },
+    staleTime: 1000 * 30,
+  });
 };
 
 /**
- * 사용자 소유 워크스페이스 목록 조회 커스텀 훅 (레거시)
- * @deprecated useMyWorkspaces 사용 권장 (백엔드 API 스펙에 맞춤)
- * 현재: useLiveQuery로 IndexedDB에서 실시간 조회
- * 백엔드 연동 시: workspaceApi.getMyWorkspaces() 호출로 변경하고 useQuery 등으로 캐싱
- * 
- * @param userId - 사용자 ID
- * @returns 워크스페이스 배열 (없으면 빈 배열)
+ * 사용자 소유 워크스페이스 목록 조회 커스텀 훅
+ * UserRequest: Step 4 — 내 워크스페이스 목록을 React Query로 가져와 캐시
  */
-export const useWorkspacesByOwner = (userId?: string): Workspace[] | undefined => {
-  // 현재: IndexedDB에서 실시간 조회 (useLiveQuery)
-  // 백엔드 연동 시: workspaceApi.getMyWorkspaces() 사용 권장
-  // const { data } = useQuery({
-  //   queryKey: ['workspaces', 'me'],
-  //   queryFn: () => workspaceApi.getMyWorkspaces(token),
-  //   enabled: !!token,
-  // });
-  // return data?.workspaces.map(w => ({ ...w, id: w.identifier, ... }));
-  
-  return useLiveQuery(
-    () => (userId ? db.workspaces.where('ownerId').equals(userId).toArray() : []),
-    [userId]
-  );
+export const useWorkspacesByOwner = (token?: string): UseQueryResult<Workspace[], Error> => {
+  // 인증 토큰을 활용해 내 워크스페이스 목록을 조회하고 캐싱
+  return useQuery<Workspace[], Error>({
+    queryKey: ['workspaces', 'me'],
+    enabled: !!token,
+    queryFn: async () => {
+      if (!token) {
+        throw new Error('인증 토큰이 필요합니다.');
+      }
+
+      const response = await workspaceApi.getMyWorkspaces(token);
+
+      if (!response.success || !response.data) {
+        throw new Error(response.error?.message ?? '워크스페이스 목록을 불러올 수 없습니다.');
+      }
+
+      return response.data.workspaces.map((workspace) =>
+        toWorkspaceEntity({
+          identifier: workspace.identifier,
+          title: workspace.title,
+          modifiedAt: workspace.modifiedAt,
+        }),
+      );
+    },
+    staleTime: 1000 * 30,
+    placeholderData: (previousData) => previousData,
+  });
 };
 

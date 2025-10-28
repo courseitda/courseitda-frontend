@@ -6,7 +6,6 @@ import { toSuccess, toError } from './http';
 // 인증 관련 백엔드 엔드포인트 상수 정의
 const LOGIN_ENDPOINT = '/api/auth/login';
 const REGISTER_ENDPOINT = '/api/members';
-const VERIFY_ENDPOINT = '/api/auth/verify';
 const EMAIL_VALIDATION_ENDPOINT = '/api/members/validations/email';
 const NICKNAME_VALIDATION_ENDPOINT = '/api/members/validations/nickname';
 const USER_ENDPOINT = '/api/users';
@@ -50,15 +49,6 @@ export interface RegisterData {
   nickname: string;   // 닉네임
   email: string;      // 이메일 (비밀번호는 응답에 포함되지 않음)
 }
-
-// 토큰 검증 응답 데이터 타입
-export interface VerifyTokenData {
-  userId: string;
-}
-
-type VerifyApiResponse = {
-  userId: string;
-};
 
 // 이메일 중복 검증 응답 데이터 타입 - 백엔드 API 스펙과 일치
 export interface CheckEmailDuplicateData {
@@ -155,22 +145,6 @@ export const authApi = {
       });
     } catch (error) {
       return toError(error, 'REGISTER_FAILED', '회원가입에 실패했습니다.');
-    }
-  },
-
-  /**
-   * 토큰 검증 API 호출 - 세션 복원 시 사용
-   * 백엔드에서는 별도 검증 엔드포인트가 없으므로 호출 시 501 에러를 반환
-   * @param token JWT 토큰 문자열
-   */
-  verifyToken: async (token: string): Promise<ApiResponse<VerifyTokenData>> => {
-    try {
-      const response = await apiClient.post<VerifyApiResponse>(VERIFY_ENDPOINT, { token });
-      return toSuccess<VerifyTokenData>({
-        userId: response.data.userId,
-      });
-    } catch (error) {
-      return toError(error, 'VERIFY_TOKEN_FAILED', '토큰 검증에 실패했습니다.');
     }
   },
 

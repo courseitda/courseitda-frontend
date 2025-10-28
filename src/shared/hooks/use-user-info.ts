@@ -144,57 +144,6 @@ export const useUserProfile = () => {
 };
 
 /**
- * 토큰에서 사용자 ID를 추출하는 커스텀 훅
- * 백엔드 연동 시: JWT 토큰 디코딩하여 userId 추출
- * 
- * 사용 위치: user.id가 필요한 곳 (워크스페이스 목록 조회 등)
- */
-export const useUserId = () => {
-  const token = useAuthStore((state) => state.token);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!token) {
-      setUserId(null);
-      setError(null);
-      setLoading(false);
-      return;
-    }
-
-    let isMounted = true;
-
-    const fetchUserId = async () => {
-      setLoading(true);
-      setError(null);
-
-      // UserRequest: Step 3 — JWT 토큰을 백엔드 verify API로 검증하여 사용자 ID를 확보
-      const response = await authApi.verifyToken(token);
-
-      if (!isMounted) return;
-
-      if (!response.success || !response.data) {
-        setError(response.error?.message || '사용자 인증에 실패했습니다.');
-        setUserId(null);
-      } else {
-        setUserId(response.data.userId);
-      }
-
-      setLoading(false);
-    };
-
-    fetchUserId();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [token]);
-
-  return { userId, loading, error };
-};
-
-/**
  * 사용자 ID를 기반으로 사용자 정보를 조회하는 커스텀 훅
  * @param userId 조회할 사용자 ID
  * 

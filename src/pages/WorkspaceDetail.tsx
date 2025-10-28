@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/mock/db';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { useUserId, useUserNickname, useUserDropdown } from '@/shared/hooks/use-user-info';
+import { useUserNickname, useUserDropdown } from '@/shared/hooks/use-user-info';
 import { useWorkspace, useWorkspacesByOwner } from '@/shared/hooks/use-workspace';
 import { Button } from '@/components/ui/button';
 import { CategoryList } from '@/features/categories/category-list';
@@ -34,7 +34,6 @@ const WorkspaceDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
-  const { userId, loading: userLoading } = useUserId(); // 토큰에서 사용자 ID 추출
   const { nickname: navNickname } = useUserNickname(); // 네비게이터용 닉네임
   const { nickname: dropdownNickname, email } = useUserDropdown(); // 드롭다운용 닉네임 + 이메일
   const logout = useAuthStore((state) => state.logout);
@@ -43,9 +42,12 @@ const WorkspaceDetail = () => {
   const [focusedPlace, setFocusedPlace] = useState<Place | null>(null);
   const [createWorkspaceOpen, setCreateWorkspaceOpen] = useState(false);
 
-  // URL 파라미터로부터 현재 워크스페이스 정보를 실시간으로 조회
-  // 백엔드 연동 시: useWorkspace 내부가 API 호출로 변경됨
-  const workspace = useWorkspace(id);
+  // UserRequest: Step 4 — 워크스페이스 상세 데이터를 React Query로 가져와 캐싱
+  const {
+    data: workspace,
+    isLoading: workspaceLoading,
+    error: workspaceError,
+  } = useWorkspace(id);
 
   // 현재 워크스페이스의 카테고리 목록을 정렬 순서대로 실시간 조회
   // 주의: categories.workspaceId는 워크스페이스의 PK(id)를 참조하므로 identifier로 직접 비교하면 안 됨
@@ -55,9 +57,13 @@ const WorkspaceDetail = () => {
     [workspace?.id]
   );
 
-  // 헤더의 워크스페이스 전환 드롭다운을 위해 모든 워크스페이스 목록 조회
-  // 백엔드 연동 시: useWorkspacesByOwner 내부가 API 호출로 변경됨
-  const workspaces = useWorkspacesByOwner(userId);
+  // UserRequest: Step 4 — 내 워크스페이스 목록을 React Query로 가져와 전환 드롭다운에 활용
+  const token = useAuthStore((state) => state.token);
+  const {
+    data: workspaces,
+    isLoading: workspacesLoading,
+    error: workspacesError,
+  } = useWorkspacesByOwner(token);
 
   // 미인증 사용자 접근 차단 - 로그인 페이지로 리다이렉트하여 보안 유지
   useEffect(() => {
@@ -65,6 +71,20 @@ const WorkspaceDetail = () => {
       navigate('/auth');
     }
   }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    // UserRequest: Step 4 — 워크스페이스 조회 실패 시 사용자에게 즉시 안내
+    if (workspaceError) {
+      toast.error(workspaceError.message);
+    }
+  }, [workspaceError]);
+
+  useEffect(() => {
+    // UserRequest: Step 4 — 워크스페이스 목록 조회 실패 시 사용자에게 즉시 안내
+    if (workspacesError) {
+      toast.error(workspacesError.message);
+    }
+  }, [workspacesError]);
 
   // API 키 미설정 시 사용자에게 안내 토스트 표시하여 설정 페이지로 이동 유도
   useEffect(() => {
@@ -89,8 +109,8 @@ const WorkspaceDetail = () => {
     navigate('/');
   };
 
-  // 사용자 ID 로딩 중 스피너 표시
-  if (userLoading) {
+  // 데이터 로딩 중에는 스피너를 표시하여 진행 상황 안내
+  if (workspaceLoading || workspacesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Spinner className="w-8 h-8" />
@@ -98,8 +118,8 @@ const WorkspaceDetail = () => {
     );
   }
 
-  // 워크스페이스 또는 사용자 ID가 로드되지 않았으면 에러 화면 표시
-  if (!workspace || !userId) {
+  // 워크스페이스가 로드되지 않았으면 진입 불가 메시지 출력
+  if (!workspace) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>워크스페이스를 찾을 수 없습니다.</p>
