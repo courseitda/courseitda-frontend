@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 // API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
 import { workspaceApi } from '@/services/api';
 import type { Workspace } from '@/entities/types';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface EditWorkspaceDialogProps {
   open: boolean;
@@ -23,8 +24,31 @@ interface EditWorkspaceDialogProps {
 // 사용 위치: features/layout/navigation-drawer, pages/Workspaces
 export const EditWorkspaceDialog = ({ open, onOpenChange, workspace }: EditWorkspaceDialogProps) => {
   const [title, setTitle] = useState(workspace.title);
-  const [loading, setLoading] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
+
+  // UserRequest: Step 5 — React Query 뮤테이션으로 수정 후 상세/목록 캐시 동기화
+  const updateWorkspaceMutation = useMutation({
+    mutationFn: async (nextTitle: string) => {
+      const response = await workspaceApi.update(workspace.identifier, { title: nextTitle });
+
+      if (!response.success || !response.data) {
+        throw new Error(response.error?.message || '워크스페이스 수정에 실패했습니다.');
+      }
+
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspace.identifier] });
+      queryClient.invalidateQueries({ queryKey: ['workspaces', 'me'] });
+      toast.success('워크스페이스가 수정되었습니다!');
+      onOpenChange(false);
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : '워크스페이스 수정에 실패했습니다.';
+      toast.error(message);
+    },
+  });
 
   // 다이얼로그 열릴 때 폼 데이터를 현재 워크스페이스 정보로 초기화
   useEffect(() => {
@@ -73,25 +97,14 @@ export const EditWorkspaceDialog = ({ open, onOpenChange, workspace }: EditWorks
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    setLoading(true);
+    if (updateWorkspaceMutation.isPending) return;
 
-    // API 서비스 레이어를 통해 워크스페이스 정보 업데이트 (백엔드 연동 시 workspaceApi만 수정)
-    // 백엔드 API 스펙: identifier로 조회, 제목만 요청
-    const response = await workspaceApi.update(workspace.identifier, {
-      title,
-    });
-
-    // 수정 실패 시 에러 메시지 표시
-    if (!response.success || !response.data) {
-      toast.error(response.error?.message || '워크스페이스 수정에 실패했습니다.');
-      setLoading(false);
+    if (!title.trim()) {
+      toast.error('워크스페이스 제목을 입력해주세요.');
       return;
     }
 
-    // 수정 성공 후 다이얼로그 닫기
-    toast.success('워크스페이스가 수정되었습니다!');
-    onOpenChange(false);
-    setLoading(false);
+    updateWorkspaceMutation.mutate(title.trim());
   };
 
   return (
@@ -117,8 +130,8 @@ export const EditWorkspaceDialog = ({ open, onOpenChange, workspace }: EditWorks
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               취소
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? '수정 중...' : '확인'}
+            <Button type="submit" disabled={updateWorkspaceMutation.isPending}>
+              {updateWorkspaceMutation.isPending ? '수정 중...' : '확인'}
             </Button>
           </div>
         </form>

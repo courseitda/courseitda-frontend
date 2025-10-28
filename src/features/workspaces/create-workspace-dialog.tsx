@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 // API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
 import { workspaceApi } from '@/services/api';
 import { useAuthStore } from '@/shared/stores/auth-store';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface CreateWorkspaceDialogProps {
   open: boolean;
@@ -24,8 +25,35 @@ interface CreateWorkspaceDialogProps {
 export const CreateWorkspaceDialog = ({ open, onOpenChange }: CreateWorkspaceDialogProps) => {
   const token = useAuthStore((state) => state.token); // 인증 토큰 추출
   const [title, setTitle] = useState('');
-  const [loading, setLoading] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
+
+  // UserRequest: Step 5 — React Query 뮤테이션으로 생성 후 내 워크스페이스 캐시 무효화
+  const createWorkspaceMutation = useMutation({
+    mutationFn: async (workspaceTitle: string) => {
+      if (!token) {
+        throw new Error('로그인이 필요합니다. 다시 로그인해주세요.');
+      }
+
+      const response = await workspaceApi.create(token, { title: workspaceTitle });
+
+      if (!response.success || !response.data) {
+        throw new Error(response.error?.message || '워크스페이스 생성에 실패했습니다.');
+      }
+
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workspaces', 'me'] });
+      toast.success('워크스페이스가 생성되었습니다!');
+      setTitle('');
+      onOpenChange(false);
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : '워크스페이스 생성에 실패했습니다.';
+      toast.error(message);
+    },
+  });
 
   // UserRequest: 모바일에서 키보드 올라올 때 팝업이 가려지지 않도록 키보드를 제외한 화면 중앙에 위치시켜 입력 편의성 향상
   useEffect(() => {
@@ -66,26 +94,19 @@ export const CreateWorkspaceDialog = ({ open, onOpenChange }: CreateWorkspaceDia
   // 워크스페이스 생성 요청 처리
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!token) return;
+    if (createWorkspaceMutation.isPending) return;
 
-    setLoading(true);
-
-    // API 서비스 레이어를 통해 새 워크스페이스 생성 (백엔드 연동 시 workspaceApi만 수정)
-    // 백엔드 API 스펙: 토큰에서 사용자 추출, 제목만 요청
-    const response = await workspaceApi.create(token, { title });
-
-    // 생성 실패 시 에러 메시지 표시
-    if (!response.success || !response.data) {
-      toast.error(response.error?.message || '워크스페이스 생성에 실패했습니다.');
-      setLoading(false);
+    if (!title.trim()) {
+      toast.error('워크스페이스 제목을 입력해주세요.');
       return;
     }
 
-    // 생성 성공 후 입력 필드 초기화 및 다이얼로그 닫기
-    toast.success('워크스페이스가 생성되었습니다!');
-    setTitle('');
-    onOpenChange(false);
-    setLoading(false);
+    if (!token) {
+      toast.error('로그인이 필요합니다. 다시 로그인해주세요.');
+      return;
+    }
+
+    createWorkspaceMutation.mutate(title.trim());
   };
 
   return (
@@ -111,8 +132,8 @@ export const CreateWorkspaceDialog = ({ open, onOpenChange }: CreateWorkspaceDia
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               취소
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? '생성 중...' : '생성'}
+            <Button type="submit" disabled={createWorkspaceMutation.isPending}>
+              {createWorkspaceMutation.isPending ? '생성 중...' : '생성'}
             </Button>
           </div>
         </form>

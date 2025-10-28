@@ -40,6 +40,7 @@ import { toast } from 'sonner';
 import { workspaceApi } from '@/services/api';
 import type { Workspace } from '@/entities/types';
 import { Spinner } from '@/components/ui/spinner';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 /**
  * 워크스페이스 목록 페이지 컴포넌트
@@ -57,6 +58,7 @@ const Workspaces = () => {
   const [selectedForEdit, setSelectedForEdit] = useState<Workspace | null>(null);
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState<Workspace | null>(null);
+  const queryClient = useQueryClient();
 
   // 미인증 사용자 접근 차단 - 로그인 페이지로 리다이렉트하여 보안 유지
   useEffect(() => {
@@ -79,6 +81,28 @@ const Workspaces = () => {
       toast.error(workspacesError.message);
     }
   }, [workspacesError]);
+
+  // UserRequest: Step 5 — React Query 뮤테이션으로 삭제 후 내 워크스페이스 캐시 무효화
+  const deleteWorkspaceMutation = useMutation({
+    mutationFn: async (identifier: string) => {
+      const { error } = await workspaceApi.delete(identifier);
+      if (error) {
+        throw new Error(error);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workspaces', 'me'] });
+      toast.success('워크스페이스가 삭제되었습니다.');
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : '워크스페이스 삭제에 실패했습니다.';
+      toast.error(message);
+    },
+    onSettled: () => {
+      setDeleteAlertOpen(false);
+      setSelectedForDelete(null);
+    },
+  });
 
   // 로그아웃 처리 후 인증 상태 초기화 및 랜딩 페이지로 이동
   const handleLogout = () => {
@@ -105,20 +129,10 @@ const Workspaces = () => {
   };
   
   // 워크스페이스 삭제 확정 - API 서비스 레이어를 통해 cascade delete 수행
-  const handleDeleteConfirm = async () => {
-    if (!selectedForDelete) return;
+  const handleDeleteConfirm = () => {
+    if (!selectedForDelete || deleteWorkspaceMutation.isPending) return;
 
-    // API 서비스 레이어에서 워크스페이스와 관련된 모든 데이터(카테고리, 장소) 삭제 (백엔드 연동 시 workspaceApi만 수정)
-    const { error } = await workspaceApi.delete(selectedForDelete.identifier);
-    if (error) {
-      toast.error(error);
-    } else {
-      toast.success('워크스페이스가 삭제되었습니다.');
-    }
-    
-    // 삭제 완료 후 상태 초기화
-    setDeleteAlertOpen(false);
-    setSelectedForDelete(null);
+    deleteWorkspaceMutation.mutate(selectedForDelete.identifier);
   };
 
   // 데이터 로딩 중에는 중앙에 스피너를 표시하여 진행 상황 안내
@@ -373,8 +387,12 @@ const Workspaces = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>취소</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive hover:bg-destructive/90">
-              삭제
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive hover:bg-destructive/90"
+              disabled={deleteWorkspaceMutation.isPending}
+            >
+              {deleteWorkspaceMutation.isPending ? '삭제 중...' : '삭제'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
