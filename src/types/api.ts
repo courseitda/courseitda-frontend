@@ -49,7 +49,7 @@ export interface ApiResponse<T = any> {
  * 구조화된 에러 정보를 제공하여 클라이언트에서 적절한 처리 가능
  */
 export interface ApiError {
-  // 에러 코드 - 백엔드에서 정의한 에러 식별자 (예: "INVALID_EMAIL", "WORKSPACE_NOT_FOUND")
+  // 에러 코드 - 백엔드에서 정의한 에러 식별자 (예: "2003", "INVALID_EMAIL")
   code: string;
   
   // 에러 메시지 - 사용자에게 표시할 친화적인 메시지
@@ -99,34 +99,52 @@ export interface PaginatedResponse<T> {
  * 백엔드와 동기화 필요 - Spring에서 정의한 에러 코드와 일치해야 함
  */
 export const ApiErrorCode = {
-  // 인증 관련
-  INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
-  TOKEN_EXPIRED: 'TOKEN_EXPIRED',
-  UNAUTHORIZED: 'UNAUTHORIZED',
-  
-  // 권한 관련
-  FORBIDDEN: 'FORBIDDEN',
-  INSUFFICIENT_PERMISSION: 'INSUFFICIENT_PERMISSION',
-  
-  // 리소스 관련
-  NOT_FOUND: 'NOT_FOUND',
-  WORKSPACE_NOT_FOUND: 'WORKSPACE_NOT_FOUND',
-  CATEGORY_NOT_FOUND: 'CATEGORY_NOT_FOUND',
-  PLACE_NOT_FOUND: 'PLACE_NOT_FOUND',
-  
-  // 유효성 검증 관련
-  VALIDATION_ERROR: 'VALIDATION_ERROR',
-  INVALID_EMAIL: 'INVALID_EMAIL',
-  DUPLICATE_EMAIL: 'DUPLICATE_EMAIL',
-  INVALID_PASSWORD: 'INVALID_PASSWORD',
-  
-  // 비즈니스 로직 관련
-  DUPLICATE_PLACE: 'DUPLICATE_PLACE',
-  PLACE_NOT_IN_CATEGORY: 'PLACE_NOT_IN_CATEGORY',
-  
-  // 서버 오류
-  INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR',
-  SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE',
+  TEMPORARY_ERROR: '0000',
+  REQUEST_VALIDATION_FAILED: '0001',
+  MISSING_AUTH_HEADER: '1001',
+  MALFORMED_BEARER_TOKEN: '1002',
+  INVALID_TOKEN: '1003',
+  INCORRECT_PASSWORD: '1004',
+  ACCESS_FORBIDDEN: '1005',
+  WORKSPACE_TITLE_EMPTY: '2001',
+  WORKSPACE_MODIFY_FORBIDDEN: '2002',
+  WORKSPACE_NOT_FOUND: '2003',
+  DUPLICATE_WORKSPACE_TITLE: '2004',
+  WORKSPACE_TITLE_LENGTH_EXCEEDED: '2005',
+  CATEGORY_NAME_EMPTY: '3001',
+  CATEGORY_COLOR_EMPTY: '3002',
+  DUPLICATE_CATEGORY_ORDER_IN_REQUEST: '3003',
+  DUPLICATE_CATEGORY_ID_IN_REQUEST: '3004',
+  CATEGORY_MODIFY_FORBIDDEN: '3005',
+  CATEGORY_OUT_OF_WORKSPACE: '3006',
+  INVALID_REPRESENTATIVE_PLACE_ASSIGNMENT: '3007',
+  CATEGORY_NOT_FOUND: '3008',
+  PARTIAL_CATEGORY_NOT_FOUND: '3009',
+  CATEGORY_NAME_LENGTH_EXCEEDED: '3010',
+  INVALID_CATEGORY_COLOR_FORMAT: '3011',
+  PLACE_NAME_EMPTY: '4001',
+  PLACE_ADDRESS_EMPTY: '4002',
+  INVALID_LATITUDE_RANGE: '4003',
+  INVALID_LONGITUDE_RANGE: '4004',
+  PLACE_NOT_BELONG_TO_CATEGORY: '4005',
+  CATEGORY_PLACE_NOT_FOUND: '4006',
+  MEMBER_NICKNAME_EMPTY: '5001',
+  MEMBER_EMAIL_EMPTY: '5002',
+  INVALID_NICKNAME_LENGTH: '5003',
+  INVALID_EMAIL_FORMAT: '5004',
+  MEMBER_NOT_FOUND: '5005',
+  MEMBER_NOT_FOUND_BY_EMAIL: '5006',
+  DUPLICATE_EMAIL: '5007',
+  DUPLICATE_NICKNAME: '5008',
+  PLACE_SEARCH_KEYWORD_EMPTY: '6001',
+  INVALID_PLACE_SEARCH_SIZE: '6002',
+  SEARCHED_PLACE_NAME_EMPTY: '6003',
+  SEARCHED_PLACE_ADDRESS_EMPTY: '6004',
+  INVALID_SEARCHED_PLACE_LATITUDE: '6005',
+  INVALID_SEARCHED_PLACE_LONGITUDE: '6006',
+  KAKAO_PLACE_SEARCH_RESPONSE_NULL: '6007',
+  KAKAO_PLACE_SEARCH_STATUS_CHECK_ERROR: '6008',
+  KAKAO_PLACE_SEARCH_ERROR: '6009',
 } as const;
 
 export type ApiErrorCodeType = typeof ApiErrorCode[keyof typeof ApiErrorCode];
@@ -170,31 +188,5 @@ export function adaptBackendResponse<T>(response: any): ApiResponse<T> {
   // Spring의 ResponseEntity는 이미 표준 형식일 가능성이 높음
   // 필요시 변환 로직 추가
   return response.data;
-}
-
-/**
- * API 에러를 사용자 친화적인 메시지로 변환
- * 
- * @param error - API 에러 객체
- * @returns 사용자에게 표시할 메시지
- */
-export function getErrorMessage(error: ApiError | undefined): string {
-  if (!error) {
-    return '알 수 없는 오류가 발생했습니다.';
-  }
-  
-  // 에러 코드별 기본 메시지 매핑
-  const defaultMessages: Record<string, string> = {
-    [ApiErrorCode.INVALID_CREDENTIALS]: '이메일 또는 비밀번호가 올바르지 않습니다.',
-    [ApiErrorCode.TOKEN_EXPIRED]: '로그인 세션이 만료되었습니다. 다시 로그인해주세요.',
-    [ApiErrorCode.UNAUTHORIZED]: '로그인이 필요합니다.',
-    [ApiErrorCode.FORBIDDEN]: '접근 권한이 없습니다.',
-    [ApiErrorCode.NOT_FOUND]: '요청한 리소스를 찾을 수 없습니다.',
-    [ApiErrorCode.DUPLICATE_EMAIL]: '이미 사용 중인 이메일입니다.',
-    [ApiErrorCode.INTERNAL_SERVER_ERROR]: '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
-  };
-  
-  // 에러 메시지가 있으면 우선 사용, 없으면 기본 메시지 사용
-  return error.message || defaultMessages[error.code] || '오류가 발생했습니다.';
 }
 

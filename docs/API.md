@@ -1,488 +1,113 @@
-# Edge Functions API Documentation
+# Backend API Integration Guide
 
-> ⚙️ **Integration Note**  
-> Backend HTTP requests are routed through the shared Axios client (`src/lib/axios.ts`).  
-> The base URL is configured via `VITE_API_BASE_URL` (default: `http://localhost:8080`) and all protected endpoints must receive an `Authorization: Bearer {accessToken}` header.
+프론트엔드는 `BACKEND_API.md`에 정리된 Spring REST API를 Axios + React Query로 호출합니다.  
+이 문서는 실제 연동 시 알아야 할 핵심 포인트를 요약합니다.
 
-This document describes the mock Edge Functions API for 코스잇다 (Courseitda).
+## 1. 인증 흐름
 
-## Principles
+| 단계 | 엔드포인트 | 설명 | 응답 |
+| --- | --- | --- | --- |
+| 로그인 | `POST /api/auth/login` | 이메일/비밀번호 인증 | `{ "tokenType": "Bearer", "accessToken": "..." }` |
+| 회원가입 | `POST /api/members` | 신규 사용자 생성 | `{ "id": 1, "nickname": "...", "email": "..." }` |
+| 프로필 조회 | `GET /api/me/profile` | 닉네임·이메일 조회 | `{ "nickname": "...", "email": "..." }` |
+| 네비게이터 표시 | `GET /api/me/navigator` | 헤더용 닉네임 조회 | `{ "nickname": "..." }` |
 
-- **All business logic MUST be in Edge Functions**
-- **Database layer MUST only perform atomic CRUD operations**
-- **No sorting, validation, or complex logic in the DB layer**
+- 프론트는 `useAuthStore`로 토큰만 저장합니다.
+- 사용자 정보가 필요할 때마다 `authApi.getProfileInfo` 혹은 `getNavigatorInfo`를 호출합니다.
+- 백엔드가 토큰을 검증하므로 `/api/auth/verify` 같은 사전 검증 호출은 필요 없습니다.
 
-## Authentication
+## 2. 워크스페이스 흐름
 
-### registerUser
+| 기능 | 엔드포인트 | 메서드 |
+| --- | --- | --- |
+| 내 워크스페이스 목록 | `/api/me/workspaces` | `GET` |
+| 워크스페이스 생성 | `/api/workspaces` | `POST` |
+| 워크스페이스 수정 | `/api/workspaces/{identifier}` | `PATCH` |
+| 워크스페이스 삭제 | `/api/workspaces/{identifier}` | `DELETE` |
 
-Create a new user account.
+- `workspaceApi`가 Axios 호출 및 응답 변환을 담당합니다.
+- React Query 훅(`useWorkspacesByOwner`, `useWorkspace`)이 목록/상세를 캐시합니다.
+- 뮤테이션 후에는 `['workspaces','me']`, `['workspace', identifier]` 쿼리를 무효화합니다.
 
-```typescript
-registerUser(input: {
-  email: string;
-  password: string;
-  nickname: string;
-}): Promise<{ user?: User; error?: string }>
+## 3. 카테고리 & 장소 흐름
+
+| 기능 | 엔드포인트 | 메서드 |
+| --- | --- | --- |
+| 워크스페이스 카테고리 목록 | `/api/workspaces/{identifier}/categories` | `GET` |
+| 카테고리 생성 | `/api/workspaces/{identifier}/categories` | `POST` |
+| 카테고리 수정 | `/api/categories/{categoryId}` | `PATCH` |
+| 카테고리 삭제 | `/api/categories/{categoryId}` | `DELETE` |
+| 순서 재정렬 | `/api/workspaces/{identifier}/categories/sequence` | `POST` |
+| 대표 장소 설정 | `/api/categories/{categoryId}/representative-place` | `PUT`/`DELETE` |
+| 장소 검색 | `/api/places/search?keyword={keyword}` | `GET` |
+| 장소 추가 | `/api/categories/{categoryId}/places` | `POST` |
+| 장소 삭제 | `/api/categories/{categoryId}/places/{categoryPlaceId}` | `DELETE` |
+
+- `useWorkspaceCategories` 훅이 워크스페이스와 연관된 카테고리/장소를 한 번에 불러옵니다.
+- `categoryApi`, `placeApi`가 각종 뮤테이션을 담당하며 성공 시 관련 캐시를 무효화합니다.
+- Kakao 키는 `useSettingsStore`에서 로컬 저장 후 Axios 요청 헤더(백엔드 relaying)에 사용합니다.
+
+## 4. 에러 처리
+
+백엔드는 `GlobalExceptionHandler`에서 Spring `ProblemDetail`을 그대로 반환하며, `ErrorCode` enum의 `code` 값(예: `"2003"`)을 `problemDetail`의 `code` 프로퍼티로 추가합니다.
+
+```json
+{
+  "type": "about:blank",
+  "title": "Not Found",
+  "status": 404,
+  "detail": "존재하지 않는 워크스페이스 입니다.",
+  "code": "2003"
+}
 ```
 
-**Validation:**
-- Email format validation
-- Password minimum 8 characters
-- Check for duplicate email
+요청 DTO 검증 실패(`REQUEST_VALIDATION_FAILED`, `"0001"`) 시에는 `fieldErrors` 맵이 함께 내려옵니다.
 
-**Backend API Mapping:**
-- Mock: Direct Edge Function call
-- Backend: `POST /api/members`
-
----
-
-### loginUser
-
-Authenticate a user and return a session token.
-
-```typescript
-loginUser(input: {
-  email: string;
-  password: string;
-}): Promise<{ user?: User; token?: string; error?: string }>
+```json
+{
+  "type": "about:blank",
+  "title": "Bad Request",
+  "status": 400,
+  "detail": "요청 데이터 검증에 실패했습니다.",
+  "code": "0001",
+  "fieldErrors": {
+    "nickname": "공백일 수 없습니다.",
+    "password": "비밀번호는 6자 이상 20자 이하이어야 합니다."
+  }
+}
 ```
 
-**Returns:**
-- Mock: `{ user, token }`
-- Backend: `{ tokenType: "Bearer", accessToken }`
-
-**Backend API Mapping:**
-- Mock: Direct Edge Function call
-- Backend: `POST /api/auth/login`
-
-**Note:** In production, user information is NOT returned in login response. Use `getProfileInfo` or `getNavigatorInfo` to fetch user data.
-
----
-
-### verifyToken
-
-Verify a session token and return the user ID.
-
-```typescript
-verifyToken(token: string): Promise<{ userId?: string; error?: string }>
-```
-
-**Backend API Mapping:**
-- Mock: Direct Edge Function call
-- Backend: Not available (token validation happens on each API call)
-
----
-
-### getUserById
-
-Get user information by user ID.
-
-```typescript
-getUserById(userId: string): Promise<{ user?: User; error?: string }>
-```
-
-**Backend API Mapping:**
-- Mock: Direct Edge Function call
-- Backend: `GET /api/users/{userId}` (internal use only)
-
----
-
-### getNavigatorInfo
-
-Get user nickname for display in navigation header.
-
-```typescript
-getNavigatorInfo(token: string): Promise<{ nickname?: string; error?: string }>
-```
-
-**Backend API Mapping:**
-- Mock: Direct Edge Function call
-- Backend: `GET /api/me/navigator`
-- Headers: `Authorization: Bearer {token}`
-
----
-
-### getProfileInfo
-
-Get full user profile information.
-
-```typescript
-getProfileInfo(token: string): Promise<{ user?: User; error?: string }>
-```
-
-**Backend API Mapping:**
-- Mock: Direct Edge Function call
-- Backend: `GET /api/me/profile`
-- Headers: `Authorization: Bearer {token}`
-
----
-
-### checkEmailDuplicate
-
-Check if an email is already registered.
-
-```typescript
-checkEmailDuplicate(email: string): Promise<{ isDuplicated: boolean; error?: string }>
-```
-
-**Backend API Mapping:**
-- Mock: Direct Edge Function call
-- Backend: `GET /api/members/validations/email?value={email}`
-- Response field: `isDuplicated` (note the 'd' at the end)
-
----
-
-### checkNicknameDuplicate
-
-Check if a nickname is already taken.
-
-```typescript
-checkNicknameDuplicate(nickname: string): Promise<{ isDuplicated: boolean; error?: string }>
-```
-
-**Backend API Mapping:**
-- Mock: Direct Edge Function call
-- Backend: `GET /api/members/validations/nickname?value={nickname}`
-- Response field: `isDuplicated` (note the 'd' at the end)
-
-## Workspace Management
-
-### createWorkspace
-
-Create a new workspace.
-
-```typescript
-createWorkspace(input: {
-  ownerId: string;
-  title: string;
-}): Promise<{ workspace?: Workspace; error?: string }>
-```
-
-**Business Logic:**
-- Title validation (non-empty)
-
-**Backend API Mapping:**
-- Mock: Direct Edge Function call
-- Backend: `POST /api/workspaces`
-- Request: `{ title: string }`
-- Response: `{ identifier: string, title: string, modifiedAt: string }`
-
-### getWorkspaceByIdentifier
-
-Get a single workspace by its identifier.
-
-```typescript
-getWorkspaceByIdentifier(identifier: string): Promise<{ workspace?: Workspace; error?: string }>
-```
-
-**Backend API Mapping:**
-- Mock: Direct Edge Function call (queries IndexedDB by `identifier` field)
-- Backend: `GET /api/workspaces/{identifier}`
-- Response: `{ identifier: string, title: string, modifiedAt: string }`
-
-### updateWorkspace
-
-Update workspace details.
-
-```typescript
-updateWorkspace(
-  id: string,
-  updates: Partial<Pick<Workspace, 'title'>>
-): Promise<{ error?: string }>
-```
-
-### deleteWorkspace
-
-Delete a workspace and all related data.
-
-```typescript
-deleteWorkspace(id: string): Promise<{ error?: string }>
-```
-
-**Business Logic:**
-- Cascade delete categories
-- Cascade delete category-place relationships
-
-### getWorkspacesByOwner
-
-Get all workspaces for a user.
-
-```typescript
-getWorkspacesByOwner(ownerId: string): Promise<Workspace[]>
-```
-
-## Category Management
-
-### getCategoryById
-
-Get a single category by its ID.
-
-```typescript
-getCategoryById(categoryId: string): Promise<{ category?: Category; error?: string }>
-```
-
-**Backend API Mapping:**
-- Mock: Direct Edge Function call (queries IndexedDB by category ID)
-- Backend: `GET /api/categories/{categoryId}`
-- Response: Includes category details, sequence, representativePlaceId, and categoryPlaces list
-
----
-
-### addCategory
-
-Add a new category to a workspace.
-
-```typescript
-addCategory(input: {
-  workspaceId: string;
-  name: string;
-  color: string;
-}): Promise<{ category?: Category; error?: string }>
-```
-
-**Business Logic:**
-- Automatic sortOrder calculation (based on existing count)
-
-**Backend API Mapping:**
-- Mock: Direct Edge Function call
-- Backend: `POST /api/categories`
-- Request: `{ name: string, color: string }`
-- Response: `{ id: number, name: string, color: string, sequence: number }`
-
-### updateCategory
-
-Update category name or color.
-
-```typescript
-updateCategory(
-  id: string,
-  updates: Partial<Pick<Category, 'name' | 'color'>>
-): Promise<{ error?: string }>
-```
-
-### deleteCategory
-
-Delete a category and its relationships.
-
-```typescript
-deleteCategory(id: string): Promise<{ error?: string }>
-```
-
-**Business Logic:**
-- Cascade delete category-place relationships
-
-### reorderCategories
-
-Update the sort order of categories.
-
-```typescript
-reorderCategories(
-  workspaceId: string,
-  categories: Array<{ id: string; sequence: number }>
-): Promise<{ 
-  categories?: Array<{ id: string; sequence: number }>; 
-  error?: string 
-}>
-```
-
-**Business Logic:**
-- Updates sequence for each category
-- Updates all categories in workspace
-
-**Backend API Mapping:**
-- Mock: Direct Edge Function call
-- Backend: `POST /api/workspaces/{identifier}/categories/sequence`
-- Request: `{ categories: Array<{ id: number, sequence: number }> }`
-- Response: `{ categories: Array<{ id: number, sequence: number }> }`
-- Note: Backend sequence starts from 1, frontend uses 0-based index
-
-### setRepresentativePlace
-
-Set the representative place for a category.
-
-```typescript
-setRepresentativePlace(
-  categoryId: string,
-  placeId: string
-): Promise<{ error?: string }>
-```
-
-**Business Logic:**
-- Validates place belongs to category
-- Triggers route recalculation
-
-**Backend API Mapping:**
-- Mock: Direct Edge Function call
-- Backend: `PUT /api/categories/{categoryId}/representative-place`
-- Request: `{ categoryPlaceId: number }`
-- Response: `{ id: number, representativeCategoryPlaceId: number }`
-
-### unsetRepresentativePlace
-
-Unset the representative place for a category.
-
-```typescript
-unsetRepresentativePlace(
-  categoryId: string
-): Promise<{ error?: string }>
-```
-
-**Backend API Mapping:**
-- Mock: Direct Edge Function call
-- Backend: `DELETE /api/categories/{categoryId}/representative-place`
-- Response: 204 No Content
-
-## Place Management
-
-### searchPlaces
-
-Search places using Kakao Local API.
-
-```typescript
-searchPlaces(input: {
-  keyword: string;
-  restApiKey: string;
-}): Promise<{ searchedPlaces?: KakaoPlace[]; error?: string }>
-```
-
-**Business Logic:**
-- Keyword validation (non-empty)
-- REST API key validation
-- Calls Kakao Local API
-
-**Backend API Mapping:**
-- Mock: Direct Kakao API call from edge function
-- Backend: `GET /api/places/search?keyword={keyword}`
-- Note: Backend removes `restApiKey` parameter (managed server-side)
-
-**Response:**
-- Mock: `{ searchedPlaces: KakaoPlace[] }` from Kakao API
-- Backend: `{ searchedPlaces: Array<{ name, roadAddressName, addressName, latitude, longitude }> }`
-
----
-
-### addPlaceToCategory
-
-Add a Kakao place to a category.
-
-```typescript
-addPlaceToCategory(input: {
-  workspaceId: string;
-  categoryId: string;
-  kakaoPlace: KakaoPlace;
-}): Promise<{ place?: Place; error?: string }>
-```
-
-**Business Logic:**
-- Duplicate check (same kakaoPlaceId in workspace)
-- Creates place if doesn't exist
-- Links place to category
-
-### removePlace
-
-Remove a place from a category.
-
-```typescript
-removePlace(
-  placeId: string,
-  categoryId: string
-): Promise<{ error?: string }>
-```
-
-**Business Logic:**
-- Removes category-place link
-- Deletes place if not used elsewhere
-- Unsets as representative if applicable
-
-### getPlacesByCategory
-
-Get all places in a category.
-
-```typescript
-getPlacesByCategory(categoryId: string): Promise<Place[]>
-```
-
-## Usage Flow
-
-### User Registration & Login (Token-Based Authentication)
-
-**Current Implementation (Mock):**
-1. User submits registration form
-2. `registerUser` validates and creates user
-3. User submits login form
-4. `loginUser` validates credentials and returns `{ tokenType, accessToken }`
-5. **Only token** stored in localStorage (no user object)
-6. User information fetched when needed via `getProfileInfo` or `getNavigatorInfo`
-
-**Backend Migration Notes:**
-- Duplicate check responses now use the `isDuplicated` field
-- Login response changes from `{ user, token }` to `{ tokenType: "Bearer", accessToken }`
-- Remove `verifyToken` calls (backend validates token on each request)
-- User info is fetched on-demand, not stored in localStorage
-
-### Creating a Course
-
-1. User creates workspace via `createWorkspace`
-2. User adds categories via `addCategory` (colors assigned automatically)
-3. User searches places via `searchPlaces` (Kakao Local API)
-4. User adds places via `addPlaceToCategory`
-5. User sets representative places via `setRepresentativePlace`
-6. Route automatically updates on map
-
-### Reordering Categories
-
-1. User drags categories in UI
-2. New order sent to `reorderCategories`
-3. sortOrder values recalculated
-4. Map route updates based on new order
-
-## Error Handling
-
-All Edge Functions return errors in the format:
-
-```typescript
-{ error?: string }
-```
-
-Common error messages:
-- "모든 필드를 입력해주세요." - Missing required fields
-- "이미 사용 중인 이메일입니다." - Duplicate email
-- "유효하지 않은 카테고리입니다." - Invalid category
-- "이미 이 카테고리에 추가된 장소입니다." - Duplicate place in category
-
-## Backend Migration Checklist
-
-### Authentication Changes
-- [ ] Update login response handling: `{ tokenType, accessToken }` instead of `{ user, token }`
-- [x] Change duplicate check response field: `isDuplicated` instead of `isDuplicate`
-- [ ] Replace `verifyToken` with on-demand user info fetching
-- [ ] Update `auth-store` to only store token (no user object)
-- [ ] Add `getNavigatorInfo` and `getProfileInfo` API calls
-
-### API Endpoint Mapping
-- [ ] `POST /api/auth/login` → Login
-- [ ] `POST /api/members` → Register
-- [ ] `GET /api/members/validations/email` → Check email
-- [ ] `GET /api/members/validations/nickname` → Check nickname
-- [ ] `GET /api/me/navigator` → Get user nickname
-- [ ] `GET /api/me/profile` → Get user profile
-- [ ] `GET /api/me/workspaces` → Get user's workspaces
-- [ ] `GET /api/places/search?keyword={keyword}` → Search places
-
-### Data Structure Changes
-- [ ] Workspace ID: `id` (UUID) → `identifier` (string)
-- [ ] Updated timestamp: `updatedAt` → `modifiedAt`
-- [ ] Category: Add `sequence`, `representativePlaceId` fields
-- [ ] Place API: Move from `/api/places` to `/api/categories/{id}/places`
-
-### Authentication Flow
-**Before (Mock):**
-```
-Login → { user, token } → Store both in localStorage → Use user object directly
-```
-
-**After (Backend):**
-```
-Login → { tokenType, accessToken } → Store token only → Fetch user info when needed
-```
+프론트 에러 처리 파이프라인:
+
+1. `src/services/api/http.ts`  
+   - `fromAxiosError`가 `problemDetail.detail` / `problemDetail.code` / `fieldErrors`를 추출  
+   - `resolveErrorMessage` (`src/shared/utils/error-message.ts`)로 코드별 한국어 메시지를 매핑  
+   - `ApiResponse` 표준 타입으로 에러 객체를 감싸고, `error.details.fieldErrors`에 필드별 메시지를 유지합니다.
+2. 페이지/훅 레이어  
+   - React Query `onError` 또는 `error` 상태에서 `apiResponse.error?.message`를 UI에 전달  
+   - 폼 검증 시 `error.details?.fieldErrors`를 참조하여 필드별 에러 메시지를 매핑  
+   - 필요 시 `error.details`에 담긴 `title`, `detail`, `type` 등을 로깅합니다.
+3. Axios 인터셉터(`src/lib/axios.ts`)  
+   - 401/403은 토큰 초기화 및 로그인 리다이렉션, 5xx는 전역 토스트를 표시
+
+> 에러 코드 ↔ 메시지 매핑은 `src/shared/utils/error-message.ts`에 정의되어 있으며, 백엔드 `ErrorCode`가 변경될 때 반드시 해당 파일을 함께 갱신하세요.
+
+## 5. React Query Key 표준
+
+| 도메인 | Query Key | 설명 |
+| --- | --- | --- |
+| 워크스페이스 목록 | `['workspaces','me']` | 인증된 사용자 워크스페이스 |
+| 워크스페이스 상세 | `['workspace', identifier]` | 단일 워크스페이스 |
+| 카테고리/장소 | `['workspace', identifier, 'categories']` | 워크스페이스 내부 구조 |
+
+뮤테이션 성공 시 위 키를 invalidate하여 최신 데이터를 유지합니다.
+
+## 6. 참고 문서
+
+- `BACKEND_API.md` – 상세 엔드포인트 명세  
+- `src/services/api/*.ts` – Axios 호출 구현  
+- `src/shared/utils/error-message.ts` – 에러 메시지 매핑  
+- 백엔드 레포지토리 `courseitda-backend` – 실제 엔티티/예외/마이그레이션 정의
+
+---  
+이 문서를 업데이트할 때는 프론트의 서비스 레이어와 백엔드 엔드포인트 변경 사항을 동시에 반영하세요.

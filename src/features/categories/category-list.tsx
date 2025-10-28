@@ -15,26 +15,27 @@ interface CategoryListProps {
   workspaceIdentifier: string;
   categories: WorkspaceCategory[];
   onPlaceClick?: (place: Place) => void;
+  isError?: boolean;
 }
 
 // 카테고리 목록 컴포넌트 - 드래그 앤 드롭으로 순서 변경 가능한 카테고리 카드 목록 표시
 // 사용 위치: pages/WorkspaceDetail
-export const CategoryList = ({ workspaceIdentifier, categories, onPlaceClick }: CategoryListProps) => {
+export const CategoryList = ({
+  workspaceIdentifier,
+  categories,
+  onPlaceClick,
+  isError,
+}: CategoryListProps) => {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const queryClient = useQueryClient();
   const queryKey = ['workspace', workspaceIdentifier, 'categories'];
 
-  const reorderMutation = useMutation({
-    mutationFn: async (items: Array<{ id: string; sequence: number }>) => {
+  const reorderMutation = useMutation<void, Error, Array<{ id: string; sequence: number }>>({
+    mutationFn: async (items) => {
       const { error } = await categoryApi.reorder(workspaceIdentifier, items);
       if (error) {
         throw new Error(error);
       }
-    },
-    onError: (error) => {
-      const message = error instanceof Error ? error.message : '카테고리 순서 변경에 실패했습니다.';
-      toast.error(message);
-      queryClient.invalidateQueries({ queryKey });
     },
   });
 
@@ -43,7 +44,11 @@ export const CategoryList = ({ workspaceIdentifier, categories, onPlaceClick }: 
     // 드롭 위치가 유효하지 않으면 아무것도 하지 않음
     if (!result.destination) return;
 
+    if (reorderMutation.isPending) return;
+
     if (result.destination.index === result.source.index) return;
+
+    const previous = queryClient.getQueryData<WorkspaceCategory[]>(queryKey);
 
     const updatedOrder = Array.from(categories);
     const [removed] = updatedOrder.splice(result.source.index, 1);
@@ -61,7 +66,18 @@ export const CategoryList = ({ workspaceIdentifier, categories, onPlaceClick }: 
       sequence: index,
     }));
 
-    reorderMutation.mutate(payload);
+    reorderMutation.mutate(payload, {
+      onError: (error) => {
+        const message = error instanceof Error ? error.message : '카테고리 순서 변경에 실패했습니다.';
+        toast.error(message);
+        if (previous) {
+          queryClient.setQueryData<WorkspaceCategory[]>(queryKey, previous);
+        }
+      },
+      onSettled: () => {
+        queryClient.invalidateQueries({ queryKey });
+      },
+    });
   };
 
   return (
@@ -75,7 +91,11 @@ export const CategoryList = ({ workspaceIdentifier, categories, onPlaceClick }: 
       </div>
 
       {/* UserRequest: 카테고리 카드 사이 여백을 0.5배로 축소하여 공간 효율성 향상 (space-y-3 → space-y-1.5) */}
-      {categories.length === 0 ? (
+      {isError ? (
+        <div className="border border-destructive/40 bg-destructive/5 text-destructive rounded-xl p-8 text-center text-sm">
+          카테고리를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.
+        </div>
+      ) : categories.length === 0 ? (
         <div className="border-2 border-dashed border-border rounded-xl p-8 text-center">
           <p className="text-muted-foreground mb-4">카테고리를 추가해보세요</p>
           <Button onClick={() => setAddDialogOpen(true)}>첫 카테고리 만들기</Button>

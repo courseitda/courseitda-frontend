@@ -1,6 +1,7 @@
 import { apiClient } from '@/lib/axios';
 import type { User } from '@/entities/types';
 import type { ApiResponse } from '@/types/api';
+import { BackendErrorCode } from '@/shared/utils/error-message';
 import { toSuccess, toError } from './http';
 
 // 인증 관련 백엔드 엔드포인트 상수 정의
@@ -124,7 +125,11 @@ export const authApi = {
         accessToken: payload.accessToken,
       });
     } catch (error) {
-      return toError(error, 'LOGIN_FAILED', '이메일 또는 비밀번호가 올바르지 않습니다.');
+      return toError(
+        error,
+        BackendErrorCode.INCORRECT_PASSWORD,
+        '이메일 또는 비밀번호가 올바르지 않습니다.'
+      );
     }
   },
 
@@ -144,7 +149,11 @@ export const authApi = {
         email: payload.email,
       });
     } catch (error) {
-      return toError(error, 'REGISTER_FAILED', '회원가입에 실패했습니다.');
+      return toError(
+        error,
+        BackendErrorCode.REQUEST_VALIDATION_FAILED,
+        '회원가입 입력값을 확인해주세요.'
+      );
     }
   },
 
@@ -163,7 +172,11 @@ export const authApi = {
         isDuplicated: response.data.isDuplicated,
       });
     } catch (error) {
-      return toError(error, 'CHECK_EMAIL_DUPLICATE_FAILED', '이메일 중복 확인에 실패했습니다.');
+      return toError(
+        error,
+        BackendErrorCode.DUPLICATE_EMAIL,
+        '이메일 중복 확인에 실패했습니다.'
+      );
     }
   },
 
@@ -182,7 +195,11 @@ export const authApi = {
         isDuplicated: response.data.isDuplicated,
       });
     } catch (error) {
-      return toError(error, 'CHECK_NICKNAME_DUPLICATE_FAILED', '닉네임 중복 확인에 실패했습니다.');
+      return toError(
+        error,
+        BackendErrorCode.DUPLICATE_NICKNAME,
+        '닉네임 중복 확인에 실패했습니다.'
+      );
     }
   },
 
@@ -199,7 +216,11 @@ export const authApi = {
         user: response.data,
       });
     } catch (error) {
-      return toError(error, 'USER_NOT_FOUND', '사용자 정보를 불러올 수 없습니다.');
+      return toError(
+        error,
+        BackendErrorCode.MEMBER_NOT_FOUND,
+        '사용자 정보를 불러올 수 없습니다.'
+      );
     }
   },
 
@@ -218,7 +239,11 @@ export const authApi = {
         nickname: response.data.nickname,
       });
     } catch (error) {
-      return toError(error, 'UNAUTHORIZED', '사용자 정보를 불러올 수 없습니다.');
+      return toError(
+        error,
+        BackendErrorCode.INVALID_TOKEN,
+        '사용자 정보를 불러올 수 없습니다.'
+      );
     }
   },
 
@@ -238,7 +263,11 @@ export const authApi = {
         email: response.data.email,
       });
     } catch (error) {
-      return toError(error, 'UNAUTHORIZED', '사용자 정보를 불러올 수 없습니다.');
+      return toError(
+        error,
+        BackendErrorCode.INVALID_TOKEN,
+        '사용자 정보를 불러올 수 없습니다.'
+      );
     }
   },
 
@@ -258,7 +287,11 @@ export const authApi = {
         email: response.data.email,
       });
     } catch (error) {
-      return toError(error, 'UNAUTHORIZED', '사용자 정보를 불러올 수 없습니다.');
+      return toError(
+        error,
+        BackendErrorCode.INVALID_TOKEN,
+        '사용자 정보를 불러올 수 없습니다.'
+      );
     }
   },
 };

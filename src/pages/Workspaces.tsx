@@ -141,6 +141,17 @@ const Workspaces = () => {
     );
   }
 
+  if (!workspaces) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <p className="text-sm text-muted-foreground">워크스페이스를 불러오지 못했습니다.</p>
+          <Button variant="outline" onClick={() => window.location.reload()}>새로고침</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-card">
       <header className="border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

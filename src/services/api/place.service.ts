@@ -1,6 +1,7 @@
 import { apiClient } from '@/lib/axios';
 import type { Place, KakaoPlace } from '@/entities/types';
 import type { ApiResponse } from '@/types/api';
+import { BackendErrorCode } from '@/shared/utils/error-message';
 import { toSuccess, toError } from './http';
 
 // 장소 관련 백엔드 엔드포인트 상수 정의
@@ -131,7 +132,11 @@ export const placeApi = {
         })),
       };
     } catch (error) {
-      const apiError = toError(error, 'SEARCH_PLACE_FAILED', '장소 검색에 실패했습니다.');
+      const apiError = toError(
+        error,
+        BackendErrorCode.KAKAO_PLACE_SEARCH_ERROR,
+        '장소 검색에 실패했습니다.',
+      );
       return { error: apiError.error?.message };
     }
   },
@@ -175,7 +180,11 @@ export const placeApi = {
         longitude: response.data.longitude,
       });
     } catch (error) {
-      return toError(error, 'ADD_PLACE_FAILED', '장소 추가에 실패했습니다.');
+      return toError(
+        error,
+        BackendErrorCode.REQUEST_VALIDATION_FAILED,
+        '장소 정보를 확인해주세요.',
+      );
     }
   },
 
@@ -192,7 +201,11 @@ export const placeApi = {
       await apiClient.delete(`${CATEGORY_PLACES_ENDPOINT(categoryId)}/${categoryPlaceId}`);
       return {};
     } catch (error) {
-      const apiError = toError(error, 'REMOVE_PLACE_FAILED', '장소 삭제에 실패했습니다.');
+      const apiError = toError(
+        error,
+        BackendErrorCode.CATEGORY_PLACE_NOT_FOUND,
+        '장소 삭제에 실패했습니다.',
+      );
       return { error: apiError.error?.message };
     }
   },
@@ -219,7 +232,11 @@ export const placeApi = {
         }),
       );
     } catch (error) {
-      const apiError = toError(error, 'GET_PLACES_FAILED', '장소 목록을 불러올 수 없습니다.');
+      const apiError = toError(
+        error,
+        BackendErrorCode.CATEGORY_PLACE_NOT_FOUND,
+        '장소 목록을 불러올 수 없습니다.',
+      );
       throw new Error(apiError.error?.message ?? '장소 목록을 불러올 수 없습니다.');
     }
   },

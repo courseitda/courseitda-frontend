@@ -1,194 +1,59 @@
 # Database Documentation
 
-This document describes the database schema and principles for 코스잇다 (Courseitda).
+코스잇다 (CourseItda) 백엔드는 Spring Boot + Spring Data JPA로 MySQL을 사용합니다.  
+프론트엔드는 모든 영속 데이터를 백엔드 REST API를 통해서만 읽고 쓰며, 로컬에는 토큰과 Kakao API 키 같은 클라이언트 설정만 저장합니다.
 
-## Critical Principle
+## 1. 아키텍처 개요
 
-**THE DATABASE LAYER MUST ONLY PERFORM ATOMIC CRUD OPERATIONS**
+- **데이터 소스**: MySQL (실제 테이블은 Flyway 마이그레이션 및 JPA 엔티티 정의를 따름)
+- **도메인 엔티티**
+  - `Member` → 테이블 `members`
+  - `Workspace` → 테이블 `workspaces`
+  - `Category` → 테이블 `categories`
+  - `CategoryPlace` → 테이블 `category_places`
+  - `Place` → 테이블 `places`
+- **프론트엔드 상태**: React Query가 서버 상태를 캐시하고, Zustand는 토큰·설정 등 클라이언트 전용 상태만 유지합니다.
 
-- ❌ NO sorting logic in DB
-- ❌ NO validation in DB
-- ❌ NO complex queries with joins
-- ❌ NO business logic in DB
-- ✅ ONLY simple CRUD: get, add, update, delete, bulkGet
+## 2. 핵심 테이블 요약
 
-All business logic MUST be in Edge Functions.
+| Domain        | Table              | 주요 컬럼                                              | 설명 |
+| ---           | ---                | ---                                                   | --- |
+| Member        | `members`          | `id`, `email`, `password`, `nickname`                | 자체 회원 가입/로그인을 위한 사용자 정보 |
+| Workspace     | `workspaces`       | `id`, `owner_id`, `identifier`, `title`              | 워크스페이스 메타 정보. `identifier`는 UUID 문자열 |
+| Category      | `categories`       | `id`, `workspace_id`, `name`, `color`, `sequence`    | 워크스페이스 내부 카테고리. 정렬은 `sequence` 컬럼 |
+| CategoryPlace | `category_places`  | `id`, `category_id`, `place_id`, `is_representative` | 카테고리와 장소 매핑 엔티티. 대표 장소 여부 관리 |
+| Place         | `places`           | `id`, `name`, `road_address_name`, `latitude`, `longitude` | 장소 기본 정보 (카카오 검색 결과 기반) |
 
-## Technology
+> 상세 스키마와 인덱스 구성은 `courseitda-backend` 레포지토리의 엔티티 및 Flyway 마이그레이션 파일을 참고하세요.
 
-- **IndexedDB** via Dexie.js
-- **Local storage** for authentication tokens and settings
+## 3. 접근 원칙
 
-## Schema
+**DB 계층은 원자적 CRUD만 수행하고, 모든 비즈니스 로직은 서비스 계층(= Edge Function 역할)에서 처리합니다.**
 
-### users
+### ✅ 올바른 패턴
 
-```typescript
-{
-  id: string (primary key)
-  email: string (indexed)
-  password: string (hashed)
-  nickname: string
-  createdAt: string (ISO timestamp)
-}
-```
+- 서비스/도메인 계층에서 유효성 검증·권한 검사 후, Repository로 단일 INSERT/UPDATE/DELETE를 실행
+- 정렬/페이징은 JPA 쿼리 메서드 또는 QueryDSL로 위임하되, 비즈니스 로직은 자바 코드에서 처리
+- 프론트엔드는 React Query를 통해 `GET /api/me/workspaces` 등 표준 엔드포인트를 호출하여 결과만 UI에 반영
 
-### workspaces
+### ❌ 피해야 할 패턴
 
-```typescript
-{
-  id: string (primary key)
-  ownerId: string (indexed, foreign key to users)
-  title: string
-  createdAt: string (ISO timestamp)
-  updatedAt: string (ISO timestamp)
-}
-```
+- Stored Procedure, Trigger, View에 비즈니스 규칙을 담는 것
+- 복잡한 계산/검증을 SQL에서 직접 수행하는 것
+- 프론트엔드에서 IndexedDB/LocalStorage에 서버 데이터를 동기화하여 진실의 근원(Single Source of Truth)을 복제하는 것
 
-### categories
+## 4. 프론트엔드 로컬 저장소
 
-```typescript
-{
-  id: string (primary key)
-  workspaceId: string (indexed, foreign key to workspaces)
-  name: string
-  color: string (hex color)
-  sortOrder: number (indexed, for ordering)
-  representativePlaceId?: string | null (foreign key to places)
-  createdAt: string (ISO timestamp)
-  updatedAt: string (ISO timestamp)
-}
-```
+| Key                          | 용도 |
+| ---                          | --- |
+| `courseitda_token`           | JWT 액세스 토큰 (Bearer) |
+| `courseitda_user`            | 최근 로그인한 회원의 요약 정보 (닉네임 등) |
+| `courseitda_kakao_rest_key`  | Kakao REST API 키 |
+| `courseitda_kakao_js_key`    | Kakao JavaScript SDK 키 |
 
-### places
+> 사용자 설정 값만 저장하며, 서버 데이터는 절대 로컬에 복제하지 않습니다.
 
-```typescript
-{
-  id: string (primary key)
-  kakaoPlaceId: string (indexed, Kakao Maps ID)
-  name: string
-  address: string
-  roadAddress: string
-  lat: number
-  lng: number
-  phone?: string
-  url?: string
-  createdAt: string (ISO timestamp)
-}
-```
+## 5. 마이그레이션 및 변경 추적
 
-### categoryPlaces
-
-Many-to-many relationship between categories and places.
-
-```typescript
-{
-  id: string (primary key)
-  placeId: string (compound indexed with categoryId)
-  categoryId: string (compound indexed with placeId)
-  createdAt: string (ISO timestamp)
-}
-```
-
-## Indexes
-
-```typescript
-users: 'id, email'
-workspaces: 'id, ownerId'
-categories: 'id, workspaceId, sortOrder'
-places: 'id, kakaoPlaceId'
-categoryPlaces: 'id, [categoryId+placeId], categoryId, placeId'
-```
-
-## Good vs Bad Examples
-
-### ❌ BAD: Business Logic in DB
-
-```typescript
-// DON'T DO THIS
-async function getCategoriesSorted(workspaceId: string) {
-  return await db.categories
-    .where('workspaceId')
-    .equals(workspaceId)
-    .sortBy('sortOrder'); // ❌ Sorting in DB
-}
-
-// DON'T DO THIS
-async function addCategoryWithValidation(name: string, workspaceId: string) {
-  if (!name.trim()) { // ❌ Validation in DB layer
-    throw new Error('Name required');
-  }
-  
-  const count = await db.categories
-    .where('workspaceId')
-    .equals(workspaceId)
-    .count(); // ❌ Complex calculation in DB
-    
-  await db.categories.add({
-    // ...
-    sortOrder: count, // ❌ Business logic in DB
-  });
-}
-```
-
-### ✅ GOOD: Atomic Operations Only
-
-```typescript
-// DB layer - ONLY atomic operations
-async function getAllCategories(workspaceId: string) {
-  return await db.categories
-    .where('workspaceId')
-    .equals(workspaceId)
-    .toArray(); // ✅ Simple retrieval
-}
-
-// Edge Function - Business logic here
-async function addCategory(input: { workspaceId: string; name: string }) {
-  // ✅ Validation in Edge Function
-  if (!input.name || input.name.trim().length === 0) {
-    return { error: 'Name required' };
-  }
-
-  // ✅ Calculation in Edge Function
-  const existing = await db.categories
-    .where('workspaceId')
-    .equals(input.workspaceId)
-    .toArray();
-  
-  const sortOrder = existing.length;
-  const color = getCategoryColor(sortOrder); // ✅ Business logic
-
-  // ✅ Simple DB insert
-  const category: Category = {
-    id: crypto.randomUUID(),
-    workspaceId: input.workspaceId,
-    name: input.name.trim(),
-    color,
-    sortOrder,
-    // ...
-  };
-
-  await db.categories.add(category);
-  
-  return { category };
-}
-```
-
-## LocalStorage
-
-Used for:
-- Authentication token: `courseitda_token`
-- User data: `courseitda_user`
-- Kakao REST API key: `courseitda_kakao_rest_key`
-- Kakao JS API key: `courseitda_kakao_js_key`
-
-## Migration Strategy
-
-When moving to a real backend (Supabase):
-
-1. Replace Dexie calls with Supabase client
-2. Edge Functions remain the same (business logic unchanged)
-3. RLS policies handle authorization
-4. Database triggers replace client-side cascade deletes
-
-The separation of DB and business logic makes this migration straightforward.
+- 스키마 변경은 백엔드의 Flyway 마이그레이션으로 관리됩니다.
+- 프론트엔드 변경 시 반드시 `BACKEND_API.md`와 본 문서의 해당 섹션을 함께 갱신해 일관성을 유지하세요.

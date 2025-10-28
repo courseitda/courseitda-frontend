@@ -1,13 +1,22 @@
 import axios, { type AxiosError } from 'axios';
 import type { ApiResponse } from '@/types/api';
+import {
+  DEFAULT_ERROR_MESSAGE,
+  resolveErrorMessage,
+} from '@/shared/utils/error-message';
 
 const isoTimestamp = () => new Date().toISOString();
 
 type ErrorPayload = {
   code?: string;
   message?: string;
+  detail?: string;
+  title?: string;
   status?: number;
   details?: Record<string, unknown>;
+  type?: string;
+  instance?: string;
+  fieldErrors?: Record<string, string>;
 };
 
 export const toSuccess = <T>(data: T, message?: string): ApiResponse<T> => ({
@@ -20,18 +29,26 @@ export const toSuccess = <T>(data: T, message?: string): ApiResponse<T> => ({
 export const toError = (
   error: unknown,
   fallbackCode: string,
-  fallbackMessage = '요청 처리 중 오류가 발생했습니다.'
+  fallbackMessage = DEFAULT_ERROR_MESSAGE
 ): ApiResponse<never> => {
   if (axios.isAxiosError(error)) {
     return fromAxiosError(error, fallbackCode, fallbackMessage);
   }
 
-  const message = error instanceof Error ? error.message : fallbackMessage;
+  const explicitMessage =
+    error instanceof Error ? error.message : undefined;
+
+  const message = resolveErrorMessage(fallbackCode, explicitMessage, fallbackMessage);
   return {
     success: false,
     error: {
       code: fallbackCode,
       message,
+      details: explicitMessage
+        ? {
+            reason: explicitMessage,
+          }
+        : undefined,
     },
     timestamp: isoTimestamp(),
   };
@@ -44,15 +61,48 @@ const fromAxiosError = (
 ): ApiResponse<never> => {
   const payload = (error.response?.data ?? {}) as ErrorPayload;
   const code = payload.code || fallbackCode;
-  const message = payload.message || fallbackMessage;
+  const explicitMessage = payload.detail ?? payload.message;
+  const fieldErrors = payload.fieldErrors;
+  const fieldErrorMessage = fieldErrors
+    ? Object.values(fieldErrors)[0]
+    : undefined;
+  const prioritizedExplicitMessage = fieldErrorMessage ?? explicitMessage;
+  const message = resolveErrorMessage(
+    code,
+    prioritizedExplicitMessage,
+    fallbackMessage
+  );
+
+  const status = payload.status ?? error.response?.status;
+  const derivedDetails =
+    explicitMessage ||
+    payload.title ||
+    payload.type ||
+    fieldErrors
+      ? Object.fromEntries(
+          Object.entries({
+            title: payload.title,
+            detail: payload.detail,
+            message: payload.message,
+            type: payload.type,
+            instance: payload.instance,
+            fieldErrors: payload.fieldErrors,
+          }).filter(([, value]) => value !== undefined && value !== null)
+        )
+      : undefined;
+
+  const normalizedDetails =
+    payload.details && derivedDetails
+      ? { ...derivedDetails, ...payload.details }
+      : payload.details ?? derivedDetails;
 
   return {
     success: false,
     error: {
       code,
       message,
-      status: payload.status ?? error.response?.status,
-      details: payload.details,
+      status,
+      details: normalizedDetails,
     },
     timestamp: isoTimestamp(),
   };

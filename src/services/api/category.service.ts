@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/axios';
 import type { Category, Place } from '@/entities/types';
+import { BackendErrorCode } from '@/shared/utils/error-message';
 import { toError } from './http';
 
 // 카테고리 관련 백엔드 엔드포인트 상수 정의
@@ -207,7 +208,11 @@ export const categoryApi = {
       const response = await apiClient.get<CategoryApiResponse>(CATEGORY_ENDPOINT(categoryId));
       return { category: adaptCategory(null, response.data) };
     } catch (error) {
-      const apiError = toError(error, 'GET_CATEGORY_FAILED', '카테고리를 불러올 수 없습니다.');
+      const apiError = toError(
+        error,
+        BackendErrorCode.CATEGORY_NOT_FOUND,
+        '카테고리를 불러올 수 없습니다.',
+      );
       return { error: apiError.error?.message };
     }
   },
@@ -227,7 +232,11 @@ export const categoryApi = {
 
       return { category: adaptCategory(workspaceIdentifier, response.data) };
     } catch (error) {
-      const apiError = toError(error, 'CREATE_CATEGORY_FAILED', '카테고리 생성에 실패했습니다.');
+      const apiError = toError(
+        error,
+        BackendErrorCode.REQUEST_VALIDATION_FAILED,
+        '카테고리 입력값을 확인해주세요.',
+      );
       return { error: apiError.error?.message };
     }
   },
@@ -243,7 +252,11 @@ export const categoryApi = {
       await apiClient.patch(CATEGORY_ENDPOINT(id), data);
       return {};
     } catch (error) {
-      const apiError = toError(error, 'UPDATE_CATEGORY_FAILED', '카테고리 수정에 실패했습니다.');
+      const apiError = toError(
+        error,
+        BackendErrorCode.REQUEST_VALIDATION_FAILED,
+        '카테고리 입력값을 확인해주세요.',
+      );
       return { error: apiError.error?.message };
     }
   },
@@ -258,7 +271,11 @@ export const categoryApi = {
       await apiClient.delete(CATEGORY_ENDPOINT(id));
       return {};
     } catch (error) {
-      const apiError = toError(error, 'DELETE_CATEGORY_FAILED', '카테고리 삭제에 실패했습니다.');
+      const apiError = toError(
+        error,
+        BackendErrorCode.TEMPORARY_ERROR,
+        '카테고리 삭제에 실패했습니다.',
+      );
       return { error: apiError.error?.message };
     }
   },
@@ -293,7 +310,11 @@ export const categoryApi = {
         })),
       };
     } catch (error) {
-      const apiError = toError(error, 'REORDER_CATEGORY_FAILED', '카테고리 순서 변경에 실패했습니다.');
+      const apiError = toError(
+        error,
+        BackendErrorCode.DUPLICATE_CATEGORY_ORDER_IN_REQUEST,
+        '카테고리 순서 변경에 실패했습니다.',
+      );
       return { error: apiError.error?.message };
     }
   },
@@ -316,7 +337,7 @@ export const categoryApi = {
     } catch (error) {
       const apiError = toError(
         error,
-        'SET_REPRESENTATIVE_PLACE_FAILED',
+        BackendErrorCode.INVALID_REPRESENTATIVE_PLACE_ASSIGNMENT,
         '대표 장소 설정에 실패했습니다.',
       );
       return { error: apiError.error?.message };
@@ -335,7 +356,7 @@ export const categoryApi = {
     } catch (error) {
       const apiError = toError(
         error,
-        'UNSET_REPRESENTATIVE_PLACE_FAILED',
+        BackendErrorCode.INVALID_REPRESENTATIVE_PLACE_ASSIGNMENT,
         '대표 장소 해제에 실패했습니다.',
       );
       return { error: apiError.error?.message };
@@ -387,7 +408,11 @@ export const categoryApi = {
 
       return { categories };
     } catch (error) {
-      const apiError = toError(error, 'GET_CATEGORIES_FAILED', '카테고리 목록을 불러올 수 없습니다.');
+      const apiError = toError(
+        error,
+        BackendErrorCode.WORKSPACE_NOT_FOUND,
+        '카테고리 목록을 불러올 수 없습니다.',
+      );
       return {
         categories: [],
         error: apiError.error?.message,
@@ -418,7 +443,11 @@ export const categoryApi = {
         })),
       };
     } catch (error) {
-      const apiError = toError(error, 'GET_CATEGORY_PLACES_FAILED', '카테고리 장소를 불러올 수 없습니다.');
+      const apiError = toError(
+        error,
+        BackendErrorCode.CATEGORY_PLACE_NOT_FOUND,
+        '카테고리 장소를 불러올 수 없습니다.',
+      );
       return {
         categoryPlaceResponses: [],
         error: apiError.error?.message,
@@ -451,7 +480,11 @@ export const categoryApi = {
         ),
       };
     } catch (error) {
-      const apiError = toError(error, 'GET_CATEGORY_PLACES_FAILED', '카테고리 장소를 불러올 수 없습니다.');
+      const apiError = toError(
+        error,
+        BackendErrorCode.CATEGORY_PLACE_NOT_FOUND,
+        '카테고리 장소를 불러올 수 없습니다.',
+      );
       return { places: [], error: apiError.error?.message };
     }
   },

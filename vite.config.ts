@@ -25,5 +25,14 @@ export default defineConfig(({ mode }) => {
       // 디버그 모드
       'import.meta.env.VITE_API_DEBUG': JSON.stringify(env.VITE_API_DEBUG ?? 'true'),
     },
+    test: {
+      environment: "node",
+      include: ["src/**/*.{test,spec}.{ts,tsx}"],
+      reporters: "default",
+      coverage: {
+        provider: "v8",
+        reporter: ["text", "lcov"]
+      }
+    },
   };
 });

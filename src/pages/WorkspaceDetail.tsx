@@ -274,6 +274,7 @@ const WorkspaceDetail = () => {
               <CategoryList 
                 workspaceIdentifier={workspace.identifier}
                 categories={workspaceCategories ?? []}
+                isError={Boolean(categoriesError)}
                 onPlaceClick={setFocusedPlace}
               />
             </div>
