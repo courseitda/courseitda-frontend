@@ -36,7 +36,7 @@ const WorkspaceDetail = () => {
   const { nickname: navNickname } = useUserNickname(); // 네비게이터용 닉네임
   const { nickname: dropdownNickname, email } = useUserDropdown(); // 드롭다운용 닉네임 + 이메일
   const logout = useAuthStore((state) => state.logout);
-  const kakaoJsApiKey = useSettingsStore((state) => state.kakaoJsApiKey);
+  const naverMapKeyId = useSettingsStore((state) => state.naverMapKeyId);
   const [focusedPlace, setFocusedPlace] = useState<Place | null>(null);
   const [createWorkspaceOpen, setCreateWorkspaceOpen] = useState(false);
 
@@ -234,7 +234,7 @@ const WorkspaceDetail = () => {
             {/* 지도 영역 - 모바일에서는 고정, 데스크톱에서는 일반 */}
             {/* UserRequest: 모바일 지도 높이를 화면의 약 45% 비율로 설정하여 카테고리 영역과 균형 유지 (기존 5/9 ≈ 0.55에서 조정) */}
             <div className="h-[calc((100vh-64px)*0.45)] md:h-full rounded-xl overflow-hidden border border-border/50 shadow-lg bg-card shrink-0">
-              {kakaoJsApiKey ? (
+              {naverMapKeyId ? (
                 <MapCanvas
                   workspaceId={workspace.id}
                   workspaceIdentifier={workspace.identifier}
@@ -245,7 +245,7 @@ const WorkspaceDetail = () => {
                 <div className="h-full flex items-center justify-center p-6 text-center">
                   <div>
                     <p className="text-sm text-muted-foreground">
-                      카카오 지도 설정이 완료되지 않았습니다. 관리자에게 문의해주세요.
+                      네이버 지도 설정이 완료되지 않았습니다. 관리자에게 문의해주세요.
                     </p>
                   </div>
                 </div>

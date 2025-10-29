@@ -4,17 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ArrowLeft } from 'lucide-react';
 import { useSettingsStore } from '@/shared/stores/settings-store';
 
-/**
- * Kakao API 키 상태를 안내하는 페이지 컴포넌트
- * 키는 환경 변수 및 백엔드에서 자동으로 관리되므로 사용자 입력이 필요하지 않음
- */
+/** Naver 지도 Key ID 안내 - 환경 변수로 주입되며 사용자 입력 불필요 */
 const Settings = () => {
   const navigate = useNavigate();
-  const kakaoJsApiKey = useSettingsStore((state) => state.kakaoJsApiKey);
-  const maskedJsKey =
-    kakaoJsApiKey && kakaoJsApiKey.length > 8
-      ? `${kakaoJsApiKey.slice(0, 6)}****${kakaoJsApiKey.slice(-2)}`
-      : kakaoJsApiKey ?? '환경 변수에서 키를 찾을 수 없습니다';
+  const keyId = useSettingsStore((state) => state.naverMapKeyId);
+  const maskedValue =
+    keyId && keyId.length > 8 ? `${keyId.slice(0, 6)}****${keyId.slice(-2)}` : keyId ?? '환경 변수에서 Key ID를 찾을 수 없습니다';
 
   return (
     <div className="min-h-screen bg-gradient-card">
@@ -47,21 +42,19 @@ const Settings = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Kakao API 키</CardTitle>
+            <CardTitle>Naver Maps SDK Key ID</CardTitle>
             <CardDescription>
-              REST API 키는 백엔드에서 관리되고, JavaScript 키는 환경 변수에서 자동으로 주입됩니다.
-              사용자는 별도로 입력할 필요가 없습니다.
+              REST API 키는 백엔드에서 관리되고, JavaScript SDK용 Key ID는 환경 변수에서 자동으로 주입됩니다. 사용자는 별도로 입력할 필요가 없습니다.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="rounded-lg border border-border/60 bg-muted/30 p-4">
               <p className="text-sm text-muted-foreground">
-                JavaScript 키는 빌드 시 <code className="text-xs">VITE_KAKAO_JS_KEY</code> 환경 변수에서
-                자동으로 설정됩니다.
+                JavaScript SDK Key ID는 빌드 시 <code className="text-xs">VITE_NAVER_MAP_KEY_ID</code> 환경 변수에서 자동으로 주입됩니다.
               </p>
-              <p className="mt-3 text-sm font-mono break-all">
-                {maskedJsKey}
-              </p>
+              <div className="mt-3 space-y-1">
+                <p className="text-sm font-mono break-all">{maskedValue}</p>
+              </div>
             </div>
             <p className="text-sm text-muted-foreground">
               키 설정을 변경해야 한다면 관리자 또는 운영 팀에 문의해주세요.

@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test';
  * ⚡ 고급 UI 기능 테스트
  * 
  * ✅ 테스트하는 것 (프론트엔드 UI/UX):
- * - Kakao 지도 로딩 실패 시 사용자 안내 메시지
+ * - Naver 지도 로딩 실패 시 사용자 안내 메시지
  * - API 키 입력 없이 지도 영역 표시
  * - 설정 페이지에서 API 키 자동 관리 안내
  * - 모바일 반응형 레이아웃 (390x844)
@@ -23,7 +23,7 @@ import { test, expect } from '@playwright/test';
  * - 삭제 버튼 destructive 스타일 (bg-destructive)
  * 
  * ❌ 테스트하지 않는 것 (백엔드 로직):
- * - Kakao Maps SDK 실제 렌더링
+ * - Naver Maps SDK 실제 렌더링
  * - API 키 유효성 검증
  * - 지도 마커 생성 로직
  * - 반응형 브레이크포인트 계산 로직
@@ -85,7 +85,7 @@ test.describe('고급 기능', () => {
 
     // 지도 로딩 실패 안내 메시지가 표시되는지 확인
     await expect(
-      page.getByText('Kakao Maps SDK 로딩에 실패했습니다.')
+      page.getByText('Naver Maps SDK 로딩에 실패했습니다.')
     ).toBeVisible();
   });
 
@@ -98,13 +98,13 @@ test.describe('고급 기능', () => {
 
     // 지도 영역에 설정 안내 버튼이 표시되지 않는지 확인
     await expect(page.getByRole('button', { name: '설정하기' })).toHaveCount(0);
-    await expect(page.getByText('Kakao API 키를 설정해주세요.')).toHaveCount(0);
+    await expect(page.getByText('네이버 지도 설정이 완료되지 않았습니다. 관리자에게 문의해주세요.')).toHaveCount(0);
   });
 
   test('설정 페이지에서 API 키 자동 관리 메시지를 확인할 수 있다', async ({ page }) => {
     await page.goto('/settings');
     await expect(
-      page.getByText('REST API 키는 백엔드에서 관리되고, JavaScript 키는 환경 변수에서 자동으로 주입됩니다.')
+      page.getByText('REST API 키는 백엔드에서 관리되고, JavaScript SDK용 Key ID는 환경 변수에서 자동으로 주입됩니다.')
     ).toBeVisible();
   });
 
@@ -286,4 +286,3 @@ test.describe('고급 기능', () => {
   });
 
 });
-

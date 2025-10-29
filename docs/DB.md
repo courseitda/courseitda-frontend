@@ -1,7 +1,7 @@
 # Database Documentation
 
 코스잇다 (CourseItda) 백엔드는 Spring Boot + Spring Data JPA로 MySQL을 사용합니다.  
-프론트엔드는 모든 영속 데이터를 백엔드 REST API를 통해서만 읽고 쓰며, 로컬에는 토큰과 Kakao API 키 같은 클라이언트 설정만 저장합니다.
+프론트엔드는 모든 영속 데이터를 백엔드 REST API를 통해서만 읽고 쓰며, 로컬에는 토큰과 Naver Maps SDK Key ID 같은 클라이언트 설정만 저장합니다.
 
 ## 1. 아키텍처 개요
 
@@ -22,7 +22,7 @@
 | Workspace     | `workspaces`       | `id`, `owner_id`, `identifier`, `title`              | 워크스페이스 메타 정보. `identifier`는 UUID 문자열 |
 | Category      | `categories`       | `id`, `workspace_id`, `name`, `color`, `sequence`    | 워크스페이스 내부 카테고리. 정렬은 `sequence` 컬럼 |
 | CategoryPlace | `category_places`  | `id`, `category_id`, `place_id`, `is_representative` | 카테고리와 장소 매핑 엔티티. 대표 장소 여부 관리 |
-| Place         | `places`           | `id`, `name`, `road_address_name`, `latitude`, `longitude` | 장소 기본 정보 (카카오 검색 결과 기반) |
+| Place         | `places`           | `id`, `name`, `road_address_name`, `latitude`, `longitude` | 장소 기본 정보 (외부 검색 결과 기반) |
 
 > 상세 스키마와 인덱스 구성은 `courseitda-backend` 레포지토리의 엔티티 및 Flyway 마이그레이션 파일을 참고하세요.
 
@@ -48,8 +48,7 @@
 | ---                          | --- |
 | `courseitda_token`           | JWT 액세스 토큰 (Bearer) |
 | `courseitda_user`            | 최근 로그인한 회원의 요약 정보 (닉네임 등) |
-| `courseitda_kakao_rest_key`  | Kakao REST API 키 |
-| `courseitda_kakao_js_key`    | Kakao JavaScript SDK 키 |
+| `courseitda_naver_map_key_id`| Naver Maps JavaScript SDK Key ID |
 
 > 사용자 설정 값만 저장하며, 서버 데이터는 절대 로컬에 복제하지 않습니다.
 

@@ -45,7 +45,7 @@
 
 - `useWorkspaceCategories` 훅이 워크스페이스와 연관된 카테고리/장소를 한 번에 불러옵니다.
 - `categoryApi`, `placeApi`가 각종 뮤테이션을 담당하며 성공 시 관련 캐시를 무효화합니다.
-- Kakao 키는 `useSettingsStore`에서 로컬 저장 후 Axios 요청 헤더(백엔드 relaying)에 사용합니다.
+- Naver Maps Key ID는 `useSettingsStore`에서 읽어 SDK 로딩에 사용합니다.
 
 ## 4. 에러 처리
 
