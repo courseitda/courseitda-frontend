@@ -1,6 +1,10 @@
 // Naver Maps SDK 로딩 완료 시 호출될 전역 콜백 함수명
 const CALLBACK_NAME = '__NAVER_MAPS_ONLOAD__';
 
+// SDK 전역 객체 준비를 위한 폴링 설정 - 콜백 이후에도 객체 준비까지 대기
+const READY_CHECK_INTERVAL = 100;
+const MAX_READY_CHECK_ATTEMPTS = 50;
+
 // SDK 중복 로딩 방지를 위한 로딩 Promise 캐싱 - 동시에 여러 컴포넌트에서 로딩 요청 시 하나의 요청만 처리
 let loadPromise: Promise<void> | null = null;
 
@@ -32,24 +36,45 @@ export const loadNaverMapScript = (keyId: string): Promise<void> => {
   // 새로운 SDK 로딩 Promise 생성 및 캐싱
   loadPromise = new Promise((resolve, reject) => {
     const globalWindow = window as WindowWithCallback;
+    let readyCheckTimer: number | null = null;
 
     // 스크립트 로딩 실패 처리 - 콜백 정리 및 캐시 초기화하여 재시도 가능하도록 설정
     const handleError = () => {
+      // UserRequest: 첫 진입에서도 Naver Maps SDK가 안정적으로 로딩되도록 실패 시 리소스를 정리
+      if (readyCheckTimer !== null) {
+        window.clearTimeout(readyCheckTimer);
+        readyCheckTimer = null;
+      }
       delete globalWindow[CALLBACK_NAME];
       loadPromise = null;
+      const existingScript = document.querySelector<HTMLScriptElement>('script[data-naver-maps-script="true"]');
+      if (existingScript) {
+        existingScript.remove();
+      }
       reject(new Error('Naver Maps SDK 로딩에 실패했습니다.'));
+    };
+
+    // SDK 전역 객체가 실제로 준비되었는지 확인 - 콜백 호출 직후 객체가 비어있는 경우가 있어 폴링 처리
+    const waitForMapsReady = (attempt: number = 0) => {
+      // UserRequest: 콜백 직후 window.naver.maps가 준비될 때까지 확인하여 첫 진입 실패를 방지
+      if (window.naver && window.naver.maps) {
+        readyCheckTimer = null;
+        resolve();
+        return;
+      }
+
+      if (attempt >= MAX_READY_CHECK_ATTEMPTS) {
+        handleError();
+        return;
+      }
+
+      readyCheckTimer = window.setTimeout(() => waitForMapsReady(attempt + 1), READY_CHECK_INTERVAL);
     };
 
     // SDK 로딩 완료 시 호출될 전역 콜백 함수 등록 - SDK가 로드되면 자동으로 호출됨
     globalWindow[CALLBACK_NAME] = () => {
-      // SDK 객체 존재 확인 후 Promise 완료 처리
-      if (window.naver && window.naver.maps) {
-        delete globalWindow[CALLBACK_NAME];
-        resolve();
-      } else {
-        // SDK 객체가 없는 경우 로딩 실패로 처리
-        handleError();
-      }
+      delete globalWindow[CALLBACK_NAME];
+      waitForMapsReady();
     };
 
     // 기존 스크립트 태그 제거 - API 키 변경 등의 경우 재로딩을 위해 이전 스크립트 삭제
