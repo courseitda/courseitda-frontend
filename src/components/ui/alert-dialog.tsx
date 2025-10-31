@@ -2,7 +2,7 @@ import * as React from "react";
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 
 // 경고 다이얼로그 컴포넌트 - 중요한 작업에 대한 사용자 확인을 받는 모달
 // 사용 위치: features/categories (category-card), features/layout (navigation-drawer), pages/Workspaces
