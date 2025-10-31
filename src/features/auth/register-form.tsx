@@ -34,7 +34,7 @@ export const RegisterForm = () => {
       minLength: password.length >= 8,
       hasLetter: /[a-zA-Z]/.test(password),
       hasNumber: /[0-9]/.test(password),
-      hasSpecialChar: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+      hasSpecialChar: /[!@#$%^&*()_+\-=\\{};':"\\|,.<>/?]/.test(password),
     };
   }, [password]);
 

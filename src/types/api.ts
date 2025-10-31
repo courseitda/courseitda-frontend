@@ -27,7 +27,7 @@
  *   timestamp: "2025-10-17T08:30:00Z"
  * }
  */
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   // 요청 성공 여부 - true: 성공, false: 실패
   success: boolean;
   
@@ -56,7 +56,7 @@ export interface ApiError {
   message: string;
   
   // 에러 상세 정보 - 디버깅용 추가 정보 (선택 사항)
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   
   // HTTP 상태 코드
   status?: number;
@@ -168,10 +168,10 @@ export interface ApiRequestConfig {
   url: string;
   
   // 요청 파라미터 (query string)
-  params?: Record<string, any>;
+  params?: Record<string, unknown>;
   
   // 요청 본문 (body)
-  data?: any;
+  data?: unknown;
   
   // 추가 헤더
   headers?: Record<string, string>;
@@ -187,7 +187,7 @@ export interface ApiRequestConfig {
  * @param response - Axios 응답 객체
  * @returns 표준 API 응답 형식
  */
-export function adaptBackendResponse<T>(response: any): ApiResponse<T> {
+export function adaptBackendResponse<T>(response: { data: ApiResponse<T> }): ApiResponse<T> {
   // Spring의 ResponseEntity는 이미 표준 형식일 가능성이 높음
   // 필요시 변환 로직 추가
   return response.data;
