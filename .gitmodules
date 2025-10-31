@@ -1,0 +1,3 @@
+[submodule "courseitda-frontend-ai-private"]
+	path = courseitda-frontend-ai-private
+	url = https://github.com/courseitda/courseitda-frontend-ai-private.git

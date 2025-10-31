@@ -29,9 +29,6 @@ build
 *.secret
 config/secrets.json
 
-# Cursor AI rules
-.cursorrules
-
 # Playwright E2E test results
 test-results/
 playwright-report/
