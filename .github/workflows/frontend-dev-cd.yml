@@ -1,4 +1,4 @@
-name: Frontend CD to dev environment
+name: Frontend CD on develop branch
 
 on:
   workflow_dispatch:

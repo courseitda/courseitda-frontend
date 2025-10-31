@@ -1,0 +1,60 @@
+name: Frontend CI on develop branch
+
+on:
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ap-northeast-2
+  NODE_VERSION: 18
+  ENVIRONMENT: dev
+  VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+  VITE_DEV_MODE: ${{ vars.VITE_DEV_MODE }}
+  VITE_NAVER_MAP_KEY_ID: ${{ secrets.VITE_NAVER_MAP_KEY_ID }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: development  # GitHub Environment 사용
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint --if-present
+        continue-on-error: true
+
+      - name: Run test
+        run: npm test --if-present
+        env:
+          CI: true  # 테스트는 CI 모드로 실행
+
+      - name: Build for development
+        run: npm run build:dev
+        env:
+          CI: false # 빌드는 경고를 에러로 처리하지 않음
+
+      - name: Check build output
+        run: |
+          # 빌드 결과물 확인
+          if [ ! -d "dist" ]; then
+            echo "❌ dist 폴더가 생성되지 않았습니다."
+            exit 1
+          fi
+          
+          if [ ! -f "dist/index.html" ]; then
+            echo "❌ index.html이 없습니다."
+            exit 1
+          fi
+          
+          echo "✅ 빌드 성공: dist 폴더 확인 완료"
+          ls -lh dist/

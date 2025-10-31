@@ -36,8 +36,7 @@ export type Category = {
   updatedAt: string; // Timestamp
 };
 
-// 장소 타입 - Kakao API로 검색한 실제 장소 정보
-// 백엔드 Place 엔티티와 매핑
+// 장소 타입 - 백엔드 Place 엔티티와 매핑
 export type Place = {
   id: string; // Long -> string (JSON 직렬화)
   name: string; // 장소 이름
@@ -45,7 +44,7 @@ export type Place = {
   roadAddressName: string | null; // 도로명 주소 (nullable)
   latitude: number; // 위도 (-90 ~ 90)
   longitude: number; // 경도 (-180 ~ 180)
-  placeUrl: string | null; // Kakao 장소 상세 URL (nullable)
+  placeUrl: string | null; // 장소 상세 URL (nullable)
   createdAt: string; // Timestamp
   updatedAt: string; // Timestamp
 };
@@ -60,25 +59,12 @@ export type CategoryPlace = {
   updatedAt: string; // Timestamp
 };
 
-// Kakao Local API 응답 타입 정의
-// Kakao API 장소 검색 결과의 개별 장소 정보
-export type KakaoPlace = {
-  id: string;
-  place_name: string;
-  address_name: string;
-  road_address_name: string;
-  phone: string;
-  place_url: string;
-  x: string; // longitude (경도)
-  y: string; // latitude (위도)
-};
-
-// Kakao API 장소 검색 응답 전체 구조
-export type KakaoSearchResponse = {
-  documents: KakaoPlace[]; // 검색 결과 장소 목록
-  meta: {
-    total_count: number; // 전체 검색 결과 수
-    pageable_count: number; // 페이징 가능한 결과 수
-    is_end: boolean; // 마지막 페이지 여부
-  };
+// 장소 검색 API 응답 타입 - 백엔드 SearchedPlace DTO와 매핑
+export type SearchedPlace = {
+  id: string; // 프론트엔드에서 생성하는 임시 식별자
+  name: string;
+  addressName: string;
+  roadAddressName: string | null;
+  latitude: number;
+  longitude: number;
 };

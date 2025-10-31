@@ -18,7 +18,7 @@ import { test, expect } from '@playwright/test';
  * - 장소 검색 버튼이 각 카테고리마다 표시
  * 
  * ❌ 테스트하지 않는 것 (백엔드 로직):
- * - Kakao Local API 실제 호출
+ * - Naver 장소 검색 API 실제 호출
  * - 장소 데이터 저장
  * - 장소 검색 결과 데이터 구조
  * - 장소와 카테고리 연결 로직
@@ -40,7 +40,7 @@ import { test, expect } from '@playwright/test';
  * - 빈 검색어 검색 (sonner 토스트 타이밍)
  * - 카테고리 헤더 버튼 (휴지통 버튼 찾기 실패)
  * 
- * ⚠️ 참고: Kakao API 키가 없어도 UI 테스트는 정상 실행됨
+ * ⚠️ 참고: Naver API 키가 없어도 UI 테스트는 정상 실행됨
  */
 
 test.describe('장소 관리', () => {
@@ -116,7 +116,7 @@ test.describe('장소 관리', () => {
     // 다이얼로그가 표시되는지 확인
     await expect(page.getByRole('dialog')).toBeVisible();
     await expect(page.getByRole('heading', { name: '장소 검색' })).toBeVisible();
-    await expect(page.getByText('Kakao 지도에서 장소를 검색하고 추가하세요')).toBeVisible();
+    await expect(page.getByText('Naver 지도에서 장소를 검색하고 추가하세요')).toBeVisible();
     
     // 검색 입력 필드 확인
     await expect(page.getByPlaceholder('장소 이름이나 주소 검색')).toBeVisible();
@@ -183,7 +183,7 @@ test.describe('장소 관리', () => {
     await page.getByPlaceholder('장소 이름이나 주소 검색').press('Enter');
 
     // API 키가 없으므로 에러 토스트가 표시됨
-    await expect(page.getByText(/Kakao REST API 키를 설정해주세요/)).toBeVisible();
+    await expect(page.getByText(/장소 검색 API/)).toBeVisible();
   });
 
   test('여러 카테고리를 동시에 표시할 수 있다', async ({ page }) => {

@@ -8,12 +8,12 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, MapPin, Phone } from 'lucide-react';
+import { Search, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 // API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
 import { placeApi } from '@/services/api';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import type { KakaoPlace } from '@/entities/types';
+import type { SearchedPlace } from '@/entities/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface PlaceSearchDialogProps {
@@ -23,7 +23,7 @@ interface PlaceSearchDialogProps {
   workspaceIdentifier: string;
 }
 
-// 장소 검색 다이얼로그 - Kakao Local API를 사용하여 장소를 검색하고 카테고리에 추가
+// 장소 검색 다이얼로그 - Naver Places API 응답을 활용하여 장소를 검색하고 카테고리에 추가
 // 사용 위치: features/categories/category-card
 export const PlaceSearchDialog = ({
   open,
@@ -33,7 +33,7 @@ export const PlaceSearchDialog = ({
 }: PlaceSearchDialogProps) => {
   const token = useAuthStore((state) => state.token); // 인증 토큰 추출
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<KakaoPlace[]>([]);
+  const [results, setResults] = useState<SearchedPlace[]>([]);
   const [loading, setLoading] = useState(false);
   const [adding, setAdding] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -71,15 +71,15 @@ export const PlaceSearchDialog = ({
 
   // 검색된 장소를 카테고리에 추가
   const addPlaceMutation = useMutation({
-    mutationFn: async (payload: { place: KakaoPlace; token: string }) => {
+    mutationFn: async (payload: { place: SearchedPlace; token: string }) => {
       const { place, token } = payload;
 
       const response = await placeApi.addToCategory(token, categoryId, {
-        name: place.place_name,
-        roadAddressName: place.road_address_name || null,
-        addressName: place.address_name,
-        lat: parseFloat(place.y),
-        lng: parseFloat(place.x),
+        name: place.name,
+        roadAddressName: place.roadAddressName,
+        addressName: place.addressName,
+        lat: place.latitude,
+        lng: place.longitude,
       });
 
       if (!response.success || !response.data) {
@@ -101,7 +101,7 @@ export const PlaceSearchDialog = ({
     },
   });
 
-  const handleAdd = (place: KakaoPlace) => {
+  const handleAdd = (place: SearchedPlace) => {
     if (!token) {
       toast.error('로그인이 필요합니다.');
       return;
@@ -118,7 +118,7 @@ export const PlaceSearchDialog = ({
       <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>장소 검색</DialogTitle>
-          <DialogDescription>Kakao 지도에서 장소를 검색하고 추가하세요</DialogDescription>
+          <DialogDescription>Naver 지도에서 장소를 검색하고 추가하세요</DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4 min-h-0 flex-1">
@@ -158,20 +158,14 @@ export const PlaceSearchDialog = ({
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium mb-1">{place.place_name}</h4>
+                        <h4 className="font-medium mb-1">{place.name}</h4>
                         <div className="space-y-1 text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">
                             <MapPin className="w-3 h-3 flex-shrink-0" />
-                            <span className="truncate">{place.address_name}</span>
+                            <span className="truncate">{place.addressName}</span>
                           </div>
-                          {place.road_address_name && (
-                            <div className="text-xs truncate">{place.road_address_name}</div>
-                          )}
-                          {place.phone && (
-                            <div className="flex items-center gap-1">
-                              <Phone className="w-3 h-3 flex-shrink-0" />
-                              <span>{place.phone}</span>
-                            </div>
+                          {place.roadAddressName && (
+                            <div className="text-xs truncate">{place.roadAddressName}</div>
                           )}
                         </div>
                       </div>

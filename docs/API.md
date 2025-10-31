@@ -59,7 +59,7 @@
 
 | 기능 | 엔드포인트 | 메서드 | 비고 |
 | --- | --- | --- | --- |
-| 장소 검색 | `/api/places/search` | `GET` | `keyword` 쿼리 필수. 백엔드가 Naver Places를 프록시하고, 프론트는 Kakao 스키마(`KakaoPlace`)로 변환합니다. |
+| 장소 검색 | `/api/places/search` | `GET` | `keyword` 쿼리 필수. 백엔드가 Naver Places를 프록시하고, 프론트는 `SearchedPlace` DTO를 그대로 사용합니다. |
 | 장소 추가 | `/api/categories/{categoryId}/places` | `POST` | `lat`/`lng`를 `latitude`/`longitude`로 매핑 후 전송. |
 | 장소 삭제 | `/api/categories/{categoryId}/places/{categoryPlaceId}` | `DELETE` | 삭제 실패 시 `BackendErrorCode.CATEGORY_PLACE_NOT_FOUND`. |
 | 장소 목록 조회 | `/api/categories/{categoryId}/places` | `GET` | 상세 관리 화면에서 직접 호출. |

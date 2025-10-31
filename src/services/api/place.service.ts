@@ -1,5 +1,5 @@
 import {apiClient} from '@/lib/axios';
-import type {KakaoPlace, Place} from '@/entities/types';
+import type {Place, SearchedPlace} from '@/entities/types';
 import type {ApiResponse} from '@/types/api';
 import {BackendErrorCode} from '@/shared/utils/error-message';
 import {toError, toSuccess} from './http';
@@ -15,8 +15,8 @@ export interface SearchPlacesRequest {
 
 // 장소 검색 응답 타입
 export interface SearchPlacesResponse {
-    searchedPlaces?: KakaoPlace[];  // 검색된 장소 목록
-    error?: string;                 // 에러 메시지
+    searchedPlaces?: SearchedPlace[];  // 검색된 장소 목록
+    error?: string;                    // 에러 메시지
 }
 
 type SearchPlacesApiResponse = {
@@ -121,24 +121,22 @@ export const placeApi = {
                 params: {keyword: data.keyword},
             });
 
-            // 백엔드 응답을 프론트엔드에서 사용하는 KakaoPlace 타입으로 변환 - 기존 인터페이스 호환성 유지
+            // 백엔드 응답을 프론트엔드 SearchedPlace 타입으로 정규화
             return {
                 searchedPlaces: response.data.searchedPlaces.map((place, index) => ({
-                    id: String(index),
-                    place_name: place.name,
-                    address_name: place.addressName,
-                    road_address_name: place.roadAddressName ?? '',
-                    phone: '',
-                    place_url: '',
-                    x: String(place.longitude),
-                    y: String(place.latitude),
+                    id: `${place.latitude}-${place.longitude}-${index}`,
+                    name: place.name,
+                    addressName: place.addressName,
+                    roadAddressName: place.roadAddressName ?? null,
+                    latitude: place.latitude,
+                    longitude: place.longitude,
                 })),
             };
         } catch (error) {
             // 검색 실패 시 에러 메시지 포맷팅하여 반환
             const apiError = toError(
                 error,
-                BackendErrorCode.KAKAO_PLACE_SEARCH_ERROR,
+                BackendErrorCode.NAVER_PLACE_SEARCH_ERROR,
                 '장소 검색에 실패했습니다.',
             );
             return {error: apiError.error?.message};
