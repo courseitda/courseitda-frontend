@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useRef} from 'react';
+import {useEffect, useMemo, useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {flushSync} from 'react-dom';
 import type {Category, Place} from '@/entities/types';
@@ -58,6 +58,7 @@ export const MapCanvas = ({workspaceId, workspaceIdentifier, categories, focused
     // 장소 ID를 키로 마커와 정보창 열기 함수를 저장 - 장소 클릭 시 InfoWindow 자동 표시에 사용
     const markerMapRef = useRef<Map<string, { marker: naver.maps.Marker; openInfoWindow: () => void }>>(new Map());
     const queryClient = useQueryClient();
+    const [mapReady, setMapReady] = useState(false);
 
     // 워크스페이스 변경 시 지도 초기화 플래그 리셋하여 새로운 경계값 적용
     useEffect(() => {
@@ -93,6 +94,7 @@ export const MapCanvas = ({workspaceId, workspaceIdentifier, categories, focused
 
         // Naver Maps 인스턴스 생성
         mapInstance.current = new naver.maps.Map(container, options);
+        setMapReady(true);
 
         // 지도 클릭 시 열려있는 정보창 닫기 - 사용자 경험 개선
         const handleMapClick = () => {
@@ -371,12 +373,12 @@ export const MapCanvas = ({workspaceId, workspaceIdentifier, categories, focused
             hasInitializedBounds.current = true;
             prevPlacesCountRef.current = currentPlacesCount;
         }
-    }, [ready, categories, placeEntries, queryClient, workspaceIdentifier]);
+    }, [ready, mapReady, categories, placeEntries, queryClient, workspaceIdentifier]);
 
     // 사용자가 장소 아이템 클릭 시 해당 장소로 지도를 부드럽게 이동하고 확대
     // UserRequest: 장소 목록 클릭 시 InfoWindow도 자동으로 표시
     useEffect(() => {
-        if (!ready || !mapInstance.current || !focusedPlace || !window.naver || !window.naver.maps) return;
+        if (!ready || !mapReady || !mapInstance.current || !focusedPlace || !window.naver || !window.naver.maps) return;
 
         const map = mapInstance.current;
         const {naver} = window;
@@ -398,7 +400,7 @@ export const MapCanvas = ({workspaceId, workspaceIdentifier, categories, focused
                 markerData.openInfoWindow();
             }, 350);
         }
-    }, [ready, focusedPlace]);
+    }, [ready, mapReady, focusedPlace]);
 
     if (error) {
         return (
@@ -408,13 +410,14 @@ export const MapCanvas = ({workspaceId, workspaceIdentifier, categories, focused
         );
     }
 
-    if (!ready) {
-        return (
-            <div className="h-full flex items-center justify-center">
-                <p className="text-muted-foreground">지도 로딩 중...</p>
-            </div>
-        );
-    }
-
-    return <div ref={mapRef} className="w-full h-full"/>;
+    return (
+        <div className="relative w-full h-full">
+            <div ref={mapRef} className="w-full h-full" />
+            {(!ready || !mapReady) && (
+                <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+                    <p className="text-muted-foreground">지도 로딩 중...</p>
+                </div>
+            )}
+        </div>
+    );
 };
