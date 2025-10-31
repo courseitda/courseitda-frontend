@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { authApi } from '@/services/api';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import type { User } from '@/entities/types';
+
+// UserRequest: ID 기반 사용자 조회 훅을 제거하여 /api/users/{userId} 호출을 노출하지 않는다.
 
 /**
  * 네비게이터(헤더)에 표시할 사용자 닉네임을 조회하는 커스텀 훅
@@ -141,47 +142,5 @@ export const useUserProfile = () => {
   }, [token]);
 
   return { nickname, email, loading, error };
-};
-
-/**
- * 사용자 ID를 기반으로 사용자 정보를 조회하는 커스텀 훅
- * @param userId 조회할 사용자 ID
- * 
- * 사용 위치: 특정 사용자 정보가 필요한 경우 (내부용)
- */
-export const useUserById = (userId: string | null) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    // userId가 없으면 조회하지 않음
-    if (!userId) {
-      setUser(null);
-      setLoading(false);
-      return;
-    }
-
-    // userId로 사용자 정보 조회
-    const fetchUser = async () => {
-      setLoading(true);
-      setError(null);
-
-      const response = await authApi.getUserById(userId);
-
-      if (!response.success || !response.data) {
-        setError(response.error?.message || '사용자 정보를 불러올 수 없습니다.');
-        setUser(null);
-      } else {
-        setUser(response.data.user);
-      }
-
-      setLoading(false);
-    };
-
-    fetchUser();
-  }, [userId]);
-
-  return { user, loading, error };
 };
 

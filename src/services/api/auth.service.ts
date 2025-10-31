@@ -1,5 +1,4 @@
 import { apiClient } from '@/lib/axios';
-import type { User } from '@/entities/types';
 import type { ApiResponse } from '@/types/api';
 import { BackendErrorCode } from '@/shared/utils/error-message';
 import { toSuccess, toError } from './http';
@@ -9,7 +8,6 @@ const LOGIN_ENDPOINT = '/api/auth/login';
 const REGISTER_ENDPOINT = '/api/members';
 const EMAIL_VALIDATION_ENDPOINT = '/api/members/validations/email';
 const NICKNAME_VALIDATION_ENDPOINT = '/api/members/validations/nickname';
-const USER_ENDPOINT = '/api/users';
 const NAVIGATOR_ENDPOINT = '/api/me/navigator';
 const DROPDOWN_ENDPOINT = '/api/me/dropdown';
 const PROFILE_ENDPOINT = '/api/me/profile';
@@ -68,13 +66,6 @@ export interface CheckNicknameDuplicateData {
 type NicknameDuplicateApiResponse = {
   isDuplicated: boolean;
 };
-
-// 사용자 정보 조회 응답 데이터 타입
-export interface UserInfoData {
-  user: User;
-}
-
-type UserInfoApiResponse = User;
 
 // 네비게이터 정보 조회 응답 데이터 타입 - 헤더 네비게이터용
 export interface NavigatorInfoData {
@@ -203,27 +194,7 @@ export const authApi = {
     }
   },
 
-  /**
-   * 사용자 ID로 사용자 정보 조회 API 호출
-   * @param userId 사용자 ID
-   * @returns API 응답 (성공 시 사용자 정보, 실패 시 에러 정보)
-   */
-  getUserById: async (userId: string): Promise<ApiResponse<UserInfoData>> => {
-    try {
-      const response = await apiClient.get<UserInfoApiResponse>(`${USER_ENDPOINT}/${userId}`);
-
-      return toSuccess<UserInfoData>({
-        user: response.data,
-      });
-    } catch (error) {
-      return toError(
-        error,
-        BackendErrorCode.MEMBER_NOT_FOUND,
-        '사용자 정보를 불러올 수 없습니다.'
-      );
-    }
-  },
-
+  // UserRequest: /api/users/{userId} 엔드포인트는 사용하지 않으므로 노출하지 않는다.
   /**
    * 네비게이터 정보 조회 API 호출 - 헤더 네비게이터에 표시할 닉네임
    * @param token 인증 토큰 (Authorization 헤더에 적용)
