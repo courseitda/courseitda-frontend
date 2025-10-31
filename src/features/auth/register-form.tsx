@@ -28,18 +28,15 @@ export const RegisterForm = () => {
   const [emailCheckLoading, setEmailCheckLoading] = useState(false);
   const [emailChecked, setEmailChecked] = useState(false);
 
-  // 비밀번호 보안 요구사항(8자 이상, 영문/숫자/특수문자 포함)을 실시간으로 검증
+  // 비밀번호 보안 요구사항(최소 길이만)을 실시간으로 검증
   const passwordValidation = useMemo(() => {
     return {
-      minLength: password.length >= 8,
-      hasLetter: /[a-zA-Z]/.test(password),
-      hasNumber: /[0-9]/.test(password),
-      hasSpecialChar: /[!@#$%^&*()_+\-=\\{};':"\\|,.<>/?]/.test(password),
+      minLength: password.length >= 6,
     };
   }, [password]);
 
   const passwordsMatch = password.length > 0 && confirmPassword.length > 0 && password === confirmPassword;
-  const isPasswordRequirementsMet = Object.values(passwordValidation).every(Boolean);
+  const isPasswordRequirementsMet = passwordValidation.minLength;
   const isPasswordValid = isPasswordRequirementsMet && passwordsMatch;
 
   // 비밀번호 입력 시 한글을 자동으로 제거하여 영문/숫자/특수문자만 입력 가능하도록 제한
@@ -316,37 +313,7 @@ export const RegisterForm = () => {
                 <X className="h-4 w-4 text-muted-foreground" />
               )}
               <span className={passwordValidation.minLength ? 'text-green-600' : 'text-muted-foreground'}>
-                최소 8자 이상
-              </span>
-            </div>
-            <div className="flex items-center gap-2 text-xs">
-              {passwordValidation.hasLetter ? (
-                <Check className="h-4 w-4 text-green-600" />
-              ) : (
-                <X className="h-4 w-4 text-muted-foreground" />
-              )}
-              <span className={passwordValidation.hasLetter ? 'text-green-600' : 'text-muted-foreground'}>
-                영문자(대소문자) 포함
-              </span>
-            </div>
-            <div className="flex items-center gap-2 text-xs">
-              {passwordValidation.hasNumber ? (
-                <Check className="h-4 w-4 text-green-600" />
-              ) : (
-                <X className="h-4 w-4 text-muted-foreground" />
-              )}
-              <span className={passwordValidation.hasNumber ? 'text-green-600' : 'text-muted-foreground'}>
-                숫자 포함
-              </span>
-            </div>
-            <div className="flex items-center gap-2 text-xs">
-              {passwordValidation.hasSpecialChar ? (
-                <Check className="h-4 w-4 text-green-600" />
-              ) : (
-                <X className="h-4 w-4 text-muted-foreground" />
-              )}
-              <span className={passwordValidation.hasSpecialChar ? 'text-green-600' : 'text-muted-foreground'}>
-                특수문자 포함
+                최소 6자 이상
               </span>
             </div>
           </div>
