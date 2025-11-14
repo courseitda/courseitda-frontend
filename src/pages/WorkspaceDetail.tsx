@@ -9,7 +9,7 @@ import { CategoryList } from '@/features/categories/category-list';
 import { MapCanvas } from '@/features/map/map-canvas';
 import { useSettingsStore } from '@/shared/stores/settings-store';
 import { toast } from 'sonner';
-import { ArrowLeft, ChevronDown, Check, Plus, LayoutGrid, User as UserIcon, Settings, LogOut } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Check, Plus, LayoutGrid, User as UserIcon, LogOut } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -209,10 +209,6 @@ const WorkspaceDetail = () => {
                   <DropdownMenuItem onClick={() => navigate('/workspaces')} className="gap-2">
                     <LayoutGrid className="w-4 h-4" />
                     워크스페이스
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/settings')} className="gap-2">
-                    <Settings className="w-4 h-4" />
-                    설정
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive gap-2">

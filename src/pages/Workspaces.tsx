@@ -30,7 +30,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useUserNickname, useUserDropdown } from '@/shared/hooks/use-user-info';
 import { useWorkspacesByOwner } from '@/shared/hooks/use-workspace';
-import { Plus, LogOut, Settings, Pencil, Trash2, Clock, User as UserIcon, LayoutGrid, MapPin } from 'lucide-react';
+import { Plus, LogOut, Pencil, Trash2, Clock, User as UserIcon, LayoutGrid, MapPin } from 'lucide-react';
 import logo from '@/assets/logo-no-background.png';
 import { CreateWorkspaceDialog } from '@/features/workspaces/create-workspace-dialog';
 import { EditWorkspaceDialog } from '@/features/workspaces/edit-workspace-dialog';
@@ -199,10 +199,6 @@ const Workspaces = () => {
                 <DropdownMenuItem onClick={() => navigate('/workspaces')} className="gap-2">
                   <LayoutGrid className="w-4 h-4" />
                   워크스페이스
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/settings')} className="gap-2">
-                  <Settings className="w-4 h-4" />
-                  설정
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive gap-2">

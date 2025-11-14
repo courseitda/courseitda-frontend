@@ -101,13 +101,6 @@ test.describe('고급 기능', () => {
     await expect(page.getByText('네이버 지도 설정이 완료되지 않았습니다. 관리자에게 문의해주세요.')).toHaveCount(0);
   });
 
-  test('설정 페이지에서 API 키 자동 관리 메시지를 확인할 수 있다', async ({ page }) => {
-    await page.goto('/settings');
-    await expect(
-      page.getByText('REST API 키는 백엔드에서 관리되고, JavaScript SDK용 Key ID는 환경 변수에서 자동으로 주입됩니다.')
-    ).toBeVisible();
-  });
-
   test('모바일 뷰에서 지도가 상단에 고정되고 카테고리가 스크롤 가능하다', async ({ page }) => {
     // 모바일 뷰포트 설정 (iPhone 13 크기)
     await page.setViewportSize({ width: 390, height: 844 });
