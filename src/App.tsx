@@ -7,7 +7,6 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Workspaces from "./pages/Workspaces";
 import WorkspaceDetail from "./pages/WorkspaceDetail";
-import Settings from "./pages/Settings";
 import MyPage from "./pages/MyPage";
 import NotFound from "./pages/NotFound";
 
@@ -27,7 +26,6 @@ const App = () => (
         <Route path="/auth" element={<Auth />} />
         <Route path="/workspaces" element={<Workspaces />} />
         <Route path="/workspace/:id" element={<WorkspaceDetail />} />
-        <Route path="/settings" element={<Settings />} />
         <Route path="/mypage" element={<MyPage />} />
         {/* 모든 커스텀 라우트는 catch-all 라우트 위에 정의 필요 */}
         <Route path="*" element={<NotFound />} />

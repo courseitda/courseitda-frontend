@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { MapPin, Calendar, Route, LogOut, User as UserIcon, LayoutGrid, Settings } from 'lucide-react';
+import { MapPin, Calendar, Route, LogOut, User as UserIcon, LayoutGrid } from 'lucide-react';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useUserDropdown, useUserNickname } from '@/shared/hooks/use-user-info';
 import logo from '@/assets/logo-no-background.png';
@@ -81,10 +81,6 @@ const Index = () => {
                   <DropdownMenuItem onClick={() => navigate('/workspaces')} className="gap-2">
                     <LayoutGrid className="w-4 h-4" />
                     워크스페이스
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/settings')} className="gap-2">
-                    <Settings className="w-4 h-4" />
-                    설정
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive gap-2">
