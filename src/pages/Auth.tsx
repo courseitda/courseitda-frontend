@@ -36,7 +36,7 @@ const Auth = () => {
             </div>
           </div>
           <h1 className="text-3xl font-bold">코스잇다</h1>
-          <p className="text-muted-foreground">당일 코스 플래닝을 시작해보세요</p>
+          <p className="text-muted-foreground">코스 계획을 시작해보세요 ☺️</p>
         </div>
 
         <Card className="border-border/50 shadow-lg">

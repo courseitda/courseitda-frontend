@@ -110,7 +110,7 @@ const Index = () => {
           <div className="space-y-4">
             <h1 className="text-5xl font-bold tracking-tight">코스잇다</h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              당일 일정을 쉽고 빠르게 계획하세요.
+              코스를 쉽고 빠르게 계획하세요.
               <br />
               카테고리별로 장소를 정리하고, 지도에서 한눈에 확인하세요.
             </p>
@@ -138,7 +138,7 @@ const Index = () => {
               <Calendar className="w-8 h-8 text-primary mb-4 mx-auto" />
               <h3 className="font-semibold mb-2">카테고리 관리</h3>
               <p className="text-sm text-muted-foreground">
-                점심, 카페, 산책 등 카테고리별로 장소를 체계적으로 정리
+                점심, 카페, 산책 등 <br />카테고리별로 장소를 체계적으로 정리
               </p>
             </div>
 
@@ -146,7 +146,7 @@ const Index = () => {
               <MapPin className="w-8 h-8 text-primary mb-4 mx-auto" />
               <h3 className="font-semibold mb-2">지도 시각화</h3>
               <p className="text-sm text-muted-foreground">
-                카테고리별 색상으로 장소를 지도에 표시하고 경로 확인
+                카테고리별 색상으로 <br />장소를 지도에 표시하고 경로 확인
               </p>
             </div>
 
@@ -154,7 +154,7 @@ const Index = () => {
               <Route className="w-8 h-8 text-primary mb-4 mx-auto" />
               <h3 className="font-semibold mb-2">경로 생성</h3>
               <p className="text-sm text-muted-foreground">
-                대표 장소를 선택하면 자동으로 이동 경로 생성
+                대표 장소를 선택하면 <br />자동으로 이동 경로 생성
               </p>
             </div>
           </div>
