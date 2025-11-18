@@ -37,6 +37,8 @@ declare global {
         fitBounds(bounds: LatLngBounds): void;
         panTo(latLng: LatLng): void;
         setZoom(zoom: number): void;
+        getZoom(): number;
+        morph(latLng: LatLng, zoom?: number): void;
       }
 
       // 마커 아이콘 커스터마이징 옵션 - HTML 콘텐츠와 앵커 위치 설정
@@ -57,6 +59,7 @@ declare global {
       class Marker {
         constructor(options: MarkerOptions);
         setMap(map: Map | null): void;
+        setPosition(position: LatLng): void;
       }
 
       // 커스텀 오버레이 생성 옵션 - 지도 위에 임의의 HTML 요소 배치 시 사용

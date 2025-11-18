@@ -9,6 +9,8 @@ import {toast} from 'sonner';
 import type {WorkspaceCategory} from '@/services/api/category.service';
 import {useQueryClient} from '@tanstack/react-query';
 import {PlaceInfoWindow} from './place-info-window';
+import {Button} from '@/components/ui/button';
+import {LocateFixed, Loader2} from 'lucide-react';
 
 // 지도 캔버스 컴포넌트 - Naver Maps SDK를 사용하여 장소 마커와 경로 표시
 // 사용 위치: pages/WorkspaceDetail
@@ -66,6 +68,8 @@ export const MapCanvas = ({
     const markerMapRef = useRef<Map<string, { marker: naver.maps.Marker; openInfoWindow: () => void }>>(new Map());
     const queryClient = useQueryClient();
     const [mapReady, setMapReady] = useState(false);
+    const userLocationMarkerRef = useRef<naver.maps.Marker | null>(null);
+    const [isLocating, setIsLocating] = useState(false);
 
     // 워크스페이스 변경 시 지도 초기화 플래그 리셋하여 새로운 경계값 적용
     useEffect(() => {
@@ -90,6 +94,15 @@ export const MapCanvas = ({
             window.clearTimeout(timeoutId);
         };
     }, [isFullscreen]);
+
+    useEffect(() => {
+        return () => {
+            if (userLocationMarkerRef.current) {
+                userLocationMarkerRef.current.setMap(null);
+                userLocationMarkerRef.current = null;
+            }
+        };
+    }, []);
 
     const placeEntries = useMemo(
         () =>
@@ -427,6 +440,81 @@ export const MapCanvas = ({
         }
     }, [ready, mapReady, focusedPlace]);
 
+    // UserRequest: 내 위치 버튼 클릭 시 현재 위치를 가져와 지도 중심으로 이동
+    const handleLocateMe = () => {
+        if (!navigator.geolocation) {
+            toast.error('이 브라우저에서는 위치 정보를 지원하지 않습니다.');
+            return;
+        }
+
+        if (!ready || !mapReady || !mapInstance.current || !window.naver || !window.naver.maps) {
+            toast.error('지도가 아직 준비되지 않았습니다.');
+            return;
+        }
+
+        setIsLocating(true);
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                setIsLocating(false);
+                const {latitude, longitude} = position.coords;
+                const {naver} = window;
+                const userLatLng = new naver.maps.LatLng(latitude, longitude);
+                const map = mapInstance.current!;
+
+                // UserRequest: 현재 위치에 파란 원형 마커를 그려 위치를 강조
+                if (!userLocationMarkerRef.current) {
+                    const marker = new naver.maps.Marker({
+                        position: userLatLng,
+                        map,
+                        icon: {
+                            content: `
+                <div style="
+                  width: 22px;
+                  height: 22px;
+                  border-radius: 50%;
+                  border: 3px solid #FFFFFF;
+                  background: #2563eb;
+                  box-shadow: 0 0 0 8px rgba(37, 99, 235, 0.25), 0 8px 18px rgba(15, 23, 42, 0.45);
+                "></div>
+              `,
+                            anchor: new naver.maps.Point(11, 11),
+                        },
+                        zIndex: 200,
+                    });
+                    userLocationMarkerRef.current = marker;
+                } else {
+                    userLocationMarkerRef.current.setPosition(userLatLng);
+                    userLocationMarkerRef.current.setMap(map);
+                }
+
+                const currentZoom = typeof map.getZoom === 'function' ? map.getZoom() : 13;
+                const targetZoom = Math.max(currentZoom, 15);
+                if (typeof map.morph === 'function') {
+                    map.morph(userLatLng, targetZoom);
+                } else {
+                    map.panTo(userLatLng);
+                    setTimeout(() => {
+                        if (map.getZoom() < targetZoom) {
+                            map.setZoom(targetZoom);
+                        }
+                    }, 280);
+                }
+            },
+            (geoError) => {
+                setIsLocating(false);
+                if (geoError.code === geoError.PERMISSION_DENIED) {
+                    toast.error('위치 권한이 거부되었습니다. 브라우저 설정을 확인해주세요.');
+                } else {
+                    toast.error('현재 위치를 가져오지 못했습니다. 다시 시도해주세요.');
+                }
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+            },
+        );
+    };
+
     if (error) {
         return (
             <div className="h-full flex items-center justify-center p-4">
@@ -443,6 +531,17 @@ export const MapCanvas = ({
                     <p className="text-muted-foreground">지도 로딩 중...</p>
                 </div>
             )}
+            <Button
+                type="button"
+                size="icon"
+                variant="secondary"
+                className="absolute bottom-4 right-4 rounded-full shadow-lg border border-border bg-background/90 backdrop-blur hover:bg-background focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary z-20 w-11 h-11"
+                onClick={handleLocateMe}
+                disabled={isLocating || !mapReady}
+                aria-label="내 위치로 이동"
+            >
+                {isLocating ? <Loader2 className="w-4 h-4 animate-spin" /> : <LocateFixed className="w-4 h-4" />}
+            </Button>
         </div>
     );
 };
