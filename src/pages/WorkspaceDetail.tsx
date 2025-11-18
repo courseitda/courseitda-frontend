@@ -9,7 +9,7 @@ import { CategoryList } from '@/features/categories/category-list';
 import { MapCanvas } from '@/features/map/map-canvas';
 import { useSettingsStore } from '@/shared/stores/settings-store';
 import { toast } from 'sonner';
-import { ArrowLeft, ChevronDown, Check, Plus, LayoutGrid, User as UserIcon, LogOut } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Check, Plus, LayoutGrid, User as UserIcon, LogOut, Maximize2, Minimize2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -334,16 +334,20 @@ const WorkspaceDetail = () => {
               className="rounded-xl overflow-hidden border border-border/50 shadow-lg bg-card shrink-0 transition-all duration-300 ease-out relative z-0 md:!h-full"
               style={{ height: mobileMapHeight, opacity: fullscreenActive ? 1 : isSheetExpanded ? 0 : 1 }}
             >
-              {/* UserRequest: 지도 전체 화면 토글 버튼을 지도 위에 배치 */}
+              {/* UserRequest: 지도 전체 화면 토글 버튼을 아이콘 형태로 배치 */}
               <div className="absolute top-3 right-3 z-20 flex gap-2 md:hidden">
                 <Button
-                  size="sm"
+                  size="icon"
                   variant="ghost"
-                  className="bg-background/70 text-foreground border border-transparent hover:bg-background/60 active:bg-background/50 focus-visible:outline-none focus-visible:ring-0"
+                  className="bg-background/70 text-foreground border border-transparent hover:bg-background/60 active:bg-background/50 focus-visible:outline-none focus-visible:ring-0 rounded-full"
                   onClick={() => setIsMapFullscreen((previous) => !previous)}
                   aria-label={isMapFullscreen ? '지도 일반 보기' : '지도 전체 화면 보기'}
                 >
-                  {isMapFullscreen ? '일반 보기' : '전체 화면'}
+                  {isMapFullscreen ? (
+                    <Minimize2 className="w-4 h-4" />
+                  ) : (
+                    <Maximize2 className="w-4 h-4" />
+                  )}
                 </Button>
               </div>
               {naverMapKeyId ? (
