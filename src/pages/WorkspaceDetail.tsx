@@ -42,6 +42,14 @@ const WorkspaceDetail = () => {
   const [isSheetExpanded, setIsSheetExpanded] = useState(false);
   const [isSheetDragging, setIsSheetDragging] = useState(false);
   const sheetDragStartY = useRef(0);
+  // UserRequest: 지도 전체 화면 토글 상태를 관리하여 카테고리 영역 대신 지도 집중 모드 제공
+  const [isMapFullscreen, setIsMapFullscreen] = useState(false);
+  // UserRequest: 전체 화면 토글은 모바일에서만 제공되므로 뷰포트 폭을 추적
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(max-width: 767px)').matches;
+  });
+  const headerHeight = '64px';
 
   // UserRequest: Step 4 — 워크스페이스 상세 데이터를 React Query로 가져와 캐싱
   const {
@@ -90,6 +98,36 @@ const WorkspaceDetail = () => {
       toast.error(categoriesError.message);
     }
   }, [categoriesError]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mediaQuery = window.matchMedia('(max-width: 767px)');
+    const handleChange = (event: MediaQueryListEvent | MediaQueryList) => {
+      setIsMobile(event.matches);
+    };
+
+    handleChange(mediaQuery);
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+
+    if (typeof mediaQuery.addListener === 'function') {
+      mediaQuery.addListener(handleChange);
+      return () => mediaQuery.removeListener(handleChange);
+    }
+
+    return undefined;
+  }, []);
+
+  useEffect(() => {
+    // UserRequest: 지도 전체 화면 진입 시 Bottom Sheet를 강제로 접어 이중 스크롤 방지
+    if (isMobile && isMapFullscreen && isSheetExpanded) {
+      setIsSheetExpanded(false);
+    }
+  }, [isMobile, isMapFullscreen, isSheetExpanded]);
+
 
   useEffect(() => {
     // UserRequest: 드래그 진행 중에는 전역 포인터 이벤트를 감지하여 Bottom Sheet 높이를 조정
@@ -168,12 +206,18 @@ const WorkspaceDetail = () => {
 
   // UserRequest: half-open / full-open 전환에 따라 지도와 Bottom Sheet 높이를 동적으로 계산
   const collapsedSheetHeight = '45vh';
-  const layoutTopPadding = '0.625rem'; // 컨테이너 py-2.5
+  const layoutTopPadding = '0.625rem'; // 컨테이너 py-2.5 (단일 방향)
+  const layoutVerticalPadding = '2rem'; // 상하 여백 합산 (전체 화면 시 하단 여백 확보)
   // UserRequest: full-open 시 카테고리 영역 상단을 기존 지도 영역과 동일한 위치까지 끌어올림
-  const mobileSheetHeight = isSheetExpanded ? `calc(100vh - 64px - ${layoutTopPadding})` : collapsedSheetHeight;
+  const fullscreenActive = isMobile && isMapFullscreen;
+  const mobileSheetHeight = isSheetExpanded ? `calc(100vh - ${headerHeight} - ${layoutTopPadding})` : collapsedSheetHeight;
   // UserRequest: 디폴트 상태의 지도·카테고리 간 간격을 기존의 절반으로 줄이기 위해 map height를 재계산
-  const collapsedMapHeight = `calc(((100vh - 64px) - ${collapsedSheetHeight} + ((100vh - 64px) * 0.45)) / 2)`;
-  const mobileMapHeight = isSheetExpanded ? '0px' : collapsedMapHeight;
+  const collapsedMapHeight = `calc(((100vh - ${headerHeight}) - ${collapsedSheetHeight} + ((100vh - ${headerHeight}) * 0.45)) / 2)`;
+  const mobileMapHeight = fullscreenActive
+    ? `calc(100vh - ${headerHeight} - ${layoutVerticalPadding})`
+    : isSheetExpanded
+      ? '0px'
+      : collapsedMapHeight;
 
   return (
     <div className="h-screen bg-gradient-card flex flex-col overflow-hidden">
@@ -287,15 +331,28 @@ const WorkspaceDetail = () => {
           <div className="h-full py-2.5 md:py-4 flex flex-col md:grid md:grid-cols-2 gap-2.5 md:gap-4">
             {/* 지도 영역 - Bottom Sheet 상태에 따라 높이 전환 */}
             <div
-              className="rounded-xl overflow-hidden border border-border/50 shadow-lg bg-card shrink-0 transition-all duration-300 ease-out md:!h-full relative z-0"
-              style={{ height: mobileMapHeight, opacity: isSheetExpanded ? 0 : 1 }}
+              className="rounded-xl overflow-hidden border border-border/50 shadow-lg bg-card shrink-0 transition-all duration-300 ease-out relative z-0 md:!h-full"
+              style={{ height: mobileMapHeight, opacity: fullscreenActive ? 1 : isSheetExpanded ? 0 : 1 }}
             >
+              {/* UserRequest: 지도 전체 화면 토글 버튼을 지도 위에 배치 */}
+              <div className="absolute top-3 right-3 z-20 flex gap-2 md:hidden">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="bg-background/70 text-foreground border border-transparent hover:bg-background/60 active:bg-background/50 focus-visible:outline-none focus-visible:ring-0"
+                  onClick={() => setIsMapFullscreen((previous) => !previous)}
+                  aria-label={isMapFullscreen ? '지도 일반 보기' : '지도 전체 화면 보기'}
+                >
+                  {isMapFullscreen ? '일반 보기' : '전체 화면'}
+                </Button>
+              </div>
               {naverMapKeyId ? (
                 <MapCanvas
                   workspaceId={workspace.id}
                   workspaceIdentifier={workspace.identifier}
                   categories={workspaceCategories ?? []}
                   focusedPlace={focusedPlace}
+                  isFullscreen={fullscreenActive}
                 />
               ) : (
                 <div className="h-full flex items-center justify-center p-6 text-center">
@@ -310,7 +367,13 @@ const WorkspaceDetail = () => {
 
             {/* 카테고리 영역 - 데스크톱에서는 기존 카드 유지 */}
             {/* UserRequest: 카테고리 영역 패딩을 0.5배로 축소하여 공간 효율성 향상 (p-8 → p-4) */}
-            <div className="hidden md:flex md:flex-col md:h-full md:min-h-0">
+            {/* UserRequest: 전체 화면에서도 카테고리 칼럼 폭은 유지하되 콘텐츠만 숨겨 지도 폭이 변하지 않도록 처리 */}
+            <div
+              className={`hidden md:flex md:flex-col md:h-full md:min-h-0 transition-opacity duration-300 ${
+                fullscreenActive ? 'md:opacity-0 md:pointer-events-none' : 'md:opacity-100'
+              }`}
+              aria-hidden={fullscreenActive}
+            >
               {/* UserRequest: 데스크톱에서도 사용자가 카테고리 목록을 드래그(스크롤)할 수 있도록 min-height 제약을 적용 */}
               <div className="flex-1 overflow-hidden">
                 <div className="h-full overflow-y-auto rounded-xl border border-border/50 bg-card p-4 min-h-0">
@@ -324,32 +387,34 @@ const WorkspaceDetail = () => {
         {/* Bottom Sheet - 모바일에서만 노출 */}
         {/* UserRequest: Bottom Sheet가 네이버 지도 로고/워터마크보다 위에 렌더되도록 z-index 보정 */}
         {/* UserRequest: 모바일에서는 시트가 화면 하단과 바로 맞닿도록 바깥 여백 제거 */}
-        <div className="md:hidden absolute inset-x-0 bottom-0 px-4 pb-0 pointer-events-none z-20">
-          <div
-            className="pointer-events-auto rounded-t-3xl border border-border/60 bg-card shadow-xl flex flex-col transition-[height,transform] duration-300 ease-out"
-            style={{ height: mobileSheetHeight }}
-          >
-            {/* UserRequest: 시각적으로 강조된 Grabber Handle 제공 */}
-            <div className="py-3 flex justify-center">
-              <div
-                className="w-20 h-2 rounded-full bg-muted-foreground/50 cursor-grab active:cursor-grabbing touch-none select-none"
-                role="button"
-                tabIndex={0}
-                aria-label="카테고리 패널 높이 조절"
-                onPointerDown={handleSheetDragStart}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    setIsSheetExpanded((previous) => !previous);
-                  }
-                }}
-              />
-            </div>
-            <div className="flex-1 overflow-y-auto px-4 pb-4">
-              {categoryListSection}
+        {!fullscreenActive && (
+          <div className="md:hidden absolute inset-x-0 bottom-0 px-4 pb-0 pointer-events-none z-20">
+            <div
+              className="pointer-events-auto rounded-t-3xl border border-border/60 bg-card shadow-xl flex flex-col transition-[height,transform] duration-300 ease-out"
+              style={{ height: mobileSheetHeight }}
+            >
+              {/* UserRequest: 시각적으로 강조된 Grabber Handle 제공 */}
+              <div className="py-3 flex justify-center">
+                <div
+                  className="w-20 h-2 rounded-full bg-muted-foreground/50 cursor-grab active:cursor-grabbing touch-none select-none"
+                  role="button"
+                  tabIndex={0}
+                  aria-label="카테고리 패널 높이 조절"
+                  onPointerDown={handleSheetDragStart}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      setIsSheetExpanded((previous) => !previous);
+                    }
+                  }}
+                />
+              </div>
+              <div className="flex-1 overflow-y-auto px-4 pb-4">
+                {categoryListSection}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </main>
 
       <CreateWorkspaceDialog 

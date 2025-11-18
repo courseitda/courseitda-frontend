@@ -42,10 +42,17 @@ interface MapCanvasProps {
     workspaceIdentifier: string;
     categories: WorkspaceCategory[];
     focusedPlace?: Place | null;
+    isFullscreen?: boolean;
 }
 
 // 지도 캔버스 컴포넌트 - Naver Maps SDK를 사용하여 장소 마커와 경로를 표시
-export const MapCanvas = ({workspaceId, workspaceIdentifier, categories, focusedPlace}: MapCanvasProps) => {
+export const MapCanvas = ({
+    workspaceId,
+    workspaceIdentifier,
+    categories,
+    focusedPlace,
+    isFullscreen = false,
+}: MapCanvasProps) => {
     const naverMapKeyId = useSettingsStore((state) => state.naverMapKeyId);
     const {ready, error} = useNaverLoader(naverMapKeyId);
     const mapRef = useRef<HTMLDivElement>(null);
@@ -65,6 +72,24 @@ export const MapCanvas = ({workspaceId, workspaceIdentifier, categories, focused
         hasInitializedBounds.current = false;
         prevPlacesCountRef.current = 0;
     }, [workspaceId]);
+
+    useEffect(() => {
+        // UserRequest: 전체 화면 모드 전환 시 지도 크기를 재조정하여 여백 없이 표시
+        if (!mapInstance.current || !window.naver || !window.naver.maps) return;
+        const {naver} = window;
+        const map = mapInstance.current;
+
+        const triggerResize = () => {
+            naver.maps.Event.trigger(map, 'resize');
+        };
+
+        triggerResize();
+        const timeoutId = window.setTimeout(triggerResize, 300);
+
+        return () => {
+            window.clearTimeout(timeoutId);
+        };
+    }, [isFullscreen]);
 
     const placeEntries = useMemo(
         () =>
