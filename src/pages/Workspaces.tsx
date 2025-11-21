@@ -72,6 +72,10 @@ const Workspaces = () => {
     isLoading: workspacesLoading,
     error: workspacesError,
   } = useWorkspacesByOwner(token);
+  // 최신 업데이트 순으로 정렬해 가장 최근 수정 워크스페이스를 우선 노출
+  const sortedWorkspaces = [...workspaces].sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+  );
 
   useEffect(() => {
     // UserRequest: Step 4 — 워크스페이스 목록 조회 실패 시 사용자에게 즉시 알림
@@ -223,7 +227,7 @@ const Workspaces = () => {
           </Button>
         </div>
 
-        {workspaces && workspaces.length === 0 ? (
+        {sortedWorkspaces && sortedWorkspaces.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-12">
               <p className="text-muted-foreground mb-4">아직 워크스페이스가 없습니다</p>
@@ -233,7 +237,7 @@ const Workspaces = () => {
         ) : (
           <div className="grid grid-cols-1 gap-2.5">
             {/* UserRequest: 워크스페이스 간격을 0.3배로 축소하여 공간 효율성 향상 (gap-8 → gap-2.5) */}
-            {workspaces?.map((workspace) => (
+            {sortedWorkspaces?.map((workspace) => (
               <ContextMenu key={workspace.id}>
                 <ContextMenuTrigger asChild>
                   <Card
@@ -300,7 +304,7 @@ const Workspaces = () => {
               </Button>
             </div>
 
-            {workspaces && workspaces.length === 0 ? (
+            {sortedWorkspaces && sortedWorkspaces.length === 0 ? (
               <Card className="border-dashed">
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <p className="text-muted-foreground mb-4">아직 워크스페이스가 없습니다</p>
@@ -310,7 +314,7 @@ const Workspaces = () => {
             ) : (
               <div className="space-y-2">
                 {/* UserRequest: 데스크톱 워크스페이스 간격을 space-y-2 (8px)로 설정하여 적절한 여백 제공 */}
-                {workspaces?.map((workspace) => (
+                {sortedWorkspaces?.map((workspace) => (
                   <ContextMenu key={workspace.id}>
                     <ContextMenuTrigger asChild>
                       <Card
