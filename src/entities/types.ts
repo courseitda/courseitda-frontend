@@ -44,7 +44,7 @@ export type Place = {
   roadAddressName: string | null; // 도로명 주소 (nullable)
   latitude: number; // 위도 (-90 ~ 90)
   longitude: number; // 경도 (-180 ~ 180)
-  placeUrl: string | null; // 장소 상세 URL (nullable)
+  placeUrl: string; // 장소 상세 URL
   createdAt: string; // Timestamp
   updatedAt: string; // Timestamp
 };
@@ -67,4 +67,5 @@ export type SearchedPlace = {
   roadAddressName: string | null;
   latitude: number;
   longitude: number;
+  placeUrl: string; // 검색 결과에서 제공되는 장소 상세 URL
 };

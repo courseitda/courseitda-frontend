@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { Place } from '@/entities/types';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MapPin, Trash2, Check, MoreHorizontal } from 'lucide-react';
+import { MapPin, Trash2, Check, MoreHorizontal, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 // API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
 import { placeApi, categoryApi } from '@/services/api';
@@ -77,6 +77,16 @@ export const PlaceItem = ({
     setMenuOpen(false);
   };
 
+  // UserRequest: 네이버 지도 바로가기 메뉴 추가 - placeUrl로 새 창을 열어 외부 지도를 확인
+  const handleOpenInMap = () => {
+    if (!place.placeUrl) {
+      toast.error('장소 링크가 없습니다.');
+      return;
+    }
+    window.open(place.placeUrl, '_blank', 'noopener,noreferrer');
+    setMenuOpen(false);
+  };
+
   const handleSetRepresentative = () => {
     if (toggleRepresentativeMutation.isPending) return;
     toggleRepresentativeMutation.mutate(!isRepresentative);
@@ -116,6 +126,13 @@ export const PlaceItem = ({
           className="w-36"
         >
           {/* UserRequest: 롱프레스 컨텍스트 메뉴처럼 대표 지정/삭제를 메뉴 내부로 이동 */}
+          <DropdownMenuItem
+            onSelect={() => handleOpenInMap()}
+            className="gap-2"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            지도 바로가기
+          </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => {
               handleSetRepresentative();

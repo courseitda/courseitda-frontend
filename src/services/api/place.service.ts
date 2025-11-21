@@ -22,6 +22,7 @@ export interface SearchPlacesResponse {
 type SearchPlacesApiResponse = {
     searchedPlaces: Array<{
         name: string;
+        url: string;
         roadAddressName: string | null;
         addressName: string;
         latitude: number;
@@ -32,6 +33,7 @@ type SearchPlacesApiResponse = {
 // 장소 추가 요청 파라미터 타입 - 백엔드 API 스펙과 일치
 export interface AddPlaceToCategoryRequest {
     name: string;
+    placeUrl: string;
     roadAddressName: string | null;
     addressName: string;
     lat: number;
@@ -40,6 +42,7 @@ export interface AddPlaceToCategoryRequest {
 
 type AddPlaceApiRequest = {
     name: string;
+    placeUrl: string;
     roadAddressName?: string | null;
     addressName: string;
     latitude: number;
@@ -51,6 +54,7 @@ export interface AddPlaceToCategoryData {
     id: string;              // 카테고리 장소 ID
     placeId: string;         // 장소 ID
     name: string;            // 장소 이름
+    placeUrl: string;        // 장소 상세 URL
     roadAddressName: string | null; // 도로명 주소
     addressName: string;     // 지번 주소
     latitude: number;        // 위도
@@ -61,6 +65,7 @@ type AddPlaceApiResponse = {
     id: number | string;
     placeId: number | string;
     name: string;
+    placeUrl: string;
     roadAddressName: string | null;
     addressName: string;
     latitude: number;
@@ -76,6 +81,7 @@ type CategoryPlacesApiResponse = {
     categoryPlaceResponses: Array<{
         id: number | string;
         name: string;
+        placeUrl: string;
         addressName: string;
         roadAddressName: string | null;
         latitude: number;
@@ -91,6 +97,7 @@ const fallbackTimestamp = () => new Date().toISOString();
 const adaptPlace = (payload: {
     id: number | string;
     name: string;
+    placeUrl: string | null;
     addressName: string;
     roadAddressName: string | null;
     latitude: number;
@@ -98,11 +105,11 @@ const adaptPlace = (payload: {
 }): Place => ({
     id: String(payload.id),
     name: payload.name,
+    placeUrl: payload.placeUrl ?? '',
     addressName: payload.addressName,
     roadAddressName: payload.roadAddressName,
     latitude: payload.latitude,
     longitude: payload.longitude,
-    placeUrl: null,
     createdAt: fallbackTimestamp(),
     updatedAt: fallbackTimestamp(),
 });
@@ -126,6 +133,7 @@ export const placeApi = {
                 searchedPlaces: response.data.searchedPlaces.map((place, index) => ({
                     id: `${place.latitude}-${place.longitude}-${index}`,
                     name: place.name,
+                    placeUrl: place.url,
                     addressName: place.addressName,
                     roadAddressName: place.roadAddressName ?? null,
                     latitude: place.latitude,
@@ -160,6 +168,8 @@ export const placeApi = {
         // 프론트엔드 요청 형식을 백엔드 API 스펙에 맞게 변환 - 좌표 필드명 통일(lat/lng -> latitude/longitude)
         const requestBody: AddPlaceApiRequest = {
             name: data.name,
+            // UserRequest: placeUrl 필수 필드 전달
+            placeUrl: data.placeUrl,
             roadAddressName: data.roadAddressName,
             addressName: data.addressName,
             latitude: data.lat,
@@ -179,6 +189,7 @@ export const placeApi = {
                 id: String(response.data.id),
                 placeId: String(response.data.placeId),
                 name: response.data.name,
+                placeUrl: response.data.placeUrl,
                 roadAddressName: response.data.roadAddressName,
                 addressName: response.data.addressName,
                 latitude: response.data.latitude,
@@ -235,6 +246,7 @@ export const placeApi = {
                 adaptPlace({
                     id: place.id,
                     name: place.name,
+                    placeUrl: place.placeUrl,
                     addressName: place.addressName,
                     roadAddressName: place.roadAddressName,
                     latitude: place.latitude,

@@ -97,6 +97,7 @@ export interface GetCategoryPlacesResponse {
   categoryPlaceResponses: Array<{
     id: string;
     name: string;
+    placeUrl: string;
     addressName: string;
     roadAddressName: string | null;
     latitude: number;
@@ -129,6 +130,7 @@ type CategoryListApiResponse = {
         id: number | string;
         placeId?: number | string | null;
         name: string;
+        placeUrl: string;
         addressName: string;
         roadAddressName: string | null;
         latitude: number;
@@ -143,6 +145,7 @@ type CategoryPlacesApiResponse = {
   categoryPlaceResponses: Array<{
     id: number | string;
     name: string;
+    placeUrl: string;
     addressName: string;
     roadAddressName: string | null;
     latitude: number;
@@ -180,6 +183,7 @@ const adaptCategory = (
 const adaptPlace = (payload: {
   id: number | string;
   name: string;
+  placeUrl: string | null;
   addressName: string;
   roadAddressName: string | null;
   latitude: number;
@@ -187,11 +191,11 @@ const adaptPlace = (payload: {
 }): Place => ({
   id: String(payload.id),
   name: payload.name,
+  placeUrl: payload.placeUrl ?? '',
   addressName: payload.addressName,
   roadAddressName: payload.roadAddressName,
   latitude: payload.latitude,
   longitude: payload.longitude,
-  placeUrl: null,
   createdAt: fallbackTimestamp(),
   updatedAt: fallbackTimestamp(),
 });
@@ -391,6 +395,7 @@ export const categoryApi = {
             place: adaptPlace({
               id: place.placeId ?? place.id,
               name: place.name,
+              placeUrl: place.placeUrl,
               addressName: place.addressName,
               roadAddressName: place.roadAddressName,
               latitude: place.latitude,
@@ -435,6 +440,7 @@ export const categoryApi = {
         categoryPlaceResponses: response.data.categoryPlaceResponses.map((place) => ({
           id: String(place.id),
           name: place.name,
+          placeUrl: place.placeUrl,
           addressName: place.addressName,
           roadAddressName: place.roadAddressName,
           latitude: place.latitude,
@@ -472,6 +478,7 @@ export const categoryApi = {
           adaptPlace({
             id: place.id,
             name: place.name,
+            placeUrl: place.placeUrl,
             addressName: place.addressName,
             roadAddressName: place.roadAddressName,
             latitude: place.latitude,

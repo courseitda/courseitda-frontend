@@ -76,6 +76,7 @@ export const PlaceSearchDialog = ({
 
       const response = await placeApi.addToCategory(token, categoryId, {
         name: place.name,
+        placeUrl: place.placeUrl,
         roadAddressName: place.roadAddressName,
         addressName: place.addressName,
         lat: place.latitude,
