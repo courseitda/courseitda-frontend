@@ -618,9 +618,9 @@ const Workspaces = () => {
             </DialogHeader>
             <div className="space-y-4">
               {/* UserRequest: 지도 영역은 임시 영역으로 마련 (실제 Naver Maps 연동 시 대체 필요) */}
-              <div className="w-full h-52 rounded-lg border border-dashed border-border bg-muted/40 flex items-center justify-center text-sm text-muted-foreground">
-                지도 영역 (임시)
-              </div>
+            <div className="w-full h-96 rounded-lg border border-dashed border-border bg-muted/40 flex items-center justify-center text-sm text-muted-foreground">
+              지도 영역 (임시)
+            </div>
               <div className="space-y-2">
                 <p className="text-sm font-semibold">장소 목록</p>
                 <div className="border border-border rounded-lg divide-y divide-border">
