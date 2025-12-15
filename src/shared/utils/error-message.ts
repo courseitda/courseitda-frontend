@@ -13,6 +13,7 @@ export const BackendErrorCode = {
   WORKSPACE_NOT_FOUND: '2003',
   DUPLICATE_WORKSPACE_TITLE: '2004',
   WORKSPACE_TITLE_LENGTH_EXCEEDED: '2005',
+  WORKSPACE_LAST_ACTIVITY_AT_NULL: '2006',
   CATEGORY_NAME_EMPTY: '3001',
   CATEGORY_COLOR_EMPTY: '3002',
   DUPLICATE_CATEGORY_ORDER_IN_REQUEST: '3003',
@@ -38,6 +39,8 @@ export const BackendErrorCode = {
   MEMBER_NOT_FOUND_BY_EMAIL: '5006',
   DUPLICATE_EMAIL: '5007',
   DUPLICATE_NICKNAME: '5008',
+  MEMBER_PASSWORD_EMPTY: '5009',
+  INVALID_PASSWORD_LENGTH: '5010',
   PLACE_SEARCH_KEYWORD_EMPTY: '6001',
   INVALID_PLACE_SEARCH_SIZE: '6002',
   SEARCHED_PLACE_NAME_EMPTY: '6003',
@@ -50,6 +53,7 @@ export const BackendErrorCode = {
   NAVER_PLACE_SEARCH_RESPONSE_NULL: '6010',
   NAVER_PLACE_SEARCH_STATUS_CHECK_ERROR: '6011',
   NAVER_PLACE_SEARCH_ERROR: '6012',
+  SEARCHED_PLACE_URL_EMPTY: '6013',
 } as const;
 
 export type BackendErrorCodeValue =
@@ -92,6 +96,9 @@ const ERROR_MESSAGES: ErrorMessageMap = {
   // WORKSPACE_TITLE_LENGTH_EXCEEDED
   [BackendErrorCode.WORKSPACE_TITLE_LENGTH_EXCEEDED]:
     '워크스페이스 제목은 20자 이하이어야 합니다.',
+  // WORKSPACE_LAST_ACTIVITY_AT_NULL
+  [BackendErrorCode.WORKSPACE_LAST_ACTIVITY_AT_NULL]:
+    '워크스페이스의 마지막 활동 시간을 확인할 수 없습니다.',
 
   // 3000 Series: Category Errors
   // CATEGORY_NAME_EMPTY
@@ -162,6 +169,11 @@ const ERROR_MESSAGES: ErrorMessageMap = {
   [BackendErrorCode.DUPLICATE_EMAIL]: '이미 사용 중인 이메일입니다.',
   // DUPLICATE_NICKNAME
   [BackendErrorCode.DUPLICATE_NICKNAME]: '이미 사용 중인 닉네임입니다.',
+  // MEMBER_PASSWORD_EMPTY
+  [BackendErrorCode.MEMBER_PASSWORD_EMPTY]: '비밀번호를 입력해주세요.',
+  // INVALID_PASSWORD_LENGTH
+  [BackendErrorCode.INVALID_PASSWORD_LENGTH]:
+    '비밀번호는 6자 이상 20자 이하여야 합니다.',
 
   // 6000 Series: Place Search Errors
   // PLACE_SEARCH_KEYWORD_EMPTY
@@ -199,6 +211,9 @@ const ERROR_MESSAGES: ErrorMessageMap = {
   // NAVER_PLACE_SEARCH_ERROR
   [BackendErrorCode.NAVER_PLACE_SEARCH_ERROR]:
     '장소 검색 API 호출 중 오류가 발생했습니다.',
+  // SEARCHED_PLACE_URL_EMPTY
+  [BackendErrorCode.SEARCHED_PLACE_URL_EMPTY]:
+    '검색된 장소의 URL이 비어 있습니다.',
 };
 
 export const DEFAULT_ERROR_MESSAGE = '요청 처리 중 오류가 발생했습니다.';
