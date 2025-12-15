@@ -28,6 +28,16 @@ export const RegisterForm = () => {
   const [emailCheckLoading, setEmailCheckLoading] = useState(false);
   const [emailChecked, setEmailChecked] = useState(false);
 
+  // 닉네임 길이 요구사항을 실시간으로 검증 (비밀번호 검증과 동일한 방식)
+  const nicknameValidation = useMemo(() => {
+    return {
+      minLength: nickname.length >= 2,
+      maxLength: nickname.length <= 20,
+    };
+  }, [nickname]);
+
+  const isNicknameLengthValid = nicknameValidation.minLength && nicknameValidation.maxLength;
+
   // 비밀번호 보안 요구사항(최소 6자, 최대 20자)을 실시간으로 검증
   const passwordValidation = useMemo(() => {
     return {
@@ -64,14 +74,13 @@ export const RegisterForm = () => {
 
   // 닉네임 중복 확인을 API 서비스 레이어를 통해 검증
   const handleNicknameCheck = async () => {
-    // 최소 길이 검증 - 2자 미만은 서버 요청 없이 클라이언트에서 차단
-    if (nickname.length < 2) {
-      setNicknameError('닉네임은 2자 이상 입력해주세요');
+    // 길이가 유효하지 않으면 중복 확인 생략 (실시간 검증으로 이미 표시됨)
+    if (!isNicknameLengthValid) {
       return;
     }
 
     setNicknameCheckLoading(true);
-    
+
     // API 서비스 레이어를 통해 닉네임 중복 확인 (백엔드 연동 시 authApi만 수정)
     const response = await authApi.checkNicknameDuplicate(nickname);
     
@@ -223,18 +232,48 @@ export const RegisterForm = () => {
           <button
             type="button"
             onClick={handleNicknameCheck}
-            disabled={nicknameCheckLoading || nickname.length < 2}
+            disabled={nicknameCheckLoading || !isNicknameLengthValid}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-xs bg-primary text-primary-foreground px-3 py-1 rounded hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {nicknameCheckLoading ? '확인 중...' : '확인'}
           </button>
         </div>
+
+        {/* 닉네임 길이 검증 - 실시간 피드백 (비밀번호 검증과 동일한 방식) */}
+        {nickname && !isNicknameLengthValid && (
+          <div className="rounded-md border p-3 bg-muted/50">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2 text-xs">
+                {nicknameValidation.minLength ? (
+                  <Check className="h-4 w-4 text-green-600" />
+                ) : (
+                  <X className="h-4 w-4 text-muted-foreground" />
+                )}
+                <span className={nicknameValidation.minLength ? 'text-green-600' : 'text-muted-foreground'}>
+                  최소 2자 이상
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                {nicknameValidation.maxLength ? (
+                  <Check className="h-4 w-4 text-green-600" />
+                ) : (
+                  <X className="h-4 w-4 text-muted-foreground" />
+                )}
+                <span className={nicknameValidation.maxLength ? 'text-green-600' : 'text-muted-foreground'}>
+                  최대 20자 이하
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 중복 확인 결과 메시지 */}
         {nicknameError && (
           <p className="text-xs text-destructive flex items-center gap-1">
             ✗ {nicknameError}
           </p>
         )}
-        {nicknameChecked && !nicknameError && (
+        {nicknameChecked && !nicknameError && isNicknameLengthValid && (
           <p className="text-xs text-green-600 flex items-center gap-1">
             ✓ 사용 가능한 닉네임입니다
           </p>
