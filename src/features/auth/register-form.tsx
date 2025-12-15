@@ -28,15 +28,16 @@ export const RegisterForm = () => {
   const [emailCheckLoading, setEmailCheckLoading] = useState(false);
   const [emailChecked, setEmailChecked] = useState(false);
 
-  // 비밀번호 보안 요구사항(최소 길이만)을 실시간으로 검증
+  // 비밀번호 보안 요구사항(최소 6자, 최대 20자)을 실시간으로 검증
   const passwordValidation = useMemo(() => {
     return {
       minLength: password.length >= 6,
+      maxLength: password.length <= 20,
     };
   }, [password]);
 
   const passwordsMatch = password.length > 0 && confirmPassword.length > 0 && password === confirmPassword;
-  const isPasswordRequirementsMet = passwordValidation.minLength;
+  const isPasswordRequirementsMet = passwordValidation.minLength && passwordValidation.maxLength;
   const isPasswordValid = isPasswordRequirementsMet && passwordsMatch;
 
   // 비밀번호 입력 시 한글을 자동으로 제거하여 영문/숫자/특수문자만 입력 가능하도록 제한
@@ -314,6 +315,16 @@ export const RegisterForm = () => {
               )}
               <span className={passwordValidation.minLength ? 'text-green-600' : 'text-muted-foreground'}>
                 최소 6자 이상
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              {passwordValidation.maxLength ? (
+                <Check className="h-4 w-4 text-green-600" />
+              ) : (
+                <X className="h-4 w-4 text-muted-foreground" />
+              )}
+              <span className={passwordValidation.maxLength ? 'text-green-600' : 'text-muted-foreground'}>
+                최대 20자 이하
               </span>
             </div>
           </div>
