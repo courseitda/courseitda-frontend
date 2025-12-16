@@ -32,7 +32,7 @@ const Auth = () => {
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-2 mb-4">
             <div className="w-12 h-12 rounded-2xl bg-gradient-primary flex items-center justify-center">
-              <MapPin className="w-6 h-6 text-white" />
+              <MapPin className="w-6 h-6 text-primary-foreground" />
             </div>
           </div>
           <h1 className="text-3xl font-bold">코스잇다</h1>

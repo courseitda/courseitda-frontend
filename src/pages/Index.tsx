@@ -41,7 +41,7 @@ const Index = () => {
         <div className="max-w-4xl mx-auto text-center space-y-8">
           <div className="flex items-center justify-center gap-2 mb-8">
             <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-glow">
-              <MapPin className="w-8 h-8 text-white" />
+              <MapPin className="w-8 h-8 text-primary-foreground" />
             </div>
           </div>
 
