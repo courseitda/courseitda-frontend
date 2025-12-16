@@ -222,10 +222,10 @@ const SearchResult = () => {
                       className={`relative h-11 w-11 rounded-full flex items-center justify-center transition-transform duration-150 hover:scale-105 active:scale-90 focus:outline-none ${likePulse[category.id] ? 'scale-110' : ''}`}
                     >
                       {likePulse[category.id] && (
-                        <span className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+                        <span className="absolute inset-0 rounded-full like-heart-ping animate-ping" />
                       )}
                       <Heart
-                        className={`w-7 h-7 ${isAuthenticated ? 'text-primary' : 'text-muted-foreground'} transition-transform duration-150 ${likePulse[category.id] ? 'scale-110' : ''}`}
+                        className={`w-7 h-7 ${isAuthenticated ? 'like-heart' : 'text-muted-foreground'} transition-transform duration-150 ${likePulse[category.id] ? 'scale-110' : ''}`}
                         fill={isAuthenticated && category.liked ? 'currentColor' : 'none'}
                         strokeWidth={isAuthenticated && category.liked ? 0 : 1.5}
                       />

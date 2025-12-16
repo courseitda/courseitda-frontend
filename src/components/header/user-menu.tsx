@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useUserDropdown, useUserNickname } from '@/shared/hooks/use-user-info';
 import { useNavigate } from 'react-router-dom';
-import { Archive, LogOut, User as UserIcon } from 'lucide-react';
+import { Folder, LayoutGrid, LogOut, User as UserIcon } from 'lucide-react';
 
 const UserMenu = () => {
   const navigate = useNavigate();
@@ -59,8 +59,13 @@ const UserMenu = () => {
           마이페이지
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => navigate('/workspaces')} className="gap-2">
-          <Archive className="w-4 h-4" />
-          내 보관함
+          <LayoutGrid className="w-4 h-4" />
+          내 워크스페이스
+        </DropdownMenuItem>
+        {/* UserRequest: 내 카테고리 메뉴를 사용자 드롭다운에 추가해 별도 페이지로 이동 */}
+        <DropdownMenuItem onClick={() => navigate('/my-category')} className="gap-2">
+          <Folder className="w-4 h-4" />
+          내 카테고리
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive gap-2">
