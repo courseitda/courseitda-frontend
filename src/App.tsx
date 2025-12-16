@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Workspaces from "./pages/Workspaces";
 import WorkspaceDetail from "./pages/WorkspaceDetail";
+import MyCategory from "./pages/MyCategory";
 import MyPage from "./pages/MyPage";
 import NotFound from "./pages/NotFound";
 import Community from "./pages/Community";
@@ -29,6 +30,7 @@ const App = () => (
         <Route path="/community" element={<Community />} />
         <Route path="/community/search" element={<SearchResult />} />
         <Route path="/workspaces" element={<Workspaces />} />
+        <Route path="/my-category" element={<MyCategory />} />
         <Route path="/workspace/:id" element={<WorkspaceDetail />} />
         <Route path="/mypage" element={<MyPage />} />
         {/* 모든 커스텀 라우트는 catch-all 라우트 위에 정의 필요 */}
