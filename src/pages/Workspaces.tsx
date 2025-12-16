@@ -19,24 +19,14 @@ import {
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { useUserNickname, useUserDropdown } from '@/shared/hooks/use-user-info';
 import { useWorkspacesByOwner } from '@/shared/hooks/use-workspace';
-import { Plus, LogOut, Pencil, Trash2, Clock, User as UserIcon, LayoutGrid, Folder, Heart, Archive, ArrowLeft } from 'lucide-react';
+import { Plus, Pencil, Trash2, Clock, LayoutGrid, Folder, Heart, ArrowLeft } from 'lucide-react';
 import { CreateWorkspaceDialog } from '@/features/workspaces/create-workspace-dialog';
 import { EditWorkspaceDialog } from '@/features/workspaces/edit-workspace-dialog';
 import { toast } from 'sonner';
@@ -46,6 +36,7 @@ import { workspaceApi } from '@/services/api';
 import type { Workspace } from '@/entities/types';
 import { Spinner } from '@/components/ui/spinner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import UserMenu from '@/components/header/user-menu';
 
 /**
  * 워크스페이스 목록 페이지 컴포넌트
@@ -54,9 +45,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
  */
 const Workspaces = () => {
   const navigate = useNavigate();
-  const { logout, isAuthenticated } = useAuthStore();
-  const { nickname: navNickname } = useUserNickname(); // 네비게이터용 닉네임
-  const { nickname: dropdownNickname, email } = useUserDropdown(); // 드롭다운용 닉네임 + 이메일
+  const { isAuthenticated } = useAuthStore();
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [selectedForEdit, setSelectedForEdit] = useState<Workspace | null>(null);
@@ -159,12 +148,6 @@ const Workspaces = () => {
     },
   });
 
-  // 로그아웃 처리 후 인증 상태 초기화 및 랜딩 페이지로 이동
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
-
   // 워크스페이스 선택 - identifier 기반으로 상세 페이지 이동
   const handleSelectWorkspace = (identifier: string) => {
     navigate(`/workspace/${identifier}`);
@@ -239,47 +222,12 @@ const Workspaces = () => {
                 <h1 className="text-lg font-semibold">내 보관함</h1>
               </div>
 
-              <div className="flex items-center">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="gap-2 h-10">
-                      <Avatar className="w-8 h-8">
-                        <AvatarFallback className="bg-primary text-primary-foreground">
-                          <UserIcon className="w-4 h-4" />
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="hidden sm:inline font-medium">{navNickname}</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuLabel className="font-normal">
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">{dropdownNickname}</p>
-                        <p className="text-xs leading-none text-muted-foreground">
-                          {email}
-                        </p>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => navigate('/mypage')} className="gap-2">
-                      <UserIcon className="w-4 h-4" />
-                      마이페이지
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/workspaces')} className="gap-2">
-                      <Archive className="w-4 h-4" />
-                      내 보관함
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive gap-2">
-                      <LogOut className="w-4 h-4" />
-                      로그아웃
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+            <div className="flex items-center">
+              <UserMenu />
             </div>
           </div>
-        </header>
+        </div>
+      </header>
 
         {/* 모바일 레이아웃 */}
         {/* UserRequest: 모바일 뷰 좌우 여백을 0.5배로 축소하여 다른 페이지와 통일성 유지 (px-8 → px-4) */}

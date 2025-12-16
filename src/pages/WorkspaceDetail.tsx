@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { useUserNickname, useUserDropdown } from '@/shared/hooks/use-user-info';
 import { useWorkspace, useWorkspacesByOwner } from '@/shared/hooks/use-workspace';
 import { useWorkspaceCategories } from '@/shared/hooks/use-categories';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,7 @@ import { CategoryList } from '@/features/categories/category-list';
 import { MapCanvas } from '@/features/map/map-canvas';
 import { useSettingsStore } from '@/shared/stores/settings-store';
 import { toast } from 'sonner';
-import { ArrowLeft, ChevronDown, Check, Plus, LayoutGrid, User as UserIcon, LogOut, Maximize2, Minimize2 } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Check, Plus, Maximize2, Minimize2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,10 +17,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { CreateWorkspaceDialog } from '@/features/workspaces/create-workspace-dialog';
 import type { Place } from '@/entities/types';
 import { Spinner } from '@/components/ui/spinner';
+import UserMenu from '@/components/header/user-menu';
 
 /**
  * 워크스페이스 상세 페이지 - 카테고리 관리 및 지도 표시
@@ -32,9 +31,6 @@ const WorkspaceDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
-  const { nickname: navNickname } = useUserNickname(); // 네비게이터용 닉네임
-  const { nickname: dropdownNickname, email } = useUserDropdown(); // 드롭다운용 닉네임 + 이메일
-  const logout = useAuthStore((state) => state.logout);
   const naverMapKeyId = useSettingsStore((state) => state.naverMapKeyId);
   const [focusedPlace, setFocusedPlace] = useState<Place | null>(null);
   const [createWorkspaceOpen, setCreateWorkspaceOpen] = useState(false);
@@ -113,10 +109,10 @@ const WorkspaceDetail = () => {
       return () => mediaQuery.removeEventListener('change', handleChange);
     }
 
-    if (typeof mediaQuery.addListener === 'function') {
-      mediaQuery.addListener(handleChange);
-      return () => mediaQuery.removeListener(handleChange);
-    }
+    mediaQuery.onchange = handleChange as (this: MediaQueryList, ev: MediaQueryListEvent) => unknown;
+    return () => {
+      mediaQuery.onchange = null;
+    };
 
     return undefined;
   }, []);
@@ -171,11 +167,6 @@ const WorkspaceDetail = () => {
   };
 
   // 로그아웃 처리 후 인증 상태 초기화 및 랜딩 페이지로 이동
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
-
   // 데이터 로딩 중에는 스피너를 표시하여 진행 상황 안내
   if (workspaceLoading || workspacesLoading || categoriesLoading) {
     return (
@@ -283,42 +274,7 @@ const WorkspaceDetail = () => {
             
             {/* 우측: 프로필 메뉴 */}
             <div className="flex items-center">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="gap-2 h-10">
-                    <Avatar className="w-8 h-8">
-                      <AvatarFallback className="bg-primary text-primary-foreground">
-                        <UserIcon className="w-4 h-4" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="hidden sm:inline font-medium">{navNickname}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{dropdownNickname}</p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {email}
-                    </p>
-                  </div>
-                </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate('/mypage')} className="gap-2">
-                    <UserIcon className="w-4 h-4" />
-                    마이페이지
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/workspaces')} className="gap-2">
-                    <LayoutGrid className="w-4 h-4" />
-                    워크스페이스
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive gap-2">
-                    <LogOut className="w-4 h-4" />
-                    로그아웃
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <UserMenu />
             </div>
           </div>
         </div>
