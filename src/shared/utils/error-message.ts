@@ -54,6 +54,10 @@ export const BackendErrorCode = {
   NAVER_PLACE_SEARCH_STATUS_CHECK_ERROR: '6011',
   NAVER_PLACE_SEARCH_ERROR: '6012',
   SEARCHED_PLACE_URL_EMPTY: '6013',
+
+  // 7000 Series: Community / MyStorage Errors
+  SHARED_SAVED_CATEGORY_NOT_FOUND: '7001',
+  SAVED_CATEGORY_NOT_FOUND: '7002',
 } as const;
 
 export type BackendErrorCodeValue =
@@ -214,6 +218,14 @@ const ERROR_MESSAGES: ErrorMessageMap = {
   // SEARCHED_PLACE_URL_EMPTY
   [BackendErrorCode.SEARCHED_PLACE_URL_EMPTY]:
     '검색된 장소의 URL이 비어 있습니다.',
+
+  // 7000 Series: Community / MyStorage Errors
+  // SHARED_SAVED_CATEGORY_NOT_FOUND
+  [BackendErrorCode.SHARED_SAVED_CATEGORY_NOT_FOUND]:
+    '존재하지 않는 공유 카테고리입니다.',
+  // SAVED_CATEGORY_NOT_FOUND
+  [BackendErrorCode.SAVED_CATEGORY_NOT_FOUND]:
+    '존재하지 않는 보관 카테고리입니다.',
 };
 
 export const DEFAULT_ERROR_MESSAGE = '요청 처리 중 오류가 발생했습니다.';

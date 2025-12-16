@@ -13,6 +13,9 @@ import { Plus, Folder, Heart, ArrowLeft, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import UserMenu from '@/components/header/user-menu';
+import { Spinner } from '@/components/ui/spinner';
+import { useMySavedCategories } from '@/shared/hooks/use-my-storage';
+import type { SavedCategory } from '@/entities/types';
 
 /**
  * 내 카테고리 페이지 컴포넌트
@@ -21,18 +24,18 @@ import UserMenu from '@/components/header/user-menu';
  */
 const MyCategory = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, token } = useAuthStore();
   // UserRequest: 내 카테고리 페이지에서는 카테고리/찜 탭만 제공하고 카테고리 탭을 기본값으로 설정
   const [activeSection, setActiveSection] = useState<'categories' | 'liked'>('categories');
   const [categoryDetailOpen, setCategoryDetailOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<{
-    id: string;
-    title: string;
-    color: string;
-    updatedAt: string;
-    placeCount: number;
-    places: { id: string; name: string; address: string }[];
-  } | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<SavedCategory | null>(null);
+
+  // UserRequest: 내 카테고리 목록은 service 계층 API + React Query로 로딩 (컴포넌트 내부 mock 제거)
+  const {
+    data: savedCategories = [],
+    isLoading: savedCategoriesLoading,
+    error: savedCategoriesError,
+  } = useMySavedCategories(token);
 
   // 미인증 사용자 접근 차단 - 로그인 페이지로 리다이렉트하여 보안 유지
   useEffect(() => {
@@ -41,50 +44,41 @@ const MyCategory = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  // 임시 데이터: 카테고리 API 연동 후 실제 데이터로 대체 필요
-  const mockCategories = [
-    {
-      id: 'cat-1',
-      title: '점심 맛집',
-      color: '#4F46E5',
-      updatedAt: new Date().toISOString(),
-      placeCount: 12,
-      places: [
-        { id: 'p-1', name: '봉추찜닭 강남점', address: '서울시 강남구 테헤란로 123' },
-        { id: 'p-2', name: '멘야하나비', address: '서울시 강남구 역삼로 45' },
-      ],
-    },
-    {
-      id: 'cat-2',
-      title: '카페 탐방',
-      color: '#10B981',
-      updatedAt: new Date().toISOString(),
-      placeCount: 8,
-      places: [
-        { id: 'p-3', name: '어니언 안국', address: '서울시 종로구 율곡로 83' },
-        { id: 'p-4', name: '펠트 한남', address: '서울시 용산구 대사관로 35' },
-      ],
-    },
-    {
-      id: 'cat-3',
-      title: '산책 코스',
-      color: '#F59E0B',
-      updatedAt: new Date().toISOString(),
-      placeCount: 5,
-      places: [
-        { id: 'p-5', name: '서울숲', address: '서울시 성동구 뚝섬로 273' },
-        { id: 'p-6', name: '반포 한강공원', address: '서울시 서초구 신반포로 11길 40' },
-      ],
-    },
-  ];
-
   // UserRequest: 카테고리 카드 클릭 시 상세 팝업을 표시하여 이름/지도(임시)/장소 목록을 보여줌
   const handleOpenCategory = (categoryId: string) => {
-    const target = mockCategories.find((category) => category.id === categoryId);
+    const target = savedCategories.find((category) => category.id === categoryId);
     if (!target) return;
     setSelectedCategory(target);
     setCategoryDetailOpen(true);
   };
+
+  useEffect(() => {
+    // UserRequest: 내 카테고리 목록 조회 실패 시 사용자에게 즉시 알림
+    if (savedCategoriesError) {
+      toast.error(savedCategoriesError.message);
+    }
+  }, [savedCategoriesError]);
+
+  if (savedCategoriesLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Spinner className="w-8 h-8" />
+      </div>
+    );
+  }
+
+  if (savedCategoriesError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <p className="text-sm text-muted-foreground">내 카테고리를 불러오지 못했습니다.</p>
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            새로고침
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
       <div className="min-h-screen bg-gradient-card">
@@ -146,7 +140,7 @@ const MyCategory = () => {
                 </CardHeader>
               </Card>
 
-              {mockCategories.map((category) => (
+              {savedCategories.map((category) => (
                   <Card
                       key={category.id}
                       className="hover-lift cursor-pointer"
@@ -221,7 +215,7 @@ const MyCategory = () => {
                     </CardHeader>
                   </Card>
 
-                  {mockCategories.map((category) => (
+                  {savedCategories.map((category) => (
                       <Card
                           key={category.id}
                           className="hover-lift cursor-pointer"
@@ -281,7 +275,7 @@ const MyCategory = () => {
                   {selectedCategory?.places.map((place) => (
                       <div key={place.id} className="p-3 flex flex-col gap-1">
                         <span className="text-sm font-medium">{place.name}</span>
-                        <span className="text-xs text-muted-foreground">{place.address}</span>
+                        <span className="text-xs text-muted-foreground">{place.addressName}</span>
                       </div>
                   ))}
                 </div>

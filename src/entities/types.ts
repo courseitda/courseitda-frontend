@@ -69,3 +69,42 @@ export type SearchedPlace = {
   longitude: number;
   placeUrl: string; // 검색 결과에서 제공되는 장소 상세 URL
 };
+
+// 보관 카테고리 장소 타입 - 내 보관함에 저장된 카테고리의 장소
+// 백엔드 SavedCategoryPlace(또는 유사 DTO)와 매핑
+export type SavedCategoryPlace = {
+  id: string; // Long -> string (JSON 직렬화)
+  name: string; // 장소 이름
+  addressName: string; // 지번 주소
+};
+
+// 보관 카테고리 타입 - 내 보관함에서 조회하는 카테고리
+// 백엔드 SavedCategory 엔티티와 매핑
+export type SavedCategory = {
+  id: string; // Long -> string (JSON 직렬화)
+  title: string; // 카테고리 제목(이름)
+  color: string; // 카테고리 색상 (#RRGGBB)
+  updatedAt: string; // 수정일시 (ISO 8601)
+  placeCount: number; // 포함된 장소 수
+  places: SavedCategoryPlace[]; // 상세 표시용 장소 목록(간략)
+};
+
+// 공유 카테고리 장소 타입 - 커뮤니티에 공유된 카테고리의 장소
+// 백엔드 SharedSavedCategoryPlace(또는 유사 DTO)와 매핑
+export type SharedSavedCategoryPlace = {
+  id: string; // Long -> string (JSON 직렬화)
+  name: string; // 장소 이름
+  addressName: string; // 지번 주소
+};
+
+// 공유 카테고리 타입 - 커뮤니티에서 조회하는 공유 카테고리
+// 백엔드 SharedSavedCategory 엔티티와 매핑
+export type SharedSavedCategory = {
+  id: string; // Long -> string (JSON 직렬화)
+  title: string; // 공유 카테고리 제목
+  uploader: string; // 업로더 닉네임
+  uploadedAt: string; // 업로드 일시 (ISO 8601)
+  liked: boolean; // 찜 여부(회원 기준)
+  placeCount: number; // 포함된 장소 수
+  places: SharedSavedCategoryPlace[]; // 상세 표시용 장소 목록(간략)
+};

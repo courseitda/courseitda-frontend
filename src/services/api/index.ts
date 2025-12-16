@@ -5,4 +5,6 @@ export * from './auth.service';
 export * from './workspace.service';
 export * from './category.service';
 export * from './place.service';
+export * from './community.service';
+export * from './my-storage.service';
 

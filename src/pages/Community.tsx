@@ -14,6 +14,11 @@ import logo from '@/assets/logo-no-background.png';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { Heart, Archive, Search, ArrowLeft, Calendar, MapPin, User as UserIcon } from 'lucide-react';
 import UserMenu from '@/components/header/user-menu';
+import { Spinner } from '@/components/ui/spinner';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { communityApi } from '@/services/api';
+import { COMMUNITY_QUERY_KEYS, useRecommendedSharedCategories } from '@/shared/hooks/use-community';
+import type { SharedSavedCategory } from '@/entities/types';
 
 /**
  * 커뮤니티 메인 페이지 - 검색 입력 후 검색 결과 페이지로 이동
@@ -21,51 +26,10 @@ import UserMenu from '@/components/header/user-menu';
  */
 const Community = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, token } = useAuthStore();
   const [keyword, setKeyword] = useState('');
-  const [sharedCategories, setSharedCategories] = useState([
-    {
-      id: 'shared-1',
-      title: '잠실 점심 식당',
-      uploader: 'lucas',
-      uploadedAt: new Date().toISOString(),
-      liked: false,
-      placeCount: 8,
-      places: [
-        { id: 'p-1', name: '을지로 을지면옥', address: '서울 중구 을지로 14길 29' },
-        { id: 'p-2', name: '윤씨밀방', address: '서울 마포구 와우산로 66' },
-        { id: 'p-3', name: '마포진짜원조최모리곰탕', address: '서울 마포구 만리재옛길 45' },
-      ],
-    },
-    {
-      id: 'shared-2',
-      title: '건대 카페',
-      uploader: 'selena',
-      uploadedAt: new Date().toISOString(),
-      liked: true,
-      placeCount: 12,
-      places: [
-        { id: 'p-4', name: '어니언 한남', address: '서울 용산구 대사관로 35' },
-        { id: 'p-5', name: '펠트 안국', address: '서울 종로구 윤보선길 29' },
-        { id: 'p-6', name: '웨이브온 커피', address: '경기 성남시 분당구 불정로 76' },
-      ],
-    },
-    {
-      id: 'shared-3',
-      title: '한강 산책 코스',
-      uploader: 'hana',
-      uploadedAt: new Date().toISOString(),
-      liked: false,
-      placeCount: 5,
-      places: [
-        { id: 'p-7', name: '뚝섬 한강공원', address: '서울 광진구 강변북로 139' },
-        { id: 'p-8', name: '반포 한강공원', address: '서울 서초구 신반포로11길 40' },
-        { id: 'p-9', name: '이촌 한강공원', address: '서울 용산구 이촌동 302-14' },
-      ],
-    },
-  ]);
   const [likePulse, setLikePulse] = useState<Record<string, boolean>>({});
-  const [selectedCategory, setSelectedCategory] = useState<(typeof sharedCategories)[number] | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<SharedSavedCategory | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [recommendIndex, setRecommendIndex] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
@@ -73,38 +37,101 @@ const Community = () => {
   const startX = useRef(0);
   const currentTranslate = useRef(0);
   const [sliderWidth, setSliderWidth] = useState(0);
+  const queryClient = useQueryClient();
+
+  // UserRequest: Community 페이지의 추천/검색/찜 로직은 service 계층 인터페이스를 통해 실행
+  const {
+    data: sharedCategories = [],
+    isLoading: sharedCategoriesLoading,
+    error: sharedCategoriesError,
+  } = useRecommendedSharedCategories();
 
   const filteredCategories = useMemo(() => sharedCategories, [sharedCategories]);
   const CARD_WIDTH = 280;
   const CARD_GAP = 16;
+
+  const toggleLikeMutation = useMutation({
+    mutationFn: async (params: { sharedCategoryId: string; nextLiked: boolean }) => {
+      if (!token) {
+        throw new Error('인증 토큰이 필요합니다.');
+      }
+
+      const response = params.nextLiked
+        ? await communityApi.likeSharedCategory(token, params.sharedCategoryId)
+        : await communityApi.unlikeSharedCategory(token, params.sharedCategoryId);
+
+      if (!response.success || !response.data) {
+        throw new Error(response.error?.message ?? '찜 처리에 실패했습니다.');
+      }
+
+      return response.data;
+    },
+    onMutate: async (params) => {
+      await queryClient.cancelQueries({ queryKey: COMMUNITY_QUERY_KEYS.recommended });
+
+      const previous = queryClient.getQueryData<SharedSavedCategory[]>(COMMUNITY_QUERY_KEYS.recommended);
+      queryClient.setQueryData<SharedSavedCategory[]>(COMMUNITY_QUERY_KEYS.recommended, (old) =>
+        (old ?? []).map((category) =>
+          category.id === params.sharedCategoryId ? { ...category, liked: params.nextLiked } : category,
+        ),
+      );
+
+      setSelectedCategory((previousSelected) =>
+        previousSelected && previousSelected.id === params.sharedCategoryId
+          ? { ...previousSelected, liked: params.nextLiked }
+          : previousSelected,
+      );
+
+      return { previous };
+    },
+    onError: (error, _params, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(COMMUNITY_QUERY_KEYS.recommended, context.previous);
+      }
+      const message = error instanceof Error ? error.message : '찜 처리에 실패했습니다.';
+      toast.error(message);
+    },
+    onSuccess: (data) => {
+      toast[data.isLiked ? 'success' : 'info'](
+        data.isLiked ? '찜했어요. 내 보관함에서 확인할 수 있습니다.' : '찜을 해제했습니다.',
+      );
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: COMMUNITY_QUERY_KEYS.recommended });
+    },
+  });
 
   const handleToggleLike = (id: string) => {
     if (!isAuthenticated) {
       toast.error('로그인 후 이용할 수 있는 기능입니다.');
       return;
     }
-    setSharedCategories((prev) =>
-      prev.map((category) => {
-        if (category.id === id) {
-          const nextLiked = !category.liked;
-          toast[nextLiked ? 'success' : 'info'](
-            nextLiked ? '찜했어요. 내 보관함에서 확인할 수 있습니다.' : '찜을 해제했습니다.',
-          );
-          return { ...category, liked: nextLiked };
-        }
-        return category;
-      }),
-    );
+    if (!token) {
+      toast.error('인증 토큰이 필요합니다. 다시 로그인해주세요.');
+      return;
+    }
+
+    const target = filteredCategories.find((category) => category.id === id);
+    if (!target || toggleLikeMutation.isPending) return;
+
+    toggleLikeMutation.mutate({ sharedCategoryId: id, nextLiked: !target.liked });
     setLikePulse((prev) => ({ ...prev, [id]: true }));
     setTimeout(() => {
       setLikePulse((prev) => ({ ...prev, [id]: false }));
     }, 200);
   };
 
-  const handleOpenDetail = (category: (typeof sharedCategories)[number]) => {
+  const handleOpenDetail = (category: SharedSavedCategory) => {
     setSelectedCategory(category);
     setDetailOpen(true);
   };
+
+  useEffect(() => {
+    // UserRequest: 추천 목록 조회 실패 시 사용자에게 즉시 알림
+    if (sharedCategoriesError) {
+      toast.error(sharedCategoriesError.message);
+    }
+  }, [sharedCategoriesError]);
 
   // 추천 카드 자동 전환 - 일정 간격으로 다음 카드로 이동
   useEffect(() => {
@@ -126,6 +153,15 @@ const Community = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // 데이터 로딩 중에는 중앙에 스피너를 표시하여 진행 상황 안내
+  if (sharedCategoriesLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Spinner className="w-8 h-8" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -393,7 +429,7 @@ const Community = () => {
                       <MapPin className="w-4 h-4 text-primary" />
                       {place.name}
                     </span>
-                    <span className="text-xs text-muted-foreground">{place.address}</span>
+                    <span className="text-xs text-muted-foreground">{place.addressName}</span>
                   </div>
                 ))}
               </div>

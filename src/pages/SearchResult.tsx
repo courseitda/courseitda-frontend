@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,117 +14,133 @@ import { useAuthStore } from '@/shared/stores/auth-store';
 import { toast } from 'sonner';
 import { ArrowLeft, Heart, Search, Folder, Calendar, MapPin, User as UserIcon } from 'lucide-react';
 import UserMenu from '@/components/header/user-menu';
-
-type SharedCategory = {
-  id: string;
-  title: string;
-  uploader: string;
-  uploadedAt: string;
-  liked: boolean;
-  placeCount: number;
-  places: { id: string; name: string; address: string }[];
-};
-
-// 임시 데이터: 공유 카테고리 검색/찜 API 연동 후 대체 필요
-const mockSharedCategories: SharedCategory[] = [
-  {
-    id: 'shared-1',
-    title: '잠실 점심 식당',
-    uploader: 'lucas',
-    uploadedAt: new Date().toISOString(),
-    liked: false,
-    placeCount: 8,
-    places: [
-      { id: 'p-1', name: '을지로 을지면옥', address: '서울 중구 을지로 14길 29' },
-      { id: 'p-2', name: '윤씨밀방', address: '서울 마포구 와우산로 66' },
-      { id: 'p-3', name: '마포진짜원조최모리곰탕', address: '서울 마포구 만리재옛길 45' },
-    ],
-  },
-  {
-    id: 'shared-2',
-    title: '건대 카페',
-    uploader: 'selena',
-    uploadedAt: new Date().toISOString(),
-    liked: true,
-    placeCount: 12,
-    places: [
-      { id: 'p-4', name: '어니언 한남', address: '서울 용산구 대사관로 35' },
-      { id: 'p-5', name: '펠트 안국', address: '서울 종로구 윤보선길 29' },
-      { id: 'p-6', name: '웨이브온 커피', address: '경기 성남시 분당구 불정로 76' },
-    ],
-  },
-  {
-    id: 'shared-3',
-    title: '한강 산책 코스',
-    uploader: 'hana',
-    uploadedAt: new Date().toISOString(),
-    liked: false,
-    placeCount: 5,
-    places: [
-      { id: 'p-7', name: '뚝섬 한강공원', address: '서울 광진구 강변북로 139' },
-      { id: 'p-8', name: '반포 한강공원', address: '서울 서초구 신반포로11길 40' },
-      { id: 'p-9', name: '이촌 한강공원', address: '서울 용산구 이촌동 302-14' },
-    ],
-  },
-];
+import { Spinner } from '@/components/ui/spinner';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { communityApi } from '@/services/api';
+import { COMMUNITY_QUERY_KEYS, useSharedCategorySearch } from '@/shared/hooks/use-community';
+import type { SharedSavedCategory } from '@/entities/types';
 
 const SearchResult = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { isAuthenticated } = useAuthStore();
-  const initialKeyword = searchParams.get('keyword') || '';
-  const [inputKeyword, setInputKeyword] = useState(initialKeyword);
-  const [searchKeyword, setSearchKeyword] = useState(initialKeyword);
-  const [sharedCategories, setSharedCategories] = useState<SharedCategory[]>(mockSharedCategories);
+  const { isAuthenticated, token } = useAuthStore();
+  const keyword = searchParams.get('keyword') || '';
+  const [inputKeyword, setInputKeyword] = useState(keyword);
   const [likePulse, setLikePulse] = useState<Record<string, boolean>>({});
-  const [selectedCategory, setSelectedCategory] = useState<SharedCategory | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<SharedSavedCategory | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const queryClient = useQueryClient();
 
-  // 검색어에 따라 공유 카테고리 필터링
-  const filteredCategories = useMemo(() => {
-    const value = searchKeyword.trim().toLowerCase();
-    if (!value) return sharedCategories;
-    return sharedCategories.filter((category) => category.title.toLowerCase().includes(value));
-  }, [searchKeyword, sharedCategories]);
+  // UserRequest: /community/search 결과는 service 계층 API + React Query로 로딩 (컴포넌트 내부 mock 제거)
+  const {
+    data: sharedCategories = [],
+    isLoading: sharedCategoriesLoading,
+    error: sharedCategoriesError,
+  } = useSharedCategorySearch(keyword);
 
-  // UserRequest: 공유 카테고리 찜하기는 토글로 구현 (임시 상태, API 연동 필요)
-  const handleToggleLike = (id: string) => {
+  useEffect(() => {
+    setInputKeyword(keyword);
+  }, [keyword]);
+
+  const filteredCategories = useMemo(() => sharedCategories, [sharedCategories]);
+
+  useEffect(() => {
+    // UserRequest: 검색 결과 조회 실패 시 사용자에게 즉시 알림
+    if (sharedCategoriesError) {
+      toast.error(sharedCategoriesError.message);
+    }
+  }, [sharedCategoriesError]);
+
+  // UserRequest: 공유 카테고리 찜 토글은 service 계층 인터페이스를 통해 서버(또는 MSW)로 위임
+  const toggleLikeMutation = useMutation({
+    mutationFn: async (params: { sharedCategoryId: string; nextLiked: boolean }) => {
+      if (!token) {
+        throw new Error('인증 토큰이 필요합니다.');
+      }
+
+      const response = params.nextLiked
+        ? await communityApi.likeSharedCategory(token, params.sharedCategoryId)
+        : await communityApi.unlikeSharedCategory(token, params.sharedCategoryId);
+
+      if (!response.success || !response.data) {
+        throw new Error(response.error?.message ?? '찜 처리에 실패했습니다.');
+      }
+
+      return response.data;
+    },
+    onMutate: async (params) => {
+      const key = COMMUNITY_QUERY_KEYS.search(keyword);
+      await queryClient.cancelQueries({ queryKey: key });
+
+      const previous = queryClient.getQueryData<SharedSavedCategory[]>(key);
+      queryClient.setQueryData<SharedSavedCategory[]>(key, (old) =>
+        (old ?? []).map((category) =>
+          category.id === params.sharedCategoryId ? { ...category, liked: params.nextLiked } : category,
+        ),
+      );
+
+      setSelectedCategory((previousSelected) =>
+        previousSelected && previousSelected.id === params.sharedCategoryId
+          ? { ...previousSelected, liked: params.nextLiked }
+          : previousSelected,
+      );
+
+      return { previous, key };
+    },
+    onError: (error, _params, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(context.key, context.previous);
+      }
+      const message = error instanceof Error ? error.message : '찜 처리에 실패했습니다.';
+      toast.error(message);
+    },
+    onSuccess: (data) => {
+      toast[data.isLiked ? 'success' : 'info'](
+        data.isLiked ? '찜했어요. 내 보관함에서 확인할 수 있습니다.' : '찜을 해제했습니다.',
+      );
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: COMMUNITY_QUERY_KEYS.search(keyword) });
+    },
+  });
+
+  const handleToggleLike = (categoryId: string, currentLiked: boolean) => {
     if (!isAuthenticated) {
       toast.error('로그인 후 이용할 수 있는 기능입니다.');
       return;
     }
-    setSharedCategories((prev) =>
-      prev.map((category) => {
-        if (category.id === id) {
-          const nextLiked = !category.liked;
-          toast[nextLiked ? 'success' : 'info'](
-            nextLiked ? '찜했어요. 내 보관함에서 확인할 수 있습니다.' : '찜을 해제했습니다.',
-          );
-          return { ...category, liked: nextLiked };
-        }
-        return category;
-      }),
-    );
-    setLikePulse((prev) => ({ ...prev, [id]: true }));
+    if (!token) {
+      toast.error('인증 토큰이 필요합니다. 다시 로그인해주세요.');
+      return;
+    }
+    if (toggleLikeMutation.isPending) return;
+
+    toggleLikeMutation.mutate({ sharedCategoryId: categoryId, nextLiked: !currentLiked });
+
+    setLikePulse((prev) => ({ ...prev, [categoryId]: true }));
     setTimeout(() => {
-      setLikePulse((prev) => ({ ...prev, [id]: false }));
+      setLikePulse((prev) => ({ ...prev, [categoryId]: false }));
     }, 200);
   };
 
-  // UserRequest: 검색 버튼으로 제목 검색 실행 (무한 스크롤은 API 연동 후 구현)
   const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const value = inputKeyword.trim();
-    setSearchKeyword(value);
     navigate(`/community/search${value ? `?keyword=${encodeURIComponent(value)}` : ''}`);
-    toast.message('검색 결과는 임시 데이터입니다. (API 연동 필요)');
   };
 
-  // UserRequest: 카드 클릭 시 상세 팝업을 띄워 공유 카테고리 정보를 보여줌 (임시 데이터 기반)
-  const handleOpenDetail = (category: SharedCategory) => {
+  const handleOpenDetail = (category: SharedSavedCategory) => {
     setSelectedCategory(category);
     setDetailOpen(true);
   };
+
+  if (sharedCategoriesLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Spinner className="w-8 h-8" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-card">
@@ -215,7 +231,7 @@ const SearchResult = () => {
                           toast.error('로그인 후 이용할 수 있는 기능입니다.');
                           return;
                         }
-                        handleToggleLike(category.id);
+                        handleToggleLike(category.id, category.liked);
                       }}
                       aria-label={`${category.title} 찜하기`}
                       aria-pressed={category.liked}
@@ -280,7 +296,7 @@ const SearchResult = () => {
                       <MapPin className="w-4 h-4 text-primary" />
                       {place.name}
                     </span>
-                    <span className="text-xs text-muted-foreground">{place.address}</span>
+                    <span className="text-xs text-muted-foreground">{place.addressName}</span>
                   </div>
                 ))}
               </div>

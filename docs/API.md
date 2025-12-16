@@ -67,7 +67,28 @@
 - `placeApi.addToCategory`는 성공 시 `categoryPlaceId`와 좌표를 문자열 ID로 정규화하여 반환합니다.
 - 지도 렌더링에는 `useSettingsStore`의 `naverMapKeyId` 값을 사용해 SDK를 초기화합니다.
 
-## 5. 에러 처리 & 메시지 규약
+## 5. 커뮤니티 & 내 보관함(MyStorage)
+
+### 커뮤니티(공유 카테고리)
+
+| 기능 | 엔드포인트 | 메서드 | 비고 |
+| --- | --- | --- | --- |
+| 추천 목록 조회 | `/api/community/shared-categories/recommendations` | `GET` | 비회원도 조회 가능, 회원이면 `isLiked` 포함 |
+| 제목 검색 | `/api/community/shared-categories/search` | `GET` | `keyword` 쿼리(옵션) |
+| 찜 추가 | `/api/community/shared-categories/{id}/likes` | `POST` | `Authorization` 필요 |
+| 찜 해제 | `/api/community/shared-categories/{id}/likes` | `DELETE` | `Authorization` 필요 |
+
+- `communityApi`(`src/services/api/community.service.ts`)가 위 호출을 담당하며, 화면에서는 `useRecommendedSharedCategories`, `useSharedCategorySearch`로 사용합니다.
+
+### 내 보관함(보관 카테고리)
+
+| 기능 | 엔드포인트 | 메서드 | 비고 |
+| --- | --- | --- | --- |
+| 내 보관 카테고리 목록 | `/api/me/saved-categories` | `GET` | `Authorization` 필요 |
+
+- `myStorageApi`(`src/services/api/my-storage.service.ts`)가 호출을 담당하며, 화면에서는 `useMySavedCategories`로 사용합니다.
+
+## 6. 에러 처리 & 메시지 규약
 
 - 백엔드는 Spring `ProblemDetail`을 확장해 `code`, `fieldErrors`를 내려줍니다. 예시는 `BackendErrorCode` 참조.
 - `src/services/api/http.ts`의 `toError`/`fromAxiosError`가 응답을 `ApiResponse<never>`로 감싸고, `resolveErrorMessage`(`src/shared/utils/error-message.ts`)가 코드별 사용자 메시지를 도출합니다.
@@ -85,18 +106,21 @@
 }
 ```
 
-## 6. React Query 키 & 캐시 전략
+## 7. React Query 키 & 캐시 전략
 
 | 도메인 | Query Key | 설명 |
 | --- | --- | --- |
 | 워크스페이스 목록 | `['workspaces','me']` | 내 워크스페이스 대시보드 |
 | 워크스페이스 상세 | `['workspace', identifier]` | 단일 워크스페이스 정보 |
 | 카테고리 구조 | `['workspace', identifier, 'categories']` | 카테고리 + 장소 트리 |
+| 커뮤니티 추천 | `['community','shared-categories','recommended']` | 공유 카테고리 추천 목록 |
+| 커뮤니티 검색 | `['community','shared-categories','search', keyword]` | 공유 카테고리 검색 결과 |
+| 내 보관함 | `['my-storage','saved-categories','me']` | 내 보관 카테고리 목록 |
 
 - 생성/수정/삭제/재정렬/대표 지정 등의 뮤테이션 이후에는 위 키를 `invalidateQueries`로 무효화합니다.
 - 테스트(`Vitest`/`Playwright`) 전에는 백엔드 목업을 최신 API 스펙에 맞춰 동기화해야 합니다.
 
-## 7. 참고 리소스
+## 8. 참고 리소스
 
 - `courseitda-frontend/docs/DB.md` – 엔티티 및 테이블 구조
 - `src/services/api/*.ts` – 실제 호출 및 어댑터 구현

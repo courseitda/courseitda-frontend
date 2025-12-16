@@ -148,6 +148,8 @@ export const ApiErrorCode = {
   NAVER_PLACE_SEARCH_RESPONSE_NULL: '6010',
   NAVER_PLACE_SEARCH_STATUS_CHECK_ERROR: '6011',
   NAVER_PLACE_SEARCH_ERROR: '6012',
+  SHARED_SAVED_CATEGORY_NOT_FOUND: '7001',
+  SAVED_CATEGORY_NOT_FOUND: '7002',
 } as const;
 
 export type ApiErrorCodeType = typeof ApiErrorCode[keyof typeof ApiErrorCode];
