@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { MapPin, Calendar, Route, LogOut, User as UserIcon, LayoutGrid } from 'lucide-react';
+import { MapPin, Calendar, Route, LogOut, User as UserIcon, Archive, Folder } from 'lucide-react';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useUserDropdown, useUserNickname } from '@/shared/hooks/use-user-info';
 import logo from '@/assets/logo-no-background.png';
@@ -40,18 +40,14 @@ const Index = () => {
       <header className="border-b border-border/40 bg-background/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4 md:py-3">
           <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
-            {/* UserRequest: 코스잇다 텍스트 색상을 primary 색상으로 변경하여 브랜드 아이덴티티 강화 */}
-            <div className="flex items-center gap-1.5 md:gap-2">
+            <div className="w-10" />
+            
+            <div className="flex items-center justify-center gap-1.5 md:gap-2">
               <img src={logo} alt="코스잇다 로고" className="w-10 h-10 object-contain rounded-lg" />
               <span className="font-bold text-lg whitespace-nowrap text-primary">코스잇다</span>
             </div>
             
-            <div></div>
-            
-            {/* UserRequest: 워크스페이스 상세 페이지의 네비게이션 드로어에서 사용하는 User 아이콘을 아바타에 적용하여 일관성 유지 */}
-            {/* UserRequest: 데스크톱 뷰에서 아바타와 닉네임을 함께 표시하고 모바일은 아이콘만 표시하여 공간 효율성 향상 */}
-            {/* UserRequest: 모든 사용자 메뉴를 마이페이지 / 워크스페이스 / 설정 / 로그아웃 순서로 통일하여 일관된 네비게이션 제공 */}
-            <div className="flex items-center">
+            <div className="flex items-center justify-end">
             {isAuthenticated && navNickname ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -74,14 +70,14 @@ const Index = () => {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate('/mypage')} className="gap-2">
-                    <UserIcon className="w-4 h-4" />
-                    마이페이지
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/workspaces')} className="gap-2">
-                    <LayoutGrid className="w-4 h-4" />
-                    워크스페이스
-                  </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/mypage')} className="gap-2">
+                  <UserIcon className="w-4 h-4" />
+                  마이페이지
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/workspaces')} className="gap-2">
+                  <Archive className="w-4 h-4" />
+                  내 보관함
+                </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive gap-2">
                     <LogOut className="w-4 h-4" />
@@ -118,9 +114,14 @@ const Index = () => {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
             {isAuthenticated ? (
-              <Button size="lg" onClick={() => navigate('/workspaces')} className="gap-2">
-                내 워크스페이스로 이동
-              </Button>
+              <div className="flex flex-col items-center gap-3">
+                <Button size="lg" onClick={() => navigate('/workspaces')} className="gap-2 w-full sm:w-auto">
+                  내 워크스페이스로 이동
+                </Button>
+                <Button size="lg" variant="outline" onClick={() => navigate('/community')} className="gap-2 w-full sm:w-auto">
+                  커뮤니티 바로가기
+                </Button>
+              </div>
             ) : (
               <>
                 <Button size="lg" onClick={() => navigate('/auth?tab=register')} className="gap-2">
@@ -128,6 +129,9 @@ const Index = () => {
                 </Button>
                 <Button size="lg" variant="outline" onClick={() => navigate('/auth')}>
                   로그인
+                </Button>
+                <Button size="lg" variant="outline" onClick={() => navigate('/community')} className="gap-2">
+                  커뮤니티 둘러보기
                 </Button>
               </>
             )}
