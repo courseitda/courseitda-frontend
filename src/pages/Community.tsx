@@ -12,7 +12,7 @@ import {
 import { toast } from 'sonner';
 import logo from '@/assets/logo-no-background.png';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { Heart, Archive, Search, ArrowLeft, Calendar, MapPin, User as UserIcon } from 'lucide-react';
+import { Heart, Folder, Search, ArrowLeft, Calendar, MapPin, User as UserIcon } from 'lucide-react';
 import UserMenu from '@/components/header/user-menu';
 import { Spinner } from '@/components/ui/spinner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -345,7 +345,7 @@ const Community = () => {
                 <CardHeader className="flex flex-row items-center gap-3 py-3">
                   <div className="relative">
                     <div className="w-9 h-9 rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground">
-                      <Archive className="w-4 h-4" />
+                      <Folder className="w-4 h-4" />
                     </div>
                     <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[11px] leading-none px-1.5 py-0.5 rounded-full">
                       {category.placeCount}
