@@ -131,7 +131,7 @@ const CommunityCategoryBoard = () => {
       {/* UserRequest: 카테고리 게시판 우측 하단에 업로드하기 버튼 고정 배치 */}
       <Button
         type="button"
-        onClick={() => navigate('/community/manage')}
+        onClick={() => navigate('/my-posts')}
         className="fixed bottom-6 right-6 shadow-lg gap-2 px-5 py-3 text-base rounded-full upload-fab-pop"
       >
         <Upload className="w-4 h-4" />

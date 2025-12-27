@@ -12,7 +12,7 @@ import MyPage from "./pages/MyPage";
 import NotFound from "./pages/NotFound";
 import Community from "./pages/Community";
 import SearchResult from "./pages/SearchResult";
-import CommunityManage from "./pages/CommunityManage";
+import MyPosts from "./pages/MyPosts";
 import CommunityCategoryBoard from "./pages/CommunityCategoryBoard";
 
 // React Query 클라이언트 생성 - 서버 상태 관리 및 캐싱 처리
@@ -30,7 +30,7 @@ const App = () => (
         <Route path="/" element={<Index />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/community" element={<Community />} />
-        <Route path="/community/manage" element={<CommunityManage />} />
+        <Route path="/my-posts" element={<MyPosts />} />
         <Route path="/community/search" element={<SearchResult />} />
         <Route path="/community/category-board" element={<CommunityCategoryBoard />} />
         <Route path="/my-workspaces" element={<MyWorkspace />} />

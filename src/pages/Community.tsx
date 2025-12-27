@@ -73,16 +73,6 @@ const Community = () => {
     setRecommendIndex(index);
   };
 
-  const handleOpenManage = () => {
-    // 회원 전용 페이지이므로 인증되지 않은 경우 로그인 페이지로 안내
-    if (!isAuthenticated) {
-      toast.error('로그인 후 이용할 수 있는 기능입니다.');
-      navigate('/auth');
-      return;
-    }
-    navigate('/community/manage');
-  };
-
   useEffect(() => {
     // UserRequest: 추천 목록 조회 실패 시 사용자에게 즉시 알림
     if (sharedCategoriesError) {
@@ -333,22 +323,7 @@ const Community = () => {
           </div>
         </section>
 
-        <section className="container mx-auto px-4 pb-10">
-          {/* UserRequest: 커뮤니티 관리 버튼을 헤더에서 본문 하단 섹션으로 이동 */}
-          <div className="max-w-5xl mx-auto border border-dashed border-border rounded-xl p-5 md:p-6 flex flex-col md:flex-row md:items-center gap-3 justify-between bg-muted/30">
-            <div>
-              <h3 className="text-base font-semibold">커뮤니티 관리</h3>
-              <p className="text-sm text-muted-foreground">
-                내가 공유한 카테고리를 확인하고 관리하려면 아래 버튼을 눌러주세요.
-              </p>
-            </div>
-            <div className="flex justify-end">
-              <Button variant="outline" onClick={handleOpenManage} className="gap-2">
-                커뮤니티 관리 바로가기
-              </Button>
-            </div>
-          </div>
-        </section>
+        {/* UserRequest: 커뮤니티 페이지에서 커뮤니티 관리 영역 제거 */}
       </main>
 
       <SharedCategoryDetailDialog

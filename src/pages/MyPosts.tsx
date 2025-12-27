@@ -16,7 +16,7 @@ import PageHeader from '@/components/layout/page-header';
  * 커뮤니티 관리 페이지 - 회원만 접근 가능, 보관 카테고리를 공유/삭제 관리
  * UserRequest: 커뮤니티 관리 페이지를 추가하고 보관 카테고리 공유/삭제 동선을 제공
  */
-const CommunityManage = () => {
+const MyPosts = () => {
   const navigate = useNavigate();
   const { isAuthenticated, token } = useAuthStore();
   const queryClient = useQueryClient();
@@ -116,7 +116,7 @@ const CommunityManage = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
-      <PageHeader title="커뮤니티 관리" />
+      <PageHeader title="내 게시물" />
 
       <main className="container mx-auto px-4 py-6 space-y-6">
         <section className="space-y-3">
@@ -210,4 +210,4 @@ const CommunityManage = () => {
   );
 };
 
-export default CommunityManage;
+export default MyPosts;
