@@ -22,7 +22,8 @@ const Auth = () => {
   // 이미 로그인된 사용자가 인증 페이지 접근 시 워크스페이스 목록으로 자동 이동
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/my-workspaces');
+      // UserRequest: 로그인 직후 뒤로가기가 인증 페이지로 되돌아가지 않도록 히스토리를 대체
+      navigate('/my-workspaces', { replace: true });
     }
   }, [isAuthenticated, navigate]);
 

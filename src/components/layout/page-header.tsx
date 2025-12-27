@@ -28,7 +28,14 @@ const PageHeader = ({
   className,
 }: PageHeaderProps) => {
   const navigate = useNavigate();
-  const handleBack = onBack ?? (() => navigate(-1));
+  const handleBack = onBack ?? (() => {
+    // UserRequest: 히스토리가 없을 때는 홈으로 이동해 뒤로가기 무반응을 방지
+    if (window.history.length <= 1) {
+      navigate('/');
+      return;
+    }
+    navigate(-1);
+  });
   // UserRequest: 헤더 중앙/우측 커스텀 콘텐츠를 지원
   const resolvedCenter = centerContent ?? (showLogo ? (
     <div
