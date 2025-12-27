@@ -196,4 +196,23 @@
   .like-heart-ping {
     background-color: hsl(var(--like-heart-ping));
   }
+
+  /* UserRequest: 업로드 버튼 초기 진입 시 가볍게 튕기는 모션 제공 */
+  .upload-fab-pop {
+    animation: upload-fab-pop 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+}
+
+@keyframes upload-fab-pop {
+  0% {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
 }

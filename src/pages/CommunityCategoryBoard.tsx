@@ -1,8 +1,10 @@
 import type { FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { toast } from 'sonner';
+import { Upload } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { COMMUNITY_QUERY_KEYS, useSharedCategorySearch } from '@/shared/hooks/use-community';
 import type { SharedSavedCategory } from '@/entities/types';
@@ -125,6 +127,16 @@ const CommunityCategoryBoard = () => {
         onOpenChange={setDetailOpen}
         category={selectedCategory}
       />
+
+      {/* UserRequest: 카테고리 게시판 우측 하단에 업로드하기 버튼 고정 배치 */}
+      <Button
+        type="button"
+        onClick={() => navigate('/community/manage')}
+        className="fixed bottom-6 right-6 shadow-lg gap-2 px-5 py-3 text-base rounded-full upload-fab-pop"
+      >
+        <Upload className="w-4 h-4" />
+        <span className="font-semibold">업로드</span>
+      </Button>
     </div>
   );
 };
