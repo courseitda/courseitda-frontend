@@ -38,7 +38,7 @@ export const LoginForm = () => {
     // UserRequest: Step 3 — 백엔드 토큰 타입을 함께 저장하여 axios 인터셉터가 Authorization 헤더를 구성
     setToken(response.data.accessToken, response.data.tokenType);
     toast.success('로그인 성공!');
-    navigate('/workspaces');
+    navigate('/my-workspaces');
   };
 
   return (

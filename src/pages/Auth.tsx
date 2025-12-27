@@ -22,7 +22,7 @@ const Auth = () => {
   // 이미 로그인된 사용자가 인증 페이지 접근 시 워크스페이스 목록으로 자동 이동
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/workspaces');
+      navigate('/my-workspaces');
     }
   }, [isAuthenticated, navigate]);
 

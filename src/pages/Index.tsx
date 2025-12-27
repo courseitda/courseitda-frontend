@@ -57,7 +57,7 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
             {isAuthenticated ? (
               <div className="flex flex-col items-center gap-3">
-                <Button size="lg" onClick={() => navigate('/workspaces')} className="gap-2 w-full sm:w-auto">
+                <Button size="lg" onClick={() => navigate('/my-workspaces')} className="gap-2 w-full sm:w-auto">
                   내 워크스페이스로 이동
                 </Button>
                 <Button size="lg" variant="outline" onClick={() => navigate('/community')} className="gap-2 w-full sm:w-auto">

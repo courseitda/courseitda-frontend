@@ -20,11 +20,10 @@ import {
 } from '@/components/ui/context-menu';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useWorkspacesByOwner } from '@/shared/hooks/use-workspace';
-import { Plus, Pencil, Trash2, Clock, LayoutGrid, Heart } from 'lucide-react';
+import { Plus, Pencil, Trash2, Clock, LayoutGrid } from 'lucide-react';
 import { CreateWorkspaceDialog } from '@/features/workspaces/create-workspace-dialog';
 import { EditWorkspaceDialog } from '@/features/workspaces/edit-workspace-dialog';
 import { toast } from 'sonner';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 // API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
 import { workspaceApi } from '@/services/api';
 import type { Workspace } from '@/entities/types';
@@ -37,7 +36,7 @@ import PageHeader from '@/components/layout/page-header';
  * 사용자의 모든 워크스페이스를 카드 형태로 표시하며, 생성/수정/삭제 기능 제공
  * UserRequest: 백엔드 API 연동을 위해 토큰 기반 인증으로 변경, 사용자 정보는 API 호출로 조회
  */
-const Workspaces = () => {
+const MyWorkspace = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
   const [createOpen, setCreateOpen] = useState(false);
@@ -45,8 +44,6 @@ const Workspaces = () => {
   const [selectedForEdit, setSelectedForEdit] = useState<Workspace | null>(null);
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState<Workspace | null>(null);
-  // UserRequest: 내 워크스페이스 진입 시 기본 탭을 워크스페이스로 고정하여 워크스페이스 목록이 바로 노출되도록 관리
-  const [activeSection, setActiveSection] = useState<'workspaces' | 'liked'>('workspaces');
   const queryClient = useQueryClient();
 
   // 미인증 사용자 접근 차단 - 로그인 페이지로 리다이렉트하여 보안 유지
@@ -149,20 +146,85 @@ const Workspaces = () => {
         {/* 모바일 레이아웃 */}
         {/* UserRequest: 모바일 뷰 좌우 여백을 0.5배로 축소하여 다른 페이지와 통일성 유지 (px-8 → px-4) */}
         <main className="md:hidden container mx-auto px-4 py-6">
-          <Tabs value={activeSection} onValueChange={(value) => setActiveSection(value as 'workspaces' | 'liked')}>
-            <TabsList className="grid w-full grid-cols-2 mb-4">
-              <TabsTrigger value="workspaces" className="flex items-center gap-1.5">
-                <LayoutGrid className="w-4 h-4" />
-                워크스페이스
-              </TabsTrigger>
-              <TabsTrigger value="liked" className="flex items-center gap-1.5">
-                <Heart className="w-4 h-4" />
-                찜
-              </TabsTrigger>
-            </TabsList>
+          {/* UserRequest: 워크스페이스 목록 페이지에서 Tabs 제거 */}
+          <div className="grid grid-cols-1 gap-2.5">
+            <Card
+                className="border-dashed hover-lift cursor-pointer"
+                onClick={() => setCreateOpen(true)}
+            >
+              <CardHeader className="flex flex-col items-center justify-center">
+                <div className="flex items-center gap-2 text-primary">
+                  <Plus className="w-5 h-5" />
+                  <CardTitle className="text-base md:text-lg text-primary">새 워크스페이스</CardTitle>
+                </div>
+                {sortedWorkspaces && sortedWorkspaces.length === 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">워크스페이스가 없습니다. 지금 추가해보세요!</p>
+                )}
+              </CardHeader>
+            </Card>
 
-            <TabsContent value="workspaces" className="mt-0">
-              <div className="grid grid-cols-1 gap-2.5">
+            {/* UserRequest: 워크스페이스 간격을 0.3배로 축소하여 공간 효율성 향상 (gap-8 → gap-2.5) */}
+            {sortedWorkspaces?.map((workspace) => (
+                <ContextMenu key={workspace.id}>
+                  <ContextMenuTrigger asChild>
+                    <Card
+                        className="hover-lift cursor-pointer"
+                        onClick={() => handleSelectWorkspace(workspace.identifier)}
+                    >
+                      <CardHeader className="flex flex-row items-center gap-3">
+                        <LayoutGrid className="w-5 h-5 text-primary" />
+                        <div className="flex flex-col gap-1">
+                          {/* UserRequest: 모바일 폰트 크기를 축소하고 워크스페이스 이름을 왼쪽 정렬하여 가독성 향상 (text-base) */}
+                          <CardTitle className="text-base md:text-lg truncate">
+                            {workspace.title}
+                          </CardTitle>
+                          {/* UserRequest: 마지막 수정 시간을 표시하고 Clock 아이콘을 추가하며 "마지막" 멘트를 제거하여 간결하게 표현 */}
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            수정: {new Date(workspace.updatedAt).toLocaleDateString('ko-KR', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                          </p>
+                        </div>
+                      </CardHeader>
+                    </Card>
+                  </ContextMenuTrigger>
+                  <ContextMenuContent>
+                    <ContextMenuItem
+                        className="gap-2"
+                        onClick={() => handleEdit(workspace)}
+                    >
+                      <Pencil className="w-4 h-4" />
+                      이름 바꾸기
+                    </ContextMenuItem>
+                    <ContextMenuItem
+                        className="text-destructive focus:text-destructive gap-2"
+                        onClick={() => handleDeleteClick(workspace)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      삭제
+                    </ContextMenuItem>
+                  </ContextMenuContent>
+                </ContextMenu>
+            ))}
+          </div>
+        </main>
+
+        {/* 데스크톱 레이아웃 - 3단 구조 */}
+        {/* UserRequest: 데스크톱 화면에서 워크스페이스가 적어도 전체 영역 높이를 보장하여 시각적 안정감 제공 (min-h-[calc(100vh-80px)]) */}
+        <main className="hidden md:block min-h-[calc(100vh-80px)]">
+          <div className="grid grid-cols-[1fr_2fr_1fr] min-h-[calc(100vh-80px)]">
+            {/* 좌측: 배경 영역 (primary/5 색상으로 시각적 여유 제공) */}
+            <div className="bg-primary/5 min-h-[calc(100vh-80px)]"></div>
+
+            {/* 중앙: 워크스페이스 목록 콘텐츠 */}
+            <div className="px-4 py-4 overflow-y-auto min-h-[calc(100vh-80px)]">
+              {/* UserRequest: 워크스페이스 목록 페이지에서 Tabs 제거 */}
+              <div className="space-y-2">
                 <Card
                     className="border-dashed hover-lift cursor-pointer"
                     onClick={() => setCreateOpen(true)}
@@ -178,7 +240,7 @@ const Workspaces = () => {
                   </CardHeader>
                 </Card>
 
-                {/* UserRequest: 워크스페이스 간격을 0.3배로 축소하여 공간 효율성 향상 (gap-8 → gap-2.5) */}
+                {/* UserRequest: 데스크톱 워크스페이스 간격을 space-y-2 (8px)로 설정하여 적절한 여백 제공 */}
                 {sortedWorkspaces?.map((workspace) => (
                     <ContextMenu key={workspace.id}>
                       <ContextMenuTrigger asChild>
@@ -227,107 +289,6 @@ const Workspaces = () => {
                     </ContextMenu>
                 ))}
               </div>
-            </TabsContent>
-
-            <TabsContent value="liked" className="mt-0">
-              <div className="text-sm text-muted-foreground">찜 목록은 준비 중입니다.</div>
-            </TabsContent>
-          </Tabs>
-        </main>
-
-        {/* 데스크톱 레이아웃 - 3단 구조 */}
-        {/* UserRequest: 데스크톱 화면에서 워크스페이스가 적어도 전체 영역 높이를 보장하여 시각적 안정감 제공 (min-h-[calc(100vh-80px)]) */}
-        <main className="hidden md:block min-h-[calc(100vh-80px)]">
-          <div className="grid grid-cols-[1fr_2fr_1fr] min-h-[calc(100vh-80px)]">
-            {/* 좌측: 배경 영역 (primary/5 색상으로 시각적 여유 제공) */}
-            <div className="bg-primary/5 min-h-[calc(100vh-80px)]"></div>
-
-            {/* 중앙: 워크스페이스 목록 콘텐츠 */}
-            <div className="px-4 py-4 overflow-y-auto min-h-[calc(100vh-80px)]">
-              <Tabs value={activeSection} onValueChange={(value) => setActiveSection(value as 'workspaces' | 'liked')}>
-                <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="workspaces" className="flex items-center gap-1.5">
-                    <LayoutGrid className="w-4 h-4" />
-                    워크스페이스
-                  </TabsTrigger>
-                  <TabsTrigger value="liked" className="flex items-center gap-1.5">
-                    <Heart className="w-4 h-4" />
-                    찜
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="workspaces" className="mt-0">
-                  <div className="space-y-2">
-                    <Card
-                        className="border-dashed hover-lift cursor-pointer"
-                        onClick={() => setCreateOpen(true)}
-                    >
-                      <CardHeader className="flex flex-col items-center justify-center">
-                        <div className="flex items-center gap-2 text-primary">
-                          <Plus className="w-5 h-5" />
-                          <CardTitle className="text-base md:text-lg text-primary">새 워크스페이스</CardTitle>
-                        </div>
-                        {sortedWorkspaces && sortedWorkspaces.length === 0 && (
-                            <p className="text-xs text-muted-foreground mt-1">워크스페이스가 없습니다. 지금 추가해보세요!</p>
-                        )}
-                      </CardHeader>
-                    </Card>
-
-                    {/* UserRequest: 데스크톱 워크스페이스 간격을 space-y-2 (8px)로 설정하여 적절한 여백 제공 */}
-                    {sortedWorkspaces?.map((workspace) => (
-                        <ContextMenu key={workspace.id}>
-                          <ContextMenuTrigger asChild>
-                            <Card
-                                className="hover-lift cursor-pointer"
-                                onClick={() => handleSelectWorkspace(workspace.identifier)}
-                            >
-                              <CardHeader className="flex flex-row items-center gap-3">
-                                <LayoutGrid className="w-5 h-5 text-primary" />
-                                <div className="flex flex-col gap-1">
-                                  {/* UserRequest: 모바일 폰트 크기를 축소하고 워크스페이스 이름을 왼쪽 정렬하여 가독성 향상 (text-base) */}
-                                  <CardTitle className="text-base md:text-lg truncate">
-                                    {workspace.title}
-                                  </CardTitle>
-                                  {/* UserRequest: 마지막 수정 시간을 표시하고 Clock 아이콘을 추가하며 "마지막" 멘트를 제거하여 간결하게 표현 */}
-                                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                    <Clock className="w-3 h-3" />
-                                    수정: {new Date(workspace.updatedAt).toLocaleDateString('ko-KR', {
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                  })}
-                                  </p>
-                                </div>
-                              </CardHeader>
-                            </Card>
-                          </ContextMenuTrigger>
-                          <ContextMenuContent>
-                            <ContextMenuItem
-                                className="gap-2"
-                                onClick={() => handleEdit(workspace)}
-                            >
-                              <Pencil className="w-4 h-4" />
-                              이름 바꾸기
-                            </ContextMenuItem>
-                            <ContextMenuItem
-                                className="text-destructive focus:text-destructive gap-2"
-                                onClick={() => handleDeleteClick(workspace)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                              삭제
-                            </ContextMenuItem>
-                          </ContextMenuContent>
-                        </ContextMenu>
-                    ))}
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="liked" className="mt-0">
-                  <div className="text-sm text-muted-foreground">찜 목록은 준비 중입니다.</div>
-                </TabsContent>
-              </Tabs>
             </div>
 
             {/* 우측: 배경 영역 (primary/5 색상으로 시각적 여유 제공) */}
@@ -375,4 +336,4 @@ const Workspaces = () => {
   );
 };
 
-export default Workspaces;
+export default MyWorkspace;

@@ -58,7 +58,7 @@ const UserMenu = () => {
           <UserIcon className="w-4 h-4" />
           마이페이지
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => navigate('/workspaces')} className="gap-2">
+        <DropdownMenuItem onClick={() => navigate('/my-workspaces')} className="gap-2">
           <LayoutGrid className="w-4 h-4" />
           내 워크스페이스
         </DropdownMenuItem>

@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import Workspaces from "./pages/Workspaces";
+import MyWorkspace from "./pages/MyWorkspace";
 import WorkspaceDetail from "./pages/WorkspaceDetail";
 import MyCategory from "./pages/MyCategory";
 import MyPage from "./pages/MyPage";
@@ -33,7 +33,7 @@ const App = () => (
         <Route path="/community/manage" element={<CommunityManage />} />
         <Route path="/community/search" element={<SearchResult />} />
         <Route path="/community/category-board" element={<CommunityCategoryBoard />} />
-        <Route path="/workspaces" element={<Workspaces />} />
+        <Route path="/my-workspaces" element={<MyWorkspace />} />
         <Route path="/my-category" element={<MyCategory />} />
         <Route path="/workspace/:id" element={<WorkspaceDetail />} />
         <Route path="/mypage" element={<MyPage />} />
