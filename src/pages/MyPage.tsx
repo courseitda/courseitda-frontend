@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { LogOut, User as UserIcon, ArrowLeft } from 'lucide-react';
+import { LogOut, User as UserIcon } from 'lucide-react';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useUserProfile } from '@/shared/hooks/use-user-info';
 import { Spinner } from '@/components/ui/spinner';
+import PageHeader from '@/components/layout/page-header';
 
 /**
  * 사용자 프로필 정보를 표시하는 마이페이지 컴포넌트
@@ -45,30 +46,8 @@ const MyPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-card">
-      {/* UserRequest: 좌우 여백을 0.5배로 축소하여 다른 페이지와 통일성 유지 (px-8 → px-4) */}
-      <header className="border-b border-border/50 bg-background/95 backdrop-blur">
-        <div className="container mx-auto px-4 py-4 md:py-3">
-          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
-            {/* 좌측: 뒤로가기 버튼 */}
-            {/* UserRequest: 마이페이지에 뒤로가기 버튼 추가하여 이전 페이지로 쉽게 이동 */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(-1)}
-              aria-label="뒤로가기"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            
-            {/* 중앙: 제목 */}
-            {/* UserRequest: 제목을 가운데 정렬하여 시각적 균형 유지 */}
-            <h1 className="text-lg font-bold text-center">마이페이지</h1>
-            
-            {/* 우측: 대칭을 위한 빈 공간 */}
-            <div className="w-10" />
-          </div>
-        </div>
-      </header>
+      {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
+      <PageHeader title="마이페이지" showUserMenu={false} />
 
       <main className="container mx-auto px-4 py-12 md:py-8 max-w-2xl">
         <div className="space-y-6">
@@ -105,4 +84,3 @@ const MyPage = () => {
 };
 
 export default MyPage;
-

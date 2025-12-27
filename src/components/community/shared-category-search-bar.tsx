@@ -1,0 +1,36 @@
+import type { FormEvent } from 'react';
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
+
+type SharedCategorySearchBarProps = {
+  value: string;
+  onChange: (value: string) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+};
+
+// UserRequest: 커뮤니티 검색 입력 UI를 공통 컴포넌트로 분리
+const SharedCategorySearchBar = ({
+  value,
+  onChange,
+  onSubmit,
+}: SharedCategorySearchBarProps) => (
+  <form onSubmit={onSubmit} className="w-5/6 max-w-xl mx-auto">
+    <div className="relative w-full">
+      <Input
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder="잠실, 점심, 한강"
+        className="pl-4 pr-12 border-primary/70 focus-visible:ring-primary rounded-full h-12"
+      />
+      <button
+        type="submit"
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-primary hover:text-primary/80"
+        aria-label="검색"
+      >
+        <Search className="w-5 h-5" />
+      </button>
+    </div>
+  </form>
+);
+
+export default SharedCategorySearchBar;

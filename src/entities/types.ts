@@ -108,3 +108,8 @@ export type SharedSavedCategory = {
   placeCount: number; // 포함된 장소 수
   places: SharedSavedCategoryPlace[]; // 상세 표시용 장소 목록(간략)
 };
+
+// 내 공유 카테고리 타입 - 내가 보관 카테고리를 공유한 경우 savedCategoryId를 추가로 보존
+export type MySharedCategory = SharedSavedCategory & {
+  savedCategoryId: string;
+};

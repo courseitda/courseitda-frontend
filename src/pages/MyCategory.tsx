@@ -9,13 +9,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { Plus, Folder, Heart, ArrowLeft, Clock } from 'lucide-react';
+import { Plus, Folder, Heart, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import UserMenu from '@/components/header/user-menu';
 import { Spinner } from '@/components/ui/spinner';
 import { useMySavedCategories } from '@/shared/hooks/use-my-storage';
 import type { SavedCategory } from '@/entities/types';
+import PageHeader from '@/components/layout/page-header';
 
 /**
  * 내 카테고리 페이지 컴포넌트
@@ -82,32 +82,9 @@ const MyCategory = () => {
 
   return (
       <div className="min-h-screen bg-gradient-card">
-        <header className="border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container mx-auto px-4 py-4 md:py-3">
-            <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
-              {/* UserRequest: 헤더 좌측에 뒤로가기 버튼을 배치해 워크스페이스 상세 페이지와 일관된 네비게이션 제공 */}
-              <div className="flex items-center">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => navigate('/')}
-                    aria-label="뒤로가기"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </Button>
-              </div>
-
-              {/* UserRequest: 헤더 중앙에 현재 위치를 명확히 표시하기 위해 제목을 추가 */}
-              <div className="flex justify-center items-center">
-                <h1 className="text-lg font-semibold">내 카테고리</h1>
-              </div>
-
-            <div className="flex items-center">
-              <UserMenu />
-            </div>
-          </div>
-        </div>
-      </header>
+        {/* UserRequest: 뒤로가기 버튼은 직전 페이지로 이동 */}
+        {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
+        <PageHeader title="내 카테고리" />
 
         {/* 모바일 레이아웃 */}
         {/* UserRequest: 모바일 뷰 좌우 여백을 0.5배로 축소하여 다른 페이지와 통일성 유지 (px-8 → px-4) */}

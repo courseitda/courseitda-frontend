@@ -77,8 +77,11 @@
 | 제목 검색 | `/api/community/shared-categories/search` | `GET` | `keyword` 쿼리(옵션) |
 | 찜 추가 | `/api/community/shared-categories/{id}/likes` | `POST` | `Authorization` 필요 |
 | 찜 해제 | `/api/community/shared-categories/{id}/likes` | `DELETE` | `Authorization` 필요 |
+| 내 공유 목록 | `/api/community/shared-categories/me` | `GET` | 내가 공유한 카테고리 목록, `Authorization` 필요 |
+| 보관 카테고리 공유 | `/api/community/shared-categories` | `POST` | `{ savedCategoryId }` 바디, `Authorization` 필요 |
+| 공유 카테고리 삭제 | `/api/community/shared-categories/{id}` | `DELETE` | 내가 올린 공유 카테고리 제거, `Authorization` 필요 |
 
-- `communityApi`(`src/services/api/community.service.ts`)가 위 호출을 담당하며, 화면에서는 `useRecommendedSharedCategories`, `useSharedCategorySearch`로 사용합니다.
+- `communityApi`(`src/services/api/community.service.ts`)가 위 호출을 담당하며, 화면에서는 `useRecommendedSharedCategories`, `useSharedCategorySearch`, `useMySharedCategories`로 사용합니다.
 
 ### 내 보관함(보관 카테고리)
 
@@ -115,6 +118,7 @@
 | 카테고리 구조 | `['workspace', identifier, 'categories']` | 카테고리 + 장소 트리 |
 | 커뮤니티 추천 | `['community','shared-categories','recommended']` | 공유 카테고리 추천 목록 |
 | 커뮤니티 검색 | `['community','shared-categories','search', keyword]` | 공유 카테고리 검색 결과 |
+| 내 공유 카테고리 | `['community','shared-categories','me']` | 내가 올린 공유 카테고리 목록 |
 | 내 보관함 | `['my-storage','saved-categories','me']` | 내 보관 카테고리 목록 |
 
 - 생성/수정/삭제/재정렬/대표 지정 등의 뮤테이션 이후에는 위 키를 `invalidateQueries`로 무효화합니다.

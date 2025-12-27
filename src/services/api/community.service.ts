@@ -6,6 +6,8 @@ import { toError, toSuccess } from './http';
 // 커뮤니티 관련 백엔드 엔드포인트 상수 정의
 const RECOMMENDED_SHARED_CATEGORIES_ENDPOINT = '/api/community/shared-categories/recommendations';
 const SEARCH_SHARED_CATEGORIES_ENDPOINT = '/api/community/shared-categories/search';
+const MY_SHARED_CATEGORIES_ENDPOINT = '/api/community/shared-categories/me';
+const SHARED_CATEGORY_ENDPOINT = '/api/community/shared-categories';
 const SHARED_CATEGORY_LIKE_ENDPOINT = (sharedCategoryId: string) =>
   `/api/community/shared-categories/${sharedCategoryId}/likes`;
 
@@ -25,6 +27,15 @@ type SharedCategoryApiResponse = {
   places: SharedCategoryPlaceApiResponse[];
 };
 
+type MySharedCategoryApiResponse = {
+  id: number | string;
+  title: string;
+  uploaderNickname: string;
+  uploadedAt: string;
+  placeCount: number;
+  savedCategoryId: number | string;
+};
+
 // 공유 카테고리 목록 조회 응답 데이터 타입 - 백엔드 API 스펙과 일치
 export interface SharedCategoriesData {
   sharedCategories: Array<{
@@ -40,6 +51,30 @@ export interface SharedCategoriesData {
       addressName: string;
     }>;
   }>;
+}
+
+// 내 공유 카테고리 목록 조회 응답 데이터 타입
+export interface MySharedCategoriesData {
+  sharedCategories: Array<{
+    id: string;
+    title: string;
+    uploaderNickname: string;
+    uploadedAt: string;
+    placeCount: number;
+    savedCategoryId: string;
+  }>;
+}
+
+// 보관 카테고리를 공유할 때 응답 데이터 타입
+export interface ShareSavedCategoryData {
+  sharedCategory: {
+    id: string;
+    title: string;
+    uploaderNickname: string;
+    uploadedAt: string;
+    placeCount: number;
+    savedCategoryId: string;
+  };
 }
 
 // 공유 카테고리 찜 토글 응답 타입
@@ -64,6 +99,17 @@ const adaptSharedCategories = (payload: SharedCategoryApiResponse[]): SharedCate
   })),
 });
 
+const adaptMySharedCategories = (payload: MySharedCategoryApiResponse[]): MySharedCategoriesData => ({
+  sharedCategories: payload.map((category) => ({
+    id: String(category.id),
+    title: category.title,
+    uploaderNickname: category.uploaderNickname,
+    uploadedAt: category.uploadedAt,
+    placeCount: category.placeCount,
+    savedCategoryId: String(category.savedCategoryId),
+  })),
+});
+
 // 커뮤니티 API 서비스 객체 - 모든 커뮤니티 관련 API 호출을 service 계층에서 중앙 관리
 export const communityApi = {
   /**
@@ -84,6 +130,29 @@ export const communityApi = {
         error,
         BackendErrorCode.TEMPORARY_ERROR,
         '추천 카테고리를 불러올 수 없습니다.',
+      );
+    }
+  },
+
+  /**
+   * 내 공유 카테고리 목록 조회 API 호출
+   * @param token 인증 토큰
+   * @returns API 응답 (성공 시 공유 카테고리 목록, 실패 시 에러 정보)
+   *
+   * 백엔드 엔드포인트: GET /api/community/shared-categories/me
+   */
+  getMySharedCategories: async (token: string): Promise<ApiResponse<MySharedCategoriesData>> => {
+    try {
+      const response = await apiClient.get<MySharedCategoryApiResponse[]>(MY_SHARED_CATEGORIES_ENDPOINT, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      return toSuccess<MySharedCategoriesData>(adaptMySharedCategories(response.data));
+    } catch (error) {
+      return toError(
+        error,
+        BackendErrorCode.INVALID_TOKEN,
+        '내 공유 카테고리를 불러올 수 없습니다.',
       );
     }
   },
@@ -171,5 +240,67 @@ export const communityApi = {
       );
     }
   },
-};
 
+  /**
+   * 보관 카테고리를 커뮤니티에 공유하는 API 호출
+   * @param token 인증 토큰
+   * @param savedCategoryId 보관 카테고리 ID
+   *
+   * 백엔드 엔드포인트: POST /api/community/shared-categories
+   */
+  shareSavedCategory: async (
+    token: string,
+    savedCategoryId: string,
+  ): Promise<ApiResponse<ShareSavedCategoryData>> => {
+    try {
+      const response = await apiClient.post<MySharedCategoryApiResponse>(
+        SHARED_CATEGORY_ENDPOINT,
+        { savedCategoryId },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      return toSuccess<ShareSavedCategoryData>({
+        sharedCategory: {
+          id: String(response.data.id),
+          title: response.data.title,
+          uploaderNickname: response.data.uploaderNickname,
+          uploadedAt: response.data.uploadedAt,
+          placeCount: response.data.placeCount,
+          savedCategoryId: String(response.data.savedCategoryId),
+        },
+      });
+    } catch (error) {
+      return toError(
+        error,
+        BackendErrorCode.ACCESS_FORBIDDEN,
+        '카테고리 공유에 실패했습니다.',
+      );
+    }
+  },
+
+  /**
+   * 내가 공유한 카테고리를 삭제하는 API 호출
+   * @param token 인증 토큰
+   * @param sharedCategoryId 공유 카테고리 ID
+   *
+   * 백엔드 엔드포인트: DELETE /api/community/shared-categories/{id}
+   */
+  deleteMySharedCategory: async (
+    token: string,
+    sharedCategoryId: string,
+  ): Promise<ApiResponse<null>> => {
+    try {
+      await apiClient.delete(`${SHARED_CATEGORY_ENDPOINT}/${sharedCategoryId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      return toSuccess<null>(null);
+    } catch (error) {
+      return toError(
+        error,
+        BackendErrorCode.ACCESS_FORBIDDEN,
+        '공유 카테고리 삭제에 실패했습니다.',
+      );
+    }
+  },
+};

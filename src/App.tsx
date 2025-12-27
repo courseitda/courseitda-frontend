@@ -12,6 +12,8 @@ import MyPage from "./pages/MyPage";
 import NotFound from "./pages/NotFound";
 import Community from "./pages/Community";
 import SearchResult from "./pages/SearchResult";
+import CommunityManage from "./pages/CommunityManage";
+import CommunityCategoryBoard from "./pages/CommunityCategoryBoard";
 
 // React Query 클라이언트 생성 - 서버 상태 관리 및 캐싱 처리
 const queryClient = new QueryClient();
@@ -28,7 +30,9 @@ const App = () => (
         <Route path="/" element={<Index />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/community" element={<Community />} />
+        <Route path="/community/manage" element={<CommunityManage />} />
         <Route path="/community/search" element={<SearchResult />} />
+        <Route path="/community/category-board" element={<CommunityCategoryBoard />} />
         <Route path="/workspaces" element={<Workspaces />} />
         <Route path="/my-category" element={<MyCategory />} />
         <Route path="/workspace/:id" element={<WorkspaceDetail />} />

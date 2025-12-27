@@ -1,42 +1,41 @@
 import type { FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import { COMMUNITY_QUERY_KEYS, useSharedCategorySearch } from '@/shared/hooks/use-community';
 import type { SharedSavedCategory } from '@/entities/types';
 import { useSharedCategoryLike } from '@/shared/hooks/use-shared-category-like';
+import { sortSharedCategoriesById } from '@/shared/utils/shared-category-sort';
 import SharedCategorySearchBar from '@/components/community/shared-category-search-bar';
 import SharedCategoryList from '@/components/community/shared-category-list';
 import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
 import PageHeader from '@/components/layout/page-header';
 
-const SearchResult = () => {
+const CommunityCategoryBoard = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { isAuthenticated, token } = useAuthStore();
-  const keyword = searchParams.get('keyword') || '';
-  const [inputKeyword, setInputKeyword] = useState(keyword);
+  const [inputKeyword, setInputKeyword] = useState('');
   const [likePulse, setLikePulse] = useState<Record<string, boolean>>({});
   const [selectedCategory, setSelectedCategory] = useState<SharedSavedCategory | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const keyword = '';
 
-  // UserRequest: /community/search 결과는 service 계층 API + React Query로 로딩 (컴포넌트 내부 mock 제거)
+  // UserRequest: 공유된 카테고리 게시판 페이지는 검색 결과 페이지와 동일한 구성으로 구현
   const {
     data: sharedCategories = [],
     isLoading: sharedCategoriesLoading,
     error: sharedCategoriesError,
   } = useSharedCategorySearch(keyword);
 
-  useEffect(() => {
-    setInputKeyword(keyword);
-  }, [keyword]);
+  const filteredCategories = useMemo(() => {
+    // UserRequest: 카테고리 게시판은 id 오름차순으로 기본 정렬
+    return sortSharedCategoriesById(sharedCategories);
+  }, [sharedCategories]);
 
-  const filteredCategories = useMemo(() => sharedCategories, [sharedCategories]);
-
   useEffect(() => {
-    // UserRequest: 검색 결과 조회 실패 시 사용자에게 즉시 알림
+    // UserRequest: 공유된 카테고리 게시판 조회 실패 시 사용자에게 즉시 알림
     if (sharedCategoriesError) {
       toast.error(sharedCategoriesError.message);
     }
@@ -85,30 +84,30 @@ const SearchResult = () => {
   return (
     <div className="min-h-screen bg-gradient-card">
       {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
-      <PageHeader showLogo />
+      <PageHeader title="카테고리 게시판" />
 
-      <main className="container mx-auto px-4 py-6 md:py-8">
-        <div className="max-w-6xl mx-auto space-y-6">
-          <section className="space-y-3">
-            {/* UserRequest: 검색 결과 페이지 검색창을 커뮤니티 페이지와 동일한 형태로 변경 */}
-            <SharedCategorySearchBar
-              value={inputKeyword}
-              onChange={setInputKeyword}
-              onSubmit={handleSearchSubmit}
-            />
-          </section>
+      {/* UserRequest: 헤더와 검색 영역 사이 간격을 0.5배로 조정 */}
+      <main className="min-h-[calc(100vh-72px)] flex flex-col pt-6 pb-6 md:pt-8 md:pb-8">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto space-y-6">
+            <section className="space-y-3">
+              <SharedCategorySearchBar
+                value={inputKeyword}
+                onChange={setInputKeyword}
+                onSubmit={handleSearchSubmit}
+              />
+            </section>
+          </div>
+        </div>
 
-          <section className="space-y-3">
-            <div className="flex items-center justify-between mb-2 px-1">
-              <h2 className="text-base font-semibold pl-1">검색 결과</h2>
-              <span className="text-xs text-muted-foreground">
-                {filteredCategories.length}개
-              </span>
-            </div>
+        {/* UserRequest: 검색 영역과 데이터 영역 사이 구분선 위치 조정 */}
+        <div className="mt-12 border-t border-border/60" />
 
-            {/* UserRequest: 검색 결과 영역을 커뮤니티 게시판과 동일하게 간격을 좁히고 박스 형태로 구분 */}
-            <div className="border border-border rounded-2xl bg-muted/30 p-3 md:p-4">
-              {/* UserRequest: 검색 결과 영역 높이를 고정하고 내부 스크롤로 표시 */}
+        {/* UserRequest: 구분선 아래 전체 배경을 회색으로 표시 */}
+        <div className="bg-muted/30 flex-1">
+          <div className="container mx-auto px-4">
+            <section className="max-w-6xl mx-auto space-y-3 p-3 md:p-4">
+              {/* UserRequest: 정렬 드롭다운 제거 */}
               <SharedCategoryList
                 categories={filteredCategories}
                 isAuthenticated={isAuthenticated}
@@ -116,10 +115,10 @@ const SearchResult = () => {
                 onOpenDetail={handleOpenDetail}
                 onToggleLike={handleToggleLike}
               />
-            </div>
-          </section>
-    </div>
-  </main>
+            </section>
+          </div>
+        </div>
+      </main>
 
       <SharedCategoryDetailDialog
         open={detailOpen}
@@ -130,4 +129,4 @@ const SearchResult = () => {
   );
 };
 
-export default SearchResult;
+export default CommunityCategoryBoard;

@@ -1,24 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import logo from '@/assets/logo-no-background.png';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { Heart, Folder, Search, ArrowLeft, Calendar, MapPin, User as UserIcon } from 'lucide-react';
-import UserMenu from '@/components/header/user-menu';
+import { Heart, Folder, User as UserIcon, Sparkles } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { communityApi } from '@/services/api';
 import { COMMUNITY_QUERY_KEYS, useRecommendedSharedCategories } from '@/shared/hooks/use-community';
 import type { SharedSavedCategory } from '@/entities/types';
+import { useSharedCategoryLike } from '@/shared/hooks/use-shared-category-like';
+import PageHeader from '@/components/layout/page-header';
+import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
 
 /**
  * 커뮤니티 메인 페이지 - 검색 입력 후 검색 결과 페이지로 이동
@@ -27,17 +19,22 @@ import type { SharedSavedCategory } from '@/entities/types';
 const Community = () => {
   const navigate = useNavigate();
   const { isAuthenticated, token } = useAuthStore();
-  const [keyword, setKeyword] = useState('');
   const [likePulse, setLikePulse] = useState<Record<string, boolean>>({});
   const [selectedCategory, setSelectedCategory] = useState<SharedSavedCategory | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [recommendIndex, setRecommendIndex] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
   const startX = useRef(0);
   const currentTranslate = useRef(0);
   const [sliderWidth, setSliderWidth] = useState(0);
-  const queryClient = useQueryClient();
+  const { toggleLike } = useSharedCategoryLike({
+    queryKey: COMMUNITY_QUERY_KEYS.recommended,
+    token,
+    isAuthenticated,
+    setSelectedCategory,
+  });
 
   // UserRequest: Community 페이지의 추천/검색/찜 로직은 service 계층 인터페이스를 통해 실행
   const {
@@ -50,80 +47,40 @@ const Community = () => {
   const CARD_WIDTH = 280;
   const CARD_GAP = 16;
 
-  const toggleLikeMutation = useMutation({
-    mutationFn: async (params: { sharedCategoryId: string; nextLiked: boolean }) => {
-      if (!token) {
-        throw new Error('인증 토큰이 필요합니다.');
-      }
-
-      const response = params.nextLiked
-        ? await communityApi.likeSharedCategory(token, params.sharedCategoryId)
-        : await communityApi.unlikeSharedCategory(token, params.sharedCategoryId);
-
-      if (!response.success || !response.data) {
-        throw new Error(response.error?.message ?? '찜 처리에 실패했습니다.');
-      }
-
-      return response.data;
-    },
-    onMutate: async (params) => {
-      await queryClient.cancelQueries({ queryKey: COMMUNITY_QUERY_KEYS.recommended });
-
-      const previous = queryClient.getQueryData<SharedSavedCategory[]>(COMMUNITY_QUERY_KEYS.recommended);
-      queryClient.setQueryData<SharedSavedCategory[]>(COMMUNITY_QUERY_KEYS.recommended, (old) =>
-        (old ?? []).map((category) =>
-          category.id === params.sharedCategoryId ? { ...category, liked: params.nextLiked } : category,
-        ),
-      );
-
-      setSelectedCategory((previousSelected) =>
-        previousSelected && previousSelected.id === params.sharedCategoryId
-          ? { ...previousSelected, liked: params.nextLiked }
-          : previousSelected,
-      );
-
-      return { previous };
-    },
-    onError: (error, _params, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(COMMUNITY_QUERY_KEYS.recommended, context.previous);
-      }
-      const message = error instanceof Error ? error.message : '찜 처리에 실패했습니다.';
-      toast.error(message);
-    },
-    onSuccess: (data) => {
-      toast[data.isLiked ? 'success' : 'info'](
-        data.isLiked ? '찜했어요. 내 보관함에서 확인할 수 있습니다.' : '찜을 해제했습니다.',
-      );
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: COMMUNITY_QUERY_KEYS.recommended });
-    },
-  });
-
-  const handleToggleLike = (id: string) => {
-    if (!isAuthenticated) {
-      toast.error('로그인 후 이용할 수 있는 기능입니다.');
-      return;
-    }
-    if (!token) {
-      toast.error('인증 토큰이 필요합니다. 다시 로그인해주세요.');
-      return;
-    }
-
-    const target = filteredCategories.find((category) => category.id === id);
-    if (!target || toggleLikeMutation.isPending) return;
-
-    toggleLikeMutation.mutate({ sharedCategoryId: id, nextLiked: !target.liked });
-    setLikePulse((prev) => ({ ...prev, [id]: true }));
+  // UserRequest: 공유 카테고리 찜 토글 로직을 공통 훅으로 대체
+  const triggerLikePulse = (categoryId: string) => {
+    setLikePulse((prev) => ({ ...prev, [categoryId]: true }));
     setTimeout(() => {
-      setLikePulse((prev) => ({ ...prev, [id]: false }));
+      setLikePulse((prev) => ({ ...prev, [categoryId]: false }));
     }, 200);
+  };
+
+  const handleToggleLike = (category: SharedSavedCategory) => {
+    const didToggle = toggleLike({ sharedCategoryId: category.id, currentLiked: category.liked });
+    if (!didToggle) return;
+    triggerLikePulse(category.id);
   };
 
   const handleOpenDetail = (category: SharedSavedCategory) => {
     setSelectedCategory(category);
     setDetailOpen(true);
+  };
+
+  // UserRequest: pagination dots 클릭 시 정상 이동을 보장하도록 드래그 상태를 초기화
+  const handleSelectRecommend = (index: number) => {
+    isDragging.current = false;
+    trackRef.current?.style.removeProperty('transform');
+    setRecommendIndex(index);
+  };
+
+  const handleOpenManage = () => {
+    // 회원 전용 페이지이므로 인증되지 않은 경우 로그인 페이지로 안내
+    if (!isAuthenticated) {
+      toast.error('로그인 후 이용할 수 있는 기능입니다.');
+      navigate('/auth');
+      return;
+    }
+    navigate('/community/manage');
   };
 
   useEffect(() => {
@@ -165,64 +122,19 @@ const Community = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-4 md:py-3">
-          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
-            <div className="flex items-center">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate(-1)}
-                aria-label="뒤로가기"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-            </div>
-            <div className="flex items-center justify-center gap-1.5 md:gap-2 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => navigate('/')}>
-              <img src={logo} alt="코스잇다 로고" className="w-10 h-10 object-contain rounded-lg" />
-              <span className="font-bold text-lg whitespace-nowrap text-primary">코스잇다</span>
-            </div>
-            <div className="flex items-center justify-end">
-              <UserMenu />
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
+      <PageHeader showLogo />
 
       <main className="min-h-[calc(100vh-72px)] flex flex-col">
-        <section className="container mx-auto px-4 py-6 md:py-8">
-          <div className="max-w-5xl mx-auto space-y-6">
-            <section className="space-y-3">
-              <form onSubmit={(event) => {
-                event.preventDefault();
-                const value = keyword.trim();
-                navigate(`/community/search${value ? `?keyword=${encodeURIComponent(value)}` : ''}`);
-              }} className="flex flex-row gap-3 items-stretch">
-                <div className="flex-1 flex gap-2">
-                  <div className="relative w-full">
-                    <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
-                    <Input
-                      value={keyword}
-                      onChange={(event) => setKeyword(event.target.value)}
-                      placeholder="잠실 점심 식당, 건대 카페"
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-                <Button type="submit" className="gap-2">
-                  <Search className="w-4 h-4" />
-                  검색
-                </Button>
-              </form>
-            </section>
-          </div>
-        </section>
 
-        <section className="container mx-auto px-4 pb-6">
-            <div className="flex flex-col items-center gap-3 mb-6 text-center">
+        {/* UserRequest: 검색 제거 후 섹션 간 여백 재조정 */}
+        <section className="container mx-auto px-4 pb-4 pt-6 md:pt-8">
+            <div className="flex flex-col gap-3 mb-6">
               <div className="inline-flex items-center gap-2">
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-bold">★</span>
-                <h2 className="text-lg font-bold tracking-tight">코스잇다 추천 카테고리!</h2>
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <Sparkles className="w-4 h-4" />
+                </span>
+                <h2 className="text-lg font-bold tracking-tight">코스잇다 추천 카테고리</h2>
               </div>
             </div>
           {filteredCategories.length > 0 && (
@@ -235,22 +147,25 @@ const Community = () => {
                     if (filteredCategories.length === 0) return;
                     isDragging.current = true;
                     startX.current = event.clientX;
-                    currentTranslate.current = (sliderWidth ? (sliderWidth - CARD_WIDTH) / 2 - recommendIndex * (CARD_WIDTH + CARD_GAP) : 0);
+                    // UserRequest: 순차 전환 시 활성 카드가 정중앙에 오도록 기준 위치를 계산
+                    currentTranslate.current = (sliderWidth
+                      ? (sliderWidth - CARD_WIDTH) / 2 - recommendIndex * (CARD_WIDTH + CARD_GAP)
+                      : 0);
                   }}
                   onPointerMove={(event) => {
-                    if (!isDragging.current || !sliderRef.current) return;
+                    if (!isDragging.current || !trackRef.current) return;
                     const delta = event.clientX - startX.current;
-                    sliderRef.current.style.setProperty(
+                    trackRef.current.style.setProperty(
                       'transform',
                       `translateX(${currentTranslate.current + delta}px)`
                     );
                   }}
                   onPointerUp={(event) => {
-                    if (!isDragging.current || !sliderRef.current) return;
+                    if (!isDragging.current || !trackRef.current) return;
                     isDragging.current = false;
                     const delta = event.clientX - startX.current;
                     const threshold = CARD_WIDTH / 3;
-                    sliderRef.current.style.removeProperty('transform');
+                    trackRef.current.style.removeProperty('transform');
                     if (delta > threshold) {
                       setRecommendIndex((prev) => (prev - 1 + filteredCategories.length) % filteredCategories.length);
                     } else if (delta < -threshold) {
@@ -260,11 +175,12 @@ const Community = () => {
                   onPointerLeave={() => {
                     if (isDragging.current) {
                       isDragging.current = false;
-                      sliderRef.current?.style.removeProperty('transform');
+                      trackRef.current?.style.removeProperty('transform');
                     }
                   }}
                 >
                   <div
+                    ref={trackRef}
                     className="flex items-center gap-4 transition-transform duration-500 ease-out"
                     style={{
                       transform: `translateX(${sliderWidth ? (sliderWidth - CARD_WIDTH) / 2 - recommendIndex * (CARD_WIDTH + CARD_GAP) : 0}px)`,
@@ -303,7 +219,7 @@ const Community = () => {
                           toast.error('로그인 후 이용할 수 있는 기능입니다.');
                           return;
                         }
-                        handleToggleLike(category.id);
+                        handleToggleLike(category);
                       }}
                       aria-label={`${category.title} 찜하기`}
                       aria-pressed={category.liked}
@@ -326,117 +242,120 @@ const Community = () => {
                   </div>
                 </div>
               </div>
+              {/* UserRequest: 카드 슬라이더 하단에 현재 위치를 표시하는 pagination dots 추가 */}
+              <div className="mt-4 flex items-center justify-center gap-2">
+                {filteredCategories.map((category, index) => (
+                  <button
+                    key={category.id}
+                    type="button"
+                    aria-label={`추천 카드 ${index + 1}번으로 이동`}
+                    aria-pressed={recommendIndex === index}
+                    onClick={() => handleSelectRecommend(index)}
+                    className={`h-2.5 w-2.5 rounded-full transition-all ${
+                      recommendIndex === index ? 'bg-primary scale-110' : 'bg-muted-foreground/40 hover:bg-muted-foreground/70'
+                    }`}
+                  />
+                ))}
+              </div>
             </div>
           )}
         </section>
 
-        <section className="container mx-auto px-4 pb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold">전체 카테고리</h2>
-            <span className="text-xs text-muted-foreground">{filteredCategories.length}개</span>
+        {/* UserRequest: 커뮤니티 페이지에서 검색 영역 제거 */}
+
+        <section className="container mx-auto px-4 pt-2 pb-8">
+          {/* UserRequest: 섹션 문구를 "카테고리 게시판"으로 변경 */}
+          <div className="flex items-center justify-between mb-2 px-1">
+            <h2 className="text-base font-semibold pl-1">카테고리 게시판</h2>
+            <button
+              type="button"
+              className="text-xs font-medium text-muted-foreground hover:underline flex items-center gap-1"
+              onClick={() => navigate('/community/category-board')}
+            >
+              더보기
+              <span aria-hidden>&gt;</span>
+            </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredCategories.map((category) => (
-              <Card
-                key={category.id}
-                className="hover-lift cursor-pointer"
-                onClick={() => handleOpenDetail(category)}
-              >
-                <CardHeader className="flex flex-row items-center gap-3 py-3">
-                  <div className="relative">
-                    <div className="w-9 h-9 rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground">
-                      <Folder className="w-4 h-4" />
+          {/* UserRequest: 전체 카테고리 영역을 옅은 회색 배경으로 강조 */}
+          <div className="border border-border rounded-2xl bg-muted/30 p-3 md:p-4">
+            {/* UserRequest: 전체 카테고리 카드 간격을 1/3 수준으로 축소 */}
+            {/* UserRequest: 카테고리 게시판에는 최대 4개까지만 노출 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+              {filteredCategories.slice(0, 4).map((category) => (
+                <Card
+                  key={category.id}
+                  className="hover-lift cursor-pointer"
+                  onClick={() => handleOpenDetail(category)}
+                >
+                  <CardHeader className="flex flex-row items-center gap-3 py-3">
+                    <div className="relative">
+                      <div className="w-9 h-9 rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground">
+                        <Folder className="w-4 h-4" />
+                      </div>
+                      <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[11px] leading-none px-1.5 py-0.5 rounded-full">
+                        {category.placeCount}
+                      </span>
                     </div>
-                    <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[11px] leading-none px-1.5 py-0.5 rounded-full">
-                      {category.placeCount}
-                    </span>
-                  </div>
-                    <div className="flex flex-col gap-1 flex-1 min-w-0">
-                      <CardTitle className="text-base truncate">{category.title}</CardTitle>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                        <UserIcon className="w-4 h-4 text-primary" />
-                      {category.uploader}
-                      </p>
-                    </div>
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      if (!isAuthenticated) {
-                        toast.error('로그인 후 이용할 수 있는 기능입니다.');
-                        return;
-                      }
-                      handleToggleLike(category.id);
-                    }}
-                    aria-label={`${category.title} 찜하기`}
-                    aria-pressed={category.liked}
-                    className={`relative h-11 w-11 rounded-full flex items-center justify-center transition-transform duration-150 hover:scale-105 active:scale-90 focus:outline-none ${likePulse[category.id] ? 'scale-110' : ''}`}
-                  >
-                    {likePulse[category.id] && (
-                      <span className="absolute inset-0 rounded-full like-heart-ping animate-ping" />
-                    )}
-                    <Heart
-                      className={`w-7 h-7 ${isAuthenticated ? 'like-heart' : 'text-muted-foreground'} transition-transform duration-150 ${likePulse[category.id] ? 'scale-110' : ''}`}
-                      fill={isAuthenticated && category.liked ? 'currentColor' : 'none'}
-                      strokeWidth={isAuthenticated && category.liked ? 0 : 1.5}
-                    />
-                  </button>
-                </CardHeader>
-              </Card>
-            ))}
+                      <div className="flex flex-col gap-1 flex-1 min-w-0">
+                        <CardTitle className="text-base truncate">{category.title}</CardTitle>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                          <UserIcon className="w-4 h-4 text-primary" />
+                        {category.uploader}
+                        </p>
+                      </div>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        if (!isAuthenticated) {
+                          toast.error('로그인 후 이용할 수 있는 기능입니다.');
+                          return;
+                        }
+                        handleToggleLike(category);
+                      }}
+                      aria-label={`${category.title} 찜하기`}
+                      aria-pressed={category.liked}
+                      className={`relative h-11 w-11 rounded-full flex items-center justify-center transition-transform duration-150 hover:scale-105 active:scale-90 focus:outline-none ${likePulse[category.id] ? 'scale-110' : ''}`}
+                    >
+                      {likePulse[category.id] && (
+                        <span className="absolute inset-0 rounded-full like-heart-ping animate-ping" />
+                      )}
+                      <Heart
+                        className={`w-7 h-7 ${isAuthenticated ? 'like-heart' : 'text-muted-foreground'} transition-transform duration-150 ${likePulse[category.id] ? 'scale-110' : ''}`}
+                        fill={isAuthenticated && category.liked ? 'currentColor' : 'none'}
+                        strokeWidth={isAuthenticated && category.liked ? 0 : 1.5}
+                      />
+                    </button>
+                  </CardHeader>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="container mx-auto px-4 pb-10">
+          {/* UserRequest: 커뮤니티 관리 버튼을 헤더에서 본문 하단 섹션으로 이동 */}
+          <div className="max-w-5xl mx-auto border border-dashed border-border rounded-xl p-5 md:p-6 flex flex-col md:flex-row md:items-center gap-3 justify-between bg-muted/30">
+            <div>
+              <h3 className="text-base font-semibold">커뮤니티 관리</h3>
+              <p className="text-sm text-muted-foreground">
+                내가 공유한 카테고리를 확인하고 관리하려면 아래 버튼을 눌러주세요.
+              </p>
+            </div>
+            <div className="flex justify-end">
+              <Button variant="outline" onClick={handleOpenManage} className="gap-2">
+                커뮤니티 관리 바로가기
+              </Button>
+            </div>
           </div>
         </section>
       </main>
 
-      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-center">{selectedCategory?.title}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground flex-wrap">
-              <span className="flex items-center gap-1.5">
-                <UserIcon className="w-4 h-4 text-primary" />
-                {selectedCategory?.uploader}
-              </span>
-              {selectedCategory?.uploadedAt && (
-                <span className="flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4 text-primary" />
-                  {new Date(selectedCategory.uploadedAt).toLocaleDateString('ko-KR', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                  })}
-                </span>
-              )}
-            </div>
-            <div className="w-full h-96 rounded-lg border border-dashed border-border bg-muted/40 flex items-center justify-center text-sm text-muted-foreground">
-              지도 영역 (임시)
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm font-semibold">
-                장소 목록
-                {selectedCategory?.placeCount !== undefined && (
-                  <span className="ml-1 text-xs text-muted-foreground">
-                    ({selectedCategory.placeCount}곳)
-                  </span>
-                )}
-              </p>
-              <div className="border border-border rounded-lg divide-y divide-border">
-                {selectedCategory?.places.map((place) => (
-                  <div key={place.id} className="p-3 flex flex-col gap-1">
-                    <span className="text-sm font-medium flex items-center gap-1.5">
-                      <MapPin className="w-4 h-4 text-primary" />
-                      {place.name}
-                    </span>
-                    <span className="text-xs text-muted-foreground">{place.addressName}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <SharedCategoryDetailDialog
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        category={selectedCategory}
+      />
     </div>
   );
 };

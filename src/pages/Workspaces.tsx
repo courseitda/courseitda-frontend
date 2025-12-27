@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/context-menu';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useWorkspacesByOwner } from '@/shared/hooks/use-workspace';
-import { Plus, Pencil, Trash2, Clock, LayoutGrid, Heart, ArrowLeft } from 'lucide-react';
+import { Plus, Pencil, Trash2, Clock, LayoutGrid, Heart } from 'lucide-react';
 import { CreateWorkspaceDialog } from '@/features/workspaces/create-workspace-dialog';
 import { EditWorkspaceDialog } from '@/features/workspaces/edit-workspace-dialog';
 import { toast } from 'sonner';
@@ -30,7 +30,7 @@ import { workspaceApi } from '@/services/api';
 import type { Workspace } from '@/entities/types';
 import { Spinner } from '@/components/ui/spinner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import UserMenu from '@/components/header/user-menu';
+import PageHeader from '@/components/layout/page-header';
 
 /**
  * 워크스페이스 목록 페이지 컴포넌트
@@ -143,32 +143,8 @@ const Workspaces = () => {
 
   return (
       <div className="min-h-screen bg-gradient-card">
-        <header className="border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container mx-auto px-4 py-4 md:py-3">
-            <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
-              {/* UserRequest: 헤더 좌측에 뒤로가기 버튼을 배치해 워크스페이스 상세 페이지와 일관된 네비게이션 제공 */}
-              <div className="flex items-center">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => navigate('/')}
-                    aria-label="뒤로가기"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </Button>
-              </div>
-
-              {/* UserRequest: 헤더 중앙에 현재 위치를 명확히 표시하기 위해 제목을 추가 */}
-              <div className="flex justify-center items-center">
-                <h1 className="text-lg font-semibold">내 워크스페이스</h1>
-              </div>
-
-            <div className="flex items-center">
-              <UserMenu />
-            </div>
-          </div>
-        </div>
-      </header>
+        {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
+        <PageHeader title="내 워크스페이스" />
 
         {/* 모바일 레이아웃 */}
         {/* UserRequest: 모바일 뷰 좌우 여백을 0.5배로 축소하여 다른 페이지와 통일성 유지 (px-8 → px-4) */}

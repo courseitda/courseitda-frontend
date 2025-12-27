@@ -8,7 +8,7 @@ import { CategoryList } from '@/features/categories/category-list';
 import { MapCanvas } from '@/features/map/map-canvas';
 import { useSettingsStore } from '@/shared/stores/settings-store';
 import { toast } from 'sonner';
-import { ArrowLeft, ChevronDown, Check, Plus, Maximize2, Minimize2 } from 'lucide-react';
+import { ChevronDown, Check, Plus, Maximize2, Minimize2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +20,7 @@ import {
 import { CreateWorkspaceDialog } from '@/features/workspaces/create-workspace-dialog';
 import type { Place } from '@/entities/types';
 import { Spinner } from '@/components/ui/spinner';
-import UserMenu from '@/components/header/user-menu';
+import PageHeader from '@/components/layout/page-header';
 
 /**
  * 워크스페이스 상세 페이지 - 카테고리 관리 및 지도 표시
@@ -214,71 +214,53 @@ const WorkspaceDetail = () => {
     <div className="h-screen bg-gradient-card flex flex-col overflow-hidden">
       {/* 헤더 */}
       {/* UserRequest: 좌우 여백을 0.5배로 축소하여 다른 페이지와 통일성 유지 (px-8 → px-4) */}
-      <header className="border-b border-border/50 bg-background/95 backdrop-blur z-20 shrink-0">
-        <div className="container mx-auto px-4 py-4 md:py-3">
-          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
-            {/* 좌측: 뒤로가기 버튼 - 워크스페이스 목록으로 이동 */}
-            <div className="flex items-center">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate('/workspaces')}
-                aria-label="뒤로가기"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-            </div>
-            
-            {/* 중앙: 워크스페이스 제목 드롭다운 - 다른 워크스페이스로 빠르게 전환 가능하도록 UX 개선 (중앙 정렬로 시각적 균형 유지) */}
-            <div className="flex justify-center items-center min-w-0 relative">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="hover:opacity-70 transition-opacity">
-                    <div className="flex items-center gap-1">
-                      <h1 className="text-lg font-bold truncate max-w-[200px] md:max-w-[400px]">
-                        {workspace.title}
-                      </h1>
-                      <ChevronDown className="w-4 h-4 shrink-0" />
-                    </div>
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="center" className="w-64">
-                  <div className="max-h-[180px] overflow-y-auto">
-                    {workspaces?.map((ws) => (
-                      <DropdownMenuItem
-                        key={ws.id}
-                        onClick={() => handleSelectWorkspace(ws.identifier)}
-                        className={`cursor-pointer justify-center font-semibold ${
-                          ws.id === workspace.id 
-                            ? 'bg-primary/10' 
-                            : ''
-                        }`}
-                      >
-                        <span className="truncate">{ws.title}</span>
-                      </DropdownMenuItem>
-                    ))}
+      {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
+      <PageHeader
+        className="z-20 shrink-0"
+        centerContent={(
+          <div className="flex justify-center items-center min-w-0 relative">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="hover:opacity-70 transition-opacity">
+                  <div className="flex items-center gap-1">
+                    <h1 className="text-lg font-bold truncate max-w-[200px] md:max-w-[400px]">
+                      {workspace.title}
+                    </h1>
+                    <ChevronDown className="w-4 h-4 shrink-0" />
                   </div>
-                  <DropdownMenuSeparator />
-                  <div className="px-1 pb-1">
-                    <button
-                      onClick={() => setCreateWorkspaceOpen(true)}
-                      className="w-full flex items-center justify-center gap-2 px-2 py-1.5 text-sm rounded-sm border border-dashed border-border hover:bg-accent transition-colors"
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center" className="w-64">
+                <div className="max-h-[180px] overflow-y-auto">
+                  {workspaces?.map((ws) => (
+                    <DropdownMenuItem
+                      key={ws.id}
+                      onClick={() => handleSelectWorkspace(ws.identifier)}
+                      className={`cursor-pointer justify-center font-semibold ${
+                        ws.id === workspace.id
+                          ? 'bg-primary/10'
+                          : ''
+                      }`}
                     >
-                      <Plus className="w-4 h-4" />
-                      새 워크스페이스
-                    </button>
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-            
-            {/* 우측: 프로필 메뉴 */}
-            <div className="flex items-center">
-              <UserMenu />
-            </div>
+                      <span className="truncate">{ws.title}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </div>
+                <DropdownMenuSeparator />
+                <div className="px-1 pb-1">
+                  <button
+                    onClick={() => setCreateWorkspaceOpen(true)}
+                    className="w-full flex items-center justify-center gap-2 px-2 py-1.5 text-sm rounded-sm border border-dashed border-border hover:bg-accent transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    새 워크스페이스
+                  </button>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-        </div>
-      </header>
+        )}
+      />
 
       {/* 메인 콘텐츠 - 모바일: 지도 상단 + Bottom Sheet, 데스크톱: 좌우 분할 */}
       {/* UserRequest: 좌우 여백을 0.5배로 축소하여 다른 페이지와 통일성 유지 (px-8 → px-4) */}
