@@ -69,9 +69,6 @@ const Index = () => {
                 <Button size="lg" onClick={() => navigate('/auth?tab=register')} className="gap-2">
                   시작하기
                 </Button>
-                <Button size="lg" variant="outline" onClick={() => navigate('/auth')}>
-                  로그인
-                </Button>
                 <Button size="lg" variant="outline" onClick={() => navigate('/community')} className="gap-2">
                   커뮤니티 둘러보기
                 </Button>
