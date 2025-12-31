@@ -11,6 +11,7 @@ import SharedCategorySearchBar from '@/components/community/shared-category-sear
 import SharedCategoryList from '@/components/community/shared-category-list';
 import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
 import PageHeader from '@/components/layout/page-header';
+import LoginRequiredDialog from '@/components/common/login-required-dialog';
 
 const SearchResult = () => {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ const SearchResult = () => {
   const [likePulse, setLikePulse] = useState<Record<string, boolean>>({});
   const [selectedCategory, setSelectedCategory] = useState<SharedSavedCategory | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
 
   // UserRequest: /community/search/results 결과는 service 계층 API + React Query로 로딩 (컴포넌트 내부 mock 제거)
   const {
@@ -48,6 +50,7 @@ const SearchResult = () => {
     token,
     isAuthenticated,
     setSelectedCategory,
+    onRequireLogin: () => setLoginDialogOpen(true),
   });
 
   const triggerLikePulse = (categoryId: string) => {
@@ -72,6 +75,12 @@ const SearchResult = () => {
   const handleOpenDetail = (category: SharedSavedCategory) => {
     setSelectedCategory(category);
     setDetailOpen(true);
+  };
+
+  // UserRequest: 로그인 필요 안내는 안내창으로 노출되도록 처리
+  const handleLoginStart = () => {
+    setLoginDialogOpen(false);
+    navigate('/auth?tab=register');
   };
 
   if (sharedCategoriesLoading) {
@@ -128,6 +137,11 @@ const SearchResult = () => {
         open={detailOpen}
         onOpenChange={setDetailOpen}
         category={selectedCategory}
+      />
+      <LoginRequiredDialog
+        open={loginDialogOpen}
+        onOpenChange={setLoginDialogOpen}
+        onStart={handleLoginStart}
       />
     </div>
   );

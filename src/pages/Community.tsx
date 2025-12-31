@@ -11,6 +11,7 @@ import type { SharedSavedCategory } from '@/entities/types';
 import { useSharedCategoryLike } from '@/shared/hooks/use-shared-category-like';
 import PageHeader from '@/components/layout/page-header';
 import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
+import LoginRequiredDialog from '@/components/common/login-required-dialog';
 
 /**
  * 커뮤니티 메인 페이지 - 검색 입력 후 검색 결과 페이지로 이동
@@ -22,6 +23,7 @@ const Community = () => {
   const [likePulse, setLikePulse] = useState<Record<string, boolean>>({});
   const [selectedCategory, setSelectedCategory] = useState<SharedSavedCategory | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
   const [recommendIndex, setRecommendIndex] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -34,6 +36,7 @@ const Community = () => {
     token,
     isAuthenticated,
     setSelectedCategory,
+    onRequireLogin: () => setLoginDialogOpen(true),
   });
 
   // UserRequest: Community 페이지의 추천/검색/찜 로직은 service 계층 인터페이스를 통해 실행
@@ -64,6 +67,12 @@ const Community = () => {
   const handleOpenDetail = (category: SharedSavedCategory) => {
     setSelectedCategory(category);
     setDetailOpen(true);
+  };
+
+  // UserRequest: 로그인 필요 안내는 안내창으로 노출되도록 처리
+  const handleLoginStart = () => {
+    setLoginDialogOpen(false);
+    navigate('/auth?tab=register');
   };
 
   // UserRequest: pagination dots 클릭 시 정상 이동을 보장하도록 드래그 상태를 초기화
@@ -205,10 +214,6 @@ const Community = () => {
                       type="button"
                       onClick={(event) => {
                         event.stopPropagation();
-                        if (!isAuthenticated) {
-                          toast.error('로그인 후 이용할 수 있는 기능입니다.');
-                          return;
-                        }
                         handleToggleLike(category);
                       }}
                       aria-label={`${category.title} 찜하기`}
@@ -297,10 +302,6 @@ const Community = () => {
                       type="button"
                       onClick={(event) => {
                         event.stopPropagation();
-                        if (!isAuthenticated) {
-                          toast.error('로그인 후 이용할 수 있는 기능입니다.');
-                          return;
-                        }
                         handleToggleLike(category);
                       }}
                       aria-label={`${category.title} 찜하기`}
@@ -330,6 +331,11 @@ const Community = () => {
         open={detailOpen}
         onOpenChange={setDetailOpen}
         category={selectedCategory}
+      />
+      <LoginRequiredDialog
+        open={loginDialogOpen}
+        onOpenChange={setLoginDialogOpen}
+        onStart={handleLoginStart}
       />
     </div>
   );

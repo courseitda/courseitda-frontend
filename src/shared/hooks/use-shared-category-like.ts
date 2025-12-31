@@ -14,6 +14,7 @@ type UseSharedCategoryLikeParams = {
   token: string | null;
   isAuthenticated: boolean;
   setSelectedCategory?: Dispatch<SetStateAction<SharedSavedCategory | null>>;
+  onRequireLogin?: () => void;
 };
 
 // UserRequest: 공유 카테고리 찜 토글 로직을 공통 훅으로 분리
@@ -22,6 +23,7 @@ export const useSharedCategoryLike = ({
   token,
   isAuthenticated,
   setSelectedCategory,
+  onRequireLogin,
 }: UseSharedCategoryLikeParams) => {
   const queryClient = useQueryClient();
 
@@ -79,7 +81,12 @@ export const useSharedCategoryLike = ({
   });
 
   const toggleLike = ({ sharedCategoryId, currentLiked }: ToggleLikeParams) => {
+    // UserRequest: 로그인 필요 안내를 토스트 대신 안내창으로 유도
     if (!isAuthenticated) {
+      if (onRequireLogin) {
+        onRequireLogin();
+        return false;
+      }
       toast.error('로그인 후 이용할 수 있는 기능입니다.');
       return false;
     }

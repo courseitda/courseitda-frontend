@@ -14,6 +14,7 @@ import SharedCategorySearchBar from '@/components/community/shared-category-sear
 import SharedCategoryList from '@/components/community/shared-category-list';
 import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
 import PageHeader from '@/components/layout/page-header';
+import LoginRequiredDialog from '@/components/common/login-required-dialog';
 
 const CommunityCategoryBoard = () => {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ const CommunityCategoryBoard = () => {
   const [likePulse, setLikePulse] = useState<Record<string, boolean>>({});
   const [selectedCategory, setSelectedCategory] = useState<SharedSavedCategory | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
   const keyword = '';
 
   // UserRequest: 공유된 카테고리 게시판 페이지는 검색 결과 페이지와 동일한 구성으로 구현
@@ -48,6 +50,7 @@ const CommunityCategoryBoard = () => {
     token,
     isAuthenticated,
     setSelectedCategory,
+    onRequireLogin: () => setLoginDialogOpen(true),
   });
 
   const triggerLikePulse = (categoryId: string) => {
@@ -72,6 +75,12 @@ const CommunityCategoryBoard = () => {
   const handleOpenDetail = (category: SharedSavedCategory) => {
     setSelectedCategory(category);
     setDetailOpen(true);
+  };
+
+  // UserRequest: 로그인 필요 안내는 안내창으로 노출되도록 처리
+  const handleLoginStart = () => {
+    setLoginDialogOpen(false);
+    navigate('/auth?tab=register');
   };
 
   if (sharedCategoriesLoading) {
@@ -129,6 +138,11 @@ const CommunityCategoryBoard = () => {
         open={detailOpen}
         onOpenChange={setDetailOpen}
         category={selectedCategory}
+      />
+      <LoginRequiredDialog
+        open={loginDialogOpen}
+        onOpenChange={setLoginDialogOpen}
+        onStart={handleLoginStart}
       />
 
       {/* UserRequest: 비회원에게는 업로드 버튼을 숨김 */}
