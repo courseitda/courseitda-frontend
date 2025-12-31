@@ -6,6 +6,13 @@ type SharedCategorySearchBarProps = {
   value: string;
   onChange: (value: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  readOnly?: boolean;
+  autoFocus?: boolean;
+  onFocus?: () => void;
+  onClick?: () => void;
+  inputClassName?: string;
+  formClassName?: string;
+  wrapperClassName?: string;
 };
 
 // UserRequest: 커뮤니티 검색 입력 UI를 공통 컴포넌트로 분리
@@ -13,14 +20,25 @@ const SharedCategorySearchBar = ({
   value,
   onChange,
   onSubmit,
+  readOnly = false,
+  autoFocus = false,
+  onFocus,
+  onClick,
+  inputClassName = '',
+  formClassName = '',
+  wrapperClassName = '',
 }: SharedCategorySearchBarProps) => (
-  <form onSubmit={onSubmit} className="w-5/6 max-w-xl mx-auto">
-    <div className="relative w-full">
+  <form onSubmit={onSubmit} className={`w-5/6 max-w-xl mx-auto ${formClassName}`}>
+    <div className={`relative w-full ${wrapperClassName}`}>
       <Input
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        placeholder="잠실, 점심, 한강"
-        className="pl-4 pr-12 border-primary/70 focus-visible:ring-primary rounded-full h-12"
+        placeholder="장소 카테고리를 찾아 찜해보세요"
+        readOnly={readOnly}
+        autoFocus={autoFocus}
+        onFocus={onFocus}
+        onClick={onClick}
+        className={`pl-4 pr-12 border-primary/70 focus-visible:ring-primary rounded-full h-12 ${inputClassName}`}
       />
       <button
         type="submit"

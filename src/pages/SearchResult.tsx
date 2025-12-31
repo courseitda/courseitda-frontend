@@ -22,7 +22,7 @@ const SearchResult = () => {
   const [selectedCategory, setSelectedCategory] = useState<SharedSavedCategory | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
-  // UserRequest: /community/search 결과는 service 계층 API + React Query로 로딩 (컴포넌트 내부 mock 제거)
+  // UserRequest: /community/search/results 결과는 service 계층 API + React Query로 로딩 (컴포넌트 내부 mock 제거)
   const {
     data: sharedCategories = [],
     isLoading: sharedCategoriesLoading,
@@ -65,8 +65,8 @@ const SearchResult = () => {
 
   const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const value = inputKeyword.trim();
-    navigate(`/community/search${value ? `?keyword=${encodeURIComponent(value)}` : ''}`);
+    // UserRequest: 검색 결과 페이지에서는 제출 시 검색 전용 페이지로 이동
+    navigate('/community/search');
   };
 
   const handleOpenDetail = (category: SharedSavedCategory) => {
@@ -91,10 +91,13 @@ const SearchResult = () => {
         <div className="max-w-6xl mx-auto space-y-6">
           <section className="space-y-3">
             {/* UserRequest: 검색 결과 페이지 검색창을 커뮤니티 페이지와 동일한 형태로 변경 */}
+            {/* UserRequest: 검색 페이지 진입 시 키보드 포커스를 바로 활성화 */}
             <SharedCategorySearchBar
               value={inputKeyword}
               onChange={setInputKeyword}
               onSubmit={handleSearchSubmit}
+              onFocus={() => navigate('/community/search')}
+              onClick={() => navigate('/community/search')}
             />
           </section>
 

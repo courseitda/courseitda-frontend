@@ -61,7 +61,7 @@ export const useRecommendedSharedCategories = (): UseQueryResult<SharedSavedCate
 
 /**
  * 공유 카테고리 검색 커스텀 훅
- * UserRequest: /community/search 페이지도 React Query + service 계층 호출로 통일
+ * UserRequest: /community/search/results 페이지도 React Query + service 계층 호출로 통일
  */
 export const useSharedCategorySearch = (
   keyword: string,

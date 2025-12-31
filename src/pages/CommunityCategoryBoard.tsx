@@ -18,7 +18,6 @@ import PageHeader from '@/components/layout/page-header';
 const CommunityCategoryBoard = () => {
   const navigate = useNavigate();
   const { isAuthenticated, token } = useAuthStore();
-  const [inputKeyword, setInputKeyword] = useState('');
   const [likePulse, setLikePulse] = useState<Record<string, boolean>>({});
   const [selectedCategory, setSelectedCategory] = useState<SharedSavedCategory | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -66,8 +65,8 @@ const CommunityCategoryBoard = () => {
 
   const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const value = inputKeyword.trim();
-    navigate(`/community/search${value ? `?keyword=${encodeURIComponent(value)}` : ''}`);
+    // UserRequest: 검색 영역 클릭 또는 제출 시 검색 전용 페이지로 이동
+    navigate('/community/search');
   };
 
   const handleOpenDetail = (category: SharedSavedCategory) => {
@@ -92,11 +91,15 @@ const CommunityCategoryBoard = () => {
       <main className="min-h-[calc(100vh-72px)] flex flex-col pt-6 pb-6 md:pt-8 md:pb-8">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto space-y-6">
+            {/* UserRequest: 검색 영역 클릭 시 검색 전용 페이지로 이동 */}
             <section className="space-y-3">
               <SharedCategorySearchBar
-                value={inputKeyword}
-                onChange={setInputKeyword}
+                value=""
+                onChange={() => undefined}
                 onSubmit={handleSearchSubmit}
+                readOnly
+                onFocus={() => navigate('/community/search')}
+                onClick={() => navigate('/community/search')}
               />
             </section>
           </div>
@@ -128,15 +131,17 @@ const CommunityCategoryBoard = () => {
         category={selectedCategory}
       />
 
-      {/* UserRequest: 카테고리 게시판 우측 하단에 업로드하기 버튼 고정 배치 */}
-      <Button
-        type="button"
-        onClick={() => navigate('/my-posts')}
-        className="fixed bottom-6 right-6 shadow-lg gap-2 px-5 py-3 text-base rounded-full upload-fab-pop"
-      >
-        <Upload className="w-4 h-4" />
-        <span className="font-semibold">업로드</span>
-      </Button>
+      {/* UserRequest: 비회원에게는 업로드 버튼을 숨김 */}
+      {isAuthenticated && (
+        <Button
+          type="button"
+          onClick={() => navigate('/my-posts')}
+          className="fixed bottom-6 right-6 shadow-lg gap-2 px-5 py-3 text-base rounded-full upload-fab-pop"
+        >
+          <Upload className="w-4 h-4" />
+          <span className="font-semibold">업로드</span>
+        </Button>
+      )}
     </div>
   );
 };

@@ -12,6 +12,7 @@ import MyPage from "./pages/MyPage";
 import NotFound from "./pages/NotFound";
 import Community from "./pages/Community";
 import SearchResult from "./pages/SearchResult";
+import CommunitySearch from "./pages/CommunitySearch";
 import MyPosts from "./pages/MyPosts";
 import CommunityCategoryBoard from "./pages/CommunityCategoryBoard";
 
@@ -31,7 +32,8 @@ const App = () => (
         <Route path="/auth" element={<Auth />} />
         <Route path="/community" element={<Community />} />
         <Route path="/my-posts" element={<MyPosts />} />
-        <Route path="/community/search" element={<SearchResult />} />
+        <Route path="/community/search" element={<CommunitySearch />} />
+        <Route path="/community/search/results" element={<SearchResult />} />
         <Route path="/community/category-board" element={<CommunityCategoryBoard />} />
         <Route path="/my-workspaces" element={<MyWorkspace />} />
         <Route path="/my-category" element={<MyCategory />} />
