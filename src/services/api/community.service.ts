@@ -13,8 +13,13 @@ const SHARED_CATEGORY_LIKE_ENDPOINT = (sharedCategoryId: string) =>
 
 type SharedCategoryPlaceApiResponse = {
   id: number | string;
+  // UserRequest: 공유 카테고리 장소 응답에 위치/주소/URL 필드 포함
   name: string;
+  placeUrl: string;
+  roadAddressName: string;
   addressName: string;
+  latitude: number;
+  longitude: number;
 };
 
 type SharedCategoryApiResponse = {
@@ -48,7 +53,11 @@ export interface SharedCategoriesData {
     places: Array<{
       id: string;
       name: string;
+      placeUrl: string;
+      roadAddressName: string;
       addressName: string;
+      latitude: number;
+      longitude: number;
     }>;
   }>;
 }
@@ -94,7 +103,12 @@ const adaptSharedCategories = (payload: SharedCategoryApiResponse[]): SharedCate
     places: category.places.map((place) => ({
       id: String(place.id),
       name: place.name,
+      // UserRequest: 공유 카테고리 장소 응답 필드 확장 반영
+      placeUrl: place.placeUrl,
+      roadAddressName: place.roadAddressName,
       addressName: place.addressName,
+      latitude: place.latitude,
+      longitude: place.longitude,
     })),
   })),
 });

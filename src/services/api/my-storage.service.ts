@@ -8,14 +8,18 @@ const MY_SAVED_CATEGORIES_ENDPOINT = '/api/me/saved-categories';
 
 type SavedCategoryPlaceApiResponse = {
   id: number | string;
+  // UserRequest: 보관 카테고리 장소 응답에 위치/주소/URL 필드 포함
   name: string;
+  placeUrl: string;
+  roadAddressName: string;
   addressName: string;
+  latitude: number;
+  longitude: number;
 };
 
 type SavedCategoryApiResponse = {
   id: number | string;
   title: string;
-  color: string;
   modifiedAt: string;
   placeCount: number;
   places: SavedCategoryPlaceApiResponse[];
@@ -26,13 +30,16 @@ export interface MySavedCategoriesData {
   categories: Array<{
     id: string;
     title: string;
-    color: string;
     modifiedAt: string;
     placeCount: number;
     places: Array<{
       id: string;
       name: string;
+      placeUrl: string;
+      roadAddressName: string;
       addressName: string;
+      latitude: number;
+      longitude: number;
     }>;
   }>;
 }
@@ -41,13 +48,17 @@ const adaptMySavedCategories = (payload: SavedCategoryApiResponse[]): MySavedCat
   categories: payload.map((category) => ({
     id: String(category.id),
     title: category.title,
-    color: category.color,
     modifiedAt: category.modifiedAt,
     placeCount: category.placeCount,
     places: category.places.map((place) => ({
       id: String(place.id),
       name: place.name,
+      // UserRequest: 보관 카테고리 장소 응답 필드 확장 반영
+      placeUrl: place.placeUrl,
+      roadAddressName: place.roadAddressName,
       addressName: place.addressName,
+      latitude: place.latitude,
+      longitude: place.longitude,
     })),
   })),
 });
@@ -79,4 +90,3 @@ export const myStorageApi = {
     }
   },
 };
-

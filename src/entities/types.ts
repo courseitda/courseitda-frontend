@@ -74,8 +74,13 @@ export type SearchedPlace = {
 // 백엔드 SavedCategoryPlace(또는 유사 DTO)와 매핑
 export type SavedCategoryPlace = {
   id: string; // Long -> string (JSON 직렬화)
+  // UserRequest: 보관 카테고리 장소에 위치/주소/URL 필드 포함
   name: string; // 장소 이름
+  placeUrl: string; // 장소 상세 URL
+  roadAddressName: string; // 도로명 주소
   addressName: string; // 지번 주소
+  latitude: number; // 위도
+  longitude: number; // 경도
 };
 
 // 보관 카테고리 타입 - 내 보관함에서 조회하는 카테고리
@@ -83,7 +88,6 @@ export type SavedCategoryPlace = {
 export type SavedCategory = {
   id: string; // Long -> string (JSON 직렬화)
   title: string; // 카테고리 제목(이름)
-  color: string; // 카테고리 색상 (#RRGGBB)
   updatedAt: string; // 수정일시 (ISO 8601)
   placeCount: number; // 포함된 장소 수
   places: SavedCategoryPlace[]; // 상세 표시용 장소 목록(간략)
@@ -93,8 +97,13 @@ export type SavedCategory = {
 // 백엔드 SharedSavedCategoryPlace(또는 유사 DTO)와 매핑
 export type SharedSavedCategoryPlace = {
   id: string; // Long -> string (JSON 직렬화)
+  // UserRequest: 공유 카테고리 장소에 위치/주소/URL 필드 포함
   name: string; // 장소 이름
+  placeUrl: string; // 장소 상세 URL
+  roadAddressName: string; // 도로명 주소
   addressName: string; // 지번 주소
+  latitude: number; // 위도
+  longitude: number; // 경도
 };
 
 // 공유 카테고리 타입 - 커뮤니티에서 조회하는 공유 카테고리
