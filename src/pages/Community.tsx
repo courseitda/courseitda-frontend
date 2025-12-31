@@ -31,6 +31,7 @@ const Community = () => {
   const isDragging = useRef(false);
   const startX = useRef(0);
   const currentTranslate = useRef(0);
+  const isLoopFixingRef = useRef(false);
   const [sliderWidth, setSliderWidth] = useState(0);
   const { toggleLike } = useSharedCategoryLike({
     queryKey: COMMUNITY_QUERY_KEYS.recommended,
@@ -58,6 +59,8 @@ const Community = () => {
   }, [filteredCategories, hasLoop]);
   const CARD_WIDTH = 280;
   const CARD_GAP = 16;
+  const getBaseTranslate = (index: number) =>
+    sliderWidth ? (sliderWidth - CARD_WIDTH) / 2 - index * (CARD_WIDTH + CARD_GAP) : 0;
   const activeIndex = filteredCategories.length
     ? hasLoop
       ? (recommendIndex - 1 + filteredCategories.length) % filteredCategories.length
@@ -92,7 +95,11 @@ const Community = () => {
   // UserRequest: pagination dots 클릭 시 정상 이동을 보장하도록 드래그 상태를 초기화
   const handleSelectRecommend = (index: number) => {
     isDragging.current = false;
-    trackRef.current?.style.removeProperty('transform');
+    if (trackRef.current) {
+      // UserRequest: 점프 시 transform 제거 대신 목표 위치로 동기화하여 깜빡임 방지
+      const nextIndex = hasLoop ? index + 1 : index;
+      trackRef.current.style.transform = `translateX(${getBaseTranslate(nextIndex)}px)`;
+    }
     // UserRequest: 추천 슬라이더를 무한 루프로 동작하도록 인덱스 보정
     setIsAnimating(true);
     setRecommendIndex(hasLoop ? index + 1 : index);
@@ -126,6 +133,31 @@ const Community = () => {
     setRecommendIndex(hasLoop ? 1 : 0);
     requestAnimationFrame(() => setIsAnimating(true));
   }, [filteredCategories.length, hasLoop, sliderWidth]);
+
+  useEffect(() => {
+    if (!trackRef.current || sliderWidth === 0) return;
+    if (isDragging.current) return;
+    // UserRequest: 인덱스 변경 시 DOM 위치와 상태를 강제로 동기화하여 정지 현상 방지
+    trackRef.current.style.transform = `translateX(${getBaseTranslate(recommendIndex)}px)`;
+  }, [recommendIndex, sliderWidth, getBaseTranslate]);
+
+  useEffect(() => {
+    // UserRequest: transitionend 누락 시에도 루프 보정을 수행하여 멈춤 방지
+    if (!hasLoop) return;
+    if (isLoopFixingRef.current) return;
+    if (recommendIndex !== 0 && recommendIndex !== filteredCategories.length + 1) return;
+
+    isLoopFixingRef.current = true;
+    setIsAnimating(false);
+    requestAnimationFrame(() => {
+      const nextIndex = recommendIndex === 0 ? filteredCategories.length : 1;
+      setRecommendIndex(nextIndex);
+      requestAnimationFrame(() => {
+        setIsAnimating(true);
+        isLoopFixingRef.current = false;
+      });
+    });
+  }, [recommendIndex, hasLoop, filteredCategories.length]);
 
   const updateSliderWidth = useCallback(() => {
     if (sliderRef.current) {
@@ -214,9 +246,7 @@ const Community = () => {
                     setIsAnimating(false);
                     startX.current = event.clientX;
                     // UserRequest: 순차 전환 시 활성 카드가 정중앙에 오도록 기준 위치를 계산
-                    currentTranslate.current = (sliderWidth
-                      ? (sliderWidth - CARD_WIDTH) / 2 - recommendIndex * (CARD_WIDTH + CARD_GAP)
-                      : 0);
+                    currentTranslate.current = getBaseTranslate(recommendIndex);
                   }}
                   onPointerMove={(event) => {
                     if (!isDragging.current || !trackRef.current) return;
@@ -232,22 +262,25 @@ const Community = () => {
                     setIsAnimating(true);
                     const delta = event.clientX - startX.current;
                     const threshold = CARD_WIDTH / 3;
-                    trackRef.current.style.removeProperty('transform');
+                    let nextIndex = recommendIndex;
                     if (delta > threshold) {
-                      setRecommendIndex((prev) =>
-                        hasLoop ? prev - 1 : Math.max(0, prev - 1),
-                      );
+                      nextIndex = hasLoop ? recommendIndex - 1 : Math.max(0, recommendIndex - 1);
                     } else if (delta < -threshold) {
-                      setRecommendIndex((prev) =>
-                        hasLoop ? prev + 1 : Math.min(filteredCategories.length - 1, prev + 1),
-                      );
+                      nextIndex = hasLoop
+                        ? recommendIndex + 1
+                        : Math.min(filteredCategories.length - 1, recommendIndex + 1);
                     }
+                    // UserRequest: 드래그 종료 시 DOM과 상태의 transform을 동일 위치로 맞춤
+                    trackRef.current.style.transform = `translateX(${getBaseTranslate(nextIndex)}px)`;
+                    setRecommendIndex(nextIndex);
                   }}
                   onPointerLeave={() => {
                     if (isDragging.current) {
                       isDragging.current = false;
                       setIsAnimating(true);
-                      trackRef.current?.style.removeProperty('transform');
+                      if (trackRef.current) {
+                        trackRef.current.style.transform = `translateX(${getBaseTranslate(recommendIndex)}px)`;
+                      }
                     }
                   }}
                 >
