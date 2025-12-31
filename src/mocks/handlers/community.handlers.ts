@@ -32,6 +32,14 @@ const isAuthorized = (request: Request): boolean => {
   return typeof authorization === 'string' && authorization.toLowerCase().startsWith('bearer ');
 };
 
+const getSavedCategoryId = (body: unknown): string => {
+  if (body && typeof body === 'object' && 'savedCategoryId' in body) {
+    const value = (body as { savedCategoryId?: unknown }).savedCategoryId;
+    return typeof value === 'string' ? value : '';
+  }
+  return '';
+};
+
 const toApiResponse = (request: Request) => {
   const authorized = isAuthorized(request);
   return sharedSavedCategories.map((category) => ({
@@ -159,7 +167,7 @@ export const communityHandlers = [
     }
 
     const body = await request.json().catch(() => ({}));
-    const savedCategoryId = String(body.savedCategoryId ?? '');
+    const savedCategoryId = getSavedCategoryId(body);
     const savedCategory = mySavedCategories.find((category) => category.id === savedCategoryId);
 
     if (!savedCategory) {
