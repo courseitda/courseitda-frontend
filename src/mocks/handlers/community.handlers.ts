@@ -1,9 +1,14 @@
 import { http, HttpResponse } from 'msw';
 import { BackendErrorCode } from '@/shared/utils/error-message';
 import { createSharedSavedCategoryMocks } from '../factories/community.factory';
+import { createRecommendedSharedCategoryMocks } from '../factories/recommended-community.factory';
 import { createSavedCategoryMocks } from '../factories/my-storage.factory';
 
 const sharedSavedCategories = createSharedSavedCategoryMocks();
+const recommendedSharedCategories = createRecommendedSharedCategoryMocks();
+const allSharedCategories = new Map(
+  [...sharedSavedCategories, ...recommendedSharedCategories].map((category) => [category.id, category]),
+);
 const mySavedCategories = createSavedCategoryMocks();
 
 const mySharedCategories: Array<{
@@ -40,9 +45,9 @@ const getSavedCategoryId = (body: unknown): string => {
   return '';
 };
 
-const toApiResponse = (request: Request) => {
+const toApiResponse = (categories: typeof sharedSavedCategories, request: Request) => {
   const authorized = isAuthorized(request);
-  return sharedSavedCategories.map((category) => ({
+  return categories.map((category) => ({
     ...category,
     isLiked: authorized ? likedSharedCategoryIds.has(category.id) : false,
   }));
@@ -51,14 +56,14 @@ const toApiResponse = (request: Request) => {
 export const communityHandlers = [
   // UserRequest: API baseURL이 다른 origin이어도 매칭되도록 와일드카드(`*`)를 사용
   http.get('*/api/community/shared-categories/recommendations', ({ request }) => {
-    return HttpResponse.json(toApiResponse(request));
+    return HttpResponse.json(toApiResponse(recommendedSharedCategories, request));
   }),
 
   http.get('*/api/community/shared-categories/search', ({ request }) => {
     const url = new URL(request.url);
     const keyword = (url.searchParams.get('keyword') ?? '').trim().toLowerCase();
 
-    const base = toApiResponse(request);
+    const base = toApiResponse(sharedSavedCategories, request);
     if (!keyword) {
       return HttpResponse.json(base);
     }
@@ -82,7 +87,7 @@ export const communityHandlers = [
     }
 
     const sharedCategoryId = String(params.sharedCategoryId ?? '');
-    const exists = sharedSavedCategories.some((category) => category.id === sharedCategoryId);
+    const exists = allSharedCategories.has(sharedCategoryId);
     if (!exists) {
       return HttpResponse.json(
         {
@@ -115,7 +120,7 @@ export const communityHandlers = [
     }
 
     const sharedCategoryId = String(params.sharedCategoryId ?? '');
-    const exists = sharedSavedCategories.some((category) => category.id === sharedCategoryId);
+    const exists = allSharedCategories.has(sharedCategoryId);
     if (!exists) {
       return HttpResponse.json(
         {
