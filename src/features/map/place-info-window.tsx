@@ -8,48 +8,52 @@ interface PlaceInfoWindowProps {
   placeName: string;
   isRepresentative: boolean;
   onToggleRepresentative: () => void;
+  showRepresentativeAction?: boolean;
 }
 
 export const PlaceInfoWindow = ({
   placeName,
   isRepresentative,
   onToggleRepresentative,
+  showRepresentativeAction = true,
 }: PlaceInfoWindowProps) => {
   return (
     <div className="relative inline-block pointer-events-auto">
       {/* 메인 컨테이너 - 반응형 및 모바일 최적화 */}
       <div className="min-w-[200px] max-w-[calc(100vw-4rem)] w-auto p-3 bg-card border border-border rounded-lg shadow-lg">
-        <div className="flex items-center justify-center gap-4">
+        <div className={cn('flex items-center justify-center', showRepresentativeAction ? 'gap-4' : '')}>
           {/* 장소명 표시 영역 */}
-          <div className="text-sm font-semibold text-foreground flex-1 truncate">
+          <div className={cn('text-sm font-semibold text-foreground truncate', showRepresentativeAction ? 'flex-1' : 'px-2')}>
             {placeName}
           </div>
 
           {/* 대표 장소 설정/해제 버튼 - 터치 영역 최적화 (최소 44x44px) */}
-          <Button
-            type="button"
-            size="icon"
-            variant={isRepresentative ? 'default' : 'outline'}
-            className={cn(
-              'h-10 w-10 shrink-0 rounded-md transition-all',
-              isRepresentative && 'bg-accent border-primary',
-            )}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onToggleRepresentative();
-            }}
-            onMouseDown={(e) => {
-              e.stopPropagation();
-            }}
-          >
-            <Check
+          {showRepresentativeAction && (
+            <Button
+              type="button"
+              size="icon"
+              variant={isRepresentative ? 'default' : 'outline'}
               className={cn(
-                'h-4 w-4',
-                isRepresentative ? 'text-primary' : 'text-muted-foreground',
+                'h-10 w-10 shrink-0 rounded-md transition-all',
+                isRepresentative && 'bg-accent border-primary',
               )}
-            />
-          </Button>
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onToggleRepresentative();
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+              }}
+            >
+              <Check
+                className={cn(
+                  'h-4 w-4',
+                  isRepresentative ? 'text-primary' : 'text-muted-foreground',
+                )}
+              />
+            </Button>
+          )}
         </div>
       </div>
 
