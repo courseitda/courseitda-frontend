@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -25,6 +25,7 @@ const Community = () => {
   const [detailOpen, setDetailOpen] = useState(false);
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);
   const [recommendIndex, setRecommendIndex] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(true);
   const sliderRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
@@ -47,8 +48,21 @@ const Community = () => {
   } = useRecommendedSharedCategories();
 
   const filteredCategories = useMemo(() => sharedCategories, [sharedCategories]);
+  const hasLoop = filteredCategories.length > 1;
+  const sliderCategories = useMemo(() => {
+    if (filteredCategories.length === 0) return [];
+    if (!hasLoop) return filteredCategories;
+    const first = filteredCategories[0];
+    const last = filteredCategories[filteredCategories.length - 1];
+    return [last, ...filteredCategories, first];
+  }, [filteredCategories, hasLoop]);
   const CARD_WIDTH = 280;
   const CARD_GAP = 16;
+  const activeIndex = filteredCategories.length
+    ? hasLoop
+      ? (recommendIndex - 1 + filteredCategories.length) % filteredCategories.length
+      : recommendIndex
+    : 0;
 
   // UserRequest: 공유 카테고리 찜 토글 로직을 공통 훅으로 대체
   const triggerLikePulse = (categoryId: string) => {
@@ -79,7 +93,9 @@ const Community = () => {
   const handleSelectRecommend = (index: number) => {
     isDragging.current = false;
     trackRef.current?.style.removeProperty('transform');
-    setRecommendIndex(index);
+    // UserRequest: 추천 슬라이더를 무한 루프로 동작하도록 인덱스 보정
+    setIsAnimating(true);
+    setRecommendIndex(hasLoop ? index + 1 : index);
   };
 
   useEffect(() => {
@@ -91,24 +107,73 @@ const Community = () => {
 
   // 추천 카드 자동 전환 - 일정 간격으로 다음 카드로 이동
   useEffect(() => {
-    if (filteredCategories.length === 0) return;
+    if (filteredCategories.length === 0 || !hasLoop) return;
+    if (sliderWidth === 0) return;
     const timer = setInterval(() => {
-      setRecommendIndex((prev) => (prev + 1) % filteredCategories.length);
+      setRecommendIndex((prev) => prev + 1);
     }, 4000);
     return () => clearInterval(timer);
-  }, [filteredCategories.length]);
+  }, [filteredCategories.length, hasLoop, sliderWidth]);
 
-  // 슬라이더 너비 측정 - 중앙 정렬 오프셋 계산용
   useEffect(() => {
-    const handleResize = () => {
-      if (sliderRef.current) {
-        setSliderWidth(sliderRef.current.offsetWidth);
-      }
-    };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    // UserRequest: 초기 렌더/리로드 시 중앙 정렬이 확정된 뒤에 슬라이더 위치를 설정
+    if (filteredCategories.length === 0) {
+      setRecommendIndex(0);
+      return;
+    }
+    if (sliderWidth === 0) return;
+    setIsAnimating(false);
+    setRecommendIndex(hasLoop ? 1 : 0);
+    requestAnimationFrame(() => setIsAnimating(true));
+  }, [filteredCategories.length, hasLoop, sliderWidth]);
+
+  const updateSliderWidth = useCallback(() => {
+    if (sliderRef.current) {
+      setSliderWidth(sliderRef.current.getBoundingClientRect().width);
+    }
   }, []);
+
+  // UserRequest: 데스크톱에서도 중앙 정렬이 안정적으로 계산되도록 슬라이더 폭을 실시간 측정
+  useLayoutEffect(() => {
+    const slider = sliderRef.current;
+    if (!slider) return;
+
+    updateSliderWidth();
+    const observer = new ResizeObserver(() => updateSliderWidth());
+    observer.observe(slider);
+
+    return () => observer.disconnect();
+  }, [updateSliderWidth]);
+
+  useEffect(() => {
+    // UserRequest: 다른 탭에서 복귀 시 애니메이션/중앙 정렬 상태를 즉시 복구
+    const handleVisibilityChange = () => {
+      if (document.hidden) return;
+      updateSliderWidth();
+      if (hasLoop) {
+        if (recommendIndex === 0) {
+          setIsAnimating(false);
+          requestAnimationFrame(() => {
+            setRecommendIndex(filteredCategories.length);
+            requestAnimationFrame(() => setIsAnimating(true));
+          });
+          return;
+        }
+        if (recommendIndex === filteredCategories.length + 1) {
+          setIsAnimating(false);
+          requestAnimationFrame(() => {
+            setRecommendIndex(1);
+            requestAnimationFrame(() => setIsAnimating(true));
+          });
+          return;
+        }
+      }
+      setIsAnimating(true);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [updateSliderWidth, hasLoop, recommendIndex, filteredCategories.length]);
 
   // 데이터 로딩 중에는 중앙에 스피너를 표시하여 진행 상황 안내
   if (sharedCategoriesLoading) {
@@ -145,6 +210,8 @@ const Community = () => {
                   onPointerDown={(event) => {
                     if (filteredCategories.length === 0) return;
                     isDragging.current = true;
+                    // UserRequest: 드래그 중에는 애니메이션을 제거하여 자연스러운 이동 제공
+                    setIsAnimating(false);
                     startX.current = event.clientX;
                     // UserRequest: 순차 전환 시 활성 카드가 정중앙에 오도록 기준 위치를 계산
                     currentTranslate.current = (sliderWidth
@@ -162,38 +229,69 @@ const Community = () => {
                   onPointerUp={(event) => {
                     if (!isDragging.current || !trackRef.current) return;
                     isDragging.current = false;
+                    setIsAnimating(true);
                     const delta = event.clientX - startX.current;
                     const threshold = CARD_WIDTH / 3;
                     trackRef.current.style.removeProperty('transform');
                     if (delta > threshold) {
-                      setRecommendIndex((prev) => (prev - 1 + filteredCategories.length) % filteredCategories.length);
+                      setRecommendIndex((prev) =>
+                        hasLoop ? prev - 1 : Math.max(0, prev - 1),
+                      );
                     } else if (delta < -threshold) {
-                      setRecommendIndex((prev) => (prev + 1) % filteredCategories.length);
+                      setRecommendIndex((prev) =>
+                        hasLoop ? prev + 1 : Math.min(filteredCategories.length - 1, prev + 1),
+                      );
                     }
                   }}
                   onPointerLeave={() => {
                     if (isDragging.current) {
                       isDragging.current = false;
+                      setIsAnimating(true);
                       trackRef.current?.style.removeProperty('transform');
                     }
                   }}
                 >
                   <div
                     ref={trackRef}
-                    className="flex items-center gap-4 transition-transform duration-500 ease-out"
+                    className={`flex items-center gap-4 ease-out ${isAnimating ? 'transition-transform duration-500' : 'transition-none'}`}
                     style={{
                       transform: `translateX(${sliderWidth ? (sliderWidth - CARD_WIDTH) / 2 - recommendIndex * (CARD_WIDTH + CARD_GAP) : 0}px)`,
                     }}
+                    onTransitionEnd={() => {
+                      if (!hasLoop) return;
+                      if (recommendIndex === 0) {
+                        // UserRequest: 마지막 -> 첫번째 이동 시 역방향 튐을 방지하기 위해 위치를 즉시 보정
+                        setIsAnimating(false);
+                        requestAnimationFrame(() => {
+                          setRecommendIndex(filteredCategories.length);
+                          requestAnimationFrame(() => setIsAnimating(true));
+                        });
+                      }
+                      if (recommendIndex === filteredCategories.length + 1) {
+                        // UserRequest: 첫번째 -> 마지막 이동 시 자연스러운 무한 루프를 유지
+                        setIsAnimating(false);
+                        requestAnimationFrame(() => {
+                          setRecommendIndex(1);
+                          requestAnimationFrame(() => setIsAnimating(true));
+                        });
+                      }
+                    }}
                   >
-                    {filteredCategories.map((category, index) => {
-                      const diff = Math.abs(index - recommendIndex);
+                    {sliderCategories.map((category, index) => {
+                      const normalizedIndex = hasLoop
+                        ? (index - 1 + filteredCategories.length) % filteredCategories.length
+                        : index;
+                      const rawDiff = Math.abs(normalizedIndex - activeIndex);
+                      const diff = hasLoop
+                        ? Math.min(rawDiff, filteredCategories.length - rawDiff)
+                        : rawDiff;
                       const scale = diff === 0 ? 1 : 0.94;
                       const opacity = diff === 0 ? 1 : 0.55;
                       const blur = diff === 0 ? 'blur(0)' : 'blur(2px)';
 
                       return (
                         <Card
-                          key={category.id}
+                          key={`${category.id}-${index}`}
                           className="flex-shrink-0 hover-lift cursor-pointer"
                           onClick={() => handleOpenDetail(category)}
                           style={{
@@ -244,10 +342,10 @@ const Community = () => {
                     key={category.id}
                     type="button"
                     aria-label={`추천 카드 ${index + 1}번으로 이동`}
-                    aria-pressed={recommendIndex === index}
+                    aria-pressed={activeIndex === index}
                     onClick={() => handleSelectRecommend(index)}
                     className={`h-2.5 w-2.5 rounded-full transition-all ${
-                      recommendIndex === index ? 'bg-primary scale-110' : 'bg-muted-foreground/40 hover:bg-muted-foreground/70'
+                      activeIndex === index ? 'bg-primary scale-110' : 'bg-muted-foreground/40 hover:bg-muted-foreground/70'
                     }`}
                   />
                 ))}
