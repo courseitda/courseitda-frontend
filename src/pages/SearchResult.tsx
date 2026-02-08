@@ -127,6 +127,7 @@ const SearchResult = () => {
                 likePulse={likePulse}
                 onOpenDetail={handleOpenDetail}
                 onToggleLike={handleToggleLike}
+                showEmptyState
               />
             </div>
           </section>
