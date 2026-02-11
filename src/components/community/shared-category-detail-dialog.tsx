@@ -273,7 +273,8 @@ const SharedCategoryDetailDialog = ({
                 </span>
               )}
             </p>
-            <div className="border border-border rounded-lg divide-y divide-border">
+            {/* UserRequest: 장소 목록은 3개까지만 보이고 이후는 스크롤로 확인 */}
+            <div className="border border-border rounded-lg divide-y divide-border max-h-48 overflow-y-auto">
               {category?.places.map((place) => (
                 <button
                   key={place.id}

@@ -660,7 +660,8 @@ const MyCategory = () => {
               />
               <div className="space-y-2">
                 <p className="text-sm font-semibold">장소 목록</p>
-                <div className="border border-border rounded-lg divide-y divide-border">
+                {/* UserRequest: 장소 목록은 3개까지만 보이고 이후는 스크롤로 확인 */}
+                <div className="border border-border rounded-lg divide-y divide-border max-h-48 overflow-y-auto">
                   {selectedCategory?.places.map((place) => (
                       <button
                         key={place.id}
