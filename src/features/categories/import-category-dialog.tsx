@@ -8,7 +8,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Folder, Heart, MapPin } from 'lucide-react';
+import { ChevronDown, Folder, Heart, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/shared/stores/auth-store';
@@ -205,6 +205,9 @@ export const ImportCategoryDialog = ({
                       >
                         불러오기
                       </Button>
+                      <ChevronDown
+                        className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${expandedCategoryId === category.id ? 'rotate-180' : ''}`}
+                      />
                     </CardHeader>
                     {expandedCategoryId === category.id && (
                       <div className="px-4 pb-4 pt-2 border-t border-border/60">
@@ -263,6 +266,9 @@ export const ImportCategoryDialog = ({
                       >
                         불러오기
                       </Button>
+                      <ChevronDown
+                        className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${expandedCategoryId === category.id ? 'rotate-180' : ''}`}
+                      />
                     </CardHeader>
                     {expandedCategoryId === category.id && (
                       <div className="px-4 pb-4 pt-2 border-t border-border/60">
