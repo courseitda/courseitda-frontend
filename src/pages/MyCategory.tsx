@@ -487,7 +487,6 @@ const MyCategory = () => {
                     <Plus className="w-5 h-5" />
                     <CardTitle className="text-base md:text-lg text-primary">새 카테고리</CardTitle>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">카테고리와 장소를 직접 추가할 수 있습니다.</p>
                 </CardHeader>
               </Card>
 
@@ -619,7 +618,6 @@ const MyCategory = () => {
                         <Plus className="w-5 h-5" />
                         <CardTitle className="text-base md:text-lg text-primary">새 카테고리</CardTitle>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1">카테고리와 장소를 직접 추가할 수 있습니다.</p>
                     </CardHeader>
                   </Card>
 
