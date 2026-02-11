@@ -1,14 +1,13 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { Folder, Trash2, Upload } from 'lucide-react';
+import { Folder, Trash2 } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { communityApi } from '@/services/api';
 import { Spinner } from '@/components/ui/spinner';
-import { useMySavedCategories } from '@/shared/hooks/use-my-storage';
 import { COMMUNITY_QUERY_KEYS, useMySharedCategories } from '@/shared/hooks/use-community';
 import PageHeader from '@/components/layout/page-header';
 
@@ -22,12 +21,6 @@ const MyPosts = () => {
   const queryClient = useQueryClient();
 
   const {
-    data: savedCategories = [],
-    isLoading: savedCategoriesLoading,
-    error: savedCategoriesError,
-  } = useMySavedCategories(token);
-
-  const {
     data: mySharedCategories = [],
     isLoading: mySharedCategoriesLoading,
     error: mySharedCategoriesError,
@@ -39,34 +32,6 @@ const MyPosts = () => {
       navigate('/auth');
     }
   }, [isAuthenticated, navigate]);
-
-  const sharedBySavedId = useMemo(
-    () => new Set(mySharedCategories.map((category) => category.savedCategoryId)),
-    [mySharedCategories],
-  );
-
-  const shareMutation = useMutation({
-    mutationFn: async (savedCategoryId: string) => {
-      if (!token) {
-        throw new Error('인증 토큰이 필요합니다.');
-      }
-      const response = await communityApi.shareSavedCategory(token, savedCategoryId);
-      if (!response.success || !response.data) {
-        throw new Error(response.error?.message ?? '카테고리 공유에 실패했습니다.');
-      }
-      return response.data.sharedCategory;
-    },
-    onSuccess: (sharedCategory) => {
-      toast.success('커뮤니티에 공유했어요.');
-      queryClient.invalidateQueries({ queryKey: COMMUNITY_QUERY_KEYS.myShared });
-      queryClient.invalidateQueries({ queryKey: COMMUNITY_QUERY_KEYS.recommended });
-      return sharedCategory;
-    },
-    onError: (error) => {
-      const message = error instanceof Error ? error.message : '카테고리 공유에 실패했습니다.';
-      toast.error(message);
-    },
-  });
 
   const deleteMutation = useMutation({
     mutationFn: async (sharedCategoryId: string) => {
@@ -90,7 +55,7 @@ const MyPosts = () => {
     },
   });
 
-  if (savedCategoriesLoading || mySharedCategoriesLoading) {
+  if (mySharedCategoriesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Spinner className="w-8 h-8" />
@@ -98,7 +63,7 @@ const MyPosts = () => {
     );
   }
 
-  if (savedCategoriesError || mySharedCategoriesError) {
+  if (mySharedCategoriesError) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="space-y-3 text-center">
@@ -118,93 +83,62 @@ const MyPosts = () => {
       {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
       <PageHeader title="내 게시물" />
 
-      <main className="container mx-auto px-4 py-6 space-y-6">
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold">보관 카테고리 공유</h2>
-          </div>
-          {savedCategories.length === 0 ? (
-            <Card>
-              <CardContent className="py-6 text-sm text-muted-foreground">
-                공유할 보관 카테고리가 없습니다. 워크스페이스에서 카테고리를 먼저 만들어주세요.
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {savedCategories.map((category) => {
-                const alreadyShared = sharedBySavedId.has(category.id);
-                return (
-                  <Card key={category.id} className="hover-lift">
-                    <CardHeader className="flex flex-row items-center gap-3">
-                      <div className="w-10 h-10 rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground">
-                        <Folder className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <CardTitle className="text-base truncate">{category.title}</CardTitle>
-                        <CardDescription className="text-xs">
-                          장소 {category.placeCount}개 · 최근 수정{' '}
-                          {new Date(category.updatedAt).toLocaleDateString('ko-KR')}
-                        </CardDescription>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant={alreadyShared ? 'outline' : 'default'}
-                        disabled={alreadyShared || shareMutation.isPending}
-                        onClick={() => shareMutation.mutate(category.id)}
-                        className="gap-1"
-                      >
-                        <Upload className="w-4 h-4" />
-                        {alreadyShared ? '공유됨' : '공유하기'}
-                      </Button>
-                    </CardHeader>
+      <main className="min-h-[calc(100vh-72px)] flex flex-col pt-6 pb-6 md:pt-8 md:pb-8">
+        <div className="container mx-auto px-4 mt-6">
+          {/* UserRequest: 커뮤니티 카테고리 게시판의 회색 박스 영역처럼 컨테이너를 구성 */}
+          <div className="relative max-w-6xl mx-auto">
+            {/* UserRequest: 배지는 영역 뒤에 두고, 겹치는 부분은 회색 영역이 위로 보이도록 처리 */}
+            <div className="absolute -top-8 left-3 h-12 w-40 rounded-t-2xl bg-muted border border-border/60 z-0 flex items-start justify-center pt-1 text-sm font-semibold text-foreground">
+              공유한 카테고리
+            </div>
+            <section className="relative z-10 rounded-2xl bg-muted border border-border/60 p-3 md:p-4">
+              <div className="space-y-3">
+              <div className="h-[75vh] overflow-y-auto pr-1">
+                {mySharedCategories.length === 0 ? (
+                  <Card className="h-full">
+                    <CardContent className="h-full flex items-center justify-center text-sm text-muted-foreground">
+                      공유한 카테고리가 없습니다. 보관 카테고리를 먼저 공유해보세요.
+                    </CardContent>
                   </Card>
-                );
-              })}
-            </div>
-          )}
-        </section>
-
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold">내가 공유한 카테고리</h2>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 items-start auto-rows-min">
+                    {mySharedCategories.map((category) => (
+                      <Card key={category.id} className="hover-lift">
+                        <CardHeader className="flex flex-row items-center gap-3 py-3">
+                          <div className="relative">
+                            <div className="w-9 h-9 rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground">
+                              <Folder className="w-4 h-4" />
+                            </div>
+                            <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[11px] leading-none px-1.5 py-0.5 rounded-full">
+                              {category.placeCount}
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <CardTitle className="text-base truncate">{category.title}</CardTitle>
+                            <CardDescription className="text-xs">
+                              업로드 {new Date(category.uploadedAt).toLocaleDateString('ko-KR')}
+                            </CardDescription>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive hover:text-destructive"
+                            disabled={deleteMutation.isPending}
+                            onClick={() => deleteMutation.mutate(category.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            삭제
+                          </Button>
+                        </CardHeader>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+              </div>
+            </section>
           </div>
-          {mySharedCategories.length === 0 ? (
-            <Card>
-              <CardContent className="py-6 text-sm text-muted-foreground">
-                공유한 카테고리가 없습니다. 보관 카테고리를 먼저 공유해보세요.
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {mySharedCategories.map((category) => (
-                <Card key={category.id} className="hover-lift">
-                  <CardHeader className="flex flex-row items-center gap-3">
-                    <div className="w-10 h-10 rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground">
-                      <Folder className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-base truncate">{category.title}</CardTitle>
-                      <CardDescription className="text-xs">
-                        장소 {category.placeCount}개 · 업로드{' '}
-                        {new Date(category.uploadedAt).toLocaleDateString('ko-KR')}
-                      </CardDescription>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-destructive hover:text-destructive"
-                      disabled={deleteMutation.isPending}
-                      onClick={() => deleteMutation.mutate(category.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      삭제
-                    </Button>
-                  </CardHeader>
-                </Card>
-              ))}
-            </div>
-          )}
-        </section>
+        </div>
       </main>
     </div>
   );
