@@ -8,7 +8,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Folder, Heart } from 'lucide-react';
+import { Folder, Heart, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/shared/stores/auth-store';
@@ -62,6 +62,7 @@ export const ImportCategoryDialog = ({
   const token = useAuthStore((state) => state.token);
   const { colorPaletteMode } = useSettingsStore();
   const [activeTab, setActiveTab] = useState<'saved' | 'liked'>('saved');
+  const [expandedCategoryId, setExpandedCategoryId] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const queryKey = ['workspace', workspaceIdentifier, 'categories'];
 
@@ -142,6 +143,11 @@ export const ImportCategoryDialog = ({
     importMutation.mutate(toImportTarget(category));
   };
 
+  const handleTogglePlaces = (categoryId: string) => {
+    // UserRequest: 카테고리 클릭 시 포함된 장소 목록을 펼쳐서 확인 가능하도록 처리
+    setExpandedCategoryId((prev) => (prev === categoryId ? null : categoryId));
+  };
+
   const isBusy = savedLoading || likedLoading;
 
   return (
@@ -169,10 +175,13 @@ export const ImportCategoryDialog = ({
             ) : savedCategories.length === 0 ? (
               <div className="text-sm text-muted-foreground">내 보관함에 카테고리가 없습니다.</div>
             ) : (
-              <div className="max-h-96 overflow-y-auto space-y-2 pr-1">
+              <div className="max-h-96 overflow-y-auto overflow-x-visible space-y-2 px-1">
                 {savedCategories.map((category) => (
                   <Card key={category.id} className="hover-lift">
-                    <CardHeader className="flex flex-row items-center gap-3 py-3">
+                    <CardHeader
+                      className="flex flex-row items-center gap-3 py-3 cursor-pointer"
+                      onClick={() => handleTogglePlaces(category.id)}
+                    >
                       {/* UserRequest: 카테고리 페이지와 동일하게 폴더 아이콘 위에 장소 수 배지 표시 */}
                       <div className="relative">
                         <div className="w-9 h-9 rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground">
@@ -185,10 +194,33 @@ export const ImportCategoryDialog = ({
                       <div className="flex flex-col gap-1 flex-1 min-w-0">
                         <CardTitle className="text-base truncate">{category.title}</CardTitle>
                       </div>
-                      <Button size="sm" className="h-10 px-4" onClick={() => handleImport(category)} disabled={importMutation.isPending}>
+                      <Button
+                        size="sm"
+                        className="h-10 px-4"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleImport(category);
+                        }}
+                        disabled={importMutation.isPending}
+                      >
                         불러오기
                       </Button>
                     </CardHeader>
+                    {expandedCategoryId === category.id && (
+                      <div className="px-4 pb-4 pt-2 border-t border-border/60">
+                        <div className="space-y-2">
+                          {category.places.map((place) => (
+                            <div key={place.id} className="flex flex-col gap-0.5">
+                              <div className="flex items-center gap-1.5 text-sm font-medium">
+                                <MapPin className="w-4 h-4 text-primary" />
+                                <span className="truncate">{place.name}</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground truncate">{place.addressName}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </Card>
                 ))}
               </div>
@@ -201,10 +233,13 @@ export const ImportCategoryDialog = ({
             ) : likedCategories.length === 0 ? (
               <div className="text-sm text-muted-foreground">찜한 카테고리가 없습니다.</div>
             ) : (
-              <div className="max-h-96 overflow-y-auto space-y-2 pr-1">
+              <div className="max-h-96 overflow-y-auto overflow-x-visible space-y-2 px-1">
                 {likedCategories.map((category) => (
                   <Card key={category.id} className="hover-lift">
-                    <CardHeader className="flex flex-row items-center gap-3 py-3">
+                    <CardHeader
+                      className="flex flex-row items-center gap-3 py-3 cursor-pointer"
+                      onClick={() => handleTogglePlaces(category.id)}
+                    >
                       {/* UserRequest: 카테고리 페이지와 동일하게 폴더 아이콘 위에 장소 수 배지 표시 */}
                       <div className="relative">
                         <div className="w-9 h-9 rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground">
@@ -217,10 +252,33 @@ export const ImportCategoryDialog = ({
                       <div className="flex flex-col gap-1 flex-1 min-w-0">
                         <CardTitle className="text-base truncate">{category.title}</CardTitle>
                       </div>
-                      <Button size="sm" className="h-10 px-4" onClick={() => handleImport(category)} disabled={importMutation.isPending}>
+                      <Button
+                        size="sm"
+                        className="h-10 px-4"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleImport(category);
+                        }}
+                        disabled={importMutation.isPending}
+                      >
                         불러오기
                       </Button>
                     </CardHeader>
+                    {expandedCategoryId === category.id && (
+                      <div className="px-4 pb-4 pt-2 border-t border-border/60">
+                        <div className="space-y-2">
+                          {category.places.map((place) => (
+                            <div key={place.id} className="flex flex-col gap-0.5">
+                              <div className="flex items-center gap-1.5 text-sm font-medium">
+                                <MapPin className="w-4 h-4 text-primary" />
+                                <span className="truncate">{place.name}</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground truncate">{place.addressName}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </Card>
                 ))}
               </div>
