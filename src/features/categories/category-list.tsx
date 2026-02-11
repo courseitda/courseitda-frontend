@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import type { Place } from '@/entities/types';
 import { Button } from '@/components/ui/button';
-import { Plus, FolderDown } from 'lucide-react';
+import { Plus, FolderDown, FolderPlus } from 'lucide-react';
 import { CategoryCard } from './category-card';
 import { AddCategoryDialog } from './add-category-dialog';
 import { ImportCategoryDialog } from './import-category-dialog';
@@ -159,8 +159,9 @@ export const CategoryList = ({
         </div>
       ) : categories.length === 0 ? (
         <div className="border-2 border-dashed border-border rounded-xl p-8 text-center">
+          {/* UserRequest: 카테고리 없음 상태에 폴더+플러스 아이콘만 크게 노출 */}
+          <FolderPlus className="mx-auto mb-3 h-[72px] w-[72px] text-muted-foreground/60" />
           <p className="text-muted-foreground mb-4">카테고리를 추가해보세요</p>
-          <Button onClick={() => setAddOptionOpen(true)}>첫 카테고리 만들기</Button>
         </div>
       ) : (
         <DragDropContext onDragEnd={handleDragEnd}>

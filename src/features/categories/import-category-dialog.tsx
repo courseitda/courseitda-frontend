@@ -196,14 +196,15 @@ export const ImportCategoryDialog = ({
                       </div>
                       <Button
                         size="sm"
-                        className="h-10 px-4"
+                        variant="outline"
+                        className="h-10 px-4 border-primary text-primary hover:bg-primary/5"
                         onClick={(event) => {
                           event.stopPropagation();
                           handleImport(category);
                         }}
                         disabled={importMutation.isPending}
                       >
-                        불러오기
+                        추가
                       </Button>
                       <ChevronDown
                         className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${expandedCategoryId === category.id ? 'rotate-180' : ''}`}
@@ -257,14 +258,15 @@ export const ImportCategoryDialog = ({
                       </div>
                       <Button
                         size="sm"
-                        className="h-10 px-4"
+                        variant="outline"
+                        className="h-10 px-4 border-primary text-primary hover:bg-primary/5"
                         onClick={(event) => {
                           event.stopPropagation();
                           handleImport(category);
                         }}
                         disabled={importMutation.isPending}
                       >
-                        불러오기
+                        추가
                       </Button>
                       <ChevronDown
                         className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${expandedCategoryId === category.id ? 'rotate-180' : ''}`}
