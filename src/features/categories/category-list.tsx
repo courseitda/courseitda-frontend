@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import type { Place } from '@/entities/types';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, FolderDown } from 'lucide-react';
 import { CategoryCard } from './category-card';
 import { AddCategoryDialog } from './add-category-dialog';
+import { ImportCategoryDialog } from './import-category-dialog';
 // API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
 import { categoryApi } from '@/services/api';
 import { toast } from 'sonner';
@@ -27,8 +28,35 @@ export const CategoryList = ({
   isError,
 }: CategoryListProps) => {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [addOptionOpen, setAddOptionOpen] = useState(false);
+  const addOptionRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const queryKey = ['workspace', workspaceIdentifier, 'categories'];
+
+  useEffect(() => {
+    if (!addOptionOpen) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!addOptionRef.current) return;
+      if (!addOptionRef.current.contains(event.target as Node)) {
+        setAddOptionOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setAddOptionOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [addOptionOpen]);
 
   const reorderMutation = useMutation<void, Error, Array<{ id: string; sequence: number }>>({
     mutationFn: async (items) => {
@@ -84,10 +112,44 @@ export const CategoryList = ({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">카테고리</h2>
-        <Button onClick={() => setAddDialogOpen(true)} size="sm" className="gap-2">
-          <Plus className="w-4 h-4" />
-          추가
-        </Button>
+        {/* UserRequest: 카테고리 추가 버튼이 좌/우로 분할되는 마이크로 인터랙션 제공 */}
+        <div ref={addOptionRef} className="relative min-h-[2.25rem]">
+          <Button
+            onClick={() => setAddOptionOpen((prev) => !prev)}
+            size="sm"
+            className={`gap-2 transition-all duration-200 ${addOptionOpen ? 'opacity-0 pointer-events-none scale-95' : 'opacity-100'}`}
+          >
+            <Plus className="w-4 h-4" />
+            추가
+          </Button>
+          <div
+            className={`absolute right-0 top-0 flex items-center gap-2 transition-all duration-200 ${addOptionOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}
+          >
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-2 order-1"
+              onClick={() => {
+                setAddOptionOpen(false);
+                setImportDialogOpen(true);
+              }}
+            >
+              <FolderDown className="w-4 h-4" />
+              불러오기
+            </Button>
+            <Button
+              size="sm"
+              className="gap-2 order-2"
+              onClick={() => {
+                setAddOptionOpen(false);
+                setAddDialogOpen(true);
+              }}
+            >
+              <Plus className="w-4 h-4" />
+              생성하기
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* UserRequest: 카테고리 카드 사이 여백을 0.5배로 축소하여 공간 효율성 향상 (space-y-3 → space-y-1.5) */}
@@ -98,7 +160,7 @@ export const CategoryList = ({
       ) : categories.length === 0 ? (
         <div className="border-2 border-dashed border-border rounded-xl p-8 text-center">
           <p className="text-muted-foreground mb-4">카테고리를 추가해보세요</p>
-          <Button onClick={() => setAddDialogOpen(true)}>첫 카테고리 만들기</Button>
+          <Button onClick={() => setAddOptionOpen(true)}>첫 카테고리 만들기</Button>
         </div>
       ) : (
         <DragDropContext onDragEnd={handleDragEnd}>
@@ -138,6 +200,14 @@ export const CategoryList = ({
         workspaceIdentifier={workspaceIdentifier}
         categories={categories.map((item) => item.category)}
       />
+
+      <ImportCategoryDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        workspaceIdentifier={workspaceIdentifier}
+        categories={categories.map((item) => item.category)}
+      />
+
     </div>
   );
 };
