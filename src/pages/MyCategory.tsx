@@ -880,7 +880,15 @@ const MyCategory = () => {
                 <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
                   취소
                 </Button>
-                <Button onClick={handleCreateCategory} disabled={createSavedCategoryMutation.isPending}>
+                {/* UserRequest: 필수 입력값이 없으면 생성 버튼을 비활성화 */}
+                <Button
+                  onClick={handleCreateCategory}
+                  disabled={
+                    createSavedCategoryMutation.isPending ||
+                    !newCategoryTitle.trim() ||
+                    selectedPlaces.length === 0
+                  }
+                >
                   {createSavedCategoryMutation.isPending ? '생성 중...' : '생성'}
                 </Button>
               </div>

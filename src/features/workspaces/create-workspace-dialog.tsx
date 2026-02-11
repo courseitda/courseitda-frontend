@@ -132,7 +132,8 @@ export const CreateWorkspaceDialog = ({ open, onOpenChange }: CreateWorkspaceDia
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               취소
             </Button>
-            <Button type="submit" disabled={createWorkspaceMutation.isPending}>
+            {/* UserRequest: 필수 입력값이 없으면 생성 버튼을 비활성화 */}
+            <Button type="submit" disabled={createWorkspaceMutation.isPending || !title.trim()}>
               {createWorkspaceMutation.isPending ? '생성 중...' : '생성'}
             </Button>
           </div>
