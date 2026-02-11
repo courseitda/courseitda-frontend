@@ -75,8 +75,10 @@
 | --- | --- | --- | --- |
 | 추천 목록 조회 | `/api/community/shared-categories/recommendations` | `GET` | 비회원도 조회 가능, 회원이면 `isLiked` 포함 |
 | 제목 검색 | `/api/community/shared-categories/search` | `GET` | `keyword` 쿼리(옵션) |
+| 찜 목록 조회 | `/api/community/shared-categories/liked` | `GET` | `Authorization` 필요 |
 | 찜 추가 | `/api/community/shared-categories/{id}/likes` | `POST` | `Authorization` 필요 |
 | 찜 해제 | `/api/community/shared-categories/{id}/likes` | `DELETE` | `Authorization` 필요 |
+| 공유 카테고리 상세 조회 | `/api/community/shared-categories/{id}` | `GET` | 공유 카테고리 상세(장소 포함) |
 | 내 공유 목록 | `/api/community/shared-categories/me` | `GET` | 내가 공유한 카테고리 목록, `Authorization` 필요 |
 | 보관 카테고리 공유 | `/api/community/shared-categories` | `POST` | `{ savedCategoryId }` 바디, `Authorization` 필요 |
 | 공유 카테고리 삭제 | `/api/community/shared-categories/{id}` | `DELETE` | 내가 올린 공유 카테고리 제거, `Authorization` 필요 |

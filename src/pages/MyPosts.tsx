@@ -11,6 +11,8 @@ import { Spinner } from '@/components/ui/spinner';
 import { COMMUNITY_QUERY_KEYS, useMySharedCategories } from '@/shared/hooks/use-community';
 import PageHeader from '@/components/layout/page-header';
 import { UploadCategoryDialog } from '@/features/community/upload-category-dialog';
+import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
+import type { SharedSavedCategory } from '@/entities/types';
 
 /**
  * 커뮤니티 관리 페이지 - 회원만 접근 가능, 보관 카테고리를 공유/삭제 관리
@@ -21,6 +23,8 @@ const MyPosts = () => {
   const { isAuthenticated, token } = useAuthStore();
   const queryClient = useQueryClient();
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<SharedSavedCategory | null>(null);
 
   const {
     data: mySharedCategories = [],
@@ -34,6 +38,34 @@ const MyPosts = () => {
       navigate('/auth');
     }
   }, [isAuthenticated, navigate]);
+
+  const handleOpenDetail = (categoryId: string) => {
+    // UserRequest: 업로드한 카테고리 클릭 시 카테고리 게시판과 동일한 상세 팝업 표시
+    void (async () => {
+      const response = await communityApi.getSharedCategoryDetail(categoryId);
+      if (!response.success || !response.data) {
+        toast.error(response.error?.message ?? '공유 카테고리를 불러올 수 없습니다.');
+        return;
+      }
+
+      const shared = response.data.sharedCategories[0];
+      if (!shared) {
+        toast.error('공유 카테고리를 불러올 수 없습니다.');
+        return;
+      }
+
+      setSelectedCategory({
+        id: shared.id,
+        title: shared.title,
+        uploader: shared.uploaderNickname,
+        uploadedAt: shared.uploadedAt,
+        liked: shared.isLiked,
+        placeCount: shared.placeCount,
+        places: shared.places,
+      });
+      setDetailOpen(true);
+    })();
+  };
 
   const deleteMutation = useMutation({
     mutationFn: async (sharedCategoryId: string) => {
@@ -119,7 +151,11 @@ const MyPosts = () => {
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 items-start auto-rows-min">
                       {mySharedCategories.map((category) => (
-                        <Card key={category.id} className="hover-lift">
+                        <Card
+                          key={category.id}
+                          className="hover-lift cursor-pointer"
+                          onClick={() => handleOpenDetail(category.id)}
+                        >
                           <CardHeader className="flex flex-row items-center gap-3 py-3">
                             <div className="relative">
                               <div className="w-9 h-9 rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground">
@@ -140,7 +176,10 @@ const MyPosts = () => {
                               variant="ghost"
                               className="text-destructive hover:text-destructive"
                               disabled={deleteMutation.isPending}
-                              onClick={() => deleteMutation.mutate(category.id)}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                deleteMutation.mutate(category.id);
+                              }}
                             >
                               <Trash2 className="w-4 h-4" />
                               삭제
@@ -159,6 +198,11 @@ const MyPosts = () => {
       </div>
 
       <UploadCategoryDialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen} />
+      <SharedCategoryDetailDialog
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        category={selectedCategory}
+      />
     </>
   );
 };

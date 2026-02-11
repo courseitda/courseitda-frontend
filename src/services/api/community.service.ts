@@ -344,4 +344,28 @@ export const communityApi = {
       );
     }
   },
+
+  /**
+   * 공유 카테고리 상세 조회 API 호출
+   * @param sharedCategoryId 공유 카테고리 ID
+   * @returns API 응답 (성공 시 공유 카테고리 상세, 실패 시 에러 정보)
+   *
+   * 백엔드 엔드포인트: GET /api/community/shared-categories/{id}
+   */
+  getSharedCategoryDetail: async (
+    sharedCategoryId: string,
+  ): Promise<ApiResponse<SharedCategoriesData>> => {
+    try {
+      const response = await apiClient.get<SharedCategoryApiResponse>(
+        `${SHARED_CATEGORY_ENDPOINT}/${sharedCategoryId}`,
+      );
+      return toSuccess<SharedCategoriesData>(adaptSharedCategories([response.data]));
+    } catch (error) {
+      return toError(
+        error,
+        BackendErrorCode.SHARED_SAVED_CATEGORY_NOT_FOUND,
+        '공유 카테고리를 불러올 수 없습니다.',
+      );
+    }
+  },
 };

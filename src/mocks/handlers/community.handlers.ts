@@ -177,6 +177,26 @@ export const communityHandlers = [
     return HttpResponse.json(mySharedCategories);
   }),
 
+  http.get('*/api/community/shared-categories/:sharedCategoryId', ({ params }) => {
+    const sharedCategoryId = String(params.sharedCategoryId ?? '');
+    const category = allSharedCategories.get(sharedCategoryId);
+
+    if (!category) {
+      return HttpResponse.json(
+        {
+          type: 'about:blank',
+          title: 'Not Found',
+          status: 404,
+          detail: '존재하지 않는 공유 카테고리입니다.',
+          code: BackendErrorCode.SHARED_SAVED_CATEGORY_NOT_FOUND,
+        },
+        { status: 404 },
+      );
+    }
+
+    return HttpResponse.json(category);
+  }),
+
   http.post('*/api/community/shared-categories', async ({ request }) => {
     if (!isAuthorized(request)) {
       return HttpResponse.json(
