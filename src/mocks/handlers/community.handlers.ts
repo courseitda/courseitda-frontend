@@ -208,19 +208,7 @@ export const communityHandlers = [
       );
     }
 
-    const exists = mySharedCategories.some((category) => category.savedCategoryId === savedCategoryId);
-    if (exists) {
-      return HttpResponse.json(
-        {
-          type: 'about:blank',
-          title: 'Conflict',
-          status: 409,
-          detail: '이미 공유된 카테고리입니다.',
-          code: BackendErrorCode.SHARED_SAVED_CATEGORY_NOT_FOUND,
-        },
-        { status: 409 },
-      );
-    }
+    // UserRequest: 동일한 보관 카테고리의 중복 업로드를 허용
 
     const newShared = {
       id: `my-shared-${Date.now()}`,
