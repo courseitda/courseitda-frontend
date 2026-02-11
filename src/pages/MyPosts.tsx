@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { Folder, Trash2 } from 'lucide-react';
+import { Folder, Trash2, Upload } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { communityApi } from '@/services/api';
@@ -96,9 +96,15 @@ const MyPosts = () => {
               <div className="h-[75vh] overflow-y-auto pr-1">
                 {mySharedCategories.length === 0 ? (
                   <Card className="h-full">
-                    <CardContent className="h-full flex items-center justify-center text-sm text-muted-foreground">
-                      공유한 카테고리가 없습니다. 보관 카테고리를 먼저 공유해보세요.
-                    </CardContent>
+                  <CardContent className="h-full flex flex-col items-center justify-center gap-2 text-sm text-muted-foreground text-center">
+                    {/* UserRequest: 공유한 카테고리가 없을 때 공유 아이콘 표시 */}
+                    <Upload className="h-[72px] w-[72px] text-muted-foreground/60 md:h-[96px] md:w-[96px] lg:h-[120px] lg:w-[120px]" />
+                    <div>
+                      공유한 카테고리가 없습니다.
+                      <br />
+                      내 카테고리를 공유해보세요.
+                    </div>
+                  </CardContent>
                   </Card>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 items-start auto-rows-min">
