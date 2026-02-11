@@ -46,11 +46,19 @@ const UserMenu = () => {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{dropdownNickname}</p>
-            <p className="text-xs leading-none text-muted-foreground">
-              {email}
-            </p>
+          {/* UserRequest: 사용자 메뉴 프로필 요약 영역에 아바타 아이콘을 왼쪽에 배치하고 우측에 닉네임/이메일을 기존 형태로 배치 */}
+          <div className="flex items-center gap-3">
+            <Avatar className="w-8 h-8">
+              <AvatarFallback className="bg-primary text-primary-foreground">
+                <UserIcon className="w-4 h-4" />
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col space-y-1">
+              <p className="text-sm font-medium leading-none">{dropdownNickname}</p>
+              <p className="text-xs leading-none text-muted-foreground">
+                {email}
+              </p>
+            </div>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
