@@ -172,15 +172,20 @@ export const ImportCategoryDialog = ({
               <div className="max-h-96 overflow-y-auto space-y-2 pr-1">
                 {savedCategories.map((category) => (
                   <Card key={category.id} className="hover-lift">
-                    <CardHeader className="flex flex-row items-center gap-3">
-                      <div className="w-8 h-8 rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground">
-                        <Folder className="w-4 h-4" />
+                    <CardHeader className="flex flex-row items-center gap-3 py-3">
+                      {/* UserRequest: 카테고리 페이지와 동일하게 폴더 아이콘 위에 장소 수 배지 표시 */}
+                      <div className="relative">
+                        <div className="w-9 h-9 rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground">
+                          <Folder className="w-5 h-5" />
+                        </div>
+                        <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[11px] leading-none px-1.5 py-0.5 rounded-full">
+                          {category.placeCount}
+                        </span>
                       </div>
                       <div className="flex flex-col gap-1 flex-1 min-w-0">
                         <CardTitle className="text-base truncate">{category.title}</CardTitle>
-                        <p className="text-xs text-muted-foreground">장소 {category.placeCount}곳</p>
                       </div>
-                      <Button size="sm" onClick={() => handleImport(category)} disabled={importMutation.isPending}>
+                      <Button size="sm" className="h-10 px-4" onClick={() => handleImport(category)} disabled={importMutation.isPending}>
                         불러오기
                       </Button>
                     </CardHeader>
@@ -199,15 +204,20 @@ export const ImportCategoryDialog = ({
               <div className="max-h-96 overflow-y-auto space-y-2 pr-1">
                 {likedCategories.map((category) => (
                   <Card key={category.id} className="hover-lift">
-                    <CardHeader className="flex flex-row items-center gap-3">
-                      <div className="w-8 h-8 rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground">
-                        <Folder className="w-4 h-4" />
+                    <CardHeader className="flex flex-row items-center gap-3 py-3">
+                      {/* UserRequest: 카테고리 페이지와 동일하게 폴더 아이콘 위에 장소 수 배지 표시 */}
+                      <div className="relative">
+                        <div className="w-9 h-9 rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground">
+                          <Folder className="w-5 h-5" />
+                        </div>
+                        <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[11px] leading-none px-1.5 py-0.5 rounded-full">
+                          {category.placeCount}
+                        </span>
                       </div>
                       <div className="flex flex-col gap-1 flex-1 min-w-0">
                         <CardTitle className="text-base truncate">{category.title}</CardTitle>
-                        <p className="text-xs text-muted-foreground">장소 {category.placeCount}곳</p>
                       </div>
-                      <Button size="sm" onClick={() => handleImport(category)} disabled={importMutation.isPending}>
+                      <Button size="sm" className="h-10 px-4" onClick={() => handleImport(category)} disabled={importMutation.isPending}>
                         불러오기
                       </Button>
                     </CardHeader>
