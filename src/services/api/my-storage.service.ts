@@ -25,6 +25,18 @@ type SavedCategoryApiResponse = {
   places: SavedCategoryPlaceApiResponse[];
 };
 
+type CreateSavedCategoryRequest = {
+  title: string;
+  places: Array<{
+    name: string;
+    placeUrl: string;
+    roadAddressName: string | null;
+    addressName: string;
+    latitude: number;
+    longitude: number;
+  }>;
+};
+
 // 내 보관 카테고리 목록 조회 응답 데이터 타입 - 백엔드 API 스펙과 일치
 export interface MySavedCategoriesData {
   categories: Array<{
@@ -42,6 +54,25 @@ export interface MySavedCategoriesData {
       longitude: number;
     }>;
   }>;
+}
+
+// 내 보관 카테고리 생성 응답 데이터 타입
+export interface CreateSavedCategoryData {
+  category: {
+    id: string;
+    title: string;
+    modifiedAt: string;
+    placeCount: number;
+    places: Array<{
+      id: string;
+      name: string;
+      placeUrl: string;
+      roadAddressName: string;
+      addressName: string;
+      latitude: number;
+      longitude: number;
+    }>;
+  };
 }
 
 const adaptMySavedCategories = (payload: SavedCategoryApiResponse[]): MySavedCategoriesData => ({
@@ -86,6 +117,52 @@ export const myStorageApi = {
         error,
         BackendErrorCode.INVALID_TOKEN,
         '내 카테고리를 불러올 수 없습니다.',
+      );
+    }
+  },
+
+  /**
+   * 내 보관 카테고리 생성 API 호출
+   * @param token 인증 토큰
+   * @param payload 카테고리 이름 및 장소 목록
+   * @returns API 응답 (성공 시 생성된 카테고리, 실패 시 에러 정보)
+   *
+   * 백엔드 엔드포인트: POST /api/me/saved-categories
+   */
+  createSavedCategory: async (
+    token: string,
+    payload: CreateSavedCategoryRequest,
+  ): Promise<ApiResponse<CreateSavedCategoryData>> => {
+    try {
+      // UserRequest: 내 카테고리 생성은 service 계층 API 호출로 통일
+      const response = await apiClient.post<SavedCategoryApiResponse>(
+        MY_SAVED_CATEGORIES_ENDPOINT,
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      return toSuccess<CreateSavedCategoryData>({
+        category: {
+          id: String(response.data.id),
+          title: response.data.title,
+          modifiedAt: response.data.modifiedAt,
+          placeCount: response.data.placeCount,
+          places: response.data.places.map((place) => ({
+            id: String(place.id),
+            name: place.name,
+            placeUrl: place.placeUrl,
+            roadAddressName: place.roadAddressName,
+            addressName: place.addressName,
+            latitude: place.latitude,
+            longitude: place.longitude,
+          })),
+        },
+      });
+    } catch (error) {
+      return toError(
+        error,
+        BackendErrorCode.REQUEST_VALIDATION_FAILED,
+        '카테고리 생성에 실패했습니다.',
       );
     }
   },

@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,19 +22,20 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { Plus, Folder, Heart, Clock, User as UserIcon } from 'lucide-react';
+import { Plus, Folder, Heart, Clock, Search, MapPin, User as UserIcon, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Spinner } from '@/components/ui/spinner';
-import { useMySavedCategories } from '@/shared/hooks/use-my-storage';
+import { useCreateSavedCategory, useMySavedCategories } from '@/shared/hooks/use-my-storage';
 import { COMMUNITY_QUERY_KEYS, useLikedSharedCategories } from '@/shared/hooks/use-community';
 import { useSharedCategoryLike } from '@/shared/hooks/use-shared-category-like';
-import type { SavedCategory, SharedSavedCategory } from '@/entities/types';
+import type { SavedCategory, SearchedPlace, SharedSavedCategory } from '@/entities/types';
 import PageHeader from '@/components/layout/page-header';
 import { useSettingsStore } from '@/shared/stores/settings-store';
 import { useNaverLoader } from '@/shared/hooks/use-naver-loader';
 import { PlaceInfoWindow } from '@/features/map/place-info-window';
 import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
+import { placeApi } from '@/services/api';
 
 type SavedCategoryMapProps = {
   open: boolean;
@@ -262,6 +264,12 @@ const MyCategory = () => {
   const [pendingUnlike, setPendingUnlike] = useState<{ id: string; title: string } | null>(null);
   const [likedDetailOpen, setLikedDetailOpen] = useState(false);
   const [selectedLikedCategory, setSelectedLikedCategory] = useState<SharedSavedCategory | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [newCategoryTitle, setNewCategoryTitle] = useState('');
+  const [placeQuery, setPlaceQuery] = useState('');
+  const [placeResults, setPlaceResults] = useState<SearchedPlace[]>([]);
+  const [placeSearchLoading, setPlaceSearchLoading] = useState(false);
+  const [selectedPlaces, setSelectedPlaces] = useState<SearchedPlace[]>([]);
 
   // UserRequest: 내 카테고리 목록은 service 계층 API + React Query로 로딩 (컴포넌트 내부 mock 제거)
   const {
@@ -274,6 +282,7 @@ const MyCategory = () => {
     isLoading: likedCategoriesLoading,
     error: likedCategoriesError,
   } = useLikedSharedCategories(token);
+  const createSavedCategoryMutation = useCreateSavedCategory(token);
 
   // UserRequest: 내 카테고리 찜 탭에서도 찜 해제를 지원
   const { toggleLike } = useSharedCategoryLike({
@@ -312,6 +321,74 @@ const MyCategory = () => {
       toast.error(likedCategoriesError.message);
     }
   }, [likedCategoriesError]);
+
+  const handleSearchPlaces = async () => {
+    if (!placeQuery.trim()) {
+      toast.error('검색어를 입력해주세요.');
+      return;
+    }
+
+    setPlaceSearchLoading(true);
+    const { searchedPlaces, error } = await placeApi.search({ keyword: placeQuery.trim() });
+    if (error) {
+      toast.error(error);
+      setPlaceResults([]);
+    } else {
+      setPlaceResults(searchedPlaces ?? []);
+      if (!searchedPlaces || searchedPlaces.length === 0) {
+        toast.info('검색 결과가 없습니다.');
+      }
+    }
+    setPlaceSearchLoading(false);
+  };
+
+  const handleAddPlace = (place: SearchedPlace) => {
+    const exists = selectedPlaces.some((item) => item.id === place.id);
+    if (exists) {
+      toast.info('이미 추가된 장소입니다.');
+      return;
+    }
+    setSelectedPlaces((prev) => [...prev, place]);
+  };
+
+  const handleRemovePlace = (placeId: string) => {
+    setSelectedPlaces((prev) => prev.filter((place) => place.id !== placeId));
+  };
+
+  const handleOpenCreateDialog = () => {
+    // UserRequest: 새 카테고리 추가 버튼 클릭 시 생성 팝업 노출
+    setCreateDialogOpen(true);
+  };
+
+  const resetCreateDialog = () => {
+    setNewCategoryTitle('');
+    setPlaceQuery('');
+    setPlaceResults([]);
+    setSelectedPlaces([]);
+  };
+
+  const handleCreateCategory = async () => {
+    if (!newCategoryTitle.trim()) {
+      toast.error('카테고리 이름을 입력해주세요.');
+      return;
+    }
+    if (selectedPlaces.length === 0) {
+      toast.error('장소를 1개 이상 추가해주세요.');
+      return;
+    }
+    if (createSavedCategoryMutation.isPending) return;
+
+    try {
+      await createSavedCategoryMutation.mutateAsync({
+        title: newCategoryTitle.trim(),
+        places: selectedPlaces,
+      });
+      setCreateDialogOpen(false);
+      resetCreateDialog();
+    } catch {
+      // UserRequest: 생성 실패 시 팝업은 유지하여 입력을 보존
+    }
+  };
 
   const triggerLikePulse = (categoryId: string) => {
     setLikePulse((prev) => ({ ...prev, [categoryId]: true }));
@@ -403,14 +480,14 @@ const MyCategory = () => {
               {/* UserRequest: 카테고리 탭에서도 생성 버튼과 목록을 워크스페이스와 동일한 형태로 표시 */}
               <Card
                   className="border-dashed hover-lift cursor-pointer"
-                  onClick={() => toast.info('카테고리 생성은 API 연동 후 제공됩니다.')}
+                  onClick={handleOpenCreateDialog}
               >
                 <CardHeader className="flex flex-col items-center justify-center">
                   <div className="flex items-center gap-2 text-primary">
                     <Plus className="w-5 h-5" />
                     <CardTitle className="text-base md:text-lg text-primary">새 카테고리</CardTitle>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">API 연동 후 카테고리를 추가할 수 있습니다.</p>
+                  <p className="text-xs text-muted-foreground mt-1">카테고리와 장소를 직접 추가할 수 있습니다.</p>
                 </CardHeader>
               </Card>
 
@@ -535,14 +612,14 @@ const MyCategory = () => {
                   {/* UserRequest: 카테고리 탭에서도 생성 버튼과 목록을 워크스페이스와 동일한 형태로 표시 */}
                   <Card
                       className="border-dashed hover-lift cursor-pointer"
-                      onClick={() => toast.info('카테고리 생성은 API 연동 후 제공됩니다.')}
+                      onClick={handleOpenCreateDialog}
                   >
                     <CardHeader className="flex flex-col items-center justify-center">
                       <div className="flex items-center gap-2 text-primary">
                         <Plus className="w-5 h-5" />
                         <CardTitle className="text-base md:text-lg text-primary">새 카테고리</CardTitle>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1">API 연동 후 카테고리를 추가할 수 있습니다.</p>
+                      <p className="text-xs text-muted-foreground mt-1">카테고리와 장소를 직접 추가할 수 있습니다.</p>
                     </CardHeader>
                   </Card>
 
@@ -699,6 +776,117 @@ const MyCategory = () => {
           onOpenChange={setLikedDetailOpen}
           category={selectedLikedCategory}
         />
+
+        <Dialog
+          open={createDialogOpen}
+          onOpenChange={(open) => {
+            setCreateDialogOpen(open);
+            if (!open) {
+              resetCreateDialog();
+            }
+          }}
+        >
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>새 카테고리 추가</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-sm font-semibold">카테고리 이름</p>
+                <Input
+                  placeholder="예: 맛집 투어"
+                  value={newCategoryTitle}
+                  onChange={(event) => setNewCategoryTitle(event.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm font-semibold">추가된 장소</p>
+                {/* UserRequest: 검색 결과 영역과 동일한 높이로 고정하고 스크롤로 관리 */}
+                <div className="max-h-56 overflow-y-auto border border-border rounded-lg divide-y divide-border">
+                  {selectedPlaces.length === 0 ? (
+                    <div className="p-4 text-sm text-muted-foreground">선택한 장소가 없습니다.</div>
+                  ) : (
+                    selectedPlaces.map((place) => (
+                      <div key={place.id} className="p-3 flex items-center gap-3">
+                        <div className="text-primary">
+                          <MapPin className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{place.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{place.addressName}</p>
+                        </div>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => handleRemovePlace(place.id)}
+                          aria-label="장소 제거"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm font-semibold">장소 검색</p>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="장소 이름이나 주소 검색"
+                    value={placeQuery}
+                    onChange={(event) => setPlaceQuery(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault();
+                        handleSearchPlaces();
+                      }
+                    }}
+                  />
+                  <Button
+                    onClick={handleSearchPlaces}
+                    disabled={placeSearchLoading}
+                    className="gap-2"
+                  >
+                    <Search className="w-4 h-4" />
+                    검색
+                  </Button>
+                </div>
+                {placeSearchLoading && (
+                  <div className="text-sm text-muted-foreground">검색 중...</div>
+                )}
+                {!placeSearchLoading && placeResults.length > 0 && (
+                  <div className="max-h-56 overflow-y-auto border border-border rounded-lg divide-y divide-border">
+                    {placeResults.map((place) => (
+                      <div key={place.id} className="p-3 flex items-start gap-3">
+                        <div className="mt-1 text-primary">
+                          <MapPin className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{place.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{place.addressName}</p>
+                        </div>
+                        <Button size="sm" variant="outline" onClick={() => handleAddPlace(place)}>
+                          추가
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+                  취소
+                </Button>
+                <Button onClick={handleCreateCategory} disabled={createSavedCategoryMutation.isPending}>
+                  {createSavedCategoryMutation.isPending ? '생성 중...' : '생성'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
   );
 };
