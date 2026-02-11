@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useUserDropdown, useUserNickname } from '@/shared/hooks/use-user-info';
 import { useNavigate } from 'react-router-dom';
-import { FileText, Folder, LayoutGrid, LogOut, User as UserIcon } from 'lucide-react';
+import { FileText, Folder, LayoutGrid, LogOut, Menu, User as UserIcon } from 'lucide-react';
 
 const UserMenu = () => {
   const navigate = useNavigate();
@@ -35,13 +35,9 @@ const UserMenu = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="gap-2 h-10">
-          <Avatar className="w-8 h-8">
-            <AvatarFallback className="bg-primary text-primary-foreground">
-              <UserIcon className="w-4 h-4" />
-            </AvatarFallback>
-          </Avatar>
-          <span className="hidden sm:inline font-medium">{navNickname}</span>
+        {/* UserRequest: 모든 페이지의 사용자 드롭다운 트리거를 아바타 대신 햄버거 메뉴 아이콘으로 표시 */}
+        <Button variant="ghost" size="icon" className="h-10 w-10" aria-label="사용자 메뉴">
+          <Menu className="w-5 h-5" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
