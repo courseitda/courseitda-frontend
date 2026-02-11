@@ -6,6 +6,7 @@ import { toError, toSuccess } from './http';
 // 커뮤니티 관련 백엔드 엔드포인트 상수 정의
 const RECOMMENDED_SHARED_CATEGORIES_ENDPOINT = '/api/community/shared-categories/recommendations';
 const SEARCH_SHARED_CATEGORIES_ENDPOINT = '/api/community/shared-categories/search';
+const LIKED_SHARED_CATEGORIES_ENDPOINT = '/api/community/shared-categories/liked';
 const MY_SHARED_CATEGORIES_ENDPOINT = '/api/community/shared-categories/me';
 const SHARED_CATEGORY_ENDPOINT = '/api/community/shared-categories';
 const SHARED_CATEGORY_LIKE_ENDPOINT = (sharedCategoryId: string) =>
@@ -190,6 +191,32 @@ export const communityApi = {
         error,
         BackendErrorCode.REQUEST_VALIDATION_FAILED,
         '검색어를 확인해주세요.',
+      );
+    }
+  },
+
+  /**
+   * 찜한 공유 카테고리 목록 조회 API 호출
+   * @param token 인증 토큰
+   * @returns API 응답 (성공 시 찜한 공유 카테고리 목록, 실패 시 에러 정보)
+   *
+   * 백엔드 엔드포인트: GET /api/community/shared-categories/liked
+   */
+  getLikedSharedCategories: async (
+    token: string,
+  ): Promise<ApiResponse<SharedCategoriesData>> => {
+    try {
+      // UserRequest: 내 카테고리 찜 탭에서 사용할 찜 목록 조회 API 추가
+      const response = await apiClient.get<SharedCategoryApiResponse[]>(
+        LIKED_SHARED_CATEGORIES_ENDPOINT,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      return toSuccess<SharedCategoriesData>(adaptSharedCategories(response.data));
+    } catch (error) {
+      return toError(
+        error,
+        BackendErrorCode.INVALID_TOKEN,
+        '찜한 카테고리를 불러올 수 없습니다.',
       );
     }
   },

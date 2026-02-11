@@ -10,17 +10,30 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { Plus, Folder, Heart, Clock } from 'lucide-react';
+import { Plus, Folder, Heart, Clock, User as UserIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Spinner } from '@/components/ui/spinner';
 import { useMySavedCategories } from '@/shared/hooks/use-my-storage';
-import type { SavedCategory } from '@/entities/types';
+import { COMMUNITY_QUERY_KEYS, useLikedSharedCategories } from '@/shared/hooks/use-community';
+import { useSharedCategoryLike } from '@/shared/hooks/use-shared-category-like';
+import type { SavedCategory, SharedSavedCategory } from '@/entities/types';
 import PageHeader from '@/components/layout/page-header';
 import { useSettingsStore } from '@/shared/stores/settings-store';
 import { useNaverLoader } from '@/shared/hooks/use-naver-loader';
 import { PlaceInfoWindow } from '@/features/map/place-info-window';
+import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
 
 type SavedCategoryMapProps = {
   open: boolean;
@@ -243,6 +256,12 @@ const MyCategory = () => {
   const [categoryDetailOpen, setCategoryDetailOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<SavedCategory | null>(null);
   const [focusedPlaceId, setFocusedPlaceId] = useState<string | null>(null);
+  const [likePulse, setLikePulse] = useState<Record<string, boolean>>({});
+  const [removingLikedIds, setRemovingLikedIds] = useState<Record<string, boolean>>({});
+  const [unlikeDialogOpen, setUnlikeDialogOpen] = useState(false);
+  const [pendingUnlike, setPendingUnlike] = useState<{ id: string; title: string } | null>(null);
+  const [likedDetailOpen, setLikedDetailOpen] = useState(false);
+  const [selectedLikedCategory, setSelectedLikedCategory] = useState<SharedSavedCategory | null>(null);
 
   // UserRequest: 내 카테고리 목록은 service 계층 API + React Query로 로딩 (컴포넌트 내부 mock 제거)
   const {
@@ -250,6 +269,18 @@ const MyCategory = () => {
     isLoading: savedCategoriesLoading,
     error: savedCategoriesError,
   } = useMySavedCategories(token);
+  const {
+    data: likedCategories = [],
+    isLoading: likedCategoriesLoading,
+    error: likedCategoriesError,
+  } = useLikedSharedCategories(token);
+
+  // UserRequest: 내 카테고리 찜 탭에서도 찜 해제를 지원
+  const { toggleLike } = useSharedCategoryLike({
+    queryKey: COMMUNITY_QUERY_KEYS.liked,
+    token,
+    isAuthenticated,
+  });
 
   // 미인증 사용자 접근 차단 - 로그인 페이지로 리다이렉트하여 보안 유지
   useEffect(() => {
@@ -274,6 +305,56 @@ const MyCategory = () => {
       toast.error(savedCategoriesError.message);
     }
   }, [savedCategoriesError]);
+
+  useEffect(() => {
+    // UserRequest: 찜 목록 조회 실패 시 사용자에게 즉시 알림
+    if (likedCategoriesError) {
+      toast.error(likedCategoriesError.message);
+    }
+  }, [likedCategoriesError]);
+
+  const triggerLikePulse = (categoryId: string) => {
+    setLikePulse((prev) => ({ ...prev, [categoryId]: true }));
+    setTimeout(() => {
+      setLikePulse((prev) => ({ ...prev, [categoryId]: false }));
+    }, 200);
+  };
+
+  const handleToggleLikedCategory = (categoryId: string, currentLiked: boolean) => {
+    if (currentLiked) {
+      // UserRequest: 찜 해제 시 카드가 자연스럽게 사라지는 전환 애니메이션 적용
+      setRemovingLikedIds((prev) => ({ ...prev, [categoryId]: true }));
+      setTimeout(() => {
+        setRemovingLikedIds((prev) => {
+          const next = { ...prev };
+          delete next[categoryId];
+          return next;
+        });
+      }, 220);
+    }
+    const didToggle = toggleLike({ sharedCategoryId: categoryId, currentLiked });
+    if (!didToggle) return;
+    triggerLikePulse(categoryId);
+  };
+
+  const requestUnlike = (categoryId: string, title: string) => {
+    // UserRequest: 찜 해제 시 안내 팝업을 띄워 확인 후 해제 처리
+    setPendingUnlike({ id: categoryId, title });
+    setUnlikeDialogOpen(true);
+  };
+
+  const confirmUnlike = () => {
+    if (!pendingUnlike) return;
+    handleToggleLikedCategory(pendingUnlike.id, true);
+    setUnlikeDialogOpen(false);
+    setPendingUnlike(null);
+  };
+
+  const handleOpenLikedDetail = (category: SharedSavedCategory) => {
+    // UserRequest: 찜 카드 클릭 시 카테고리 게시판과 동일한 상세 팝업을 표시
+    setSelectedLikedCategory(category);
+    setLikedDetailOpen(true);
+  };
 
   if (savedCategoriesLoading) {
     return (
@@ -367,7 +448,64 @@ const MyCategory = () => {
             </TabsContent>
 
             <TabsContent value="liked" className="mt-0">
-              <div className="text-sm text-muted-foreground">찜 목록은 준비 중입니다.</div>
+              {likedCategoriesLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Spinner className="w-6 h-6" />
+                </div>
+              ) : likedCategories.length === 0 ? (
+                <div className="text-sm text-muted-foreground">찜한 카테고리가 없습니다.</div>
+              ) : (
+                <div className="space-y-3">
+                  {/* UserRequest: 찜 탭에서도 카테고리 탭과 동일한 카드 레이아웃으로 표시 */}
+                  {likedCategories.map((category) => (
+                    <Card
+                      key={category.id}
+                      className={`hover-lift transition-all duration-200 ${removingLikedIds[category.id] ? 'opacity-0 scale-95 translate-y-1 pointer-events-none' : ''}`}
+                      onClick={() => handleOpenLikedDetail(category)}
+                    >
+                      <CardHeader className="flex flex-row items-center gap-3">
+                        <div className="relative">
+                          <div className="w-8 h-8 rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground">
+                            <Folder className="w-4 h-4" />
+                          </div>
+                          <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[11px] leading-none px-1.5 py-0.5 rounded-full">
+                            {category.placeCount}
+                          </span>
+                        </div>
+                        {/* UserRequest: 찜 카드에서 공유 시간 정보를 제거 */}
+                        <div className="flex flex-col gap-1 flex-1 min-w-0">
+                          <CardTitle className="text-base truncate">{category.title}</CardTitle>
+                          {/* UserRequest: 찜 카드에 작성자 정보를 카테고리 게시판과 동일한 형태로 표시 */}
+                          <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                            <UserIcon className="w-4 h-4 text-primary" />
+                            {category.uploader}
+                          </p>
+                        </div>
+                        {/* UserRequest: 찜 카드 우측에 하트 버튼을 배치해 찜 해제 가능하도록 구현 */}
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            requestUnlike(category.id, category.title);
+                          }}
+                          aria-label={`${category.title} 찜 해제`}
+                          aria-pressed={category.liked}
+                          className={`relative h-11 w-11 rounded-full flex items-center justify-center transition-transform duration-150 hover:scale-105 active:scale-90 focus:outline-none ${likePulse[category.id] ? 'scale-110' : ''}`}
+                        >
+                          {likePulse[category.id] && (
+                            <span className="absolute inset-0 rounded-full like-heart-ping animate-ping" />
+                          )}
+                          <Heart
+                            className={`w-7 h-7 ${isAuthenticated ? 'like-heart' : 'text-muted-foreground'} transition-transform duration-150 ${likePulse[category.id] ? 'scale-110' : ''}`}
+                            fill={isAuthenticated && category.liked ? 'currentColor' : 'none'}
+                            strokeWidth={isAuthenticated && category.liked ? 0 : 1.5}
+                          />
+                        </button>
+                      </CardHeader>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </main>
@@ -442,7 +580,64 @@ const MyCategory = () => {
                 </TabsContent>
 
                 <TabsContent value="liked" className="mt-0">
-                  <div className="text-sm text-muted-foreground">찜 목록은 준비 중입니다.</div>
+                  {likedCategoriesLoading ? (
+                    <div className="flex items-center justify-center py-10">
+                      <Spinner className="w-6 h-6" />
+                    </div>
+                  ) : likedCategories.length === 0 ? (
+                    <div className="text-sm text-muted-foreground">찜한 카테고리가 없습니다.</div>
+                  ) : (
+                    <div className="space-y-2">
+                      {/* UserRequest: 찜 탭에서도 카테고리 탭과 동일한 카드 레이아웃으로 표시 */}
+                      {likedCategories.map((category) => (
+                        <Card
+                          key={category.id}
+                          className={`hover-lift transition-all duration-200 ${removingLikedIds[category.id] ? 'opacity-0 scale-95 translate-y-1 pointer-events-none' : ''}`}
+                          onClick={() => handleOpenLikedDetail(category)}
+                        >
+                          <CardHeader className="flex flex-row items-center gap-3">
+                            <div className="relative">
+                              <div className="w-8 h-8 rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground">
+                                <Folder className="w-4 h-4" />
+                              </div>
+                              <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[11px] leading-none px-1.5 py-0.5 rounded-full">
+                                {category.placeCount}
+                              </span>
+                            </div>
+                            {/* UserRequest: 찜 카드에서 공유 시간 정보를 제거 */}
+                            <div className="flex flex-col gap-1 flex-1 min-w-0">
+                              <CardTitle className="text-base truncate">{category.title}</CardTitle>
+                              {/* UserRequest: 찜 카드에 작성자 정보를 카테고리 게시판과 동일한 형태로 표시 */}
+                              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                                <UserIcon className="w-4 h-4 text-primary" />
+                                {category.uploader}
+                              </p>
+                            </div>
+                            {/* UserRequest: 찜 카드 우측에 하트 버튼을 배치해 찜 해제 가능하도록 구현 */}
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                requestUnlike(category.id, category.title);
+                              }}
+                              aria-label={`${category.title} 찜 해제`}
+                              aria-pressed={category.liked}
+                              className={`relative h-11 w-11 rounded-full flex items-center justify-center transition-transform duration-150 hover:scale-105 active:scale-90 focus:outline-none ${likePulse[category.id] ? 'scale-110' : ''}`}
+                            >
+                              {likePulse[category.id] && (
+                                <span className="absolute inset-0 rounded-full like-heart-ping animate-ping" />
+                              )}
+                              <Heart
+                                className={`w-7 h-7 ${isAuthenticated ? 'like-heart' : 'text-muted-foreground'} transition-transform duration-150 ${likePulse[category.id] ? 'scale-110' : ''}`}
+                                fill={isAuthenticated && category.liked ? 'currentColor' : 'none'}
+                                strokeWidth={isAuthenticated && category.liked ? 0 : 1.5}
+                              />
+                            </button>
+                          </CardHeader>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
                 </TabsContent>
               </Tabs>
             </div>
@@ -482,6 +677,27 @@ const MyCategory = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        <AlertDialog open={unlikeDialogOpen} onOpenChange={setUnlikeDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>찜을 해제할까요?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {pendingUnlike?.title ? `"${pendingUnlike.title}"` : '선택한 카테고리'}를 찜 목록에서 제거합니다.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>취소</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmUnlike}>해제하기</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <SharedCategoryDetailDialog
+          open={likedDetailOpen}
+          onOpenChange={setLikedDetailOpen}
+          category={selectedLikedCategory}
+        />
       </div>
   );
 };

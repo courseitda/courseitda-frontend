@@ -44,6 +44,7 @@ const toSharedSavedCategoryEntity = (payload: SharedSavedCategoryPayload): Share
 export const COMMUNITY_QUERY_KEYS = {
   recommended: ['community', 'shared-categories', 'recommended'] as const,
   search: (keyword: string) => ['community', 'shared-categories', 'search', keyword] as const,
+  liked: ['community', 'shared-categories', 'liked'] as const,
   myShared: ['community', 'shared-categories', 'me'] as const,
 };
 
@@ -83,6 +84,34 @@ export const useSharedCategorySearch = (
 
       if (!response.success || !response.data) {
         throw new Error(response.error?.message ?? '검색 결과를 불러올 수 없습니다.');
+      }
+
+      return response.data.sharedCategories.map((category) =>
+        toSharedSavedCategoryEntity(category),
+      );
+    },
+    staleTime: 1000 * 15,
+    placeholderData: (previousData) => previousData,
+  });
+
+/**
+ * 찜한 공유 카테고리 목록 조회 커스텀 훅
+ */
+export const useLikedSharedCategories = (
+  token: string | null,
+): UseQueryResult<SharedSavedCategory[], Error> =>
+  useQuery<SharedSavedCategory[], Error>({
+    queryKey: COMMUNITY_QUERY_KEYS.liked,
+    enabled: !!token,
+    queryFn: async () => {
+      if (!token) {
+        throw new Error('인증 토큰이 필요합니다.');
+      }
+
+      const response = await communityApi.getLikedSharedCategories(token);
+
+      if (!response.success || !response.data) {
+        throw new Error(response.error?.message ?? '찜한 카테고리를 불러올 수 없습니다.');
       }
 
       return response.data.sharedCategories.map((category) =>

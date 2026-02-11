@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { communityApi } from '@/services/api';
 import type { SharedSavedCategory } from '@/entities/types';
+import { COMMUNITY_QUERY_KEYS } from '@/shared/hooks/use-community';
 
 type ToggleLikeParams = {
   sharedCategoryId: string;
@@ -77,6 +78,8 @@ export const useSharedCategoryLike = ({
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey });
+      // UserRequest: 찜 목록 조회 API 추가에 맞춰 찜한 카테고리 목록 캐시도 동기화
+      queryClient.invalidateQueries({ queryKey: COMMUNITY_QUERY_KEYS.liked });
     },
   });
 

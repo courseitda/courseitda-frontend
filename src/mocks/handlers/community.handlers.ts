@@ -72,6 +72,26 @@ export const communityHandlers = [
     return HttpResponse.json(filtered);
   }),
 
+  // UserRequest: 찜 목록 조회 API를 MSW로 제공
+  http.get('*/api/community/shared-categories/liked', ({ request }) => {
+    if (!isAuthorized(request)) {
+      return HttpResponse.json(
+        {
+          type: 'about:blank',
+          title: 'Unauthorized',
+          status: 401,
+          detail: '인증이 필요합니다.',
+          code: BackendErrorCode.MISSING_AUTH_HEADER,
+        },
+        { status: 401 },
+      );
+    }
+
+    const categories = toApiResponse(Array.from(allSharedCategories.values()), request);
+    const liked = categories.filter((category) => category.isLiked);
+    return HttpResponse.json(liked);
+  }),
+
   http.post('*/api/community/shared-categories/:sharedCategoryId/likes', ({ request, params }) => {
     if (!isAuthorized(request)) {
       return HttpResponse.json(
