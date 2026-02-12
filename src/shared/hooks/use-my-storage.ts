@@ -110,3 +110,69 @@ export const useCreateSavedCategory = (token: string | null) => {
     },
   });
 };
+
+// UserRequest: 내 보관 카테고리 수정은 React Query 뮤테이션으로 관리
+export const useUpdateSavedCategory = (token: string | null) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: { id: string; title: string; places: SearchedPlace[] }) => {
+      if (!token) {
+        throw new Error('인증 토큰이 필요합니다.');
+      }
+
+      const response = await myStorageApi.updateSavedCategory(token, input.id, {
+        title: input.title,
+        places: input.places.map((place) => ({
+          name: place.name,
+          placeUrl: place.placeUrl,
+          roadAddressName: place.roadAddressName,
+          addressName: place.addressName,
+          latitude: place.latitude,
+          longitude: place.longitude,
+        })),
+      });
+
+      if (!response.success || !response.data) {
+        throw new Error(response.error?.message ?? '카테고리 수정에 실패했습니다.');
+      }
+
+      return response.data.category;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: MY_STORAGE_QUERY_KEYS.mySavedCategories });
+      toast.success('카테고리가 수정되었습니다.');
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : '카테고리 수정에 실패했습니다.';
+      toast.error(message);
+    },
+  });
+};
+
+// UserRequest: 내 보관 카테고리 삭제는 React Query 뮤테이션으로 관리
+export const useDeleteSavedCategory = (token: string | null) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (savedCategoryId: string) => {
+      if (!token) {
+        throw new Error('인증 토큰이 필요합니다.');
+      }
+
+      const response = await myStorageApi.deleteSavedCategory(token, savedCategoryId);
+
+      if (!response.success) {
+        throw new Error(response.error?.message ?? '카테고리 삭제에 실패했습니다.');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: MY_STORAGE_QUERY_KEYS.mySavedCategories });
+      toast.success('카테고리가 삭제되었습니다.');
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : '카테고리 삭제에 실패했습니다.';
+      toast.error(message);
+    },
+  });
+};

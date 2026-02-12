@@ -91,8 +91,10 @@
 | --- | --- | --- | --- |
 | 내 보관 카테고리 목록 | `/api/me/saved-categories` | `GET` | `Authorization` 필요 |
 | 내 보관 카테고리 생성 | `/api/me/saved-categories` | `POST` | `Authorization` 필요, `title`, `places` |
+| 내 보관 카테고리 수정 | `/api/me/saved-categories/{savedCategoryId}` | `PATCH` | `Authorization` 필요, `title`, `places` |
+| 내 보관 카테고리 삭제 | `/api/me/saved-categories/{savedCategoryId}` | `DELETE` | `Authorization` 필요 |
 
-- `myStorageApi`(`src/services/api/my-storage.service.ts`)가 호출을 담당하며, 화면에서는 `useMySavedCategories`, `useCreateSavedCategory`로 사용합니다.
+- `myStorageApi`(`src/services/api/my-storage.service.ts`)가 호출을 담당하며, 화면에서는 `useMySavedCategories`, `useCreateSavedCategory`, `useUpdateSavedCategory`, `useDeleteSavedCategory`로 사용합니다.
 
 ## 6. 에러 처리 & 메시지 규약
 

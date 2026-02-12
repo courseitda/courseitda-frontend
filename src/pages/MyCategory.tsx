@@ -21,12 +21,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { Plus, Folder, Heart, Clock, Search, MapPin, User as UserIcon, X } from 'lucide-react';
+import { Plus, Folder, Heart, Clock, Search, MapPin, User as UserIcon, X, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Spinner } from '@/components/ui/spinner';
-import { useCreateSavedCategory, useMySavedCategories } from '@/shared/hooks/use-my-storage';
+import {
+  useCreateSavedCategory,
+  useDeleteSavedCategory,
+  useMySavedCategories,
+  useUpdateSavedCategory,
+} from '@/shared/hooks/use-my-storage';
 import { COMMUNITY_QUERY_KEYS, useLikedSharedCategories } from '@/shared/hooks/use-community';
 import { useSharedCategoryLike } from '@/shared/hooks/use-shared-category-like';
 import type { SavedCategory, SearchedPlace, SharedSavedCategory } from '@/entities/types';
@@ -265,6 +276,10 @@ const MyCategory = () => {
   const [likedDetailOpen, setLikedDetailOpen] = useState(false);
   const [selectedLikedCategory, setSelectedLikedCategory] = useState<SharedSavedCategory | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [categoryDialogMode, setCategoryDialogMode] = useState<'create' | 'edit'>('create');
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
+  const [selectedForDelete, setSelectedForDelete] = useState<SavedCategory | null>(null);
   const [newCategoryTitle, setNewCategoryTitle] = useState('');
   const [placeQuery, setPlaceQuery] = useState('');
   const [placeResults, setPlaceResults] = useState<SearchedPlace[]>([]);
@@ -283,6 +298,8 @@ const MyCategory = () => {
     error: likedCategoriesError,
   } = useLikedSharedCategories(token);
   const createSavedCategoryMutation = useCreateSavedCategory(token);
+  const updateSavedCategoryMutation = useUpdateSavedCategory(token);
+  const deleteSavedCategoryMutation = useDeleteSavedCategory(token);
 
   // UserRequest: 내 카테고리 찜 탭에서도 찜 해제를 지원
   const { toggleLike } = useSharedCategoryLike({
@@ -357,6 +374,30 @@ const MyCategory = () => {
 
   const handleOpenCreateDialog = () => {
     // UserRequest: 새 카테고리 추가 버튼 클릭 시 생성 팝업 노출
+    setCategoryDialogMode('create');
+    setEditingCategoryId(null);
+    resetCreateDialog();
+    setCreateDialogOpen(true);
+  };
+
+  const handleOpenEditDialog = (category: SavedCategory) => {
+    // UserRequest: 길게 누른 카테고리 카드의 "수정하기"는 생성 팝업을 재사용하되 기존 값을 초기값으로 채운다.
+    setCategoryDialogMode('edit');
+    setEditingCategoryId(category.id);
+    setNewCategoryTitle(category.title);
+    setPlaceQuery('');
+    setPlaceResults([]);
+    setSelectedPlaces(
+      category.places.map((place) => ({
+        id: place.id,
+        name: place.name,
+        placeUrl: place.placeUrl,
+        roadAddressName: place.roadAddressName,
+        addressName: place.addressName,
+        latitude: place.latitude,
+        longitude: place.longitude,
+      })),
+    );
     setCreateDialogOpen(true);
   };
 
@@ -376,18 +417,51 @@ const MyCategory = () => {
       toast.error('장소를 1개 이상 추가해주세요.');
       return;
     }
-    if (createSavedCategoryMutation.isPending) return;
+    if (createSavedCategoryMutation.isPending || updateSavedCategoryMutation.isPending) return;
 
     try {
-      await createSavedCategoryMutation.mutateAsync({
-        title: newCategoryTitle.trim(),
-        places: selectedPlaces,
-      });
+      // UserRequest: 수정하기에서는 기존 카테고리 ID를 사용해 덮어쓰기 저장
+      if (categoryDialogMode === 'edit' && editingCategoryId) {
+        await updateSavedCategoryMutation.mutateAsync({
+          id: editingCategoryId,
+          title: newCategoryTitle.trim(),
+          places: selectedPlaces,
+        });
+      } else {
+        await createSavedCategoryMutation.mutateAsync({
+          title: newCategoryTitle.trim(),
+          places: selectedPlaces,
+        });
+      }
       setCreateDialogOpen(false);
       resetCreateDialog();
+      setCategoryDialogMode('create');
+      setEditingCategoryId(null);
     } catch {
       // UserRequest: 생성 실패 시 팝업은 유지하여 입력을 보존
     }
+  };
+
+  const handleDeleteClick = (category: SavedCategory) => {
+    // UserRequest: 길게 누른 카테고리 카드의 "삭제하기"는 워크스페이스와 유사한 확인 팝업으로 진행
+    setSelectedForDelete(category);
+    setDeleteAlertOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!selectedForDelete || deleteSavedCategoryMutation.isPending) return;
+    deleteSavedCategoryMutation.mutate(selectedForDelete.id, {
+      onSuccess: () => {
+        if (selectedCategory?.id === selectedForDelete.id) {
+          setCategoryDetailOpen(false);
+          setSelectedCategory(null);
+        }
+      },
+      onSettled: () => {
+        setDeleteAlertOpen(false);
+        setSelectedForDelete(null);
+      },
+    });
   };
 
   const triggerLikePulse = (categoryId: string) => {
@@ -491,35 +565,52 @@ const MyCategory = () => {
               </Card>
 
               {savedCategories.map((category) => (
-                  <Card
-                      key={category.id}
+                <ContextMenu key={category.id}>
+                  {/* UserRequest: 카테고리 카드 길게 누르기 시 수정/삭제 컨텍스트 메뉴를 표시한다. */}
+                  <ContextMenuTrigger asChild>
+                    <Card
                       className="hover-lift cursor-pointer"
                       onClick={() => handleOpenCategory(category.id)}
-                  >
-                    <CardHeader className="flex flex-row items-center gap-3">
-                      <div className="relative">
-                        <div className="w-8 h-8 rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground">
-                          <Folder className="w-4 h-4" />
+                    >
+                      <CardHeader className="flex flex-row items-center gap-3">
+                        <div className="relative">
+                          <div className="w-8 h-8 rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground">
+                            <Folder className="w-4 h-4" />
+                          </div>
+                          <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[11px] leading-none px-1.5 py-0.5 rounded-full">
+                            {category.placeCount}
+                          </span>
                         </div>
-                        <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[11px] leading-none px-1.5 py-0.5 rounded-full">
-                      {category.placeCount}
-                    </span>
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <CardTitle className="text-base truncate">{category.title}</CardTitle>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          수정: {new Date(category.updatedAt).toLocaleDateString('ko-KR', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                        </p>
-                      </div>
-                    </CardHeader>
-                  </Card>
+                        <div className="flex flex-col gap-1">
+                          <CardTitle className="text-base truncate">{category.title}</CardTitle>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            수정: {new Date(category.updatedAt).toLocaleDateString('ko-KR', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </p>
+                        </div>
+                      </CardHeader>
+                    </Card>
+                  </ContextMenuTrigger>
+                  <ContextMenuContent>
+                    <ContextMenuItem className="gap-2" onClick={() => handleOpenEditDialog(category)}>
+                      <Pencil className="w-4 h-4" />
+                      수정하기
+                    </ContextMenuItem>
+                    <ContextMenuItem
+                      className="text-destructive focus:text-destructive gap-2"
+                      onClick={() => handleDeleteClick(category)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      삭제하기
+                    </ContextMenuItem>
+                  </ContextMenuContent>
+                </ContextMenu>
               ))}
             </TabsContent>
 
@@ -622,35 +713,51 @@ const MyCategory = () => {
                   </Card>
 
                   {savedCategories.map((category) => (
-                      <Card
-                          key={category.id}
+                    <ContextMenu key={category.id}>
+                      <ContextMenuTrigger asChild>
+                        <Card
                           className="hover-lift cursor-pointer"
                           onClick={() => handleOpenCategory(category.id)}
-                      >
-                        <CardHeader className="flex flex-row items-center gap-3">
-                          <div className="relative">
-                            <div className="w-8 h-8 rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground">
-                              <Folder className="w-4 h-4" />
+                        >
+                          <CardHeader className="flex flex-row items-center gap-3">
+                            <div className="relative">
+                              <div className="w-8 h-8 rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground">
+                                <Folder className="w-4 h-4" />
+                              </div>
+                              <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[11px] leading-none px-1.5 py-0.5 rounded-full">
+                                {category.placeCount}
+                              </span>
                             </div>
-                            <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[11px] leading-none px-1.5 py-0.5 rounded-full">
-                          {category.placeCount}
-                        </span>
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            <CardTitle className="text-base truncate">{category.title}</CardTitle>
-                            <p className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              수정: {new Date(category.updatedAt).toLocaleDateString('ko-KR', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                            </p>
-                          </div>
-                        </CardHeader>
-                      </Card>
+                            <div className="flex flex-col gap-1">
+                              <CardTitle className="text-base truncate">{category.title}</CardTitle>
+                              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                수정: {new Date(category.updatedAt).toLocaleDateString('ko-KR', {
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </p>
+                            </div>
+                          </CardHeader>
+                        </Card>
+                      </ContextMenuTrigger>
+                      <ContextMenuContent>
+                        <ContextMenuItem className="gap-2" onClick={() => handleOpenEditDialog(category)}>
+                          <Pencil className="w-4 h-4" />
+                          수정하기
+                        </ContextMenuItem>
+                        <ContextMenuItem
+                          className="text-destructive focus:text-destructive gap-2"
+                          onClick={() => handleDeleteClick(category)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          삭제하기
+                        </ContextMenuItem>
+                      </ContextMenuContent>
+                    </ContextMenu>
                   ))}
                 </TabsContent>
 
@@ -781,12 +888,14 @@ const MyCategory = () => {
             setCreateDialogOpen(open);
             if (!open) {
               resetCreateDialog();
+              setCategoryDialogMode('create');
+              setEditingCategoryId(null);
             }
           }}
         >
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>새 카테고리 추가</DialogTitle>
+              <DialogTitle>{categoryDialogMode === 'edit' ? '카테고리 수정' : '새 카테고리 추가'}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
@@ -883,16 +992,50 @@ const MyCategory = () => {
                   onClick={handleCreateCategory}
                   disabled={
                     createSavedCategoryMutation.isPending ||
+                    updateSavedCategoryMutation.isPending ||
                     !newCategoryTitle.trim() ||
                     selectedPlaces.length === 0
                   }
                 >
-                  {createSavedCategoryMutation.isPending ? '생성 중...' : '생성'}
+                  {createSavedCategoryMutation.isPending || updateSavedCategoryMutation.isPending
+                    ? categoryDialogMode === 'edit'
+                      ? '수정 중...'
+                      : '생성 중...'
+                    : categoryDialogMode === 'edit'
+                      ? '수정'
+                      : '생성'}
                 </Button>
               </div>
             </div>
           </DialogContent>
         </Dialog>
+
+        <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>카테고리 삭제</AlertDialogTitle>
+              <AlertDialogDescription>
+                {selectedForDelete && (
+                  <>
+                    "<strong>{selectedForDelete.title}</strong>" 카테고리를 정말 삭제하시겠습니까?
+                    <br />
+                    <span className="text-destructive">이 작업은 되돌릴 수 없으며, 카테고리에 포함된 장소 정보도 함께 삭제됩니다.</span>
+                  </>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>취소</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteConfirm}
+                className="bg-destructive hover:bg-destructive/90"
+                disabled={deleteSavedCategoryMutation.isPending}
+              >
+                {deleteSavedCategoryMutation.isPending ? '삭제 중...' : '삭제'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
   );
 };
