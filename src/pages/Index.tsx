@@ -1,7 +1,7 @@
 import {useNavigate} from 'react-router-dom';
 import {motion, useReducedMotion} from 'framer-motion';
 import {Button} from '@/components/ui/button';
-import {Compass, FolderTree, Layers, MapPinned, Route, Search, Share2, Sparkles, Workflow} from 'lucide-react';
+import {CircleHelp, Compass, FolderTree, Layers, MapPinned, Route, Search, Share2, Sparkles, Workflow} from 'lucide-react';
 import {useAuthStore} from '@/shared/stores/auth-store';
 import UserMenu from '@/components/header/user-menu';
 import HeroAnimation from '@/components/landing/hero-animation';
@@ -194,8 +194,10 @@ const Index = () => {
                         initial={{opacity: 0, y: 14}}
                         whileInView={{opacity: 1, y: 0}}
                         viewport={{once: true, amount: 0.3}}
-                        className="text-2xl font-bold"
+                        className="flex items-center gap-2 text-2xl font-bold"
                     >
+                        {/* UserRequest: 섹션 제목 앞에 주제별 아이콘을 배치해 정보 구분을 강화한다. */}
+                        <CircleHelp className="h-6 w-6 text-primary"/>
                         이런 고민, 있지 않나요?
                     </motion.h2>
                     <div className="mt-6 grid gap-3 md:grid-cols-3">
@@ -228,8 +230,9 @@ const Index = () => {
                         initial={{opacity: 0, y: 14}}
                         whileInView={{opacity: 1, y: 0}}
                         viewport={{once: true, amount: 0.3}}
-                        className="text-2xl font-bold"
+                        className="flex items-center gap-2 text-2xl font-bold"
                     >
+                        <Sparkles className="h-6 w-6 text-primary"/>
                         핵심 기능
                     </motion.h2>
                     <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -262,8 +265,9 @@ const Index = () => {
                         initial={{opacity: 0, y: 14}}
                         whileInView={{opacity: 1, y: 0}}
                         viewport={{once: true, amount: 0.3}}
-                        className="text-2xl font-bold"
+                        className="flex items-center gap-2 text-2xl font-bold"
                     >
+                        <Workflow className="h-6 w-6 text-primary"/>
                         이렇게 사용해요
                     </motion.h2>
 
