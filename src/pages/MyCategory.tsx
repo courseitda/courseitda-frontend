@@ -144,11 +144,11 @@ const SavedCategoryMap = ({ open, places, focusedPlaceId }: SavedCategoryMapProp
             <div style="
               width: 24px;
               height: 24px;
-              background-color: #ef4444;
-              border: 2px solid #ffffff;
+              background-color: hsl(var(--map-marker-drop-bg));
+              border: 2px solid hsl(var(--map-marker-drop-border));
               border-radius: 50% 50% 50% 0;
               transform: rotate(-45deg);
-              box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+              box-shadow: var(--map-marker-drop-shadow);
             "></div>
           `,
           anchor: new naver.maps.Point(12, 24),

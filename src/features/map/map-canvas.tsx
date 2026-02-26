@@ -247,7 +247,7 @@ export const MapCanvas = ({
           background-color: ${category.color};
           border: ${borderWidth}px solid hsl(var(--card));
           border-radius: 50%;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          box-shadow: var(--map-marker-shadow);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -472,9 +472,9 @@ export const MapCanvas = ({
                   width: 22px;
                   height: 22px;
                   border-radius: 50%;
-                  border: 3px solid #FFFFFF;
-                  background: #2563eb;
-                  box-shadow: 0 0 0 8px rgba(37, 99, 235, 0.25), 0 8px 18px rgba(15, 23, 42, 0.45);
+                  border: 3px solid hsl(var(--map-user-location-border));
+                  background: hsl(var(--map-user-location-bg));
+                  box-shadow: 0 0 0 8px hsl(var(--map-user-location-ring)), var(--map-user-location-shadow);
                 "></div>
               `,
                             anchor: new naver.maps.Point(11, 11),
