@@ -47,7 +47,8 @@ const MyPage = () => {
   return (
     <div className="min-h-screen bg-gradient-card">
       {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
-      <PageHeader title="마이페이지" showUserMenu={false} />
+      {/* UserRequest: 마이페이지 우측 상단에도 햄버거 메뉴를 노출 */}
+      <PageHeader title="마이페이지" />
 
       <main className="container mx-auto px-4 py-12 md:py-8 max-w-2xl">
         <div className="space-y-6">
