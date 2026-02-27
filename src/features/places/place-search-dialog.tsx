@@ -119,7 +119,8 @@ export const PlaceSearchDialog = ({
       <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>장소 검색</DialogTitle>
-          <DialogDescription>Naver 지도에서 장소를 검색하고 추가하세요</DialogDescription>
+          {/* UserRequest: 검색 제공자 혼선을 방지하기 위해 안내 문구를 중립적으로 변경한다. */}
+          <DialogDescription>장소를 검색하고 추가하세요</DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4 min-h-0 flex-1">
