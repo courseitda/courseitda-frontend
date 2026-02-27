@@ -31,6 +31,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import PageHeader from '@/components/layout/page-header';
 import { formatRelativeTimeKorean } from '@/shared/utils/relative-time';
+import { MESSAGES } from '@/shared/constants/messages';
 
 /**
  * 워크스페이스 목록 페이지 컴포넌트
@@ -69,7 +70,7 @@ const MyWorkspace = () => {
   useEffect(() => {
     // UserRequest: Step 4 — 워크스페이스 목록 조회 실패 시 사용자에게 즉시 알림
     if (workspacesError) {
-      toast.error(workspacesError.message);
+      toast.error(workspacesError.message || MESSAGES.workspace.loadFailed);
     }
   }, [workspacesError]);
 
@@ -83,10 +84,10 @@ const MyWorkspace = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workspaces', 'me'] });
-      toast.success('워크스페이스가 삭제되었습니다.');
+      toast.success(MESSAGES.workspace.deleteSuccess);
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : '워크스페이스 삭제에 실패했습니다.';
+      const message = error instanceof Error ? error.message : MESSAGES.workspace.deleteFailed;
       toast.error(message);
     },
     onSettled: () => {
@@ -195,7 +196,7 @@ const MyWorkspace = () => {
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center space-y-3">
             <p className="text-sm text-muted-foreground">워크스페이스를 불러오지 못했습니다.</p>
-            <Button variant="outline" onClick={() => window.location.reload()}>새로고침</Button>
+            <Button variant="outline" onClick={() => window.location.reload()}>{MESSAGES.common.retry}</Button>
           </div>
         </div>
     );
@@ -284,13 +285,13 @@ const MyWorkspace = () => {
         <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>워크스페이스 삭제</AlertDialogTitle>
+              <AlertDialogTitle>{MESSAGES.workspace.deleteConfirmTitle}</AlertDialogTitle>
               <AlertDialogDescription>
                 {selectedForDelete && (
                     <>
-                      "<strong>{selectedForDelete.title}</strong>" 워크스페이스를 정말 삭제하시겠습니까?
+                      {MESSAGES.workspace.deleteConfirmDescription(selectedForDelete.title)}
                       <br />
-                      <span className="text-destructive">이 작업은 되돌릴 수 없으며, 모든 카테고리와 장소 정보가 함께 삭제됩니다.</span>
+                      <span className="text-destructive">{MESSAGES.workspace.deleteConfirmWarning}</span>
                     </>
                 )}
               </AlertDialogDescription>

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { myStorageApi } from '@/services/api';
 import type { SavedCategory, SearchedPlace } from '@/entities/types';
+import { MESSAGES } from '@/shared/constants/messages';
 import { toast } from 'sonner';
 
 type SavedCategoryPayload = {
@@ -52,13 +53,13 @@ export const useMySavedCategories = (token: string | null): UseQueryResult<Saved
     enabled: !!token,
     queryFn: async () => {
       if (!token) {
-        throw new Error('인증 토큰이 필요합니다.');
+        throw new Error(MESSAGES.common.authTokenRequired);
       }
 
       const response = await myStorageApi.getMySavedCategories(token);
 
       if (!response.success || !response.data) {
-        throw new Error(response.error?.message ?? '내 카테고리를 불러올 수 없습니다.');
+        throw new Error(response.error?.message ?? MESSAGES.savedCategory.listLoadFailed);
       }
 
       return response.data.categories.map((category) => toSavedCategoryEntity(category));
@@ -79,7 +80,7 @@ export const useCreateSavedCategory = (token: string | null) => {
   return useMutation({
     mutationFn: async (input: CreateSavedCategoryInput) => {
       if (!token) {
-        throw new Error('인증 토큰이 필요합니다.');
+        throw new Error(MESSAGES.common.authTokenRequired);
       }
 
       const response = await myStorageApi.createSavedCategory(token, {
@@ -95,17 +96,17 @@ export const useCreateSavedCategory = (token: string | null) => {
       });
 
       if (!response.success || !response.data) {
-        throw new Error(response.error?.message ?? '카테고리 생성에 실패했습니다.');
+        throw new Error(response.error?.message ?? MESSAGES.savedCategory.addFailed);
       }
 
       return response.data.category;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: MY_STORAGE_QUERY_KEYS.mySavedCategories });
-      toast.success('카테고리가 추가되었습니다.');
+      toast.success(MESSAGES.savedCategory.addSuccess);
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : '카테고리 생성에 실패했습니다.';
+      const message = error instanceof Error ? error.message : MESSAGES.savedCategory.addFailed;
       toast.error(message);
     },
   });
@@ -118,7 +119,7 @@ export const useUpdateSavedCategory = (token: string | null) => {
   return useMutation({
     mutationFn: async (input: { id: string; title: string; places: SearchedPlace[] }) => {
       if (!token) {
-        throw new Error('인증 토큰이 필요합니다.');
+        throw new Error(MESSAGES.common.authTokenRequired);
       }
 
       const response = await myStorageApi.updateSavedCategory(token, input.id, {
@@ -134,17 +135,17 @@ export const useUpdateSavedCategory = (token: string | null) => {
       });
 
       if (!response.success || !response.data) {
-        throw new Error(response.error?.message ?? '카테고리 수정에 실패했습니다.');
+        throw new Error(response.error?.message ?? MESSAGES.savedCategory.updateFailed);
       }
 
       return response.data.category;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: MY_STORAGE_QUERY_KEYS.mySavedCategories });
-      toast.success('카테고리가 수정되었습니다.');
+      toast.success(MESSAGES.savedCategory.updateSuccess);
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : '카테고리 수정에 실패했습니다.';
+      const message = error instanceof Error ? error.message : MESSAGES.savedCategory.updateFailed;
       toast.error(message);
     },
   });
@@ -157,21 +158,21 @@ export const useDeleteSavedCategory = (token: string | null) => {
   return useMutation({
     mutationFn: async (savedCategoryId: string) => {
       if (!token) {
-        throw new Error('인증 토큰이 필요합니다.');
+        throw new Error(MESSAGES.common.authTokenRequired);
       }
 
       const response = await myStorageApi.deleteSavedCategory(token, savedCategoryId);
 
       if (!response.success) {
-        throw new Error(response.error?.message ?? '카테고리 삭제에 실패했습니다.');
+        throw new Error(response.error?.message ?? MESSAGES.savedCategory.deleteFailed);
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: MY_STORAGE_QUERY_KEYS.mySavedCategories });
-      toast.success('카테고리가 삭제되었습니다.');
+      toast.success(MESSAGES.savedCategory.deleteSuccess);
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : '카테고리 삭제에 실패했습니다.';
+      const message = error instanceof Error ? error.message : MESSAGES.savedCategory.deleteFailed;
       toast.error(message);
     },
   });

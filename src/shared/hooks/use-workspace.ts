@@ -1,5 +1,6 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { workspaceApi } from '@/services/api';
+import { MESSAGES } from '@/shared/constants/messages';
 import type { Workspace } from '@/entities/types';
 
 type WorkspacePayload = {
@@ -31,13 +32,13 @@ export const useWorkspace = (workspaceIdentifier?: string): UseQueryResult<Works
     enabled: !!workspaceIdentifier,
     queryFn: async () => {
       if (!workspaceIdentifier) {
-        throw new Error('워크스페이스 식별자가 필요합니다.');
+        throw new Error(MESSAGES.workspace.identifierRequired);
       }
 
       const response = await workspaceApi.getByIdentifier(workspaceIdentifier);
 
       if (!response.success || !response.data) {
-        throw new Error(response.error?.message ?? '워크스페이스를 불러올 수 없습니다.');
+        throw new Error(response.error?.message ?? MESSAGES.workspace.notFound);
       }
 
       return toWorkspaceEntity({
@@ -61,13 +62,13 @@ export const useWorkspacesByOwner = (token?: string): UseQueryResult<Workspace[]
     enabled: !!token,
     queryFn: async () => {
       if (!token) {
-        throw new Error('인증 토큰이 필요합니다.');
+        throw new Error(MESSAGES.common.authTokenRequired);
       }
 
       const response = await workspaceApi.getMyWorkspaces(token);
 
       if (!response.success || !response.data) {
-        throw new Error(response.error?.message ?? '워크스페이스 목록을 불러올 수 없습니다.');
+        throw new Error(response.error?.message ?? MESSAGES.workspace.loadFailed);
       }
 
       return response.data.workspaces.map((workspace) =>
@@ -82,4 +83,3 @@ export const useWorkspacesByOwner = (token?: string): UseQueryResult<Workspace[]
     placeholderData: (previousData) => previousData,
   });
 };
-

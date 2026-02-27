@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { communityApi } from '@/services/api';
 import type { SharedSavedCategory } from '@/entities/types';
 import { COMMUNITY_QUERY_KEYS } from '@/shared/hooks/use-community';
+import { MESSAGES } from '@/shared/constants/messages';
 
 type ToggleLikeParams = {
   sharedCategoryId: string;
@@ -31,7 +32,7 @@ export const useSharedCategoryLike = ({
   const toggleLikeMutation = useMutation({
     mutationFn: async (params: { sharedCategoryId: string; nextLiked: boolean }) => {
       if (!token) {
-        throw new Error('인증 토큰이 필요합니다.');
+        throw new Error(MESSAGES.common.authTokenRequired);
       }
 
       const response = params.nextLiked
@@ -39,7 +40,7 @@ export const useSharedCategoryLike = ({
         : await communityApi.unlikeSharedCategory(token, params.sharedCategoryId);
 
       if (!response.success || !response.data) {
-        throw new Error(response.error?.message ?? '찜 처리에 실패했습니다.');
+        throw new Error(response.error?.message ?? MESSAGES.common.defaultError);
       }
 
       return response.data;
@@ -68,7 +69,7 @@ export const useSharedCategoryLike = ({
       if (context?.previous) {
         queryClient.setQueryData(queryKey, context.previous);
       }
-      const message = error instanceof Error ? error.message : '찜 처리에 실패했습니다.';
+      const message = error instanceof Error ? error.message : MESSAGES.common.defaultError;
       toast.error(message);
     },
     onSuccess: (data) => {
@@ -90,11 +91,11 @@ export const useSharedCategoryLike = ({
         onRequireLogin();
         return false;
       }
-      toast.error('로그인 후 이용할 수 있는 기능입니다.');
+      toast.error(MESSAGES.common.loginRequiredForFeature);
       return false;
     }
     if (!token) {
-      toast.error('인증 토큰이 필요합니다. 다시 로그인해주세요.');
+      toast.error(MESSAGES.common.authTokenRequired);
       return false;
     }
     if (toggleLikeMutation.isPending) {

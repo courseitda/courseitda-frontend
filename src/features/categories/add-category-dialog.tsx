@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 // API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
 import { categoryApi } from '@/services/api';
 import { getCategoryColors, PALETTE_NAMES, type PaletteMode } from '@/shared/constants/colors';
+import { MESSAGES } from '@/shared/constants/messages';
 import { useSettingsStore } from '@/shared/stores/settings-store';
 import { Check, Palette } from 'lucide-react';
 import type { Category } from '@/entities/types';
@@ -54,19 +55,19 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceIdentifier, cat
       });
 
       if (!category || error) {
-        throw new Error(error || '카테고리 추가에 실패했습니다.');
+        throw new Error(error || MESSAGES.savedCategory.addFailed);
       }
 
       return category;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
-      toast.success('카테고리가 추가되었습니다!');
+      toast.success(MESSAGES.savedCategory.addSuccess);
       setName('');
       onOpenChange(false);
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : '카테고리 추가에 실패했습니다.';
+      const message = error instanceof Error ? error.message : MESSAGES.savedCategory.addFailed;
       toast.error(message);
     },
   });
@@ -150,7 +151,7 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceIdentifier, cat
   const handleSubmit = (categoryName: string) => {
     // 빈 문자열이나 공백만 있는 경우 추가 방지
     if (!categoryName.trim()) {
-      toast.error('카테고리 이름을 입력해주세요.');
+      toast.error(MESSAGES.savedCategory.nameRequired);
       return;
     }
 
@@ -186,7 +187,7 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceIdentifier, cat
         }}
       >
         <DialogHeader>
-          <DialogTitle>카테고리 추가</DialogTitle>
+          <DialogTitle>{MESSAGES.savedCategory.addDialogTitle}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">

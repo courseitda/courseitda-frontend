@@ -2,6 +2,7 @@ import {apiClient} from '@/lib/axios';
 import type {Place, SearchedPlace} from '@/entities/types';
 import type {ApiResponse} from '@/types/api';
 import {BackendErrorCode} from '@/shared/utils/error-message';
+import {MESSAGES} from '@/shared/constants/messages';
 import {toError, toSuccess} from './http';
 
 // 장소 관련 백엔드 엔드포인트 상수 정의
@@ -223,7 +224,7 @@ export const placeApi = {
             const apiError = toError(
                 error,
                 BackendErrorCode.CATEGORY_PLACE_NOT_FOUND,
-                '장소 삭제에 실패했습니다.',
+                MESSAGES.place.removeFailed,
             );
             return {error: apiError.error?.message};
         }
@@ -258,9 +259,9 @@ export const placeApi = {
             const apiError = toError(
                 error,
                 BackendErrorCode.CATEGORY_PLACE_NOT_FOUND,
-                '장소 목록을 불러올 수 없습니다.',
+                MESSAGES.place.searchFailed,
             );
-            throw new Error(apiError.error?.message ?? '장소 목록을 불러올 수 없습니다.');
+            throw new Error(apiError.error?.message ?? MESSAGES.place.searchFailed);
         }
     },
 };

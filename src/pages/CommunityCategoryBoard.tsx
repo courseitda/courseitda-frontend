@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Upload } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { COMMUNITY_QUERY_KEYS, useSharedCategorySearch } from '@/shared/hooks/use-community';
+import { MESSAGES } from '@/shared/constants/messages';
 import type { SharedSavedCategory } from '@/entities/types';
 import { useSharedCategoryLike } from '@/shared/hooks/use-shared-category-like';
 import { sortSharedCategoriesById } from '@/shared/utils/shared-category-sort';
@@ -40,7 +41,7 @@ const CommunityCategoryBoard = () => {
   useEffect(() => {
     // UserRequest: 공유된 카테고리 게시판 조회 실패 시 사용자에게 즉시 알림
     if (sharedCategoriesError) {
-      toast.error(sharedCategoriesError.message);
+      toast.error(sharedCategoriesError.message || MESSAGES.sharedCategory.searchLoadFailed);
     }
   }, [sharedCategoriesError]);
 

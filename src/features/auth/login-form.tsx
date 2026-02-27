@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 // API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
 import { authApi } from '@/services/api';
 import { useAuthStore } from '@/shared/stores/auth-store';
+import { MESSAGES } from '@/shared/constants/messages';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 
 // 로그인 폼 컴포넌트 - 이메일과 비밀번호를 입력받아 인증 처리
@@ -29,7 +30,7 @@ export const LoginForm = () => {
 
     // 로그인 실패 시 에러 메시지 표시 후 종료
     if (!response.success || !response.data) {
-      toast.error(response.error?.message || '로그인에 실패했습니다.');
+      toast.error(response.error?.message || MESSAGES.auth.loginFailed);
       setLoading(false);
       return;
     }
@@ -37,7 +38,7 @@ export const LoginForm = () => {
     // 로그인 성공 시 전역 상태에 토큰만 저장 (사용자 정보는 필요할 때 API 호출)
     // UserRequest: Step 3 — 백엔드 토큰 타입을 함께 저장하여 axios 인터셉터가 Authorization 헤더를 구성
     setToken(response.data.accessToken, response.data.tokenType);
-    toast.success('로그인 성공!');
+    toast.success(MESSAGES.auth.loginSuccess);
     // UserRequest: 로그인 후 커뮤니티 페이지로 이동한다.
     // UserRequest: 로그인 직후 뒤로가기가 인증 페이지로 되돌아가지 않도록 히스토리를 대체
     navigate('/community', { replace: true });

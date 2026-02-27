@@ -104,7 +104,7 @@ export const PALETTE_NAMES: Record<PaletteMode, string> = {
 };
 
 // 선택한 모드의 전체 색상 배열 반환
-export const getCategoryColors = (mode: PaletteMode = 'vibrant') => {
+export const getCategoryColors = (mode: PaletteMode = 'vibrant'): readonly string[] => {
   return COLOR_PALETTES[mode];
 };
 

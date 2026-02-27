@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 // API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
 import { placeApi } from '@/services/api';
 import { useAuthStore } from '@/shared/stores/auth-store';
+import { MESSAGES } from '@/shared/constants/messages';
 import type { SearchedPlace } from '@/entities/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -43,7 +44,7 @@ export const PlaceSearchDialog = ({
   const handleSearch = async () => {
     // 빈 검색어 입력 방지
     if (!query.trim()) {
-      toast.error('검색어를 입력해주세요.');
+      toast.error(MESSAGES.place.searchKeywordRequired);
       return;
     }
 
@@ -55,14 +56,14 @@ export const PlaceSearchDialog = ({
     });
 
     if (error) {
-      toast.error(error);
+      toast.error(error || MESSAGES.place.searchFailed);
       setResults([]);
     } else if (searchedPlaces) {
       setResults(searchedPlaces);
       
       // 검색 결과가 없을 경우 안내
       if (searchedPlaces.length === 0) {
-        toast.info('검색 결과가 없습니다.');
+        toast.info(MESSAGES.place.searchNoResult);
       }
     }
 
@@ -84,17 +85,17 @@ export const PlaceSearchDialog = ({
       });
 
       if (!response.success || !response.data) {
-        throw new Error(response.error?.message || '장소 추가에 실패했습니다.');
+        throw new Error(response.error?.message || MESSAGES.place.addFailed);
       }
 
       return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
-      toast.success('장소가 추가되었습니다!');
+      toast.success(MESSAGES.place.addSuccess);
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : '장소 추가에 실패했습니다.';
+      const message = error instanceof Error ? error.message : MESSAGES.place.addFailed;
       toast.error(message);
     },
     onSettled: () => {
@@ -104,7 +105,7 @@ export const PlaceSearchDialog = ({
 
   const handleAdd = (place: SearchedPlace) => {
     if (!token) {
-      toast.error('로그인이 필요합니다.');
+      toast.error(MESSAGES.common.loginRequired);
       return;
     }
 
@@ -118,9 +119,9 @@ export const PlaceSearchDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>장소 검색</DialogTitle>
+          <DialogTitle>{MESSAGES.place.searchDialogTitle}</DialogTitle>
           {/* UserRequest: 검색 제공자 혼선을 방지하기 위해 안내 문구를 중립적으로 변경한다. */}
-          <DialogDescription>장소를 검색하고 추가하세요</DialogDescription>
+          <DialogDescription>{MESSAGES.place.searchDialogDescription}</DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4 min-h-0 flex-1">
@@ -148,7 +149,7 @@ export const PlaceSearchDialog = ({
           {/* 스크롤 가능한 결과 영역 */}
           <div className="flex-1 overflow-y-auto min-h-0">
             {loading && (
-              <div className="text-center py-8 text-muted-foreground">검색 중...</div>
+              <div className="text-center py-8 text-muted-foreground">{MESSAGES.workspaceCategory.searching}</div>
             )}
 
             {!loading && results.length > 0 && (

@@ -21,6 +21,7 @@ import { CreateWorkspaceDialog } from '@/features/workspaces/create-workspace-di
 import type { Place } from '@/entities/types';
 import { Spinner } from '@/components/ui/spinner';
 import PageHeader from '@/components/layout/page-header';
+import { MESSAGES } from '@/shared/constants/messages';
 
 /**
  * 워크스페이스 상세 페이지 - 카테고리 관리 및 지도 표시
@@ -78,20 +79,20 @@ const WorkspaceDetail = () => {
   useEffect(() => {
     // UserRequest: Step 4 — 워크스페이스 조회 실패 시 사용자에게 즉시 안내
     if (workspaceError) {
-      toast.error(workspaceError.message);
+      toast.error(workspaceError.message || MESSAGES.workspace.loadFailed);
     }
   }, [workspaceError]);
 
   useEffect(() => {
     // UserRequest: Step 4 — 워크스페이스 목록 조회 실패 시 사용자에게 즉시 안내
     if (workspacesError) {
-      toast.error(workspacesError.message);
+      toast.error(workspacesError.message || MESSAGES.workspace.loadFailed);
     }
   }, [workspacesError]);
 
   useEffect(() => {
     if (categoriesError) {
-      toast.error(categoriesError.message);
+      toast.error(categoriesError.message || MESSAGES.workspaceCategory.listLoadFailed);
     }
   }, [categoriesError]);
 

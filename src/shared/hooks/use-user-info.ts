@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { authApi } from '@/services/api';
 import { useAuthStore } from '@/shared/stores/auth-store';
+import { MESSAGES } from '@/shared/constants/messages';
 
 // UserRequest: ID 기반 사용자 조회 훅을 제거하여 /api/users/{userId} 호출을 노출하지 않는다.
 
@@ -33,7 +34,7 @@ export const useUserNickname = () => {
       const response = await authApi.getNavigatorInfo(token);
 
       if (!response.success || !response.data) {
-        setError(response.error?.message || '닉네임을 불러올 수 없습니다.');
+        setError(response.error?.message || MESSAGES.auth.nicknameLoadFailed);
         setNickname(null);
       } else {
         setNickname(response.data.nickname);
@@ -79,7 +80,7 @@ export const useUserDropdown = () => {
       const response = await authApi.getDropdownInfo(token);
 
       if (!response.success || !response.data) {
-        setError(response.error?.message || '사용자 정보를 불러올 수 없습니다.');
+        setError(response.error?.message || MESSAGES.auth.userInfoLoadFailed);
         setNickname(null);
         setEmail(null);
       } else {
@@ -127,7 +128,7 @@ export const useUserProfile = () => {
       const response = await authApi.getProfileInfo(token);
 
       if (!response.success || !response.data) {
-        setError(response.error?.message || '사용자 정보를 불러올 수 없습니다.');
+        setError(response.error?.message || MESSAGES.auth.userInfoLoadFailed);
         setNickname(null);
         setEmail(null);
       } else {
@@ -143,4 +144,3 @@ export const useUserProfile = () => {
 
   return { nickname, email, loading, error };
 };
-

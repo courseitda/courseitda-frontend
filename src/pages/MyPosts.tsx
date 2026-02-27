@@ -25,6 +25,7 @@ import { toast } from 'sonner';
 import { communityApi } from '@/services/api';
 import { Spinner } from '@/components/ui/spinner';
 import { COMMUNITY_QUERY_KEYS, useMySharedCategories } from '@/shared/hooks/use-community';
+import { MESSAGES } from '@/shared/constants/messages';
 import PageHeader from '@/components/layout/page-header';
 import { UploadCategoryDialog } from '@/features/community/upload-category-dialog';
 import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
@@ -62,13 +63,13 @@ const MyPosts = () => {
     void (async () => {
       const response = await communityApi.getSharedCategoryDetail(categoryId);
       if (!response.success || !response.data) {
-        toast.error(response.error?.message ?? '공유 카테고리를 불러올 수 없습니다.');
+        toast.error(response.error?.message ?? MESSAGES.sharedCategory.fetchDetailFailed);
         return;
       }
 
       const shared = response.data.sharedCategories[0];
       if (!shared) {
-        toast.error('공유 카테고리를 불러올 수 없습니다.');
+        toast.error(MESSAGES.sharedCategory.fetchDetailFailed);
         return;
       }
 
@@ -88,23 +89,23 @@ const MyPosts = () => {
   const deleteMutation = useMutation({
     mutationFn: async (sharedCategoryId: string) => {
       if (!token) {
-        throw new Error('인증 토큰이 필요합니다.');
+        throw new Error(MESSAGES.common.authTokenRequired);
       }
       const response = await communityApi.deleteMySharedCategory(token, sharedCategoryId);
       if (!response.success) {
-        throw new Error(response.error?.message ?? '공유 카테고리 삭제에 실패했습니다.');
+        throw new Error(response.error?.message ?? MESSAGES.sharedCategory.deleteFailed);
       }
       return sharedCategoryId;
     },
     onSuccess: () => {
-      toast.success('공유 카테고리를 삭제했어요.');
+      toast.success(MESSAGES.sharedCategory.deleteSuccess);
       queryClient.invalidateQueries({ queryKey: COMMUNITY_QUERY_KEYS.myShared });
       queryClient.invalidateQueries({ queryKey: COMMUNITY_QUERY_KEYS.recommended });
       setDeleteAlertOpen(false);
       setSelectedForDelete(null);
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : '공유 카테고리 삭제에 실패했습니다.';
+      const message = error instanceof Error ? error.message : MESSAGES.sharedCategory.deleteFailed;
       toast.error(message);
     },
   });
@@ -133,11 +134,9 @@ const MyPosts = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="space-y-3 text-center">
           <p className="text-sm text-muted-foreground">
-            커뮤니티 관리 정보를 불러오지 못했습니다.
+            {MESSAGES.sharedCategory.myPostsLoadFailed}
           </p>
-          <Button variant="outline" onClick={() => window.location.reload()}>
-            새로고침
-          </Button>
+          <Button variant="outline" onClick={() => window.location.reload()}>{MESSAGES.common.retry}</Button>
         </div>
       </div>
     );
@@ -254,13 +253,13 @@ const MyPosts = () => {
       <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>게시물을 삭제할까요?</AlertDialogTitle>
+            <AlertDialogTitle>{MESSAGES.sharedCategory.deleteConfirmTitle}</AlertDialogTitle>
             <AlertDialogDescription>
               {selectedForDelete && (
                 <>
-                  "<strong>{selectedForDelete.title}</strong>" 게시물을 삭제합니다.
+                  {MESSAGES.sharedCategory.deleteConfirmDescription(selectedForDelete.title)}
                   <br />
-                  <span className="text-destructive">삭제 후에는 복구할 수 없습니다.</span>
+                  <span className="text-destructive">{MESSAGES.sharedCategory.deleteConfirmWarning}</span>
                 </>
               )}
             </AlertDialogDescription>

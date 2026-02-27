@@ -2,6 +2,7 @@ import { apiClient } from '@/lib/axios';
 import type { Workspace } from '@/entities/types';
 import type { ApiResponse } from '@/types/api';
 import { BackendErrorCode } from '@/shared/utils/error-message';
+import { MESSAGES } from '@/shared/constants/messages';
 import { toSuccess, toError } from './http';
 
 // 워크스페이스 관련 백엔드 엔드포인트 상수 정의
@@ -148,7 +149,7 @@ export const workspaceApi = {
       return toError(
         error,
         BackendErrorCode.WORKSPACE_NOT_FOUND,
-        '워크스페이스 수정에 실패했습니다.',
+        MESSAGES.workspace.updateFailed,
       );
     }
   },
@@ -168,9 +169,9 @@ export const workspaceApi = {
       const response = toError(
         error,
         BackendErrorCode.WORKSPACE_NOT_FOUND,
-        '워크스페이스 삭제에 실패했습니다.',
+        MESSAGES.workspace.deleteFailed,
       );
-      return { error: response.error?.message ?? '워크스페이스 삭제에 실패했습니다.' };
+      return { error: response.error?.message ?? MESSAGES.workspace.deleteFailed };
     }
   },
 
@@ -192,7 +193,7 @@ export const workspaceApi = {
       return toError(
         error,
         BackendErrorCode.WORKSPACE_NOT_FOUND,
-        '워크스페이스를 불러올 수 없습니다.',
+        MESSAGES.workspace.notFound,
       );
     }
   },
@@ -218,7 +219,7 @@ export const workspaceApi = {
       return toError(
         error,
         BackendErrorCode.ACCESS_FORBIDDEN,
-        '워크스페이스 목록을 불러올 수 없습니다.',
+        MESSAGES.workspace.loadFailed,
       );
     }
   },
@@ -239,9 +240,9 @@ export const workspaceApi = {
       const response = toError(
         error,
         BackendErrorCode.ACCESS_FORBIDDEN,
-        '워크스페이스 목록을 불러올 수 없습니다.',
+        MESSAGES.workspace.loadFailed,
       );
-      throw new Error(response.error?.message ?? '워크스페이스 목록을 불러올 수 없습니다.');
+      throw new Error(response.error?.message ?? MESSAGES.workspace.loadFailed);
     }
   },
 
@@ -266,7 +267,7 @@ export const workspaceApi = {
       const response = toError(
         error,
         BackendErrorCode.DUPLICATE_WORKSPACE_TITLE,
-        '워크스페이스 제목 중복 확인에 실패했습니다.',
+        MESSAGES.workspace.titleDuplicateCheckFailed,
       );
       return {
         isDuplicated: false,

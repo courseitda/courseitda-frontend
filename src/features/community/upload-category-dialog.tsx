@@ -13,6 +13,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useMySavedCategories } from '@/shared/hooks/use-my-storage';
 import { COMMUNITY_QUERY_KEYS } from '@/shared/hooks/use-community';
+import { MESSAGES } from '@/shared/constants/messages';
 import { communityApi } from '@/services/api';
 import type { SavedCategory } from '@/entities/types';
 
@@ -42,22 +43,22 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
   const shareMutation = useMutation({
     mutationFn: async (savedCategoryId: string) => {
       if (!token) {
-        throw new Error('인증 토큰이 필요합니다.');
+        throw new Error(MESSAGES.common.authTokenRequired);
       }
       const response = await communityApi.shareSavedCategory(token, savedCategoryId);
       if (!response.success || !response.data) {
-        throw new Error(response.error?.message ?? '카테고리 업로드에 실패했습니다.');
+        throw new Error(response.error?.message ?? MESSAGES.sharedCategory.uploadFailed);
       }
       return response.data.sharedCategory;
     },
     onSuccess: () => {
-      toast.success('커뮤니티에 업로드했어요.');
+      toast.success(MESSAGES.sharedCategory.uploadSuccess);
       queryClient.invalidateQueries({ queryKey: COMMUNITY_QUERY_KEYS.myShared });
       queryClient.invalidateQueries({ queryKey: COMMUNITY_QUERY_KEYS.recommended });
       onOpenChange(false);
     },
     onError: (uploadError) => {
-      const message = uploadError instanceof Error ? uploadError.message : '카테고리 업로드에 실패했습니다.';
+      const message = uploadError instanceof Error ? uploadError.message : MESSAGES.sharedCategory.uploadFailed;
       toast.error(message);
     },
   });
@@ -76,15 +77,15 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl h-[65vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>카테고리 업로드</DialogTitle>
+          <DialogTitle>{MESSAGES.sharedCategory.uploadDialogTitle}</DialogTitle>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto overflow-x-visible pr-1">
           {isLoading ? (
-            <div className="text-sm text-muted-foreground">불러오는 중...</div>
+            <div className="text-sm text-muted-foreground">{MESSAGES.common.loading}</div>
           ) : savedCategories.length === 0 ? (
             <div className="text-sm text-muted-foreground">
-              업로드할 카테고리가 없습니다. 내 카테고리에서 먼저 만들어주세요.
+              {MESSAGES.sharedCategory.uploadEmpty}
             </div>
           ) : (
             <div className="space-y-2 px-1 py-1">

@@ -40,6 +40,7 @@ import {
 } from '@/shared/hooks/use-my-storage';
 import { COMMUNITY_QUERY_KEYS, useLikedSharedCategories } from '@/shared/hooks/use-community';
 import { useSharedCategoryLike } from '@/shared/hooks/use-shared-category-like';
+import { MESSAGES } from '@/shared/constants/messages';
 import type { SavedCategory, SearchedPlace, SharedSavedCategory } from '@/entities/types';
 import PageHeader from '@/components/layout/page-header';
 import { useSettingsStore } from '@/shared/stores/settings-store';
@@ -329,32 +330,32 @@ const MyCategory = () => {
   useEffect(() => {
     // UserRequest: 내 카테고리 목록 조회 실패 시 사용자에게 즉시 알림
     if (savedCategoriesError) {
-      toast.error(savedCategoriesError.message);
+      toast.error(savedCategoriesError.message || MESSAGES.savedCategory.listLoadFailed);
     }
   }, [savedCategoriesError]);
 
   useEffect(() => {
     // UserRequest: 찜 목록 조회 실패 시 사용자에게 즉시 알림
     if (likedCategoriesError) {
-      toast.error(likedCategoriesError.message);
+      toast.error(likedCategoriesError.message || MESSAGES.likedCategory.listLoadFailed);
     }
   }, [likedCategoriesError]);
 
   const handleSearchPlaces = async () => {
     if (!placeQuery.trim()) {
-      toast.error('검색어를 입력해주세요.');
+      toast.error(MESSAGES.savedCategory.searchKeywordRequired);
       return;
     }
 
     setPlaceSearchLoading(true);
     const { searchedPlaces, error } = await placeApi.search({ keyword: placeQuery.trim() });
     if (error) {
-      toast.error(error);
+      toast.error(error || MESSAGES.place.searchFailed);
       setPlaceResults([]);
     } else {
       setPlaceResults(searchedPlaces ?? []);
       if (!searchedPlaces || searchedPlaces.length === 0) {
-        toast.info('검색 결과가 없습니다.');
+        toast.info(MESSAGES.savedCategory.searchNoResult);
       }
     }
     setPlaceSearchLoading(false);
@@ -363,7 +364,7 @@ const MyCategory = () => {
   const handleAddPlace = (place: SearchedPlace) => {
     const exists = selectedPlaces.some((item) => item.id === place.id);
     if (exists) {
-      toast.info('이미 추가된 장소입니다.');
+      toast.info(MESSAGES.savedCategory.placeAlreadyAdded);
       return;
     }
     setSelectedPlaces((prev) => [...prev, place]);
@@ -411,11 +412,11 @@ const MyCategory = () => {
 
   const handleCreateCategory = async () => {
     if (!newCategoryTitle.trim()) {
-      toast.error('카테고리 이름을 입력해주세요.');
+      toast.error(MESSAGES.savedCategory.nameRequired);
       return;
     }
     if (selectedPlaces.length === 0) {
-      toast.error('장소를 1개 이상 추가해주세요.');
+      toast.error(MESSAGES.savedCategory.atLeastOnePlace);
       return;
     }
     if (createSavedCategoryMutation.isPending || updateSavedCategoryMutation.isPending) return;
@@ -591,10 +592,8 @@ const MyCategory = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-3">
-          <p className="text-sm text-muted-foreground">내 카테고리를 불러오지 못했습니다.</p>
-          <Button variant="outline" onClick={() => window.location.reload()}>
-            새로고침
-          </Button>
+          <p className="text-sm text-muted-foreground">{MESSAGES.savedCategory.listLoadFailed}</p>
+          <Button variant="outline" onClick={() => window.location.reload()}>{MESSAGES.common.retry}</Button>
         </div>
       </div>
     );
@@ -826,7 +825,7 @@ const MyCategory = () => {
                   {detailPlaces.length === 0 ? (
                     <>
                       <div className="h-14 px-3 flex items-center text-sm text-muted-foreground">
-                        표시할 장소가 없습니다.
+                        {MESSAGES.savedCategory.noPlacesInDetail}
                       </div>
                       {Array.from({ length: detailMinRows - 1 }).map((_, index) => (
                         <div key={`detail-empty-initial-${index}`} className="h-14" />
@@ -859,9 +858,11 @@ const MyCategory = () => {
         <AlertDialog open={unlikeDialogOpen} onOpenChange={setUnlikeDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>찜을 해제할까요?</AlertDialogTitle>
+              <AlertDialogTitle>{MESSAGES.likedCategory.unlikeConfirmTitle}</AlertDialogTitle>
               <AlertDialogDescription>
-                {pendingUnlike?.title ? `"${pendingUnlike.title}"` : '선택한 카테고리'}를 찜 목록에서 제거합니다.
+                {pendingUnlike?.title
+                  ? MESSAGES.likedCategory.unlikeConfirmDescription(pendingUnlike.title)
+                  : MESSAGES.likedCategory.unlikeConfirmDescription('선택한 카테고리')}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -907,7 +908,7 @@ const MyCategory = () => {
                 {/* UserRequest: 검색 결과 영역과 동일한 높이로 고정하고 스크롤로 관리 */}
                 <div className="max-h-56 overflow-y-auto overflow-x-hidden border border-border rounded-lg divide-y divide-border">
                   {selectedPlaces.length === 0 ? (
-                    <div className="p-4 text-sm text-muted-foreground">선택한 장소가 없습니다.</div>
+                    <div className="p-4 text-sm text-muted-foreground">{MESSAGES.savedCategory.noPlacesSelected}</div>
                   ) : (
                     selectedPlaces.map((place) => (
                       <div key={place.id} className="p-3 flex items-center gap-3">
@@ -957,7 +958,7 @@ const MyCategory = () => {
                   </Button>
                 </div>
                 {placeSearchLoading && (
-                  <div className="text-sm text-muted-foreground">검색 중...</div>
+                  <div className="text-sm text-muted-foreground">{MESSAGES.workspaceCategory.searching}</div>
                 )}
                 {!placeSearchLoading && placeResults.length > 0 && (
                   <div className="max-h-56 overflow-y-auto overflow-x-hidden border border-border rounded-lg divide-y divide-border">
@@ -1009,13 +1010,13 @@ const MyCategory = () => {
         <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>카테고리 삭제</AlertDialogTitle>
+              <AlertDialogTitle>{MESSAGES.savedCategory.deleteConfirmTitle}</AlertDialogTitle>
               <AlertDialogDescription>
                 {selectedForDelete && (
                   <>
-                    "<strong>{selectedForDelete.title}</strong>" 카테고리를 정말 삭제하시겠습니까?
+                    {MESSAGES.savedCategory.deleteConfirmDescription(selectedForDelete.title)}
                     <br />
-                    <span className="text-destructive">이 작업은 되돌릴 수 없으며, 카테고리에 포함된 장소 정보도 함께 삭제됩니다.</span>
+                    <span className="text-destructive">{MESSAGES.savedCategory.deleteConfirmWarning}</span>
                   </>
                 )}
               </AlertDialogDescription>

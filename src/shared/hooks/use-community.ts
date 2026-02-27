@@ -1,5 +1,6 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { communityApi } from '@/services/api';
+import { MESSAGES } from '@/shared/constants/messages';
 import type { MySharedCategory, SharedSavedCategory } from '@/entities/types';
 
 type SharedSavedCategoryPayload = {
@@ -59,7 +60,7 @@ export const useRecommendedSharedCategories = (): UseQueryResult<SharedSavedCate
       const response = await communityApi.getRecommendedSharedCategories();
 
       if (!response.success || !response.data) {
-        throw new Error(response.error?.message ?? '추천 카테고리를 불러올 수 없습니다.');
+        throw new Error(response.error?.message ?? MESSAGES.sharedCategory.recommendedLoadFailed);
       }
 
       return response.data.sharedCategories.map((category) =>
@@ -83,7 +84,7 @@ export const useSharedCategorySearch = (
       const response = await communityApi.searchSharedCategories(keyword);
 
       if (!response.success || !response.data) {
-        throw new Error(response.error?.message ?? '검색 결과를 불러올 수 없습니다.');
+        throw new Error(response.error?.message ?? MESSAGES.sharedCategory.searchLoadFailed);
       }
 
       return response.data.sharedCategories.map((category) =>
@@ -105,13 +106,13 @@ export const useLikedSharedCategories = (
     enabled: !!token,
     queryFn: async () => {
       if (!token) {
-        throw new Error('인증 토큰이 필요합니다.');
+        throw new Error(MESSAGES.common.authTokenRequired);
       }
 
       const response = await communityApi.getLikedSharedCategories(token);
 
       if (!response.success || !response.data) {
-        throw new Error(response.error?.message ?? '찜한 카테고리를 불러올 수 없습니다.');
+        throw new Error(response.error?.message ?? MESSAGES.likedCategory.noLikedCategories);
       }
 
       return response.data.sharedCategories.map((category) =>
@@ -155,13 +156,13 @@ export const useMySharedCategories = (
     enabled: !!token,
     queryFn: async () => {
       if (!token) {
-        throw new Error('인증 토큰이 필요합니다.');
+        throw new Error(MESSAGES.common.authTokenRequired);
       }
 
       const response = await communityApi.getMySharedCategories(token);
 
       if (!response.success || !response.data) {
-        throw new Error(response.error?.message ?? '내 공유 카테고리를 불러올 수 없습니다.');
+        throw new Error(response.error?.message ?? MESSAGES.sharedCategory.myPostsLoadFailed);
       }
 
       return response.data.sharedCategories.map((category) => toMySharedCategoryEntity(category));

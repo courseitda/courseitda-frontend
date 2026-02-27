@@ -6,6 +6,7 @@ import { MapPin, Trash2, Check, MoreHorizontal, ExternalLink } from 'lucide-reac
 import { toast } from 'sonner';
 // API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
 import { placeApi, categoryApi } from '@/services/api';
+import { MESSAGES } from '@/shared/constants/messages';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface PlaceItemProps {
@@ -43,10 +44,10 @@ export const PlaceItem = ({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
-      toast.success('장소가 삭제되었습니다.');
+      toast.success(MESSAGES.place.removeSuccess);
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : '장소 삭제에 실패했습니다.';
+      const message = error instanceof Error ? error.message : MESSAGES.place.removeFailed;
       toast.error(message);
     },
   });
@@ -66,7 +67,7 @@ export const PlaceItem = ({
       queryClient.invalidateQueries({ queryKey });
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : '대표 장소 설정에 실패했습니다.';
+      const message = error instanceof Error ? error.message : MESSAGES.place.representativeFailed;
       toast.error(message);
     },
   });
@@ -80,7 +81,7 @@ export const PlaceItem = ({
   // UserRequest: 네이버 지도 바로가기 메뉴 추가 - placeUrl로 새 창을 열어 외부 지도를 확인
   const handleOpenInMap = () => {
     if (!place.placeUrl) {
-      toast.error('장소 링크가 없습니다.');
+      toast.error(MESSAGES.place.linkMissing);
       return;
     }
     window.open(place.placeUrl, '_blank', 'noopener,noreferrer');

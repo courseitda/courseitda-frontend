@@ -17,6 +17,7 @@ import { useLikedSharedCategories } from '@/shared/hooks/use-community';
 import { categoryApi, placeApi } from '@/services/api';
 import { getCategoryColors, type PaletteMode } from '@/shared/constants/colors';
 import { useSettingsStore } from '@/shared/stores/settings-store';
+import { MESSAGES } from '@/shared/constants/messages';
 import type { Category, SavedCategory, SharedSavedCategory } from '@/entities/types';
 
 type ImportCategoryDialogProps = {
@@ -94,7 +95,7 @@ export const ImportCategoryDialog = ({
   const importMutation = useMutation({
     mutationFn: async (target: ImportTarget) => {
       if (!token) {
-        throw new Error('인증 토큰이 필요합니다.');
+        throw new Error(MESSAGES.common.authTokenRequired);
       }
 
       const { category, error } = await categoryApi.add({
@@ -103,7 +104,7 @@ export const ImportCategoryDialog = ({
         color: nextColor,
       });
       if (!category || error) {
-        throw new Error(error || '카테고리 불러오기에 실패했습니다.');
+        throw new Error(error || MESSAGES.workspaceCategory.importFailed);
       }
 
       if (target.places.length > 0) {
@@ -121,7 +122,7 @@ export const ImportCategoryDialog = ({
         );
         const failed = results.find((result) => !result.success);
         if (failed) {
-          throw new Error(failed.error?.message ?? '장소 불러오기에 실패했습니다.');
+          throw new Error(failed.error?.message ?? MESSAGES.workspaceCategory.placeImportFailed);
         }
       }
 
@@ -129,11 +130,11 @@ export const ImportCategoryDialog = ({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
-      toast.success('카테고리를 불러왔습니다.');
+      toast.success(MESSAGES.workspaceCategory.importSuccess);
       onOpenChange(false);
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : '카테고리 불러오기에 실패했습니다.';
+      const message = error instanceof Error ? error.message : MESSAGES.workspaceCategory.importFailed;
       toast.error(message);
     },
   });
@@ -157,7 +158,7 @@ export const ImportCategoryDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>카테고리 불러오기</DialogTitle>
+          <DialogTitle>{MESSAGES.workspaceCategory.importDialogTitle}</DialogTitle>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'saved' | 'liked')}>
@@ -175,11 +176,11 @@ export const ImportCategoryDialog = ({
           <TabsContent value="saved" className="mt-4">
             {isBusy ? (
               <div className={`${listViewportClassName} flex items-center justify-center text-sm text-muted-foreground`}>
-                불러오는 중...
+                {MESSAGES.common.loading}
               </div>
             ) : savedCategories.length === 0 ? (
               <div className={`${listViewportClassName} flex items-center justify-center text-sm text-muted-foreground`}>
-                내 보관함에 카테고리가 없습니다.
+                {MESSAGES.savedCategory.noSavedCategories}
               </div>
             ) : (
               <div className={`${listViewportClassName} overflow-y-auto overflow-x-visible space-y-2 px-1 py-1`}>
@@ -242,11 +243,11 @@ export const ImportCategoryDialog = ({
           <TabsContent value="liked" className="mt-4">
             {isBusy ? (
               <div className={`${listViewportClassName} flex items-center justify-center text-sm text-muted-foreground`}>
-                불러오는 중...
+                {MESSAGES.common.loading}
               </div>
             ) : likedCategories.length === 0 ? (
               <div className={`${listViewportClassName} flex items-center justify-center text-sm text-muted-foreground`}>
-                찜한 카테고리가 없습니다.
+                {MESSAGES.likedCategory.noLikedCategories}
               </div>
             ) : (
               <div className={`${listViewportClassName} overflow-y-auto overflow-x-visible space-y-2 px-1 py-1`}>

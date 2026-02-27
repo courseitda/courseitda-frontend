@@ -5,6 +5,7 @@ import { useAuthStore } from '@/shared/stores/auth-store';
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import { COMMUNITY_QUERY_KEYS, useSharedCategorySearch } from '@/shared/hooks/use-community';
+import { MESSAGES } from '@/shared/constants/messages';
 import type { SharedSavedCategory } from '@/entities/types';
 import { useSharedCategoryLike } from '@/shared/hooks/use-shared-category-like';
 import SharedCategorySearchBar from '@/components/community/shared-category-search-bar';
@@ -40,7 +41,7 @@ const SearchResult = () => {
   useEffect(() => {
     // UserRequest: 검색 결과 조회 실패 시 사용자에게 즉시 알림
     if (sharedCategoriesError) {
-      toast.error(sharedCategoriesError.message);
+      toast.error(sharedCategoriesError.message || MESSAGES.sharedCategory.searchLoadFailed);
     }
   }, [sharedCategoriesError]);
 

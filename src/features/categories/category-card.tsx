@@ -19,6 +19,7 @@ import { categoryApi } from '@/services/api';
 import { PlaceSearchDialog } from '@/features/places/place-search-dialog';
 import { PlaceItem } from '@/features/places/place-item';
 import { EditCategoryDialog } from './edit-category-dialog';
+import { MESSAGES } from '@/shared/constants/messages';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { CategoryPlaceView } from '@/services/api/category.service';
@@ -50,10 +51,10 @@ export const CategoryCard = ({ category, places, workspaceIdentifier, index, onP
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
-      toast.success('카테고리가 삭제되었습니다.');
+      toast.success(MESSAGES.savedCategory.deleteSuccess);
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : '카테고리 삭제에 실패했습니다.';
+      const message = error instanceof Error ? error.message : MESSAGES.savedCategory.deleteFailed;
       toast.error(message);
     },
     onSettled: () => {
@@ -169,11 +170,11 @@ export const CategoryCard = ({ category, places, workspaceIdentifier, index, onP
       <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>카테고리 삭제</AlertDialogTitle>
+            <AlertDialogTitle>{MESSAGES.savedCategory.deleteConfirmTitle}</AlertDialogTitle>
             <AlertDialogDescription>
-              "<strong>{category.name}</strong>" 카테고리를 정말 삭제하시겠습니까?
+              {MESSAGES.savedCategory.deleteConfirmDescription(category.name)}
               <br />
-              <span className="text-destructive">이 작업은 되돌릴 수 없으며, 카테고리에 포함된 모든 장소 연결이 함께 삭제됩니다.</span>
+              <span className="text-destructive">{MESSAGES.savedCategory.deleteConfirmWarning}</span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

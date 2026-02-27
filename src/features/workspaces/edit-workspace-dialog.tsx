@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 // API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
 import { workspaceApi } from '@/services/api';
+import { MESSAGES } from '@/shared/constants/messages';
 import type { Workspace } from '@/entities/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -33,7 +34,7 @@ export const EditWorkspaceDialog = ({ open, onOpenChange, workspace }: EditWorks
       const response = await workspaceApi.update(workspace.identifier, { title: nextTitle });
 
       if (!response.success || !response.data) {
-        throw new Error(response.error?.message || '워크스페이스 수정에 실패했습니다.');
+        throw new Error(response.error?.message || MESSAGES.workspace.updateFailed);
       }
 
       return response.data;
@@ -41,11 +42,11 @@ export const EditWorkspaceDialog = ({ open, onOpenChange, workspace }: EditWorks
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workspace', workspace.identifier] });
       queryClient.invalidateQueries({ queryKey: ['workspaces', 'me'] });
-      toast.success('워크스페이스가 수정되었습니다!');
+      toast.success(MESSAGES.workspace.updateSuccess);
       onOpenChange(false);
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : '워크스페이스 수정에 실패했습니다.';
+      const message = error instanceof Error ? error.message : MESSAGES.workspace.updateFailed;
       toast.error(message);
     },
   });
@@ -100,7 +101,7 @@ export const EditWorkspaceDialog = ({ open, onOpenChange, workspace }: EditWorks
     if (updateWorkspaceMutation.isPending) return;
 
     if (!title.trim()) {
-      toast.error('워크스페이스 제목을 입력해주세요.');
+      toast.error(MESSAGES.workspace.titleRequired);
       return;
     }
 
@@ -111,7 +112,7 @@ export const EditWorkspaceDialog = ({ open, onOpenChange, workspace }: EditWorks
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent ref={dialogRef} className="transition-transform duration-200">
         <DialogHeader>
-          <DialogTitle>워크스페이스 이름 바꾸기</DialogTitle>
+          <DialogTitle>{MESSAGES.workspace.editDialogTitle}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -139,4 +140,3 @@ export const EditWorkspaceDialog = ({ open, onOpenChange, workspace }: EditWorks
     </Dialog>
   );
 };
-

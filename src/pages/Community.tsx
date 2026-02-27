@@ -7,6 +7,7 @@ import { useAuthStore } from '@/shared/stores/auth-store';
 import { Heart, Folder, User as UserIcon, Sparkles } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { COMMUNITY_QUERY_KEYS, useRecommendedSharedCategories } from '@/shared/hooks/use-community';
+import { MESSAGES } from '@/shared/constants/messages';
 import type { SharedSavedCategory } from '@/entities/types';
 import { useSharedCategoryLike } from '@/shared/hooks/use-shared-category-like';
 import PageHeader from '@/components/layout/page-header';
@@ -108,7 +109,7 @@ const Community = () => {
   useEffect(() => {
     // UserRequest: 추천 목록 조회 실패 시 사용자에게 즉시 알림
     if (sharedCategoriesError) {
-      toast.error(sharedCategoriesError.message);
+      toast.error(sharedCategoriesError.message || MESSAGES.sharedCategory.recommendedLoadFailed);
     }
   }, [sharedCategoriesError]);
 

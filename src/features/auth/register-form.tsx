@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 // API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
 import { authApi } from '@/services/api';
 import { useAuthStore } from '@/shared/stores/auth-store';
+import { MESSAGES } from '@/shared/constants/messages';
 import { Check, X, AlertCircle, Eye, EyeOff, User, Mail, Lock } from 'lucide-react';
 
 // 회원가입 폼 컴포넌트 - 닉네임, 이메일, 비밀번호 입력 및 검증 후 회원 등록
@@ -88,7 +89,7 @@ export const RegisterForm = () => {
     
     // API 호출 실패 시 에러 처리
     if (!response.success || !response.data) {
-      setNicknameError(response.error?.message || '닉네임 확인 중 오류가 발생했습니다');
+      setNicknameError(response.error?.message || MESSAGES.auth.nicknameCheckFailed);
       setNicknameChecked(false);
       return;
     }
@@ -136,7 +137,7 @@ export const RegisterForm = () => {
     
     // API 호출 실패 시 에러 처리
     if (!response.success || !response.data) {
-      setEmailError(response.error?.message || '이메일 확인 중 오류가 발생했습니다');
+      setEmailError(response.error?.message || MESSAGES.auth.emailCheckFailed);
       setEmailChecked(false);
       return;
     }
@@ -190,20 +191,20 @@ export const RegisterForm = () => {
 
     // UserRequest: 회원가입 실패 시 에러 토스트 메시지 표시하여 사용자에게 실패 원인 안내
     if (!registerResponse.success || !registerResponse.data) {
-      toast.error(registerResponse.error?.message || '회원가입에 실패했습니다.');
+      toast.error(registerResponse.error?.message || MESSAGES.auth.registerFailed);
       setLoading(false);
       return;
     }
 
     // UserRequest: 회원가입 성공 시 성공 토스트 메시지 표시하여 사용자에게 피드백 제공
-    toast.success('회원가입이 완료되었습니다!');
+    toast.success(MESSAGES.auth.registerSuccess);
 
     // 회원가입 성공 후 자동 로그인 처리하여 사용자 경험 개선 (API 서비스 레이어 사용)
     const loginResponse = await authApi.login({ email, password });
     
     // UserRequest: 자동 로그인 실패 시 에러 토스트 메시지 표시 후 로그인 페이지로 이동하여 수동 로그인 유도
     if (!loginResponse.success || !loginResponse.data) {
-      toast.error('자동 로그인에 실패했습니다. 다시 로그인해주세요.');
+      toast.error(MESSAGES.auth.autoLoginFailed);
       setLoading(false);
       navigate('/auth?tab=login');
       return;

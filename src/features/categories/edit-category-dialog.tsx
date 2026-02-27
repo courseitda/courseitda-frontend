@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 // API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
 import { categoryApi } from '@/services/api';
 import { getCategoryColors, PALETTE_NAMES, type PaletteMode } from '@/shared/constants/colors';
+import { MESSAGES } from '@/shared/constants/messages';
 import { useSettingsStore } from '@/shared/stores/settings-store';
 import { Check, Palette } from 'lucide-react';
 import type { Category } from '@/entities/types';
@@ -49,11 +50,11 @@ export const EditCategoryDialog = ({ open, onOpenChange, category, workspaceIden
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
-      toast.success('카테고리가 수정되었습니다!');
+      toast.success(MESSAGES.savedCategory.updateSuccess);
       onOpenChange(false);
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : '카테고리 수정에 실패했습니다.';
+      const message = error instanceof Error ? error.message : MESSAGES.savedCategory.updateFailed;
       toast.error(message);
     },
   });
@@ -125,7 +126,7 @@ export const EditCategoryDialog = ({ open, onOpenChange, category, workspaceIden
     
     // 빈 문자열이나 공백만 있는 경우 수정 방지
     if (!name.trim()) {
-      toast.error('카테고리 이름을 입력해주세요.');
+      toast.error(MESSAGES.savedCategory.nameRequired);
       return;
     }
 
@@ -146,7 +147,7 @@ export const EditCategoryDialog = ({ open, onOpenChange, category, workspaceIden
         }}
       >
         <DialogHeader>
-          <DialogTitle>카테고리 수정</DialogTitle>
+          <DialogTitle>{MESSAGES.savedCategory.editDialogTitle}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -206,4 +207,3 @@ export const EditCategoryDialog = ({ open, onOpenChange, category, workspaceIden
     </Dialog>
   );
 };
-

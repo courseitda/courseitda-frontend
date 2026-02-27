@@ -1,5 +1,6 @@
 import { Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { MESSAGES } from '@/shared/constants/messages';
 import {
   Dialog,
   DialogContent,
@@ -23,8 +24,8 @@ const LoginRequiredDialog = ({ open, onOpenChange, onStart }: LoginRequiredDialo
           <Lock className="w-8 h-8 text-primary" />
         </div>
         <DialogHeader className="items-center text-center">
-          <DialogTitle className="text-lg font-semibold">로그인이 필요해요</DialogTitle>
-          <DialogDescription>해당 기능을 이용하시려면 먼저 로그인해주세요.</DialogDescription>
+          <DialogTitle className="text-lg font-semibold">{MESSAGES.common.loginRequiredDialogTitle}</DialogTitle>
+          <DialogDescription>{MESSAGES.common.loginRequiredDialogDescription}</DialogDescription>
         </DialogHeader>
       </div>
       <Button type="button" className="w-full mt-4" onClick={onStart}>

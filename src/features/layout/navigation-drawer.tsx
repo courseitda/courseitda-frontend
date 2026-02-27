@@ -32,6 +32,7 @@ import { EditWorkspaceDialog } from '@/features/workspaces/edit-workspace-dialog
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import { workspaceApi } from '@/services/api';
+import { MESSAGES } from '@/shared/constants/messages';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface NavigationDrawerProps {
@@ -66,10 +67,10 @@ export const NavigationDrawer = ({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
-      toast.success('워크스페이스가 삭제되었습니다.');
+      toast.success(MESSAGES.workspace.deleteSuccess);
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : '워크스페이스 삭제에 실패했습니다.';
+      const message = error instanceof Error ? error.message : MESSAGES.workspace.deleteFailed;
       toast.error(message);
     },
     onSettled: () => {
@@ -210,13 +211,13 @@ export const NavigationDrawer = ({
       <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>워크스페이스 삭제</AlertDialogTitle>
+            <AlertDialogTitle>{MESSAGES.workspace.deleteConfirmTitle}</AlertDialogTitle>
             <AlertDialogDescription>
               {selectedForDelete && (
                 <>
-                  "<strong>{selectedForDelete.title}</strong>" 워크스페이스를 정말 삭제하시겠습니까?
+                  {MESSAGES.workspace.deleteConfirmDescription(selectedForDelete.title)}
                   <br />
-                  <span className="text-destructive">이 작업은 되돌릴 수 없으며, 모든 카테고리와 장소 정보가 함께 삭제됩니다.</span>
+                  <span className="text-destructive">{MESSAGES.workspace.deleteConfirmWarning}</span>
                 </>
               )}
             </AlertDialogDescription>

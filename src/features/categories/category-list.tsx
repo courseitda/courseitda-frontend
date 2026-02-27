@@ -8,6 +8,7 @@ import { AddCategoryDialog } from './add-category-dialog';
 import { ImportCategoryDialog } from './import-category-dialog';
 // API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
 import { categoryApi } from '@/services/api';
+import { MESSAGES } from '@/shared/constants/messages';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { WorkspaceCategory } from '@/services/api/category.service';
@@ -96,7 +97,7 @@ export const CategoryList = ({
 
     reorderMutation.mutate(payload, {
       onError: (error) => {
-        const message = error instanceof Error ? error.message : '카테고리 순서 변경에 실패했습니다.';
+        const message = error instanceof Error ? error.message : MESSAGES.workspaceCategory.reorderFailed;
         toast.error(message);
         if (previous) {
           queryClient.setQueryData<WorkspaceCategory[]>(queryKey, previous);

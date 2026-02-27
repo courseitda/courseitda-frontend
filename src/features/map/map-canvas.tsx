@@ -11,6 +11,7 @@ import {useQueryClient} from '@tanstack/react-query';
 import {PlaceInfoWindow} from './place-info-window';
 import {Button} from '@/components/ui/button';
 import {LocateFixed, Loader2} from 'lucide-react';
+import {MESSAGES} from '@/shared/constants/messages';
 
 // 지도 캔버스 컴포넌트 - Naver Maps SDK를 사용하여 장소 마커와 경로 표시
 // 사용 위치: pages/WorkspaceDetail
@@ -287,7 +288,7 @@ export const MapCanvas = ({
                         : await categoryApi.setRepresentativePlace(category.id, categoryPlaceId);
 
                     if (error) {
-                        toast.error(error);
+                        toast.error(error || MESSAGES.common.defaultError);
                     } else {
                         // 정보창 닫기 - 대표 장소 변경 시 UI 즉시 업데이트
                         if (currentInfoWindowRef.current) {
@@ -443,12 +444,12 @@ export const MapCanvas = ({
     // UserRequest: 내 위치 버튼 클릭 시 현재 위치를 가져와 지도 중심으로 이동
     const handleLocateMe = () => {
         if (!navigator.geolocation) {
-            toast.error('이 브라우저에서는 위치 정보를 지원하지 않습니다.');
+            toast.error(MESSAGES.map.browserLocationUnsupported);
             return;
         }
 
         if (!ready || !mapReady || !mapInstance.current || !window.naver || !window.naver.maps) {
-            toast.error('지도가 아직 준비되지 않았습니다.');
+            toast.error(MESSAGES.map.mapNotReady);
             return;
         }
 
@@ -503,9 +504,9 @@ export const MapCanvas = ({
             (geoError) => {
                 setIsLocating(false);
                 if (geoError.code === geoError.PERMISSION_DENIED) {
-                    toast.error('위치 권한이 거부되었습니다. 브라우저 설정을 확인해주세요.');
+                    toast.error(MESSAGES.map.locationPermissionDenied);
                 } else {
-                    toast.error('현재 위치를 가져오지 못했습니다. 다시 시도해주세요.');
+                    toast.error(MESSAGES.map.locationFetchFailed);
                 }
             },
             {

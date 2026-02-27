@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 // API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
 import { workspaceApi } from '@/services/api';
 import { useAuthStore } from '@/shared/stores/auth-store';
+import { MESSAGES } from '@/shared/constants/messages';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface CreateWorkspaceDialogProps {
@@ -32,25 +33,25 @@ export const CreateWorkspaceDialog = ({ open, onOpenChange }: CreateWorkspaceDia
   const createWorkspaceMutation = useMutation({
     mutationFn: async (workspaceTitle: string) => {
       if (!token) {
-        throw new Error('로그인이 필요합니다. 다시 로그인해주세요.');
+        throw new Error(MESSAGES.common.loginRequired);
       }
 
       const response = await workspaceApi.create(token, { title: workspaceTitle });
 
       if (!response.success || !response.data) {
-        throw new Error(response.error?.message || '워크스페이스 생성에 실패했습니다.');
+        throw new Error(response.error?.message || MESSAGES.workspace.createFailed);
       }
 
       return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workspaces', 'me'] });
-      toast.success('워크스페이스가 생성되었습니다!');
+      toast.success(MESSAGES.workspace.createSuccess);
       setTitle('');
       onOpenChange(false);
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : '워크스페이스 생성에 실패했습니다.';
+      const message = error instanceof Error ? error.message : MESSAGES.workspace.createFailed;
       toast.error(message);
     },
   });
@@ -97,12 +98,12 @@ export const CreateWorkspaceDialog = ({ open, onOpenChange }: CreateWorkspaceDia
     if (createWorkspaceMutation.isPending) return;
 
     if (!title.trim()) {
-      toast.error('워크스페이스 제목을 입력해주세요.');
+      toast.error(MESSAGES.workspace.titleRequired);
       return;
     }
 
     if (!token) {
-      toast.error('로그인이 필요합니다. 다시 로그인해주세요.');
+      toast.error(MESSAGES.common.loginRequired);
       return;
     }
 
@@ -113,7 +114,7 @@ export const CreateWorkspaceDialog = ({ open, onOpenChange }: CreateWorkspaceDia
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent ref={dialogRef} className="transition-transform duration-200">
         <DialogHeader>
-          <DialogTitle>새 워크스페이스</DialogTitle>
+          <DialogTitle>{MESSAGES.workspace.createDialogTitle}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
