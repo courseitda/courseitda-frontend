@@ -2,8 +2,24 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { Folder, Trash2, Upload } from 'lucide-react';
+import { Folder, MoreHorizontal, Trash2, Upload } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { communityApi } from '@/services/api';
@@ -25,6 +41,8 @@ const MyPosts = () => {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<SharedSavedCategory | null>(null);
+  const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
+  const [selectedForDelete, setSelectedForDelete] = useState<SharedSavedCategory | null>(null);
 
   const {
     data: mySharedCategories = [],
@@ -82,12 +100,25 @@ const MyPosts = () => {
       toast.success('공유 카테고리를 삭제했어요.');
       queryClient.invalidateQueries({ queryKey: COMMUNITY_QUERY_KEYS.myShared });
       queryClient.invalidateQueries({ queryKey: COMMUNITY_QUERY_KEYS.recommended });
+      setDeleteAlertOpen(false);
+      setSelectedForDelete(null);
     },
     onError: (error) => {
       const message = error instanceof Error ? error.message : '공유 카테고리 삭제에 실패했습니다.';
       toast.error(message);
     },
   });
+
+  const handleRequestDelete = (category: SharedSavedCategory) => {
+    // UserRequest: 삭제는 즉시 실행하지 않고 확인 다이얼로그를 통해 진행
+    setSelectedForDelete(category);
+    setDeleteAlertOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!selectedForDelete || deleteMutation.isPending) return;
+    deleteMutation.mutate(selectedForDelete.id);
+  };
 
   if (mySharedCategoriesLoading) {
     return (
@@ -171,19 +202,36 @@ const MyPosts = () => {
                                 업로드 {new Date(category.uploadedAt).toLocaleDateString('ko-KR')}
                               </CardDescription>
                             </div>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="text-destructive hover:text-destructive"
-                              disabled={deleteMutation.isPending}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                deleteMutation.mutate(category.id);
-                              }}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                              삭제
-                            </Button>
+                            {/* UserRequest: 삭제 액션은 카드에 직접 노출하지 않고 더보기 메뉴에서 실행 */}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-8 w-8 rounded-full"
+                                  onClick={(event) => event.stopPropagation()}
+                                  aria-label="게시물 더보기"
+                                >
+                                  <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent
+                                align="end"
+                                onClick={(event) => event.stopPropagation()}
+                              >
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive gap-2"
+                                  disabled={deleteMutation.isPending}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    handleRequestDelete(category);
+                                  }}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                  삭제
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </CardHeader>
                         </Card>
                       ))}
@@ -203,6 +251,32 @@ const MyPosts = () => {
         onOpenChange={setDetailOpen}
         category={selectedCategory}
       />
+      <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>게시물을 삭제할까요?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {selectedForDelete && (
+                <>
+                  "<strong>{selectedForDelete.title}</strong>" 게시물을 삭제합니다.
+                  <br />
+                  <span className="text-destructive">삭제 후에는 복구할 수 없습니다.</span>
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>취소</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive hover:bg-destructive/90"
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? '삭제 중...' : '삭제'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
