@@ -211,9 +211,10 @@ const MyWorkspace = () => {
         {/* UserRequest: 모바일 뷰 좌우 여백을 0.5배로 축소하여 다른 페이지와 통일성 유지 (px-8 → px-4) */}
         <main className="md:hidden container mx-auto px-4 py-6">
           {/* UserRequest: 워크스페이스 목록 페이지에서 Tabs 제거 */}
-          <div className="grid grid-cols-1 gap-2.5">
+          <div className="space-y-2.5">
+            {/* UserRequest: 내 워크스페이스 페이지의 생성 진입 버튼을 이전 카드형 새 워크스페이스 UI로 되돌린다. */}
             <Card
-                className="border-dashed hover-lift cursor-pointer"
+                className="hover-lift cursor-pointer border-border bg-card hover:bg-accent/40 transition-colors"
                 onClick={() => setCreateOpen(true)}
             >
               <CardHeader className="flex flex-col items-center justify-center">
@@ -221,11 +222,19 @@ const MyWorkspace = () => {
                   <Plus className="w-5 h-5" />
                   <CardTitle className="text-base md:text-lg text-primary">새 워크스페이스</CardTitle>
                 </div>
-                {sortedWorkspaces && sortedWorkspaces.length === 0 && (
-                    <p className="text-xs text-muted-foreground mt-1">워크스페이스가 없습니다. 지금 추가해보세요!</p>
-                )}
               </CardHeader>
             </Card>
+            {sortedWorkspaces.length === 0 && (
+              <div className="border-2 border-dashed border-border rounded-xl p-8 text-center h-[50vh] flex flex-col items-center justify-center">
+                {/* UserRequest: 내 워크스페이스가 비어 있을 때도 영역이 보이도록 빈 상태 박스를 표시한다. */}
+                <LayoutGrid className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />
+                <p className="text-sm text-muted-foreground">
+                  워크스페이스가 없습니다.
+                  <br />
+                  지금 추가해보세요!
+                </p>
+              </div>
+            )}
 
             {/* UserRequest: 워크스페이스 간격을 0.3배로 축소하여 공간 효율성 향상 (gap-8 → gap-2.5) */}
             {sortedWorkspaces?.map((workspace) => (
@@ -245,8 +254,9 @@ const MyWorkspace = () => {
             <div className="px-4 py-4 overflow-y-auto min-h-[calc(100vh-80px)]">
               {/* UserRequest: 워크스페이스 목록 페이지에서 Tabs 제거 */}
               <div className="space-y-2">
+                {/* UserRequest: 내 워크스페이스 페이지의 생성 진입 버튼을 이전 카드형 새 워크스페이스 UI로 되돌린다. */}
                 <Card
-                    className="border-dashed hover-lift cursor-pointer"
+                    className="hover-lift cursor-pointer border-border bg-card hover:bg-accent/40 transition-colors"
                     onClick={() => setCreateOpen(true)}
                 >
                   <CardHeader className="flex flex-col items-center justify-center">
@@ -254,11 +264,19 @@ const MyWorkspace = () => {
                       <Plus className="w-5 h-5" />
                       <CardTitle className="text-base md:text-lg text-primary">새 워크스페이스</CardTitle>
                     </div>
-                    {sortedWorkspaces && sortedWorkspaces.length === 0 && (
-                        <p className="text-xs text-muted-foreground mt-1">워크스페이스가 없습니다. 지금 추가해보세요!</p>
-                    )}
                   </CardHeader>
                 </Card>
+                {sortedWorkspaces.length === 0 && (
+                  <div className="border-2 border-dashed border-border rounded-xl p-10 text-center h-[50vh] flex flex-col items-center justify-center">
+                    {/* UserRequest: 내 워크스페이스가 비어 있을 때도 영역이 보이도록 빈 상태 박스를 표시한다. */}
+                    <LayoutGrid className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />
+                    <p className="text-sm text-muted-foreground">
+                      워크스페이스가 없습니다.
+                      <br />
+                      지금 추가해보세요!
+                    </p>
+                  </div>
+                )}
 
                 {/* UserRequest: 데스크톱 워크스페이스 간격을 space-y-2 (8px)로 설정하여 적절한 여백 제공 */}
                 {sortedWorkspaces?.map((workspace) => (

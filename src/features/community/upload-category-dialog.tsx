@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -7,7 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Folder, MapPin, Upload } from 'lucide-react';
+import { ArrowRight, ChevronDown, Folder, MapPin, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/shared/stores/auth-store';
@@ -24,6 +25,7 @@ type UploadCategoryDialogProps = {
 
 // UserRequest: 내 게시물 업로드 팝업은 보관 카테고리만 노출하고 찜 카테고리는 제외
 export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialogProps) => {
+  const navigate = useNavigate();
   const token = useAuthStore((state) => state.token);
   const queryClient = useQueryClient();
   const [expandedCategoryId, setExpandedCategoryId] = useState<string | null>(null);
@@ -73,6 +75,12 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
     shareMutation.mutate(category.id);
   };
 
+  const handleMoveToMyCategory = () => {
+    // UserRequest: 업로드 가능한 카테고리가 없을 때 내 카테고리 페이지로 바로 이동할 수 있게 연결한다.
+    onOpenChange(false);
+    navigate('/my-category');
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl h-[65vh] flex flex-col">
@@ -84,8 +92,23 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
           {isLoading ? (
             <div className="text-sm text-muted-foreground">{MESSAGES.common.loading}</div>
           ) : savedCategories.length === 0 ? (
-            <div className="text-sm text-muted-foreground">
-              {MESSAGES.sharedCategory.uploadEmpty}
+            <div className="flex h-[90%] min-h-[90%] items-center justify-center px-1 py-1">
+              {/* UserRequest: 업로드 가능한 보관 카테고리가 없을 때도 다이얼로그 안에 빈 상태 영역과 안내 문구를 표시한다. */}
+              <div className="flex h-full w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-border p-8 text-center">
+                <Folder className="mb-3 h-10 w-10 text-muted-foreground/60" />
+                {/* UserRequest: 업로드 불가 안내 문구를 3줄 구조와 내 카테고리 바로가기 액션으로 교체한다. */}
+                <p className="text-sm text-muted-foreground">업로드 할 카테고리가 없습니다.</p>
+                <p className="mt-1 text-sm text-muted-foreground">내 카테고리에서 먼저 만들어보세요.</p>
+                <Button
+                  type="button"
+                  variant="link"
+                  className="mt-2 inline-flex h-auto items-center gap-1 p-0 text-sm font-medium text-primary underline-offset-4 hover:underline"
+                  onClick={handleMoveToMyCategory}
+                >
+                  <ArrowRight className="h-4 w-4" />
+                  내 카테고리 만들러 가기
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="space-y-2 px-1 py-1">

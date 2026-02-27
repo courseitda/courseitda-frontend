@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,7 +26,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { Plus, Folder, Heart, Search, MapPin, X, Pencil, Trash2, MoreHorizontal } from 'lucide-react';
+import { ArrowRight, Plus, Folder, Heart, Search, MapPin, X, Pencil, Trash2, MoreHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Spinner } from '@/components/ui/spinner';
@@ -389,6 +389,25 @@ const MyCategory = () => {
     );
   }
 
+  // UserRequest: 빈 탭에서도 경계가 보이도록 공통 빈 상태 박스를 재사용한다.
+  const renderEmptyState = (
+    icon: ReactNode,
+    message: string,
+    className = 'h-[50vh]',
+    action?: ReactNode,
+  ) => (
+    <div className={`border-2 border-dashed border-border rounded-xl p-8 md:p-10 text-center flex flex-col items-center justify-center ${className}`}>
+      {icon}
+      <p className="whitespace-pre-line text-sm text-muted-foreground">{message}</p>
+      {action}
+    </div>
+  );
+
+  const handleMoveToCommunity = () => {
+    // UserRequest: 찜 카테고리 빈 상태에서 커뮤니티로 바로 이동할 수 있게 연결한다.
+    navigate('/community');
+  };
+
   return (
       <div className="min-h-screen bg-gradient-card">
         {/* UserRequest: 뒤로가기 버튼은 직전 페이지로 이동 */}
@@ -414,7 +433,7 @@ const MyCategory = () => {
             <TabsContent value="categories" className="mt-0 space-y-3">
               {/* UserRequest: 카테고리 탭에서도 생성 버튼과 목록을 워크스페이스와 동일한 형태로 표시 */}
               <Card
-                  className="border-dashed hover-lift cursor-pointer"
+                  className="hover-lift cursor-pointer border-border bg-card hover:bg-accent/40 transition-colors"
                   onClick={handleOpenCreateDialog}
               >
                 <CardHeader className="flex flex-col items-center justify-center">
@@ -425,7 +444,12 @@ const MyCategory = () => {
                 </CardHeader>
               </Card>
 
-              {savedCategories.map((category) => renderSavedCategoryCard(category))}
+              {savedCategories.length === 0
+                ? renderEmptyState(
+                  <Folder className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />,
+                  '카테고리가 없습니다.\n지금 추가해보세요!',
+                )
+                : savedCategories.map((category) => renderSavedCategoryCard(category))}
             </TabsContent>
 
             <TabsContent value="liked" className="mt-0">
@@ -434,7 +458,20 @@ const MyCategory = () => {
                   <Spinner className="w-6 h-6" />
                 </div>
               ) : likedCategories.length === 0 ? (
-                <div className="text-sm text-muted-foreground">찜한 카테고리가 없습니다.</div>
+                renderEmptyState(
+                  <Heart className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />,
+                  '아직 찜한 카테고리가 없습니다.\n커뮤니티에서 마음에 드는 카테고리를 찾아보세요.',
+                  'h-[calc(50vh+5rem)]',
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="mt-2 inline-flex h-auto items-center gap-1 p-0 text-sm font-medium text-primary underline-offset-4 hover:underline"
+                    onClick={handleMoveToCommunity}
+                  >
+                    <ArrowRight className="h-4 w-4" />
+                    찜하러 가기
+                  </Button>,
+                )
               ) : (
                 <LikedCategoryList
                   categories={likedCategories}
@@ -473,7 +510,7 @@ const MyCategory = () => {
                 <TabsContent value="categories" className="mt-0 space-y-2">
                   {/* UserRequest: 카테고리 탭에서도 생성 버튼과 목록을 워크스페이스와 동일한 형태로 표시 */}
                   <Card
-                      className="border-dashed hover-lift cursor-pointer"
+                      className="hover-lift cursor-pointer border-border bg-card hover:bg-accent/40 transition-colors"
                       onClick={handleOpenCreateDialog}
                   >
                     <CardHeader className="flex flex-col items-center justify-center">
@@ -484,7 +521,12 @@ const MyCategory = () => {
                     </CardHeader>
                   </Card>
 
-                  {savedCategories.map((category) => renderSavedCategoryCard(category))}
+                  {savedCategories.length === 0
+                    ? renderEmptyState(
+                      <Folder className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />,
+                      '카테고리가 없습니다.\n지금 추가해보세요!',
+                    )
+                    : savedCategories.map((category) => renderSavedCategoryCard(category))}
                 </TabsContent>
 
                 <TabsContent value="liked" className="mt-0">
@@ -493,7 +535,20 @@ const MyCategory = () => {
                       <Spinner className="w-6 h-6" />
                     </div>
                   ) : likedCategories.length === 0 ? (
-                    <div className="text-sm text-muted-foreground">찜한 카테고리가 없습니다.</div>
+                    renderEmptyState(
+                      <Heart className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />,
+                      '아직 찜한 카테고리가 없습니다.\n커뮤니티에서 마음에 드는 카테고리를 찾아보세요.',
+                      'h-[calc(50vh+5rem)]',
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="mt-2 inline-flex h-auto items-center gap-1 p-0 text-sm font-medium text-primary underline-offset-4 hover:underline"
+                        onClick={handleMoveToCommunity}
+                      >
+                        <ArrowRight className="h-4 w-4" />
+                        찜하러 가기
+                      </Button>,
+                    )
                   ) : (
                     <LikedCategoryList
                       categories={likedCategories}
