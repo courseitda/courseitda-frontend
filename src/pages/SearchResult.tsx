@@ -95,7 +95,7 @@ const SearchResult = () => {
   return (
     <div className="min-h-screen bg-gradient-card">
       {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
-      <PageHeader showLogo />
+      <PageHeader title="검색 결과" />
 
       <main className="container mx-auto px-4 py-6 md:py-8">
         <div className="max-w-6xl mx-auto space-y-6">

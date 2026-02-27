@@ -248,7 +248,7 @@ const Community = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
-      <PageHeader showLogo />
+      <PageHeader title="커뮤니티" />
 
       <main className="min-h-[calc(100vh-72px)] flex flex-col">
 

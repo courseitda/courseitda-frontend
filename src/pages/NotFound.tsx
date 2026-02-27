@@ -1,5 +1,6 @@
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import PageHeader from '@/components/layout/page-header';
 
 /**
  * 존재하지 않는 경로 접근 시 표시되는 404 에러 페이지
@@ -14,18 +15,22 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-card">
-      <div className="text-center space-y-4">
-        <h1 className="text-6xl font-bold text-primary">404</h1>
-        <p className="text-xl text-muted-foreground">페이지를 찾을 수 없습니다</p>
-        <p className="text-sm text-muted-foreground">요청하신 페이지가 존재하지 않거나 이동되었습니다.</p>
-        <a 
-          href="/" 
-          className="inline-block mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-        >
-          홈으로 돌아가기
-        </a>
-      </div>
+    <div className="min-h-screen bg-gradient-card">
+      {/* UserRequest: 404 페이지도 공통 헤더를 사용해 전 페이지 헤더 구조 통일 */}
+      <PageHeader title="페이지 오류" />
+      <main className="flex items-center justify-center py-16 px-4">
+        <div className="text-center space-y-4">
+          <h1 className="text-6xl font-bold text-primary">404</h1>
+          <p className="text-xl text-muted-foreground">페이지를 찾을 수 없습니다</p>
+          <p className="text-sm text-muted-foreground">요청하신 페이지가 존재하지 않거나 이동되었습니다.</p>
+          <a
+            href="/"
+            className="inline-block mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+          >
+            홈으로 돌아가기
+          </a>
+        </div>
+      </main>
     </div>
   );
 };

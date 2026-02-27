@@ -217,6 +217,9 @@ const WorkspaceDetail = () => {
       {/* UserRequest: 좌우 여백을 0.5배로 축소하여 다른 페이지와 통일성 유지 (px-8 → px-4) */}
       {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
       <PageHeader
+        showBackButton
+        showBrand={false}
+        showBrandText={false}
         className="z-20 shrink-0"
         centerContent={(
           <div className="flex justify-center items-center min-w-0 relative">

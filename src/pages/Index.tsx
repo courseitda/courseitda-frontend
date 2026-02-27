@@ -3,9 +3,8 @@ import {motion, useReducedMotion} from 'framer-motion';
 import {Button} from '@/components/ui/button';
 import {CircleHelp, Compass, FolderTree, Layers, MapPinned, Route, Search, Share2, Sparkles, Workflow} from 'lucide-react';
 import {useAuthStore} from '@/shared/stores/auth-store';
-import UserMenu from '@/components/header/user-menu';
+import PageHeader from '@/components/layout/page-header';
 import HeroAnimation from '@/components/landing/hero-animation';
-import logo from '@/assets/logo-no-background.png';
 
 const problems = [
     {
@@ -85,20 +84,8 @@ const Index = () => {
     // UserRequest: 랜딩 전반에 버튼/카드 중심 마이크로 인터랙션과 reduced-motion 대응을 추가한다.
     return (
         <div className="min-h-screen bg-background">
-            <header className="sticky top-0 z-20 border-b border-border/50 bg-background/85 backdrop-blur">
-                <div className="container mx-auto px-4 py-4 md:py-3">
-                    <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
-                        <div className="w-10"/>
-                        <div className="flex items-center justify-center gap-1.5 md:gap-2">
-                            <img src={logo} alt="코스잇다 로고" className="h-10 w-10 rounded-lg object-contain"/>
-                            <span className="whitespace-nowrap text-lg font-bold text-primary">코스잇다</span>
-                        </div>
-                        <div className="flex items-center justify-end">
-                            <UserMenu/>
-                        </div>
-                    </div>
-                </div>
-            </header>
+            {/* UserRequest: 랜딩 페이지 헤더도 공통 헤더로 통일 (좌측 로고, 우측 햄버거) */}
+            <PageHeader className="z-30" />
 
             <main className="w-full pb-10 md:pb-12">
                 <section

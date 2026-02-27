@@ -50,7 +50,7 @@ const CommunitySearch = () => {
 
     return (
         <div className="min-h-screen bg-background">
-            {/* UserRequest: 검색 전용 페이지는 SearchHeader로 교체하고 상단에 고정 */}
+            {/* UserRequest: 검색 페이지는 공통 헤더 예외로 기존 SearchHeader(뒤로가기+검색창)를 사용 */}
             <SearchHeader
                 value={keyword}
                 onChange={setKeyword}
