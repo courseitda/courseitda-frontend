@@ -148,6 +148,9 @@ export const ImportCategoryDialog = ({
     setExpandedCategoryId((prev) => (prev === categoryId ? null : categoryId));
   };
 
+  // UserRequest: 화면 크기에 따라 비율로 보정되도록 목록 영역 높이를 반응형으로 고정
+  const listViewportClassName = 'h-[55vh] min-h-72 max-h-96';
+
   const isBusy = savedLoading || likedLoading;
 
   return (
@@ -171,13 +174,17 @@ export const ImportCategoryDialog = ({
 
           <TabsContent value="saved" className="mt-4">
             {isBusy ? (
-              <div className="text-sm text-muted-foreground">불러오는 중...</div>
+              <div className={`${listViewportClassName} flex items-center justify-center text-sm text-muted-foreground`}>
+                불러오는 중...
+              </div>
             ) : savedCategories.length === 0 ? (
-              <div className="text-sm text-muted-foreground">내 보관함에 카테고리가 없습니다.</div>
+              <div className={`${listViewportClassName} flex items-center justify-center text-sm text-muted-foreground`}>
+                내 보관함에 카테고리가 없습니다.
+              </div>
             ) : (
-              <div className="max-h-96 overflow-y-auto overflow-x-visible space-y-2 px-1">
+              <div className={`${listViewportClassName} overflow-y-auto overflow-x-visible space-y-2 px-1 py-1`}>
                 {savedCategories.map((category) => (
-                  <Card key={category.id} className="hover-lift">
+                  <Card key={category.id} className="transition-colors hover:bg-muted/20">
                     <CardHeader
                       className="flex flex-row items-center gap-3 py-3 cursor-pointer"
                       onClick={() => handleTogglePlaces(category.id)}
@@ -196,8 +203,8 @@ export const ImportCategoryDialog = ({
                       </div>
                       <Button
                         size="sm"
-                        variant="outline"
-                        className="h-10 px-4 border-primary text-primary hover:bg-primary/5"
+                        variant="ghost"
+                        className="h-8 px-1 text-xs font-medium text-primary hover:bg-transparent hover:underline underline-offset-4"
                         onClick={(event) => {
                           event.stopPropagation();
                           handleImport(category);
@@ -217,9 +224,9 @@ export const ImportCategoryDialog = ({
                             <div key={place.id} className="flex flex-col gap-0.5">
                               <div className="flex items-center gap-1.5 text-sm font-medium">
                                 <MapPin className="w-4 h-4 text-primary" />
-                                <span className="truncate">{place.name}</span>
+                                <span className="flex-1 min-w-0 break-words leading-snug">{place.name}</span>
                               </div>
-                              <p className="text-xs text-muted-foreground truncate">{place.addressName}</p>
+                              <p className="text-xs text-muted-foreground break-words leading-snug">{place.addressName}</p>
                             </div>
                           ))}
                         </div>
@@ -233,13 +240,17 @@ export const ImportCategoryDialog = ({
 
           <TabsContent value="liked" className="mt-4">
             {isBusy ? (
-              <div className="text-sm text-muted-foreground">불러오는 중...</div>
+              <div className={`${listViewportClassName} flex items-center justify-center text-sm text-muted-foreground`}>
+                불러오는 중...
+              </div>
             ) : likedCategories.length === 0 ? (
-              <div className="text-sm text-muted-foreground">찜한 카테고리가 없습니다.</div>
+              <div className={`${listViewportClassName} flex items-center justify-center text-sm text-muted-foreground`}>
+                찜한 카테고리가 없습니다.
+              </div>
             ) : (
-              <div className="max-h-96 overflow-y-auto overflow-x-visible space-y-2 px-1">
+              <div className={`${listViewportClassName} overflow-y-auto overflow-x-visible space-y-2 px-1 py-1`}>
                 {likedCategories.map((category) => (
-                  <Card key={category.id} className="hover-lift">
+                  <Card key={category.id} className="transition-colors hover:bg-muted/20">
                     <CardHeader
                       className="flex flex-row items-center gap-3 py-3 cursor-pointer"
                       onClick={() => handleTogglePlaces(category.id)}
@@ -258,8 +269,8 @@ export const ImportCategoryDialog = ({
                       </div>
                       <Button
                         size="sm"
-                        variant="outline"
-                        className="h-10 px-4 border-primary text-primary hover:bg-primary/5"
+                        variant="ghost"
+                        className="h-8 px-1 text-xs font-medium text-primary hover:bg-transparent hover:underline underline-offset-4"
                         onClick={(event) => {
                           event.stopPropagation();
                           handleImport(category);
@@ -279,9 +290,9 @@ export const ImportCategoryDialog = ({
                             <div key={place.id} className="flex flex-col gap-0.5">
                               <div className="flex items-center gap-1.5 text-sm font-medium">
                                 <MapPin className="w-4 h-4 text-primary" />
-                                <span className="truncate">{place.name}</span>
+                                <span className="flex-1 min-w-0 break-words leading-snug">{place.name}</span>
                               </div>
-                              <p className="text-xs text-muted-foreground truncate">{place.addressName}</p>
+                              <p className="text-xs text-muted-foreground break-words leading-snug">{place.addressName}</p>
                             </div>
                           ))}
                         </div>
