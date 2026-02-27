@@ -49,27 +49,7 @@ const HeroAnimation = () => {
                     transition={{duration: shouldReduceMotion ? 0.6 : 2, delay: 0.3, ease: 'easeInOut'}}
                 />
 
-                {/* UserRequest: 경로를 따라 움직이는 원형 이동점 표시 */}
-                {shouldReduceMotion ? (
-                    <circle r="5" fill="hsl(var(--primary))" cx="280" cy="160" opacity="0.9"/>
-                ) : (
-                    <motion.circle
-                        r="5"
-                        fill="hsl(var(--primary))"
-                        initial={{opacity: 0}}
-                        // UserRequest: 이동 원형은 첫 핀부터 마지막 핀까지 선명하게 유지한 뒤 마지막 지점에서만 사라지도록 조정한다.
-                        animate={{opacity: [0, 1, 1, 1, 0]}}
-                        transition={{
-                            duration: 3,
-                            delay: 2,
-                            times: [0, 0.08, 0.85, 0.95, 1],
-                            repeat: Infinity,
-                            repeatDelay: 1,
-                        }}
-                    >
-                        <animateMotion dur="3s" begin="2s" repeatCount="indefinite" path={pathPoints}/>
-                    </motion.circle>
-                )}
+                {/* UserRequest: 랜딩 지도 경로를 따라 이동하는 원형 요소를 제거한다. */}
 
                 {pins.map((pin) => (
                     <g key={pin.label}>
