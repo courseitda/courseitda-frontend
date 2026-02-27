@@ -13,14 +13,14 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-} from '@/components/ui/context-menu';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useWorkspacesByOwner } from '@/shared/hooks/use-workspace';
-import { Plus, Pencil, Trash2, Clock, LayoutGrid } from 'lucide-react';
+import { Plus, Pencil, Trash2, Clock, LayoutGrid, MoreHorizontal } from 'lucide-react';
 import { CreateWorkspaceDialog } from '@/features/workspaces/create-workspace-dialog';
 import { EditWorkspaceDialog } from '@/features/workspaces/edit-workspace-dialog';
 import { toast } from 'sonner';
@@ -111,6 +111,75 @@ const MyWorkspace = () => {
     setDeleteAlertOpen(true);
   };
 
+  // UserRequest: 롱프레스 대신 카드 우측 더보기 버튼으로 이름 바꾸기/삭제 메뉴를 노출한다.
+  const renderWorkspaceCard = (workspace: Workspace) => (
+    <Card
+      key={workspace.id}
+      className="hover-lift cursor-pointer"
+      onClick={() => handleSelectWorkspace(workspace.identifier)}
+    >
+      <CardHeader className="flex flex-row items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <LayoutGrid className="w-5 h-5 shrink-0 text-primary" />
+          <div className="flex min-w-0 flex-col gap-1">
+            {/* UserRequest: 모바일 폰트 크기를 축소하고 워크스페이스 이름을 왼쪽 정렬하여 가독성 향상 (text-base) */}
+            <CardTitle className="text-base md:text-lg truncate">
+              {workspace.title}
+            </CardTitle>
+            {/* UserRequest: 마지막 수정 시간을 표시하고 Clock 아이콘을 추가하며 "마지막" 멘트를 제거하여 간결하게 표현 */}
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              수정: {new Date(workspace.updatedAt).toLocaleDateString('ko-KR', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+            </p>
+          </div>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="워크스페이스 더보기"
+              className="h-8 w-8 shrink-0"
+              onClick={(event) => event.stopPropagation()}
+              onPointerDown={(event) => event.stopPropagation()}
+            >
+              <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              className="gap-2"
+              onClick={(event) => {
+                event.stopPropagation();
+                handleEdit(workspace);
+              }}
+            >
+              <Pencil className="w-4 h-4" />
+              이름 바꾸기
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive gap-2"
+              onClick={(event) => {
+                event.stopPropagation();
+                handleDeleteClick(workspace);
+              }}
+            >
+              <Trash2 className="w-4 h-4" />
+              삭제
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </CardHeader>
+    </Card>
+  );
+
   // 워크스페이스 삭제 확정 - API 서비스 레이어를 통해 cascade delete 수행
   const handleDeleteConfirm = () => {
     if (!selectedForDelete || deleteWorkspaceMutation.isPending) return;
@@ -165,51 +234,7 @@ const MyWorkspace = () => {
 
             {/* UserRequest: 워크스페이스 간격을 0.3배로 축소하여 공간 효율성 향상 (gap-8 → gap-2.5) */}
             {sortedWorkspaces?.map((workspace) => (
-                <ContextMenu key={workspace.id}>
-                  <ContextMenuTrigger asChild>
-                    <Card
-                        className="hover-lift cursor-pointer"
-                        onClick={() => handleSelectWorkspace(workspace.identifier)}
-                    >
-                      <CardHeader className="flex flex-row items-center gap-3">
-                        <LayoutGrid className="w-5 h-5 text-primary" />
-                        <div className="flex flex-col gap-1">
-                          {/* UserRequest: 모바일 폰트 크기를 축소하고 워크스페이스 이름을 왼쪽 정렬하여 가독성 향상 (text-base) */}
-                          <CardTitle className="text-base md:text-lg truncate">
-                            {workspace.title}
-                          </CardTitle>
-                          {/* UserRequest: 마지막 수정 시간을 표시하고 Clock 아이콘을 추가하며 "마지막" 멘트를 제거하여 간결하게 표현 */}
-                          <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            수정: {new Date(workspace.updatedAt).toLocaleDateString('ko-KR', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                          </p>
-                        </div>
-                      </CardHeader>
-                    </Card>
-                  </ContextMenuTrigger>
-                  <ContextMenuContent>
-                    <ContextMenuItem
-                        className="gap-2"
-                        onClick={() => handleEdit(workspace)}
-                    >
-                      <Pencil className="w-4 h-4" />
-                      이름 바꾸기
-                    </ContextMenuItem>
-                    <ContextMenuItem
-                        className="text-destructive focus:text-destructive gap-2"
-                        onClick={() => handleDeleteClick(workspace)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      삭제
-                    </ContextMenuItem>
-                  </ContextMenuContent>
-                </ContextMenu>
+                renderWorkspaceCard(workspace)
             ))}
           </div>
         </main>
@@ -242,51 +267,7 @@ const MyWorkspace = () => {
 
                 {/* UserRequest: 데스크톱 워크스페이스 간격을 space-y-2 (8px)로 설정하여 적절한 여백 제공 */}
                 {sortedWorkspaces?.map((workspace) => (
-                    <ContextMenu key={workspace.id}>
-                      <ContextMenuTrigger asChild>
-                        <Card
-                            className="hover-lift cursor-pointer"
-                            onClick={() => handleSelectWorkspace(workspace.identifier)}
-                        >
-                          <CardHeader className="flex flex-row items-center gap-3">
-                            <LayoutGrid className="w-5 h-5 text-primary" />
-                            <div className="flex flex-col gap-1">
-                              {/* UserRequest: 모바일 폰트 크기를 축소하고 워크스페이스 이름을 왼쪽 정렬하여 가독성 향상 (text-base) */}
-                              <CardTitle className="text-base md:text-lg truncate">
-                                {workspace.title}
-                              </CardTitle>
-                              {/* UserRequest: 마지막 수정 시간을 표시하고 Clock 아이콘을 추가하며 "마지막" 멘트를 제거하여 간결하게 표현 */}
-                              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                수정: {new Date(workspace.updatedAt).toLocaleDateString('ko-KR', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                              </p>
-                            </div>
-                          </CardHeader>
-                        </Card>
-                      </ContextMenuTrigger>
-                      <ContextMenuContent>
-                        <ContextMenuItem
-                            className="gap-2"
-                            onClick={() => handleEdit(workspace)}
-                        >
-                          <Pencil className="w-4 h-4" />
-                          이름 바꾸기
-                        </ContextMenuItem>
-                        <ContextMenuItem
-                            className="text-destructive focus:text-destructive gap-2"
-                            onClick={() => handleDeleteClick(workspace)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          삭제
-                        </ContextMenuItem>
-                      </ContextMenuContent>
-                    </ContextMenu>
+                    renderWorkspaceCard(workspace)
                 ))}
               </div>
             </div>

@@ -22,13 +22,13 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-} from '@/components/ui/context-menu';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { Plus, Folder, Heart, Clock, Search, MapPin, User as UserIcon, X, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Folder, Heart, Clock, Search, MapPin, User as UserIcon, X, Pencil, Trash2, MoreHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Spinner } from '@/components/ui/spinner';
@@ -448,6 +448,78 @@ const MyCategory = () => {
     setDeleteAlertOpen(true);
   };
 
+  // UserRequest: 내 카테고리 카드의 롱프레스를 제거하고 우측 더보기 버튼으로 수정/삭제 메뉴를 노출한다.
+  const renderSavedCategoryCard = (category: SavedCategory) => (
+    <Card
+      key={category.id}
+      className="hover-lift cursor-pointer"
+      onClick={() => handleOpenCategory(category.id)}
+    >
+      <CardHeader className="flex flex-row items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="relative shrink-0">
+            <div className="w-8 h-8 rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground">
+              <Folder className="w-4 h-4" />
+            </div>
+            <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[11px] leading-none px-1.5 py-0.5 rounded-full">
+              {category.placeCount}
+            </span>
+          </div>
+          <div className="flex min-w-0 flex-col gap-1">
+            <CardTitle className="text-base truncate">{category.title}</CardTitle>
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              수정: {new Date(category.updatedAt).toLocaleDateString('ko-KR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </p>
+          </div>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="카테고리 더보기"
+              className="h-8 w-8 shrink-0"
+              onClick={(event) => event.stopPropagation()}
+              onPointerDown={(event) => event.stopPropagation()}
+            >
+              <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              className="gap-2"
+              onClick={(event) => {
+                event.stopPropagation();
+                handleOpenEditDialog(category);
+              }}
+            >
+              <Pencil className="w-4 h-4" />
+              수정하기
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive gap-2"
+              onClick={(event) => {
+                event.stopPropagation();
+                handleDeleteClick(category);
+              }}
+            >
+              <Trash2 className="w-4 h-4" />
+              삭제하기
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </CardHeader>
+    </Card>
+  );
+
   const handleDeleteConfirm = () => {
     if (!selectedForDelete || deleteSavedCategoryMutation.isPending) return;
     deleteSavedCategoryMutation.mutate(selectedForDelete.id, {
@@ -564,54 +636,7 @@ const MyCategory = () => {
                 </CardHeader>
               </Card>
 
-              {savedCategories.map((category) => (
-                <ContextMenu key={category.id}>
-                  {/* UserRequest: 카테고리 카드 길게 누르기 시 수정/삭제 컨텍스트 메뉴를 표시한다. */}
-                  <ContextMenuTrigger asChild>
-                    <Card
-                      className="hover-lift cursor-pointer"
-                      onClick={() => handleOpenCategory(category.id)}
-                    >
-                      <CardHeader className="flex flex-row items-center gap-3">
-                        <div className="relative">
-                          <div className="w-8 h-8 rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground">
-                            <Folder className="w-4 h-4" />
-                          </div>
-                          <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[11px] leading-none px-1.5 py-0.5 rounded-full">
-                            {category.placeCount}
-                          </span>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <CardTitle className="text-base truncate">{category.title}</CardTitle>
-                          <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            수정: {new Date(category.updatedAt).toLocaleDateString('ko-KR', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </p>
-                        </div>
-                      </CardHeader>
-                    </Card>
-                  </ContextMenuTrigger>
-                  <ContextMenuContent>
-                    <ContextMenuItem className="gap-2" onClick={() => handleOpenEditDialog(category)}>
-                      <Pencil className="w-4 h-4" />
-                      수정하기
-                    </ContextMenuItem>
-                    <ContextMenuItem
-                      className="text-destructive focus:text-destructive gap-2"
-                      onClick={() => handleDeleteClick(category)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      삭제하기
-                    </ContextMenuItem>
-                  </ContextMenuContent>
-                </ContextMenu>
-              ))}
+              {savedCategories.map((category) => renderSavedCategoryCard(category))}
             </TabsContent>
 
             <TabsContent value="liked" className="mt-0">
@@ -712,53 +737,7 @@ const MyCategory = () => {
                     </CardHeader>
                   </Card>
 
-                  {savedCategories.map((category) => (
-                    <ContextMenu key={category.id}>
-                      <ContextMenuTrigger asChild>
-                        <Card
-                          className="hover-lift cursor-pointer"
-                          onClick={() => handleOpenCategory(category.id)}
-                        >
-                          <CardHeader className="flex flex-row items-center gap-3">
-                            <div className="relative">
-                              <div className="w-8 h-8 rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground">
-                                <Folder className="w-4 h-4" />
-                              </div>
-                              <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[11px] leading-none px-1.5 py-0.5 rounded-full">
-                                {category.placeCount}
-                              </span>
-                            </div>
-                            <div className="flex flex-col gap-1">
-                              <CardTitle className="text-base truncate">{category.title}</CardTitle>
-                              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                수정: {new Date(category.updatedAt).toLocaleDateString('ko-KR', {
-                                  year: 'numeric',
-                                  month: 'long',
-                                  day: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}
-                              </p>
-                            </div>
-                          </CardHeader>
-                        </Card>
-                      </ContextMenuTrigger>
-                      <ContextMenuContent>
-                        <ContextMenuItem className="gap-2" onClick={() => handleOpenEditDialog(category)}>
-                          <Pencil className="w-4 h-4" />
-                          수정하기
-                        </ContextMenuItem>
-                        <ContextMenuItem
-                          className="text-destructive focus:text-destructive gap-2"
-                          onClick={() => handleDeleteClick(category)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          삭제하기
-                        </ContextMenuItem>
-                      </ContextMenuContent>
-                    </ContextMenu>
-                  ))}
+                  {savedCategories.map((category) => renderSavedCategoryCard(category))}
                 </TabsContent>
 
                 <TabsContent value="liked" className="mt-0">
