@@ -884,7 +884,7 @@ const MyCategory = () => {
               <div className="space-y-2">
                 <p className="text-sm font-semibold">추가된 장소</p>
                 {/* UserRequest: 검색 결과 영역과 동일한 높이로 고정하고 스크롤로 관리 */}
-                <div className="max-h-56 overflow-y-auto border border-border rounded-lg divide-y divide-border">
+                <div className="max-h-56 overflow-y-auto overflow-x-hidden border border-border rounded-lg divide-y divide-border">
                   {selectedPlaces.length === 0 ? (
                     <div className="p-4 text-sm text-muted-foreground">선택한 장소가 없습니다.</div>
                   ) : (
@@ -913,8 +913,9 @@ const MyCategory = () => {
 
               <div className="space-y-2">
                 <p className="text-sm font-semibold">장소 검색</p>
-                <div className="flex gap-2">
+                <div className="flex w-full min-w-0 items-center gap-2">
                   <Input
+                    className="flex-1 min-w-0"
                     placeholder="장소 이름이나 주소 검색"
                     value={placeQuery}
                     onChange={(event) => setPlaceQuery(event.target.value)}
@@ -928,7 +929,7 @@ const MyCategory = () => {
                   <Button
                     onClick={handleSearchPlaces}
                     disabled={placeSearchLoading}
-                    className="gap-2"
+                    className="shrink-0 gap-2"
                   >
                     <Search className="w-4 h-4" />
                     검색
@@ -938,7 +939,7 @@ const MyCategory = () => {
                   <div className="text-sm text-muted-foreground">검색 중...</div>
                 )}
                 {!placeSearchLoading && placeResults.length > 0 && (
-                  <div className="max-h-56 overflow-y-auto border border-border rounded-lg divide-y divide-border">
+                  <div className="max-h-56 overflow-y-auto overflow-x-hidden border border-border rounded-lg divide-y divide-border">
                     {placeResults.map((place) => (
                       <div key={place.id} className="p-3 flex items-start gap-3">
                         <div className="mt-1 text-primary">
