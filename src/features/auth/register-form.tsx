@@ -209,12 +209,12 @@ export const RegisterForm = () => {
       return;
     }
 
-    // 자동 로그인 성공 시 전역 상태에 토큰만 저장 후 랜딩 페이지로 이동
+    // 자동 로그인 성공 시 전역 상태에 토큰만 저장 후 커뮤니티 페이지로 이동
     // UserRequest: Step 3 — 회원가입 직후 로그인 토큰과 타입을 저장하여 백엔드 인증 흐름과 동기화
     setToken(loginResponse.data.accessToken, loginResponse.data.tokenType);
-    // UserRequest: 로그인 후 내 워크스페이스 대신 랜딩 페이지로 이동한다.
+    // UserRequest: 로그인 후 커뮤니티 페이지로 이동한다.
     // UserRequest: 회원가입 직후 뒤로가기가 인증 페이지로 되돌아가지 않도록 히스토리를 대체
-    navigate('/', { replace: true });
+    navigate('/community', { replace: true });
   };
 
   return (

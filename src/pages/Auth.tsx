@@ -9,7 +9,7 @@ import { MapPin } from 'lucide-react';
 
 /**
  * 로그인 및 회원가입을 처리하는 인증 페이지 컴포넌트
- * 이미 인증된 사용자는 자동으로 랜딩 페이지로 리다이렉트
+ * 이미 인증된 사용자는 자동으로 커뮤니티 페이지로 리다이렉트
  */
 const Auth = () => {
   const navigate = useNavigate();
@@ -19,12 +19,12 @@ const Auth = () => {
   // URL 쿼리 파라미터에서 탭 정보를 읽어 초기 탭 설정 (기본값: login)
   const defaultTab = searchParams.get('tab') || 'login';
 
-  // 이미 로그인된 사용자가 인증 페이지 접근 시 랜딩 페이지로 자동 이동
+  // 이미 로그인된 사용자가 인증 페이지 접근 시 커뮤니티 페이지로 자동 이동
   useEffect(() => {
     if (isAuthenticated) {
-      // UserRequest: 로그인 후 내 워크스페이스 대신 랜딩 페이지로 이동한다.
+      // UserRequest: 로그인 후 커뮤니티 페이지로 이동한다.
       // UserRequest: 로그인 직후 뒤로가기가 인증 페이지로 되돌아가지 않도록 히스토리를 대체
-      navigate('/', { replace: true });
+      navigate('/community', { replace: true });
     }
   }, [isAuthenticated, navigate]);
 

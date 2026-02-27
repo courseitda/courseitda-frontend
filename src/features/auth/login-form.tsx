@@ -19,7 +19,7 @@ export const LoginForm = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // 로그인 요청을 처리하고 성공 시 토큰만 저장한 뒤 랜딩 페이지로 이동
+  // 로그인 요청을 처리하고 성공 시 토큰만 저장한 뒤 커뮤니티 페이지로 이동
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -38,9 +38,9 @@ export const LoginForm = () => {
     // UserRequest: Step 3 — 백엔드 토큰 타입을 함께 저장하여 axios 인터셉터가 Authorization 헤더를 구성
     setToken(response.data.accessToken, response.data.tokenType);
     toast.success('로그인 성공!');
-    // UserRequest: 로그인 후 내 워크스페이스 대신 랜딩 페이지로 이동한다.
+    // UserRequest: 로그인 후 커뮤니티 페이지로 이동한다.
     // UserRequest: 로그인 직후 뒤로가기가 인증 페이지로 되돌아가지 않도록 히스토리를 대체
-    navigate('/', { replace: true });
+    navigate('/community', { replace: true });
   };
 
   return (
