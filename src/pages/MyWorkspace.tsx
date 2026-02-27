@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useWorkspacesByOwner } from '@/shared/hooks/use-workspace';
-import { Plus, Pencil, Trash2, Clock, LayoutGrid, MoreHorizontal } from 'lucide-react';
+import { Plus, Pencil, Trash2, LayoutGrid, MoreHorizontal } from 'lucide-react';
 import { CreateWorkspaceDialog } from '@/features/workspaces/create-workspace-dialog';
 import { EditWorkspaceDialog } from '@/features/workspaces/edit-workspace-dialog';
 import { toast } from 'sonner';
@@ -30,6 +30,7 @@ import type { Workspace } from '@/entities/types';
 import { Spinner } from '@/components/ui/spinner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import PageHeader from '@/components/layout/page-header';
+import { formatRelativeTimeKorean } from '@/shared/utils/relative-time';
 
 /**
  * 워크스페이스 목록 페이지 컴포넌트
@@ -126,16 +127,9 @@ const MyWorkspace = () => {
             <CardTitle className="text-base md:text-lg truncate">
               {workspace.title}
             </CardTitle>
-            {/* UserRequest: 마지막 수정 시간을 표시하고 Clock 아이콘을 추가하며 "마지막" 멘트를 제거하여 간결하게 표현 */}
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              수정: {new Date(workspace.updatedAt).toLocaleDateString('ko-KR', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
+            {/* UserRequest: 수정 시간을 주/개월/년 단위까지 포함한 상대시간으로 표시한다. */}
+            <p className="text-xs text-muted-foreground">
+              업데이트 {formatRelativeTimeKorean(workspace.updatedAt)}
             </p>
           </div>
         </div>

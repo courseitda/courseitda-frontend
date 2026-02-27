@@ -28,7 +28,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { Plus, Folder, Heart, Clock, Search, MapPin, User as UserIcon, X, Pencil, Trash2, MoreHorizontal } from 'lucide-react';
+import { Plus, Folder, Heart, Search, MapPin, User as UserIcon, X, Pencil, Trash2, MoreHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Spinner } from '@/components/ui/spinner';
@@ -47,6 +47,7 @@ import { useNaverLoader } from '@/shared/hooks/use-naver-loader';
 import { PlaceInfoWindow } from '@/features/map/place-info-window';
 import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
 import { placeApi } from '@/services/api';
+import { formatRelativeTimeKorean } from '@/shared/utils/relative-time';
 
 type SavedCategoryMapProps = {
   open: boolean;
@@ -467,15 +468,9 @@ const MyCategory = () => {
           </div>
           <div className="flex min-w-0 flex-col gap-1">
             <CardTitle className="text-base truncate">{category.title}</CardTitle>
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              수정: {new Date(category.updatedAt).toLocaleDateString('ko-KR', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
+            {/* UserRequest: 수정 시간을 주/개월/년 단위까지 포함한 상대시간으로 표시한다. */}
+            <p className="text-xs text-muted-foreground">
+              업데이트 {formatRelativeTimeKorean(category.updatedAt)}
             </p>
           </div>
         </div>
