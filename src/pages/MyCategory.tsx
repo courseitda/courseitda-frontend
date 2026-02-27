@@ -1,6 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
-import { createRoot } from 'react-dom/client';
-import { flushSync } from 'react-dom';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,7 +26,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { Plus, Folder, Heart, Search, MapPin, User as UserIcon, X, Pencil, Trash2, MoreHorizontal } from 'lucide-react';
+import { Plus, Folder, Heart, Search, MapPin, X, Pencil, Trash2, MoreHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Spinner } from '@/components/ui/spinner';
@@ -43,220 +41,12 @@ import { useSharedCategoryLike } from '@/shared/hooks/use-shared-category-like';
 import { MESSAGES } from '@/shared/constants/messages';
 import type { SavedCategory, SearchedPlace, SharedSavedCategory } from '@/entities/types';
 import PageHeader from '@/components/layout/page-header';
-import { useSettingsStore } from '@/shared/stores/settings-store';
-import { useNaverLoader } from '@/shared/hooks/use-naver-loader';
-import { PlaceInfoWindow } from '@/features/map/place-info-window';
 import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
 import { placeApi } from '@/services/api';
 import { formatRelativeTimeKorean } from '@/shared/utils/relative-time';
+import { CategoryPlacesMap } from '@/components/map/category-places-map';
+import { LikedCategoryList } from '@/features/my-category/liked-category-list';
 
-type SavedCategoryMapProps = {
-  open: boolean;
-  places: SavedCategory['places'];
-  focusedPlaceId: string | null;
-};
-
-// UserRequest: 내 보관함 카테고리 팝업 지도도 공유 카테고리 팝업과 동일한 동작/표기를 적용
-const SavedCategoryMap = ({ open, places, focusedPlaceId }: SavedCategoryMapProps) => {
-  const naverMapKeyId = useSettingsStore((state) => state.naverMapKeyId);
-  const { ready, error } = useNaverLoader(naverMapKeyId);
-  const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<naver.maps.Map | null>(null);
-  const markersRef = useRef<naver.maps.Marker[]>([]);
-  const markerMapRef = useRef<
-    Map<
-      string,
-      { marker: naver.maps.Marker; position: naver.maps.LatLng; openInfoWindow: () => void }
-    >
-  >(new Map());
-  const currentInfoWindowRef = useRef<naver.maps.InfoWindow | null>(null);
-
-  useEffect(() => {
-    // UserRequest: 팝업이 열리고 SDK 로딩 완료 시에만 지도 초기화
-    if (!open || !ready || !mapRef.current || !window.naver || !window.naver.maps || mapInstanceRef.current) {
-      return;
-    }
-
-    const { naver } = window;
-    const firstPlace = places[0];
-    const initialCenter = firstPlace
-      ? new naver.maps.LatLng(firstPlace.latitude, firstPlace.longitude)
-      : new naver.maps.LatLng(37.5665, 126.9780);
-
-    mapInstanceRef.current = new naver.maps.Map(mapRef.current, {
-      center: initialCenter,
-      zoom: 13,
-    });
-
-    // 지도 클릭 시 열려있는 정보창 닫기 - 사용자 경험 개선
-    const handleMapClick = () => {
-      if (currentInfoWindowRef.current) {
-        currentInfoWindowRef.current.close();
-        currentInfoWindowRef.current = null;
-      }
-    };
-
-    const clickListener = naver.maps.Event.addListener(mapInstanceRef.current, 'click', handleMapClick);
-
-    return () => {
-      naver.maps.Event.removeListener(clickListener);
-      if (currentInfoWindowRef.current) {
-        currentInfoWindowRef.current.close();
-        currentInfoWindowRef.current = null;
-      }
-    };
-  }, [open, ready, places]);
-
-  useEffect(() => {
-    // UserRequest: 장소 좌표를 지도 마커로 반영
-    if (!open || !ready || !mapInstanceRef.current || !window.naver || !window.naver.maps) return;
-
-    const { naver } = window;
-    const map = mapInstanceRef.current;
-
-    markersRef.current.forEach((marker) => marker.setMap(null));
-    markersRef.current = [];
-    markerMapRef.current.clear();
-    if (currentInfoWindowRef.current) {
-      currentInfoWindowRef.current.close();
-      currentInfoWindowRef.current = null;
-    }
-
-    const validPlaces = places.filter(
-      (place) => Number.isFinite(place.latitude) && Number.isFinite(place.longitude),
-    );
-
-    if (validPlaces.length === 0) {
-      // UserRequest: 좌표가 없을 때 기본 중심 좌표로 이동
-      map.panTo(new naver.maps.LatLng(37.5665, 126.9780));
-      map.setZoom(13);
-      return;
-    }
-
-    const bounds = new naver.maps.LatLngBounds();
-
-    validPlaces.forEach((place) => {
-      const position = new naver.maps.LatLng(place.latitude, place.longitude);
-      const marker = new naver.maps.Marker({
-        position,
-        map,
-        // UserRequest: 공유 카테고리 팝업과 동일한 붉은 물방울 마커 적용
-        icon: {
-          content: `
-            <div style="
-              width: 24px;
-              height: 24px;
-              background-color: hsl(var(--map-marker-drop-bg));
-              border: 2px solid hsl(var(--map-marker-drop-border));
-              border-radius: 50% 50% 50% 0;
-              transform: rotate(-45deg);
-              box-shadow: var(--map-marker-drop-shadow);
-            "></div>
-          `,
-          anchor: new naver.maps.Point(12, 24),
-        },
-      });
-      markersRef.current.push(marker);
-
-      // UserRequest: 워크스페이스 상세보기와 동일한 스타일의 InfoWindow 사용
-      const createInfoWindowElement = () => {
-        const container = document.createElement('div');
-        const root = createRoot(container);
-        flushSync(() => {
-          root.render(
-            <PlaceInfoWindow
-              placeName={place.name}
-              isRepresentative={false}
-              onToggleRepresentative={() => undefined}
-              showRepresentativeAction={false}
-            />,
-          );
-        });
-        return container;
-      };
-
-      const openInfoWindow = () => {
-        if (currentInfoWindowRef.current) {
-          currentInfoWindowRef.current.close();
-          currentInfoWindowRef.current = null;
-        }
-
-        const infoWindow = new naver.maps.InfoWindow({
-          content: createInfoWindowElement(),
-          borderWidth: 0,
-          backgroundColor: 'transparent',
-          // UserRequest: InfoWindow와 마커 간격을 좁혀 시각적 연결감 강화
-          pixelOffset: new naver.maps.Point(0, -26),
-          disableAnchor: true,
-        });
-        infoWindow.open(map, marker);
-        currentInfoWindowRef.current = infoWindow;
-      };
-
-      markerMapRef.current.set(place.id, {
-        marker,
-        position,
-        openInfoWindow,
-      });
-      bounds.extend(position);
-    });
-
-    // UserRequest: 팝업 진입 시 지도 레이아웃을 먼저 갱신한 후 모든 마커가 보이도록 bounds 적용
-    naver.maps.Event.trigger(map, 'resize');
-    map.fitBounds(bounds);
-  }, [open, ready, places]);
-
-  useEffect(() => {
-    // UserRequest: 장소 클릭 시 해당 마커를 중앙으로 이동하고 InfoWindow 표시
-    if (!open || !ready || !mapInstanceRef.current || !window.naver || !window.naver.maps) return;
-    if (!focusedPlaceId) return;
-
-    const target = markerMapRef.current.get(focusedPlaceId);
-    if (!target) return;
-
-    const map = mapInstanceRef.current;
-
-    map.panTo(target.position);
-    setTimeout(() => {
-      map.setZoom(14);
-    }, 300);
-    setTimeout(() => {
-      target.openInfoWindow();
-    }, 350);
-  }, [open, ready, focusedPlaceId]);
-
-  useEffect(() => {
-    // 팝업 닫힘 시 지도 인스턴스와 마커 참조를 정리하여 누수 방지
-    if (!open) {
-      markersRef.current.forEach((marker) => marker.setMap(null));
-      markersRef.current = [];
-      markerMapRef.current.clear();
-      if (currentInfoWindowRef.current) {
-        currentInfoWindowRef.current.close();
-        currentInfoWindowRef.current = null;
-      }
-      mapInstanceRef.current = null;
-    }
-  }, [open]);
-
-  if (!naverMapKeyId || error) {
-    return (
-      <div className="w-full h-96 rounded-lg border border-dashed border-border bg-muted/40 flex items-center justify-center text-sm text-muted-foreground text-center px-6">
-        네이버 지도 설정이 완료되지 않았습니다. 관리자에게 문의해주세요.
-      </div>
-    );
-  }
-
-  if (!ready) {
-    return (
-      <div className="w-full h-96 rounded-lg border border-dashed border-border bg-muted/40 flex items-center justify-center text-sm text-muted-foreground">
-        지도 로딩 중...
-      </div>
-    );
-  }
-
-  return <div ref={mapRef} className="w-full h-96 rounded-lg border border-border overflow-hidden" />;
-};
 
 /**
  * 내 카테고리 페이지 컴포넌트
@@ -646,56 +436,14 @@ const MyCategory = () => {
               ) : likedCategories.length === 0 ? (
                 <div className="text-sm text-muted-foreground">찜한 카테고리가 없습니다.</div>
               ) : (
-                <div className="space-y-3">
-                  {/* UserRequest: 찜 탭에서도 카테고리 탭과 동일한 카드 레이아웃으로 표시 */}
-                  {likedCategories.map((category) => (
-                    <Card
-                      key={category.id}
-                      className={`hover-lift transition-all duration-200 ${removingLikedIds[category.id] ? 'opacity-0 scale-95 translate-y-1 pointer-events-none' : ''}`}
-                      onClick={() => handleOpenLikedDetail(category)}
-                    >
-                      <CardHeader className="flex flex-row items-center gap-3">
-                        <div className="relative">
-                          <div className="w-8 h-8 rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground">
-                            <Folder className="w-4 h-4" />
-                          </div>
-                          <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[11px] leading-none px-1.5 py-0.5 rounded-full">
-                            {category.placeCount}
-                          </span>
-                        </div>
-                        {/* UserRequest: 찜 카드에서 공유 시간 정보를 제거 */}
-                        <div className="flex flex-col gap-1 flex-1 min-w-0">
-                          <CardTitle className="text-base truncate">{category.title}</CardTitle>
-                          {/* UserRequest: 찜 카드에 작성자 정보를 카테고리 게시판과 동일한 형태로 표시 */}
-                          <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                            <UserIcon className="w-4 h-4 text-primary" />
-                            {category.uploader}
-                          </p>
-                        </div>
-                        {/* UserRequest: 찜 카드 우측에 하트 버튼을 배치해 찜 해제 가능하도록 구현 */}
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            requestUnlike(category.id, category.title);
-                          }}
-                          aria-label={`${category.title} 찜 해제`}
-                          aria-pressed={category.liked}
-                          className={`relative h-11 w-11 rounded-full flex items-center justify-center transition-transform duration-150 hover:scale-105 active:scale-90 focus:outline-none ${likePulse[category.id] ? 'scale-110' : ''}`}
-                        >
-                          {likePulse[category.id] && (
-                            <span className="absolute inset-0 rounded-full like-heart-ping animate-ping" />
-                          )}
-                          <Heart
-                            className={`w-7 h-7 ${isAuthenticated ? 'like-heart' : 'text-muted-foreground'} transition-transform duration-150 ${likePulse[category.id] ? 'scale-110' : ''}`}
-                            fill={isAuthenticated && category.liked ? 'currentColor' : 'none'}
-                            strokeWidth={isAuthenticated && category.liked ? 0 : 1.5}
-                          />
-                        </button>
-                      </CardHeader>
-                    </Card>
-                  ))}
-                </div>
+                <LikedCategoryList
+                  categories={likedCategories}
+                  isAuthenticated={isAuthenticated}
+                  likePulse={likePulse}
+                  removingLikedIds={removingLikedIds}
+                  onOpenDetail={handleOpenLikedDetail}
+                  onRequestUnlike={requestUnlike}
+                />
               )}
             </TabsContent>
           </Tabs>
@@ -747,56 +495,14 @@ const MyCategory = () => {
                   ) : likedCategories.length === 0 ? (
                     <div className="text-sm text-muted-foreground">찜한 카테고리가 없습니다.</div>
                   ) : (
-                    <div className="space-y-2">
-                      {/* UserRequest: 찜 탭에서도 카테고리 탭과 동일한 카드 레이아웃으로 표시 */}
-                      {likedCategories.map((category) => (
-                        <Card
-                          key={category.id}
-                          className={`hover-lift transition-all duration-200 ${removingLikedIds[category.id] ? 'opacity-0 scale-95 translate-y-1 pointer-events-none' : ''}`}
-                          onClick={() => handleOpenLikedDetail(category)}
-                        >
-                          <CardHeader className="flex flex-row items-center gap-3">
-                            <div className="relative">
-                              <div className="w-8 h-8 rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground">
-                                <Folder className="w-4 h-4" />
-                              </div>
-                              <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[11px] leading-none px-1.5 py-0.5 rounded-full">
-                                {category.placeCount}
-                              </span>
-                            </div>
-                            {/* UserRequest: 찜 카드에서 공유 시간 정보를 제거 */}
-                            <div className="flex flex-col gap-1 flex-1 min-w-0">
-                              <CardTitle className="text-base truncate">{category.title}</CardTitle>
-                              {/* UserRequest: 찜 카드에 작성자 정보를 카테고리 게시판과 동일한 형태로 표시 */}
-                              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                                <UserIcon className="w-4 h-4 text-primary" />
-                                {category.uploader}
-                              </p>
-                            </div>
-                            {/* UserRequest: 찜 카드 우측에 하트 버튼을 배치해 찜 해제 가능하도록 구현 */}
-                            <button
-                              type="button"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                requestUnlike(category.id, category.title);
-                              }}
-                              aria-label={`${category.title} 찜 해제`}
-                              aria-pressed={category.liked}
-                              className={`relative h-11 w-11 rounded-full flex items-center justify-center transition-transform duration-150 hover:scale-105 active:scale-90 focus:outline-none ${likePulse[category.id] ? 'scale-110' : ''}`}
-                            >
-                              {likePulse[category.id] && (
-                                <span className="absolute inset-0 rounded-full like-heart-ping animate-ping" />
-                              )}
-                              <Heart
-                                className={`w-7 h-7 ${isAuthenticated ? 'like-heart' : 'text-muted-foreground'} transition-transform duration-150 ${likePulse[category.id] ? 'scale-110' : ''}`}
-                                fill={isAuthenticated && category.liked ? 'currentColor' : 'none'}
-                                strokeWidth={isAuthenticated && category.liked ? 0 : 1.5}
-                              />
-                            </button>
-                          </CardHeader>
-                        </Card>
-                      ))}
-                    </div>
+                    <LikedCategoryList
+                      categories={likedCategories}
+                      isAuthenticated={isAuthenticated}
+                      likePulse={likePulse}
+                      removingLikedIds={removingLikedIds}
+                      onOpenDetail={handleOpenLikedDetail}
+                      onRequestUnlike={requestUnlike}
+                    />
                   )}
                 </TabsContent>
               </Tabs>
@@ -813,9 +519,14 @@ const MyCategory = () => {
               <DialogTitle className="text-center">{selectedCategory?.title}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <SavedCategoryMap
+              <CategoryPlacesMap
                 open={categoryDetailOpen}
-                places={selectedCategory?.places ?? []}
+                places={(selectedCategory?.places ?? []).map((place) => ({
+                  id: place.id,
+                  name: place.name,
+                  latitude: place.latitude,
+                  longitude: place.longitude,
+                }))}
                 focusedPlaceId={focusedPlaceId}
               />
               <div className="space-y-2">

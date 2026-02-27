@@ -74,7 +74,7 @@ export const useSharedCategoryLike = ({
     },
     onSuccess: (data) => {
       toast[data.isLiked ? 'success' : 'info'](
-        data.isLiked ? '찜했어요. 내 보관함에서 확인할 수 있습니다.' : '찜을 해제했습니다.',
+        data.isLiked ? MESSAGES.sharedCategory.likeAdded : MESSAGES.sharedCategory.likeRemoved,
       );
     },
     onSettled: () => {
