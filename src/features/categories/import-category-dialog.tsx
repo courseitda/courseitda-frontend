@@ -8,7 +8,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Folder, Heart, MapPin } from 'lucide-react';
+import { ChevronDown, Folder, FolderDown, Heart, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/shared/stores/auth-store';
@@ -204,13 +204,14 @@ export const ImportCategoryDialog = ({
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-8 px-1 text-xs font-medium text-primary hover:bg-transparent hover:underline underline-offset-4"
+                        className="h-8 px-2 text-xs font-medium text-muted-foreground border border-border rounded-md bg-muted/20 hover:bg-muted/40 hover:text-foreground hover:underline underline-offset-4 inline-flex items-center gap-1"
                         onClick={(event) => {
                           event.stopPropagation();
                           handleImport(category);
                         }}
                         disabled={importMutation.isPending}
                       >
+                        <FolderDown className="h-3.5 w-3.5" />
                         추가
                       </Button>
                       <ChevronDown
@@ -270,13 +271,14 @@ export const ImportCategoryDialog = ({
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-8 px-1 text-xs font-medium text-primary hover:bg-transparent hover:underline underline-offset-4"
+                        className="h-8 px-2 text-xs font-medium text-muted-foreground border border-border rounded-md bg-muted/20 hover:bg-muted/40 hover:text-foreground hover:underline underline-offset-4 inline-flex items-center gap-1"
                         onClick={(event) => {
                           event.stopPropagation();
                           handleImport(category);
                         }}
                         disabled={importMutation.isPending}
                       >
+                        <FolderDown className="h-3.5 w-3.5" />
                         추가
                       </Button>
                       <ChevronDown
