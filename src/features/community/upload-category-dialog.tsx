@@ -87,9 +87,9 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
               업로드할 카테고리가 없습니다. 내 카테고리에서 먼저 만들어주세요.
             </div>
           ) : (
-            <div className="space-y-2 px-1">
+            <div className="space-y-2 px-1 py-1">
               {savedCategories.map((category) => (
-                <Card key={category.id} className="hover-lift">
+                <Card key={category.id} className="transition-colors hover:bg-muted/20">
                   <CardHeader
                     className="flex flex-row items-center gap-3 py-3 cursor-pointer"
                     onClick={() => handleTogglePlaces(category.id)}
@@ -107,8 +107,8 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
                     </div>
                     <Button
                       size="sm"
-                      variant="outline"
-                      className="h-10 px-4 border-primary text-primary hover:bg-primary/5 gap-1.5"
+                      variant="ghost"
+                      className="h-8 px-2 text-xs font-medium text-muted-foreground border border-border rounded-md bg-muted/20 hover:bg-muted/40 hover:text-foreground hover:underline underline-offset-4 inline-flex items-center gap-1"
                       onClick={(event) => {
                         event.stopPropagation();
                         handleUpload(category);
