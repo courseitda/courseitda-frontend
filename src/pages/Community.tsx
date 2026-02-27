@@ -60,8 +60,12 @@ const Community = () => {
   }, [filteredCategories, hasLoop]);
   const CARD_WIDTH = 280;
   const CARD_GAP = 16;
-  const getBaseTranslate = (index: number) =>
-    sliderWidth ? (sliderWidth - CARD_WIDTH) / 2 - index * (CARD_WIDTH + CARD_GAP) : 0;
+  // UserRequest: 클린 코드 기준 Hook 의존성 경고를 제거하기 위해 계산 함수를 메모이제이션
+  const getBaseTranslate = useCallback(
+    (index: number) =>
+      sliderWidth ? (sliderWidth - CARD_WIDTH) / 2 - index * (CARD_WIDTH + CARD_GAP) : 0,
+    [sliderWidth],
+  );
   const activeIndex = filteredCategories.length
     ? hasLoop
       ? (recommendIndex - 1 + filteredCategories.length) % filteredCategories.length

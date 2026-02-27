@@ -5,7 +5,8 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist"] },
+  // UserRequest: 생성 파일 경고로 린트 결과가 흐려지지 않도록 MSW 산출물은 검사 대상에서 제외
+  { ignores: ["dist", "public/mockServiceWorker.js"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
