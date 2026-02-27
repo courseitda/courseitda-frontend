@@ -33,6 +33,7 @@ const Community = () => {
   const startX = useRef(0);
   const currentTranslate = useRef(0);
   const isLoopFixingRef = useRef(false);
+  const loopFallbackTimerRef = useRef<number | null>(null);
   const [sliderWidth, setSliderWidth] = useState(0);
   const { toggleLike } = useSharedCategoryLike({
     queryKey: COMMUNITY_QUERY_KEYS.recommended,
@@ -147,22 +148,45 @@ const Community = () => {
   }, [recommendIndex, sliderWidth, getBaseTranslate]);
 
   useEffect(() => {
-    // UserRequest: transitionend 누락 시에도 루프 보정을 수행하여 멈춤 방지
+    // UserRequest: transitionend 누락 시에만 지연 보정하여 경계 전환이 점프처럼 보이지 않게 처리
     if (!hasLoop) return;
-    if (isLoopFixingRef.current) return;
-    if (recommendIndex !== 0 && recommendIndex !== filteredCategories.length + 1) return;
+    if (!isAnimating) return;
 
-    isLoopFixingRef.current = true;
-    setIsAnimating(false);
-    requestAnimationFrame(() => {
-      const nextIndex = recommendIndex === 0 ? filteredCategories.length : 1;
-      setRecommendIndex(nextIndex);
+    const isLoopBoundary = recommendIndex === 0 || recommendIndex === filteredCategories.length + 1;
+    if (!isLoopBoundary) {
+      if (loopFallbackTimerRef.current) {
+        window.clearTimeout(loopFallbackTimerRef.current);
+        loopFallbackTimerRef.current = null;
+      }
+      return;
+    }
+
+    if (loopFallbackTimerRef.current) {
+      window.clearTimeout(loopFallbackTimerRef.current);
+    }
+
+    loopFallbackTimerRef.current = window.setTimeout(() => {
+      if (isLoopFixingRef.current) return;
+      isLoopFixingRef.current = true;
+      setIsAnimating(false);
       requestAnimationFrame(() => {
-        setIsAnimating(true);
-        isLoopFixingRef.current = false;
+        const nextIndex = recommendIndex === 0 ? filteredCategories.length : 1;
+        setRecommendIndex(nextIndex);
+        requestAnimationFrame(() => {
+          setIsAnimating(true);
+          isLoopFixingRef.current = false;
+        });
       });
-    });
-  }, [recommendIndex, hasLoop, filteredCategories.length]);
+      loopFallbackTimerRef.current = null;
+    }, 560);
+
+    return () => {
+      if (loopFallbackTimerRef.current) {
+        window.clearTimeout(loopFallbackTimerRef.current);
+        loopFallbackTimerRef.current = null;
+      }
+    };
+  }, [recommendIndex, hasLoop, filteredCategories.length, isAnimating]);
 
   const updateSliderWidth = useCallback(() => {
     if (sliderRef.current) {
