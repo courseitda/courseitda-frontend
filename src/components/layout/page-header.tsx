@@ -62,7 +62,7 @@ const PageHeader = ({
                 aria-label="홈으로 이동"
               >
                 {showBrandText && (
-                  <span className="font-bold text-lg whitespace-nowrap text-primary">코스잇다</span>
+                  <span className="brand-wordmark text-[1.4rem] whitespace-nowrap text-primary">코스잇다</span>
                 )}
               </button>
             ) : (
