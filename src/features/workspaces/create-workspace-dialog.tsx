@@ -112,7 +112,7 @@ export const CreateWorkspaceDialog = ({ open, onOpenChange }: CreateWorkspaceDia
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent ref={dialogRef} className="transition-transform duration-200">
+      <DialogContent ref={dialogRef} className="max-h-[88vh] overflow-y-auto px-3 py-4 transition-transform duration-200 sm:p-6">
         <DialogHeader>
           <DialogTitle>{MESSAGES.workspace.createDialogTitle}</DialogTitle>
         </DialogHeader>
@@ -129,12 +129,12 @@ export const CreateWorkspaceDialog = ({ open, onOpenChange }: CreateWorkspaceDia
             />
           </div>
 
-          <div className="flex gap-2 justify-end">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <div className="flex justify-end gap-2">
+            <Button className="shrink-0" type="button" variant="outline" onClick={() => onOpenChange(false)}>
               취소
             </Button>
             {/* UserRequest: 필수 입력값이 없으면 생성 버튼을 비활성화 */}
-            <Button type="submit" disabled={createWorkspaceMutation.isPending || !title.trim()}>
+            <Button className="shrink-0" type="submit" disabled={createWorkspaceMutation.isPending || !title.trim()}>
               {createWorkspaceMutation.isPending ? '생성 중...' : '생성'}
             </Button>
           </div>

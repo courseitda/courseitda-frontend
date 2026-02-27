@@ -396,9 +396,9 @@ const MyCategory = () => {
     className = 'h-[50vh]',
     action?: ReactNode,
   ) => (
-    <div className={`border-2 border-dashed border-border rounded-xl p-8 md:p-10 text-center flex flex-col items-center justify-center ${className}`}>
+    <div className={`border-2 border-dashed border-border rounded-xl p-5 text-center flex flex-col items-center justify-center sm:p-8 md:p-10 ${className}`}>
       {icon}
-      <p className="whitespace-pre-line text-sm text-muted-foreground">{message}</p>
+      <p className="whitespace-pre-line text-sm leading-6 text-muted-foreground">{message}</p>
       {action}
     </div>
   );
@@ -465,10 +465,10 @@ const MyCategory = () => {
                   <Button
                     type="button"
                     variant="link"
-                    className="mt-2 inline-flex h-auto items-center gap-1 p-0 text-sm font-medium text-primary underline-offset-4 hover:underline"
+                    className="mt-2 inline-flex h-auto max-w-full flex-wrap items-center justify-center gap-1 whitespace-normal p-0 text-center text-sm font-medium text-primary underline-offset-4 hover:underline"
                     onClick={handleMoveToCommunity}
                   >
-                    <ArrowRight className="h-4 w-4" />
+                    <ArrowRight className="h-4 w-4 shrink-0" />
                     찜하러 가기
                   </Button>,
                 )
@@ -542,10 +542,10 @@ const MyCategory = () => {
                       <Button
                         type="button"
                         variant="link"
-                        className="mt-2 inline-flex h-auto items-center gap-1 p-0 text-sm font-medium text-primary underline-offset-4 hover:underline"
+                        className="mt-2 inline-flex h-auto max-w-full flex-wrap items-center justify-center gap-1 whitespace-normal p-0 text-center text-sm font-medium text-primary underline-offset-4 hover:underline"
                         onClick={handleMoveToCommunity}
                       >
-                        <ArrowRight className="h-4 w-4" />
+                        <ArrowRight className="h-4 w-4 shrink-0" />
                         찜하러 가기
                       </Button>,
                     )
@@ -655,7 +655,7 @@ const MyCategory = () => {
             }
           }}
         >
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[88vh] overflow-y-auto px-3 py-4 sm:p-6">
             <DialogHeader>
               <DialogTitle>{categoryDialogMode === 'edit' ? '카테고리 수정' : '새 카테고리 추가'}</DialogTitle>
             </DialogHeader>
@@ -677,8 +677,8 @@ const MyCategory = () => {
                     <div className="p-4 text-sm text-muted-foreground">{MESSAGES.savedCategory.noPlacesSelected}</div>
                   ) : (
                     selectedPlaces.map((place) => (
-                      <div key={place.id} className="p-3 flex items-center gap-3">
-                        <div className="text-primary">
+                      <div key={place.id} className="flex items-center gap-2.5 p-3">
+                        <div className="text-primary shrink-0">
                           <MapPin className="w-4 h-4" />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -688,6 +688,7 @@ const MyCategory = () => {
                         <Button
                           size="icon"
                           variant="ghost"
+                          className="shrink-0"
                           onClick={() => handleRemovePlace(place.id)}
                           aria-label="장소 제거"
                         >
@@ -703,7 +704,7 @@ const MyCategory = () => {
                 <p className="text-sm font-semibold">장소 검색</p>
                 <div className="flex w-full min-w-0 items-center gap-2">
                   <Input
-                    className="flex-1 min-w-0"
+                    className="min-w-0 flex-1"
                     placeholder="장소 이름이나 주소 검색"
                     value={placeQuery}
                     onChange={(event) => setPlaceQuery(event.target.value)}
@@ -717,7 +718,7 @@ const MyCategory = () => {
                   <Button
                     onClick={handleSearchPlaces}
                     disabled={placeSearchLoading}
-                    className="shrink-0 gap-2"
+                    className="shrink-0 gap-2 px-3"
                   >
                     <Search className="w-4 h-4" />
                     검색
@@ -729,15 +730,20 @@ const MyCategory = () => {
                 {!placeSearchLoading && placeResults.length > 0 && (
                   <div className="max-h-56 overflow-y-auto overflow-x-hidden border border-border rounded-lg divide-y divide-border">
                     {placeResults.map((place) => (
-                      <div key={place.id} className="p-3 flex items-start gap-3">
-                        <div className="mt-1 text-primary">
+                      <div key={place.id} className="flex items-start gap-2.5 p-3">
+                        <div className="mt-0.5 shrink-0 text-primary">
                           <MapPin className="w-4 h-4" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">{place.name}</p>
                           <p className="text-xs text-muted-foreground truncate">{place.addressName}</p>
                         </div>
-                        <Button size="sm" variant="outline" onClick={() => handleAddPlace(place)}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="shrink-0"
+                          onClick={() => handleAddPlace(place)}
+                        >
                           추가
                         </Button>
                       </div>
@@ -747,11 +753,12 @@ const MyCategory = () => {
               </div>
 
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+                <Button className="shrink-0" variant="outline" onClick={() => setCreateDialogOpen(false)}>
                   취소
                 </Button>
                 {/* UserRequest: 필수 입력값이 없으면 생성 버튼을 비활성화 */}
                 <Button
+                  className="shrink-0"
                   onClick={handleCreateCategory}
                   disabled={
                     createSavedCategoryMutation.isPending ||

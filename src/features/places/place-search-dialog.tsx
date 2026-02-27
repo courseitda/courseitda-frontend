@@ -117,7 +117,7 @@ export const PlaceSearchDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+      <DialogContent className="max-w-2xl max-h-[88vh] flex flex-col overflow-y-auto px-3 py-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>{MESSAGES.place.searchDialogTitle}</DialogTitle>
           {/* UserRequest: 검색 제공자 혼선을 방지하기 위해 안내 문구를 중립적으로 변경한다. */}
@@ -127,7 +127,7 @@ export const PlaceSearchDialog = ({
         <div className="flex flex-col gap-4 min-h-0 flex-1">
           {/* 고정된 검색 영역 */}
           <div className="flex gap-2">
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <Input
                 placeholder="장소 이름이나 주소 검색"
                 value={query}
@@ -140,7 +140,7 @@ export const PlaceSearchDialog = ({
                 }}
               />
             </div>
-            <Button onClick={handleSearch} disabled={loading} className="gap-2">
+            <Button onClick={handleSearch} disabled={loading} className="shrink-0 gap-2 px-3">
               <Search className="w-4 h-4" />
               검색
             </Button>
@@ -149,7 +149,7 @@ export const PlaceSearchDialog = ({
           {/* 스크롤 가능한 결과 영역 */}
           <div className="flex-1 overflow-y-auto min-h-0">
             {loading && (
-              <div className="text-center py-8 text-muted-foreground">{MESSAGES.workspaceCategory.searching}</div>
+              <div className="py-8 text-center text-muted-foreground">{MESSAGES.workspaceCategory.searching}</div>
             )}
 
             {!loading && results.length > 0 && (
@@ -157,11 +157,11 @@ export const PlaceSearchDialog = ({
                 {results.map((place) => (
                   <div
                     key={place.id}
-                    className="p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors"
+                    className="rounded-lg border border-border p-4 transition-colors hover:bg-accent/50"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium mb-1">{place.name}</h4>
+                        <h4 className="mb-1 truncate text-sm font-medium sm:text-base">{place.name}</h4>
                         <div className="space-y-1 text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">
                             <MapPin className="w-3 h-3 flex-shrink-0" />
@@ -174,6 +174,7 @@ export const PlaceSearchDialog = ({
                       </div>
                       <Button
                         size="sm"
+                        className="shrink-0"
                         onClick={() => handleAdd(place)}
                         disabled={adding === place.id}
                       >

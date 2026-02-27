@@ -83,7 +83,7 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl h-[65vh] flex flex-col">
+      <DialogContent className="max-w-2xl h-[65vh] flex flex-col px-4 py-5 sm:p-6">
         <DialogHeader>
           <DialogTitle>{MESSAGES.sharedCategory.uploadDialogTitle}</DialogTitle>
         </DialogHeader>
@@ -94,18 +94,18 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
           ) : savedCategories.length === 0 ? (
             <div className="flex h-[90%] min-h-[90%] items-center justify-center px-1 py-1">
               {/* UserRequest: 업로드 가능한 보관 카테고리가 없을 때도 다이얼로그 안에 빈 상태 영역과 안내 문구를 표시한다. */}
-              <div className="flex h-full w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-border p-8 text-center">
-                <Folder className="mb-3 h-10 w-10 text-muted-foreground/60" />
+              <div className="flex h-full w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-border p-5 text-center sm:p-8">
+                <Folder className="mb-3 h-9 w-9 text-muted-foreground/60 sm:h-10 sm:w-10" />
                 {/* UserRequest: 업로드 불가 안내 문구를 3줄 구조와 내 카테고리 바로가기 액션으로 교체한다. */}
-                <p className="text-sm text-muted-foreground">업로드 할 카테고리가 없습니다.</p>
-                <p className="mt-1 text-sm text-muted-foreground">내 카테고리에서 먼저 만들어보세요.</p>
+                <p className="text-xs leading-5 text-muted-foreground sm:text-sm">업로드 할 카테고리가 없습니다.</p>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground sm:text-sm">내 카테고리에서 먼저 만들어보세요.</p>
                 <Button
                   type="button"
                   variant="link"
-                  className="mt-2 inline-flex h-auto items-center gap-1 p-0 text-sm font-medium text-primary underline-offset-4 hover:underline"
+                  className="mt-2 inline-flex h-auto max-w-full flex-wrap items-center justify-center gap-1 whitespace-normal p-0 text-center text-xs font-medium text-primary underline-offset-4 hover:underline sm:text-sm"
                   onClick={handleMoveToMyCategory}
                 >
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className="h-4 w-4 shrink-0" />
                   내 카테고리 만들러 가기
                 </Button>
               </div>
@@ -115,10 +115,10 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
               {savedCategories.map((category) => (
                 <Card key={category.id} className="transition-colors hover:bg-muted/20">
                   <CardHeader
-                    className="flex flex-row items-center gap-3 py-3 cursor-pointer"
+                    className="flex cursor-pointer flex-col items-start gap-3 py-3 sm:flex-row sm:items-center"
                     onClick={() => handleTogglePlaces(category.id)}
                   >
-                    <div className="relative">
+                    <div className="relative shrink-0">
                       <div className="w-9 h-9 rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground">
                         <Folder className="w-5 h-5" />
                       </div>
@@ -126,25 +126,27 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
                         {category.placeCount}
                       </span>
                     </div>
-                    <div className="flex flex-col gap-1 flex-1 min-w-0">
-                      <CardTitle className="text-base truncate">{category.title}</CardTitle>
+                    <div className="flex min-w-0 flex-1 flex-col gap-1 self-stretch">
+                      <CardTitle className="truncate text-sm sm:text-base">{category.title}</CardTitle>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-8 px-2 text-xs font-medium text-muted-foreground border border-border rounded-md bg-muted/20 hover:bg-muted/40 hover:text-foreground hover:underline underline-offset-4 inline-flex items-center gap-1"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        handleUpload(category);
-                      }}
-                      disabled={shareMutation.isPending}
-                    >
-                      <Upload className="w-4 h-4" />
-                      업로드
-                    </Button>
-                    <ChevronDown
-                      className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${expandedCategoryId === category.id ? 'rotate-180' : ''}`}
-                    />
+                    <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 px-2 text-xs font-medium text-muted-foreground border border-border rounded-md bg-muted/20 hover:bg-muted/40 hover:text-foreground hover:underline underline-offset-4 inline-flex items-center gap-1"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleUpload(category);
+                        }}
+                        disabled={shareMutation.isPending}
+                      >
+                        <Upload className="w-4 h-4" />
+                        업로드
+                      </Button>
+                      <ChevronDown
+                        className={`w-4 h-4 shrink-0 text-muted-foreground transition-transform duration-200 ${expandedCategoryId === category.id ? 'rotate-180' : ''}`}
+                      />
+                    </div>
                   </CardHeader>
                   {expandedCategoryId === category.id && (
                     <div className="px-4 pb-4 pt-2 border-t border-border/60">

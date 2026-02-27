@@ -160,6 +160,10 @@
 }
 
 @layer base {
+  html {
+    font-size: 16px;
+  }
+
   * {
     @apply border-border;
   }
@@ -173,6 +177,13 @@
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-semibold;
+  }
+}
+
+@media (max-width: 430px) {
+  html {
+    /* UserRequest: 기기 폭에 따라 전체 UI가 비율로 커지고 작아지도록 모바일 기준 루트 폰트 크기를 유동적으로 조정한다. */
+    font-size: clamp(14.5px, calc(100vw * 0.0415), 16px);
   }
 }
 
