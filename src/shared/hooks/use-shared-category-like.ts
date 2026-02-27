@@ -5,6 +5,7 @@ import { communityApi } from '@/services/api';
 import type { SharedSavedCategory } from '@/entities/types';
 import { COMMUNITY_QUERY_KEYS } from '@/shared/hooks/use-community';
 import { MESSAGES } from '@/shared/constants/messages';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 type ToggleLikeParams = {
   sharedCategoryId: string;
@@ -32,7 +33,7 @@ export const useSharedCategoryLike = ({
   const toggleLikeMutation = useMutation({
     mutationFn: async (params: { sharedCategoryId: string; nextLiked: boolean }) => {
       if (!token) {
-        throw new Error(MESSAGES.common.authTokenRequired);
+        throw new Error(UI_COPY.system.authTokenRequired);
       }
 
       const response = params.nextLiked
@@ -91,11 +92,11 @@ export const useSharedCategoryLike = ({
         onRequireLogin();
         return false;
       }
-      toast.error(MESSAGES.common.loginRequiredForFeature);
+      toast.error(UI_COPY.system.loginRequiredForFeature);
       return false;
     }
     if (!token) {
-      toast.error(MESSAGES.common.authTokenRequired);
+      toast.error(UI_COPY.system.authTokenRequired);
       return false;
     }
     if (toggleLikeMutation.isPending) {

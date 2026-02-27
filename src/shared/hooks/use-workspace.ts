@@ -2,6 +2,7 @@ import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { workspaceApi } from '@/services/api';
 import { MESSAGES } from '@/shared/constants/messages';
 import type { Workspace } from '@/entities/types';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 type WorkspacePayload = {
   identifier: string;
@@ -32,13 +33,13 @@ export const useWorkspace = (workspaceIdentifier?: string): UseQueryResult<Works
     enabled: !!workspaceIdentifier,
     queryFn: async () => {
       if (!workspaceIdentifier) {
-        throw new Error(MESSAGES.workspace.identifierRequired);
+        throw new Error(UI_COPY.system.workspaceIdentifierRequired);
       }
 
       const response = await workspaceApi.getByIdentifier(workspaceIdentifier);
 
       if (!response.success || !response.data) {
-        throw new Error(response.error?.message ?? MESSAGES.workspace.notFound);
+        throw new Error(response.error?.message ?? MESSAGES.workspace.loadFailed);
       }
 
       return toWorkspaceEntity({
@@ -62,7 +63,7 @@ export const useWorkspacesByOwner = (token?: string): UseQueryResult<Workspace[]
     enabled: !!token,
     queryFn: async () => {
       if (!token) {
-        throw new Error(MESSAGES.common.authTokenRequired);
+        throw new Error(UI_COPY.system.authTokenRequired);
       }
 
       const response = await workspaceApi.getMyWorkspaces(token);

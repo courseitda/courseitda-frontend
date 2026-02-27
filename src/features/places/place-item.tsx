@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { placeApi, categoryApi } from '@/services/api';
 import { MESSAGES } from '@/shared/constants/messages';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 interface PlaceItemProps {
   categoryPlaceId: string;
@@ -81,7 +82,7 @@ export const PlaceItem = ({
   // UserRequest: 네이버 지도 바로가기 메뉴 추가 - placeUrl로 새 창을 열어 외부 지도를 확인
   const handleOpenInMap = () => {
     if (!place.placeUrl) {
-      toast.error(MESSAGES.place.linkMissing);
+      toast.error(UI_COPY.place.linkMissing);
       return;
     }
     window.open(place.placeUrl, '_blank', 'noopener,noreferrer');

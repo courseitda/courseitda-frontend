@@ -34,6 +34,7 @@ import { toast } from 'sonner';
 import { workspaceApi } from '@/services/api';
 import { MESSAGES } from '@/shared/constants/messages';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 interface NavigationDrawerProps {
   workspaces: Workspace[];
@@ -113,7 +114,7 @@ export const NavigationDrawer = ({
       <SheetContent side="right" className="w-[75vw] md:w-80 p-0 flex flex-col">
         {/* UserRequest: 네비게이션 드로어 제목을 가운데 정렬하여 시각적 균형 유지 (!text-center) */}
         <SheetHeader className="p-4 pb-3 !text-center">
-          <SheetTitle>메뉴</SheetTitle>
+          <SheetTitle>{UI_COPY.navigationDrawer.sheetTitle}</SheetTitle>
         </SheetHeader>
 
         {/* UserRequest: 스크롤 영역을 유연하게 확장하고 내부 여백 설정하여 가독성 향상 (좌우 16px, 아래 16px, 자식 요소 간 세로 간격 16px) */}
@@ -141,7 +142,7 @@ export const NavigationDrawer = ({
 
             {/* 워크스페이스 목록 */}
             <div className="space-y-2">
-              <h3 className="text-sm font-semibold text-muted-foreground px-1">워크스페이스</h3>
+              <h3 className="text-sm font-semibold text-muted-foreground px-1">{UI_COPY.navigationDrawer.workspaceSection}</h3>
               
               {/* 새 워크스페이스 추가 버튼 */}
               <Button
@@ -150,7 +151,7 @@ export const NavigationDrawer = ({
                 onClick={() => setCreateDialogOpen(true)}
               >
                 <Plus className="w-4 h-4" />
-                새 워크스페이스
+                {UI_COPY.navigationDrawer.createWorkspace}
               </Button>
               
               {workspaces.map((workspace) => {
@@ -211,25 +212,25 @@ export const NavigationDrawer = ({
       <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{MESSAGES.workspace.deleteConfirmTitle}</AlertDialogTitle>
+            <AlertDialogTitle>{UI_COPY.myWorkspace.deleteDialog.title}</AlertDialogTitle>
             <AlertDialogDescription>
               {selectedForDelete && (
                 <>
-                  {MESSAGES.workspace.deleteConfirmDescription(selectedForDelete.title)}
+                  {UI_COPY.myWorkspace.deleteDialog.description(selectedForDelete.title)}
                   <br />
-                  <span className="text-destructive">{MESSAGES.workspace.deleteConfirmWarning}</span>
+                  <span className="text-destructive">{UI_COPY.myWorkspace.deleteDialog.warning}</span>
                 </>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogCancel>{UI_COPY.common.cancel}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
               className="bg-destructive hover:bg-destructive/90"
               disabled={deleteWorkspaceMutation.isPending}
             >
-              {deleteWorkspaceMutation.isPending ? '삭제 중...' : '삭제'}
+              {deleteWorkspaceMutation.isPending ? UI_COPY.common.deleting : UI_COPY.common.delete}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

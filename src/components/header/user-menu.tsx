@@ -13,6 +13,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { FileText, Folder, House, LayoutGrid, LogOut, Menu, User as UserIcon } from 'lucide-react';
 import { useState } from 'react';
 import { Separator } from '@/components/ui/separator';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 const UserMenu = () => {
   const navigate = useNavigate();
@@ -46,7 +47,7 @@ const UserMenu = () => {
   if (!isAuthenticated || !navNickname) {
     return (
       <Button onClick={() => navigate('/auth')}>
-        로그인
+        {UI_COPY.userMenu.login}
       </Button>
     );
   }
@@ -61,7 +62,7 @@ const UserMenu = () => {
       </SheetTrigger>
       <SheetContent side="right" className="w-[80vw] max-w-sm flex flex-col">
         <SheetHeader>
-          <SheetTitle>메뉴</SheetTitle>
+          <SheetTitle>{UI_COPY.userMenu.sheetTitle}</SheetTitle>
         </SheetHeader>
 
         {/* UserRequest: 로그아웃은 마이페이지 바로 아래가 아닌 메뉴 하단 고정 영역에 배치 */}
@@ -81,14 +82,14 @@ const UserMenu = () => {
             </div>
 
             <div className="space-y-1">
-              <p className="px-2 text-xs font-semibold text-muted-foreground">보관함</p>
+              <p className="px-2 text-xs font-semibold text-muted-foreground">{UI_COPY.userMenu.storageSection}</p>
               <Button
                 variant="ghost"
                 className={menuItemClassName(isActive('/my-workspaces'))}
                 onClick={() => handleNavigate('/my-workspaces')}
               >
                 <LayoutGrid className="w-4 h-4" />
-                내 워크스페이스
+                {UI_COPY.userMenu.myWorkspace}
               </Button>
               <Button
                 variant="ghost"
@@ -96,21 +97,21 @@ const UserMenu = () => {
                 onClick={() => handleNavigate('/my-category')}
               >
                 <Folder className="w-4 h-4" />
-                내 카테고리
+                {UI_COPY.userMenu.myCategory}
               </Button>
             </div>
 
             <Separator />
 
             <div className="space-y-1">
-              <p className="px-2 text-xs font-semibold text-muted-foreground">커뮤니티</p>
+              <p className="px-2 text-xs font-semibold text-muted-foreground">{UI_COPY.userMenu.communitySection}</p>
               <Button
                 variant="ghost"
                 className={menuItemClassName(isActive('/community'))}
                 onClick={() => handleNavigate('/community')}
               >
                 <House className="w-4 h-4" />
-                커뮤니티 둘러보기
+                {UI_COPY.userMenu.communityExplore}
               </Button>
               <Button
                 variant="ghost"
@@ -118,21 +119,21 @@ const UserMenu = () => {
                 onClick={() => handleNavigate('/my-posts')}
               >
                 <FileText className="w-4 h-4" />
-                내 공유 목록
+                {UI_COPY.userMenu.myPosts}
               </Button>
             </div>
 
             <Separator />
 
             <div className="space-y-1">
-              <p className="px-2 text-xs font-semibold text-muted-foreground">계정</p>
+              <p className="px-2 text-xs font-semibold text-muted-foreground">{UI_COPY.userMenu.accountSection}</p>
               <Button
                 variant="ghost"
                 className={menuItemClassName(isActive('/mypage'))}
                 onClick={() => handleNavigate('/mypage')}
               >
                 <UserIcon className="w-4 h-4" />
-                마이페이지
+                {UI_COPY.userMenu.myPage}
               </Button>
             </div>
           </div>
@@ -146,7 +147,7 @@ const UserMenu = () => {
             onClick={handleLogout}
           >
             <LogOut className="w-4 h-4" />
-            로그아웃
+            {UI_COPY.userMenu.logout}
           </Button>
         </div>
       </SheetContent>

@@ -17,6 +17,7 @@ import { useSettingsStore } from '@/shared/stores/settings-store';
 import { Check, Palette } from 'lucide-react';
 import type { Category } from '@/entities/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 interface AddCategoryDialogProps {
   open: boolean;
@@ -151,7 +152,7 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceIdentifier, cat
   const handleSubmit = (categoryName: string) => {
     // 빈 문자열이나 공백만 있는 경우 추가 방지
     if (!categoryName.trim()) {
-      toast.error(MESSAGES.savedCategory.nameRequired);
+      toast.error(UI_COPY.myCategory.nameRequired);
       return;
     }
 
@@ -187,14 +188,14 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceIdentifier, cat
         }}
       >
         <DialogHeader>
-          <DialogTitle>{MESSAGES.savedCategory.addDialogTitle}</DialogTitle>
+          <DialogTitle>{UI_COPY.categoryDialog.add.title}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* UserRequest: 색상을 7개씩 2줄로 중앙 정렬하여 배치하고 시각적 균형 유지 */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label>색상 선택</Label>
+              <Label>{UI_COPY.categoryDialog.add.colorLabel}</Label>
               <span className="text-xs text-muted-foreground">{PALETTE_NAMES[colorPaletteMode]}</span>
             </div>
             <div className="grid grid-cols-7 gap-2 justify-items-center">
@@ -224,7 +225,7 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceIdentifier, cat
           </div>
 
           <div className="space-y-2">
-            <Label>추천 카테고리</Label>
+            <Label>{UI_COPY.categoryDialog.add.suggestedLabel}</Label>
             <div className="flex justify-center gap-2">
               {SUGGESTED_CATEGORIES.map((category) => (
                 <Button
@@ -241,10 +242,10 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceIdentifier, cat
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="name">직접 입력</Label>
+            <Label htmlFor="name">{UI_COPY.categoryDialog.add.manualInputLabel}</Label>
             <Input
               id="name"
-              placeholder="카테고리 이름"
+              placeholder={UI_COPY.categoryDialog.add.manualInputPlaceholder}
               value={name}
               onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => {
@@ -258,10 +259,10 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceIdentifier, cat
 
           <div className="flex gap-2 justify-end">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              취소
+              {UI_COPY.categoryDialog.add.cancel}
             </Button>
             <Button onClick={handleManualSubmit} disabled={isSubmitting || !name.trim()}>
-              {isSubmitting ? '추가 중...' : '추가'}
+              {isSubmitting ? UI_COPY.categoryDialog.add.submitting : UI_COPY.categoryDialog.add.submit}
             </Button>
           </div>
         </div>

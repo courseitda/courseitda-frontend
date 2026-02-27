@@ -23,6 +23,7 @@ import { MESSAGES } from '@/shared/constants/messages';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { CategoryPlaceView } from '@/services/api/category.service';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 interface CategoryCardProps {
   category: Category;
@@ -170,21 +171,21 @@ export const CategoryCard = ({ category, places, workspaceIdentifier, index, onP
       <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{MESSAGES.savedCategory.deleteConfirmTitle}</AlertDialogTitle>
+            <AlertDialogTitle>{UI_COPY.myCategory.deleteDialog.title}</AlertDialogTitle>
             <AlertDialogDescription>
-              {MESSAGES.savedCategory.deleteConfirmDescription(category.name)}
+              {UI_COPY.myCategory.deleteDialog.description(category.name)}
               <br />
-              <span className="text-destructive">{MESSAGES.savedCategory.deleteConfirmWarning}</span>
+              <span className="text-destructive">{UI_COPY.myCategory.deleteDialog.warning}</span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogCancel>{UI_COPY.common.cancel}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
               className="bg-destructive hover:bg-destructive/90"
               disabled={deleteCategoryMutation.isPending}
             >
-              {deleteCategoryMutation.isPending ? '삭제 중...' : '삭제'}
+              {deleteCategoryMutation.isPending ? UI_COPY.common.deleting : UI_COPY.common.delete}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

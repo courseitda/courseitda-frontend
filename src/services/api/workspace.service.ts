@@ -3,6 +3,7 @@ import type { Workspace } from '@/entities/types';
 import type { ApiResponse } from '@/types/api';
 import { BackendErrorCode } from '@/shared/utils/error-message';
 import { MESSAGES } from '@/shared/constants/messages';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 import { toSuccess, toError } from './http';
 
 // 워크스페이스 관련 백엔드 엔드포인트 상수 정의
@@ -193,7 +194,7 @@ export const workspaceApi = {
       return toError(
         error,
         BackendErrorCode.WORKSPACE_NOT_FOUND,
-        MESSAGES.workspace.notFound,
+        UI_COPY.workspaceDetail.notFound,
       );
     }
   },

@@ -12,6 +12,7 @@ import {PlaceInfoWindow} from './place-info-window';
 import {Button} from '@/components/ui/button';
 import {LocateFixed, Loader2} from 'lucide-react';
 import {MESSAGES} from '@/shared/constants/messages';
+import {UI_COPY} from '@/shared/constants/ui-copy';
 
 // 지도 캔버스 컴포넌트 - Naver Maps SDK를 사용하여 장소 마커와 경로 표시
 // 사용 위치: pages/WorkspaceDetail
@@ -444,12 +445,12 @@ export const MapCanvas = ({
     // UserRequest: 내 위치 버튼 클릭 시 현재 위치를 가져와 지도 중심으로 이동
     const handleLocateMe = () => {
         if (!navigator.geolocation) {
-            toast.error(MESSAGES.map.browserLocationUnsupported);
+            toast.error(UI_COPY.map.browserLocationUnsupported);
             return;
         }
 
         if (!ready || !mapReady || !mapInstance.current || !window.naver || !window.naver.maps) {
-            toast.error(MESSAGES.map.mapNotReady);
+            toast.error(UI_COPY.map.mapNotReady);
             return;
         }
 
@@ -504,9 +505,9 @@ export const MapCanvas = ({
             (geoError) => {
                 setIsLocating(false);
                 if (geoError.code === geoError.PERMISSION_DENIED) {
-                    toast.error(MESSAGES.map.locationPermissionDenied);
+                    toast.error(UI_COPY.map.locationPermissionDenied);
                 } else {
-                    toast.error(MESSAGES.map.locationFetchFailed);
+                    toast.error(UI_COPY.map.locationFetchFailed);
                 }
             },
             {

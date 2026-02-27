@@ -12,6 +12,7 @@ import { MESSAGES } from '@/shared/constants/messages';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { WorkspaceCategory } from '@/services/api/category.service';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 interface CategoryListProps {
   workspaceIdentifier: string;
@@ -112,7 +113,7 @@ export const CategoryList = ({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">카테고리</h2>
+        <h2 className="text-lg font-semibold">{UI_COPY.categoryList.title}</h2>
         {/* UserRequest: 카테고리 추가 버튼이 좌/우로 분할되는 마이크로 인터랙션 제공 */}
         <div ref={addOptionRef} className="relative min-h-[2.25rem]">
           <Button
@@ -121,7 +122,7 @@ export const CategoryList = ({
             className={`gap-2 transition-all duration-200 ${addOptionOpen ? 'opacity-0 pointer-events-none scale-95' : 'opacity-100'}`}
           >
             <Plus className="w-4 h-4" />
-            추가
+            {UI_COPY.categoryList.addAction}
           </Button>
           <div
             className={`absolute right-0 top-0 flex items-center gap-2 transition-all duration-200 ${addOptionOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}
@@ -136,7 +137,7 @@ export const CategoryList = ({
               }}
             >
               <FolderDown className="w-4 h-4" />
-              불러오기
+              {UI_COPY.categoryList.importAction}
             </Button>
             <Button
               size="sm"
@@ -147,7 +148,7 @@ export const CategoryList = ({
               }}
             >
               <Plus className="w-4 h-4" />
-              생성하기
+              {UI_COPY.categoryList.createAction}
             </Button>
           </div>
         </div>
@@ -156,13 +157,13 @@ export const CategoryList = ({
       {/* UserRequest: 카테고리 카드 사이 여백을 0.5배로 축소하여 공간 효율성 향상 (space-y-3 → space-y-1.5) */}
       {isError ? (
         <div className="border border-destructive/40 bg-destructive/5 text-destructive rounded-xl p-8 text-center text-sm">
-          카테고리를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.
+          {UI_COPY.categoryList.loadFailed}
         </div>
       ) : categories.length === 0 ? (
         <div className="border-2 border-dashed border-border rounded-xl p-8 text-center">
           {/* UserRequest: 카테고리 없음 상태에 폴더+플러스 아이콘만 크게 노출 */}
           <FolderPlus className="mx-auto mb-3 h-[72px] w-[72px] text-muted-foreground/60" />
-          <p className="text-muted-foreground mb-4">카테고리를 추가해보세요</p>
+          <p className="text-muted-foreground mb-4">{UI_COPY.categoryList.emptyDescription}</p>
         </div>
       ) : (
         <DragDropContext onDragEnd={handleDragEnd}>

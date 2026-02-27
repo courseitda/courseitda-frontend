@@ -14,6 +14,7 @@ import { workspaceApi } from '@/services/api';
 import { MESSAGES } from '@/shared/constants/messages';
 import type { Workspace } from '@/entities/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 interface EditWorkspaceDialogProps {
   open: boolean;
@@ -101,7 +102,7 @@ export const EditWorkspaceDialog = ({ open, onOpenChange, workspace }: EditWorks
     if (updateWorkspaceMutation.isPending) return;
 
     if (!title.trim()) {
-      toast.error(MESSAGES.workspace.titleRequired);
+      toast.error(UI_COPY.myWorkspace.titleRequired);
       return;
     }
 
@@ -112,15 +113,15 @@ export const EditWorkspaceDialog = ({ open, onOpenChange, workspace }: EditWorks
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent ref={dialogRef} className="transition-transform duration-200">
         <DialogHeader>
-          <DialogTitle>{MESSAGES.workspace.editDialogTitle}</DialogTitle>
+          <DialogTitle>{UI_COPY.workspaceDialog.edit.title}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">제목</Label>
+            <Label htmlFor="title">{UI_COPY.workspaceDialog.edit.fieldLabel}</Label>
             <Input
               id="title"
-              placeholder="예: 홍대 데이트 코스"
+              placeholder={UI_COPY.workspaceDialog.edit.placeholder}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
@@ -129,10 +130,12 @@ export const EditWorkspaceDialog = ({ open, onOpenChange, workspace }: EditWorks
 
           <div className="flex gap-2 justify-end">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              취소
+              {UI_COPY.workspaceDialog.edit.cancel}
             </Button>
             <Button type="submit" disabled={updateWorkspaceMutation.isPending}>
-              {updateWorkspaceMutation.isPending ? '수정 중...' : '확인'}
+              {updateWorkspaceMutation.isPending
+                ? UI_COPY.workspaceDialog.edit.submitting
+                : UI_COPY.workspaceDialog.edit.submit}
             </Button>
           </div>
         </form>

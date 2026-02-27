@@ -30,6 +30,7 @@ import PageHeader from '@/components/layout/page-header';
 import { UploadCategoryDialog } from '@/features/community/upload-category-dialog';
 import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
 import type { SharedSavedCategory } from '@/entities/types';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 /**
  * 커뮤니티 관리 페이지 - 회원만 접근 가능, 보관 카테고리를 공유/삭제 관리
@@ -89,7 +90,7 @@ const MyPosts = () => {
   const deleteMutation = useMutation({
     mutationFn: async (sharedCategoryId: string) => {
       if (!token) {
-        throw new Error(MESSAGES.common.authTokenRequired);
+        throw new Error(UI_COPY.system.authTokenRequired);
       }
       const response = await communityApi.deleteMySharedCategory(token, sharedCategoryId);
       if (!response.success) {
@@ -136,7 +137,7 @@ const MyPosts = () => {
           <p className="text-sm text-muted-foreground">
             {MESSAGES.sharedCategory.myPostsLoadFailed}
           </p>
-          <Button variant="outline" onClick={() => window.location.reload()}>{MESSAGES.common.retry}</Button>
+          <Button variant="outline" onClick={() => window.location.reload()}>{UI_COPY.common.retry}</Button>
         </div>
       </div>
     );
@@ -146,7 +147,7 @@ const MyPosts = () => {
     <>
       <div className="min-h-screen bg-background">
       {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
-      <PageHeader title="내 게시물" />
+      <PageHeader title={UI_COPY.myPosts.pageTitle} />
 
       <main className="min-h-[calc(100vh-72px)] flex flex-col pt-6 pb-6 md:pt-8 md:pb-8">
         <div className="container mx-auto px-4 mt-2">
@@ -157,11 +158,11 @@ const MyPosts = () => {
                 {/* UserRequest: 영역 내부 상단에 '공유한 카테고리' 라벨 표시 */}
                 {/* UserRequest: 제목과 공유 버튼을 한 줄로 정렬 */}
                 <div className="flex items-center justify-between">
-                  <div className="text-sm font-semibold text-foreground">업로드한 카테고리</div>
+                  <div className="text-sm font-semibold text-foreground">{UI_COPY.myPosts.sectionTitle}</div>
                   {/* UserRequest: 업로드하기 버튼 클릭 시 업로드 팝업을 노출 */}
                   <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setUploadDialogOpen(true)}>
                     <Upload className="w-4 h-4" />
-                    업로드하기
+                    {UI_COPY.myPosts.uploadAction}
                   </Button>
                 </div>
 
@@ -172,9 +173,9 @@ const MyPosts = () => {
                         {/* UserRequest: 공유한 카테고리가 없을 때 공유 아이콘 표시 */}
                         <Upload className="h-[72px] w-[72px] text-muted-foreground/60 md:h-[96px] md:w-[96px] lg:h-[120px] lg:w-[120px]" />
                         <div>
-                          업로드한 카테고리가 없습니다.
+                          {UI_COPY.myPosts.empty.title}
                           <br />
-                          내 카테고리를 업로드해보세요.
+                          {UI_COPY.myPosts.empty.description}
                         </div>
                       </CardContent>
                     </Card>
@@ -253,25 +254,25 @@ const MyPosts = () => {
       <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{MESSAGES.sharedCategory.deleteConfirmTitle}</AlertDialogTitle>
+            <AlertDialogTitle>{UI_COPY.myPosts.deleteDialog.title}</AlertDialogTitle>
             <AlertDialogDescription>
               {selectedForDelete && (
                 <>
-                  {MESSAGES.sharedCategory.deleteConfirmDescription(selectedForDelete.title)}
+                  {UI_COPY.myPosts.deleteDialog.description(selectedForDelete.title)}
                   <br />
-                  <span className="text-destructive">{MESSAGES.sharedCategory.deleteConfirmWarning}</span>
+                  <span className="text-destructive">{UI_COPY.myPosts.deleteDialog.warning}</span>
                 </>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteMutation.isPending}>취소</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>{UI_COPY.common.cancel}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmDelete}
               className="bg-destructive hover:bg-destructive/90"
               disabled={deleteMutation.isPending}
             >
-              {deleteMutation.isPending ? '삭제 중...' : '삭제'}
+              {deleteMutation.isPending ? UI_COPY.common.deleting : UI_COPY.common.delete}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

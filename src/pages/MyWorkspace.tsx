@@ -32,6 +32,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import PageHeader from '@/components/layout/page-header';
 import { formatRelativeTimeKorean } from '@/shared/utils/relative-time';
 import { MESSAGES } from '@/shared/constants/messages';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 /**
  * 워크스페이스 목록 페이지 컴포넌트
@@ -196,7 +197,7 @@ const MyWorkspace = () => {
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center space-y-3">
             <p className="text-sm text-muted-foreground">워크스페이스를 불러오지 못했습니다.</p>
-            <Button variant="outline" onClick={() => window.location.reload()}>{MESSAGES.common.retry}</Button>
+            <Button variant="outline" onClick={() => window.location.reload()}>{UI_COPY.common.retry}</Button>
           </div>
         </div>
     );
@@ -205,7 +206,7 @@ const MyWorkspace = () => {
   return (
       <div className="min-h-screen bg-gradient-card">
         {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
-        <PageHeader title="내 워크스페이스" />
+        <PageHeader title={UI_COPY.myWorkspace.pageTitle} />
 
         {/* 모바일 레이아웃 */}
         {/* UserRequest: 모바일 뷰 좌우 여백을 0.5배로 축소하여 다른 페이지와 통일성 유지 (px-8 → px-4) */}
@@ -220,7 +221,7 @@ const MyWorkspace = () => {
               <CardHeader className="flex flex-col items-center justify-center">
                 <div className="flex items-center gap-2 text-primary">
                   <Plus className="w-5 h-5" />
-                  <CardTitle className="text-base md:text-lg text-primary">새 워크스페이스</CardTitle>
+                  <CardTitle className="text-base md:text-lg text-primary">{UI_COPY.myWorkspace.createAction}</CardTitle>
                 </div>
               </CardHeader>
             </Card>
@@ -262,7 +263,7 @@ const MyWorkspace = () => {
                   <CardHeader className="flex flex-col items-center justify-center">
                     <div className="flex items-center gap-2 text-primary">
                       <Plus className="w-5 h-5" />
-                      <CardTitle className="text-base md:text-lg text-primary">새 워크스페이스</CardTitle>
+                      <CardTitle className="text-base md:text-lg text-primary">{UI_COPY.myWorkspace.createAction}</CardTitle>
                     </div>
                   </CardHeader>
                 </Card>
@@ -303,25 +304,25 @@ const MyWorkspace = () => {
         <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>{MESSAGES.workspace.deleteConfirmTitle}</AlertDialogTitle>
+              <AlertDialogTitle>{UI_COPY.myWorkspace.deleteDialog.title}</AlertDialogTitle>
               <AlertDialogDescription>
                 {selectedForDelete && (
                     <>
-                      {MESSAGES.workspace.deleteConfirmDescription(selectedForDelete.title)}
+                      {UI_COPY.myWorkspace.deleteDialog.description(selectedForDelete.title)}
                       <br />
-                      <span className="text-destructive">{MESSAGES.workspace.deleteConfirmWarning}</span>
+                      <span className="text-destructive">{UI_COPY.myWorkspace.deleteDialog.warning}</span>
                     </>
                 )}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>취소</AlertDialogCancel>
+              <AlertDialogCancel>{UI_COPY.common.cancel}</AlertDialogCancel>
               <AlertDialogAction
                   onClick={handleDeleteConfirm}
                   className="bg-destructive hover:bg-destructive/90"
                   disabled={deleteWorkspaceMutation.isPending}
               >
-                {deleteWorkspaceMutation.isPending ? '삭제 중...' : '삭제'}
+                {deleteWorkspaceMutation.isPending ? UI_COPY.common.deleting : UI_COPY.common.delete}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

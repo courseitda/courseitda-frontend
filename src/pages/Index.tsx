@@ -5,44 +5,45 @@ import {CircleHelp, Compass, FolderTree, Layers, MapPinned, Route, Search, Share
 import {useAuthStore} from '@/shared/stores/auth-store';
 import PageHeader from '@/components/layout/page-header';
 import HeroAnimation from '@/components/landing/hero-animation';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 const problems = [
     {
-        title: '분산된 정보',
-        description: '지도 즐겨찾기, 메모, 채팅에 흩어진 장소를 한 곳에서 체계적으로 관리하기 어렵습니다.',
+        title: UI_COPY.landing.problems[0].title,
+        description: UI_COPY.landing.problems[0].description,
         icon: Layers,
     },
     {
-        title: '장소 탐색 피로도',
-        description: '내 취향에 맞는 코스 정보를 찾기 위해 여러 플랫폼을 오가며 탐색해야 합니다.',
+        title: UI_COPY.landing.problems[1].title,
+        description: UI_COPY.landing.problems[1].description,
         icon: Search,
     },
     {
-        title: '복잡한 코스 선정 과정',
-        description: '장소를 찾은 뒤에도 순서 정리와 동선 확인까지 직접 하려면 시간이 오래 걸립니다.',
+        title: UI_COPY.landing.problems[2].title,
+        description: UI_COPY.landing.problems[2].description,
         icon: Route,
     },
 ] as const;
 
 const features = [
     {
-        title: '커뮤니티 탐색과 저장',
-        description: '다른 사용자가 공유한 카테고리를 둘러보고, 마음에 드는 카테고리를 내 보관함에 모을 수 있습니다.',
+        title: UI_COPY.landing.features[0].title,
+        description: UI_COPY.landing.features[0].description,
         icon: Search,
     },
     {
-        title: '커스텀 코스 제작',
-        description: '카테고리 순서를 편집하고 대표 장소를 정해, 완벽한 일정을 만들 수 있습니다.',
+        title: UI_COPY.landing.features[1].title,
+        description: UI_COPY.landing.features[1].description,
         icon: FolderTree,
     },
     {
-        title: '지도 기반 시각화',
-        description: '카테고리별 색상 마커와 대표 장소 경로로 동선을 한눈에 확인할 수 있습니다.',
+        title: UI_COPY.landing.features[2].title,
+        description: UI_COPY.landing.features[2].description,
         icon: Compass,
     },
     {
-        title: '공유와 재사용',
-        description: '내가 만들어둔 카테고리를 재사용하거나 공유할 수 있습니다.',
+        title: UI_COPY.landing.features[3].title,
+        description: UI_COPY.landing.features[3].description,
         icon: Share2,
     },
 ] as const;
@@ -50,24 +51,24 @@ const features = [
 const steps = [
     // UserRequest: "이렇게 사용해요" 단계를 커뮤니티 기반 간편 시작 흐름(발견→가져오기→커스텀→공유)으로 재구성한다.
     {
-        number: '01',
-        title: '커뮤니티에서 카테고리를 찾습니다',
-        description: '다른 사용자가 공유한 카테고리를 둘러보고, 원하는 카테고리를 고릅니다.',
+        number: UI_COPY.landing.steps[0].number,
+        title: UI_COPY.landing.steps[0].title,
+        description: UI_COPY.landing.steps[0].description,
     },
     {
-        number: '02',
-        title: '워크스페이스로 가져옵니다',
-        description: '고른 카테고리를 내 워크스페이스 일정으로 불러와 바로 사용합니다.',
+        number: UI_COPY.landing.steps[1].number,
+        title: UI_COPY.landing.steps[1].title,
+        description: UI_COPY.landing.steps[1].description,
     },
     {
-        number: '03',
-        title: '필요한 만큼만 커스텀합니다',
-        description: '카테고리 순서를 편집하고 대표 장소를 설정해 일정 흐름을 정리합니다.',
+        number: UI_COPY.landing.steps[2].number,
+        title: UI_COPY.landing.steps[2].title,
+        description: UI_COPY.landing.steps[2].description,
     },
     {
-        number: '04',
-        title: '완성한 카테고리를 다시 공유합니다',
-        description: '내가 다듬은 카테고리를 공유해 다른 사용자도 쉽게 코스를 시작할 수 있습니다.',
+        number: UI_COPY.landing.steps[3].number,
+        title: UI_COPY.landing.steps[3].title,
+        description: UI_COPY.landing.steps[3].description,
     },
 ] as const;
 
@@ -100,11 +101,11 @@ const Index = () => {
                             className="mt-5 text-4xl font-extrabold leading-tight tracking-tight md:text-5xl"
                         >
                             {/* UserRequest: 랜딩 최상단 문구를 3줄 카피(시작/마무리/코스잇다)로 교체한다. */}
-                            시작은 간편하게
+                            {UI_COPY.landing.hero.line1}
                             <br/>
-                            마무리는 완벽하게
+                            {UI_COPY.landing.hero.line2}
                             <br/>
-                            <span className="text-primary">코스잇다</span>에서!
+                            <span className="text-primary">{UI_COPY.landing.hero.brand}</span>{UI_COPY.landing.hero.suffix}
                         </motion.h1>
 
                         <motion.p
@@ -114,7 +115,7 @@ const Index = () => {
                             className="mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base"
                         >
                             {/* UserRequest: 랜딩 보조 문구를 카테고리 선택 기반의 간편 시작 메시지로 교체한다. */}
-                            처음부터 고민하지 말고, 필요한 카테고리만 골라 간편하게 시작하세요.
+                            {UI_COPY.landing.hero.description}
                         </motion.p>
 
                         <motion.div
@@ -132,7 +133,7 @@ const Index = () => {
                                         className="justify-center sm:min-w-48 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-primary/45"
                                         onClick={() => navigate('/my-workspaces')}
                                     >
-                                        내 워크스페이스로 이동
+                                        {UI_COPY.landing.hero.moveToWorkspace}
                                     </Button>
                                     <Button
                                         size="lg"
@@ -140,7 +141,7 @@ const Index = () => {
                                         className="sm:min-w-48 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-primary/45"
                                         onClick={() => navigate('/community')}
                                     >
-                                        커뮤니티 둘러보기
+                                        {UI_COPY.landing.hero.exploreCommunity}
                                     </Button>
                                 </>
                             ) : (
@@ -150,7 +151,7 @@ const Index = () => {
                                         className="justify-center sm:min-w-40 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-primary/45"
                                         onClick={() => navigate('/auth?tab=register')}
                                     >
-                                        시작하기
+                                        {UI_COPY.landing.hero.start}
                                     </Button>
                                     <Button
                                         size="lg"
@@ -158,7 +159,7 @@ const Index = () => {
                                         className="sm:min-w-40 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-primary/45"
                                         onClick={() => navigate('/community')}
                                     >
-                                        커뮤니티 둘러보기
+                                        {UI_COPY.landing.hero.exploreCommunity}
                                     </Button>
                                 </>
                             )}
@@ -185,7 +186,7 @@ const Index = () => {
                     >
                         {/* UserRequest: 섹션 제목 앞에 주제별 아이콘을 배치해 정보 구분을 강화한다. */}
                         <CircleHelp className="h-6 w-6 text-primary"/>
-                        이런 고민, 있지 않나요?
+                        {UI_COPY.landing.problemsTitle}
                     </motion.h2>
                     <div className="mt-6 grid gap-3 md:grid-cols-3">
                         {problems.map((item, index) => (
@@ -220,7 +221,7 @@ const Index = () => {
                         className="flex items-center gap-2 text-2xl font-bold"
                     >
                         <Sparkles className="h-6 w-6 text-primary"/>
-                        핵심 기능
+                        {UI_COPY.landing.featuresTitle}
                     </motion.h2>
                     <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
                         {features.map((feature, index) => (
@@ -255,7 +256,7 @@ const Index = () => {
                         className="flex items-center gap-2 text-2xl font-bold"
                     >
                         <Workflow className="h-6 w-6 text-primary"/>
-                        이렇게 사용해요
+                        {UI_COPY.landing.stepsTitle}
                     </motion.h2>
 
                     <div className="relative mt-8">

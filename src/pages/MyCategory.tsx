@@ -46,6 +46,7 @@ import { placeApi } from '@/services/api';
 import { formatRelativeTimeKorean } from '@/shared/utils/relative-time';
 import { CategoryPlacesMap } from '@/components/map/category-places-map';
 import { LikedCategoryList } from '@/features/my-category/liked-category-list';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 
 /**
@@ -133,7 +134,7 @@ const MyCategory = () => {
 
   const handleSearchPlaces = async () => {
     if (!placeQuery.trim()) {
-      toast.error(MESSAGES.savedCategory.searchKeywordRequired);
+      toast.error(UI_COPY.myCategory.placeSearchKeywordRequired);
       return;
     }
 
@@ -145,7 +146,7 @@ const MyCategory = () => {
     } else {
       setPlaceResults(searchedPlaces ?? []);
       if (!searchedPlaces || searchedPlaces.length === 0) {
-        toast.info(MESSAGES.savedCategory.searchNoResult);
+        toast.info(UI_COPY.myCategory.placeSearchNoResult);
       }
     }
     setPlaceSearchLoading(false);
@@ -154,7 +155,7 @@ const MyCategory = () => {
   const handleAddPlace = (place: SearchedPlace) => {
     const exists = selectedPlaces.some((item) => item.id === place.id);
     if (exists) {
-      toast.info(MESSAGES.savedCategory.placeAlreadyAdded);
+      toast.info(UI_COPY.myCategory.placeAlreadyAdded);
       return;
     }
     setSelectedPlaces((prev) => [...prev, place]);
@@ -202,11 +203,11 @@ const MyCategory = () => {
 
   const handleCreateCategory = async () => {
     if (!newCategoryTitle.trim()) {
-      toast.error(MESSAGES.savedCategory.nameRequired);
+      toast.error(UI_COPY.myCategory.nameRequired);
       return;
     }
     if (selectedPlaces.length === 0) {
-      toast.error(MESSAGES.savedCategory.atLeastOnePlace);
+      toast.error(UI_COPY.myCategory.atLeastOnePlace);
       return;
     }
     if (createSavedCategoryMutation.isPending || updateSavedCategoryMutation.isPending) return;
@@ -383,7 +384,7 @@ const MyCategory = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-3">
           <p className="text-sm text-muted-foreground">{MESSAGES.savedCategory.listLoadFailed}</p>
-          <Button variant="outline" onClick={() => window.location.reload()}>{MESSAGES.common.retry}</Button>
+          <Button variant="outline" onClick={() => window.location.reload()}>{UI_COPY.common.retry}</Button>
         </div>
       </div>
     );
@@ -412,7 +413,7 @@ const MyCategory = () => {
       <div className="min-h-screen bg-gradient-card">
         {/* UserRequest: 뒤로가기 버튼은 직전 페이지로 이동 */}
         {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
-        <PageHeader title="내 카테고리" />
+        <PageHeader title={UI_COPY.myCategory.pageTitle} />
 
         {/* 모바일 레이아웃 */}
         {/* UserRequest: 모바일 뷰 좌우 여백을 0.5배로 축소하여 다른 페이지와 통일성 유지 (px-8 → px-4) */}
@@ -439,7 +440,7 @@ const MyCategory = () => {
                 <CardHeader className="flex flex-col items-center justify-center">
                   <div className="flex items-center gap-2 text-primary">
                     <Plus className="w-5 h-5" />
-                    <CardTitle className="text-base md:text-lg text-primary">새 카테고리</CardTitle>
+                    <CardTitle className="text-base md:text-lg text-primary">{UI_COPY.myCategory.createAction}</CardTitle>
                   </div>
                 </CardHeader>
               </Card>
@@ -460,7 +461,7 @@ const MyCategory = () => {
               ) : likedCategories.length === 0 ? (
                 renderEmptyState(
                   <Heart className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />,
-                  '아직 찜한 카테고리가 없습니다.\n커뮤니티에서 마음에 드는 카테고리를 찾아보세요.',
+                  `${UI_COPY.myCategory.likedEmpty.title}\n${UI_COPY.myCategory.likedEmpty.description}`,
                   'h-[calc(50vh+5rem)]',
                   <Button
                     type="button"
@@ -469,7 +470,7 @@ const MyCategory = () => {
                     onClick={handleMoveToCommunity}
                   >
                     <ArrowRight className="h-4 w-4 shrink-0" />
-                    찜하러 가기
+                    {UI_COPY.myCategory.likedEmpty.action}
                   </Button>,
                 )
               ) : (
@@ -516,7 +517,7 @@ const MyCategory = () => {
                     <CardHeader className="flex flex-col items-center justify-center">
                       <div className="flex items-center gap-2 text-primary">
                         <Plus className="w-5 h-5" />
-                        <CardTitle className="text-base md:text-lg text-primary">새 카테고리</CardTitle>
+                        <CardTitle className="text-base md:text-lg text-primary">{UI_COPY.myCategory.createAction}</CardTitle>
                       </div>
                     </CardHeader>
                   </Card>
@@ -537,7 +538,7 @@ const MyCategory = () => {
                   ) : likedCategories.length === 0 ? (
                     renderEmptyState(
                       <Heart className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />,
-                      '아직 찜한 카테고리가 없습니다.\n커뮤니티에서 마음에 드는 카테고리를 찾아보세요.',
+                      `${UI_COPY.myCategory.likedEmpty.title}\n${UI_COPY.myCategory.likedEmpty.description}`,
                       'h-[calc(50vh+5rem)]',
                       <Button
                         type="button"
@@ -546,7 +547,7 @@ const MyCategory = () => {
                         onClick={handleMoveToCommunity}
                       >
                         <ArrowRight className="h-4 w-4 shrink-0" />
-                        찜하러 가기
+                        {UI_COPY.myCategory.likedEmpty.action}
                       </Button>,
                     )
                   ) : (
@@ -585,13 +586,13 @@ const MyCategory = () => {
                 focusedPlaceId={focusedPlaceId}
               />
               <div className="space-y-2">
-                <p className="text-sm font-semibold">장소 목록</p>
+                <p className="text-sm font-semibold">{UI_COPY.myCategory.detailDialog.placeListTitle}</p>
                 {/* UserRequest: 장소 개수와 무관하게 상세보기 목록 영역 높이를 고정하고 최소 행 슬롯으로 구분선 유지 */}
                 <div className="h-48 border border-border rounded-lg divide-y divide-border overflow-y-auto bg-muted/20">
                   {detailPlaces.length === 0 ? (
                     <>
                       <div className="h-14 px-3 flex items-center text-sm text-muted-foreground">
-                        {MESSAGES.savedCategory.noPlacesInDetail}
+                        {UI_COPY.myCategory.detailDialog.noPlacesInDetail}
                       </div>
                       {Array.from({ length: detailMinRows - 1 }).map((_, index) => (
                         <div key={`detail-empty-initial-${index}`} className="h-14" />
@@ -624,16 +625,16 @@ const MyCategory = () => {
         <AlertDialog open={unlikeDialogOpen} onOpenChange={setUnlikeDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>{MESSAGES.likedCategory.unlikeConfirmTitle}</AlertDialogTitle>
+              <AlertDialogTitle>{UI_COPY.myCategory.detailDialog.unlikeTitle}</AlertDialogTitle>
               <AlertDialogDescription>
                 {pendingUnlike?.title
-                  ? MESSAGES.likedCategory.unlikeConfirmDescription(pendingUnlike.title)
-                  : MESSAGES.likedCategory.unlikeConfirmDescription('선택한 카테고리')}
+                  ? UI_COPY.myCategory.detailDialog.unlikeDescription(pendingUnlike.title)
+                  : UI_COPY.myCategory.detailDialog.unlikeDescription('선택한 카테고리')}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>취소</AlertDialogCancel>
-              <AlertDialogAction onClick={confirmUnlike}>해제하기</AlertDialogAction>
+              <AlertDialogCancel>{UI_COPY.myCategory.detailDialog.unlikeCancel}</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmUnlike}>{UI_COPY.myCategory.detailDialog.unlikeConfirm}</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -657,24 +658,28 @@ const MyCategory = () => {
         >
           <DialogContent className="max-w-2xl max-h-[88vh] overflow-y-auto px-3 py-4 sm:p-6">
             <DialogHeader>
-              <DialogTitle>{categoryDialogMode === 'edit' ? '카테고리 수정' : '새 카테고리 추가'}</DialogTitle>
+              <DialogTitle>
+                {categoryDialogMode === 'edit'
+                  ? UI_COPY.myCategory.editorDialog.editTitle
+                  : UI_COPY.myCategory.editorDialog.createTitle}
+              </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <p className="text-sm font-semibold">카테고리 이름</p>
+                <p className="text-sm font-semibold">{UI_COPY.myCategory.editorDialog.nameLabel}</p>
                 <Input
-                  placeholder="예: 맛집 투어"
+                  placeholder={UI_COPY.myCategory.editorDialog.namePlaceholder}
                   value={newCategoryTitle}
                   onChange={(event) => setNewCategoryTitle(event.target.value)}
                 />
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm font-semibold">추가된 장소</p>
+                <p className="text-sm font-semibold">{UI_COPY.myCategory.editorDialog.selectedPlacesLabel}</p>
                 {/* UserRequest: 검색 결과 영역과 동일한 높이로 고정하고 스크롤로 관리 */}
                 <div className="max-h-56 overflow-y-auto overflow-x-hidden border border-border rounded-lg divide-y divide-border">
                   {selectedPlaces.length === 0 ? (
-                    <div className="p-4 text-sm text-muted-foreground">{MESSAGES.savedCategory.noPlacesSelected}</div>
+                    <div className="p-4 text-sm text-muted-foreground">{UI_COPY.myCategory.editorDialog.noPlacesSelected}</div>
                   ) : (
                     selectedPlaces.map((place) => (
                       <div key={place.id} className="flex items-center gap-2.5 p-3">
@@ -690,7 +695,7 @@ const MyCategory = () => {
                           variant="ghost"
                           className="shrink-0"
                           onClick={() => handleRemovePlace(place.id)}
-                          aria-label="장소 제거"
+                          aria-label={UI_COPY.myCategory.editorDialog.removePlaceAriaLabel}
                         >
                           <X className="w-4 h-4" />
                         </Button>
@@ -701,11 +706,11 @@ const MyCategory = () => {
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm font-semibold">장소 검색</p>
+                <p className="text-sm font-semibold">{UI_COPY.myCategory.editorDialog.placeSearchLabel}</p>
                 <div className="flex w-full min-w-0 items-center gap-2">
                   <Input
                     className="min-w-0 flex-1"
-                    placeholder="장소 이름이나 주소 검색"
+                    placeholder={UI_COPY.myCategory.editorDialog.placeSearchPlaceholder}
                     value={placeQuery}
                     onChange={(event) => setPlaceQuery(event.target.value)}
                     onKeyDown={(event) => {
@@ -721,11 +726,11 @@ const MyCategory = () => {
                     className="shrink-0 gap-2 px-3"
                   >
                     <Search className="w-4 h-4" />
-                    검색
+                    {UI_COPY.myCategory.editorDialog.searchAction}
                   </Button>
                 </div>
                 {placeSearchLoading && (
-                  <div className="text-sm text-muted-foreground">{MESSAGES.workspaceCategory.searching}</div>
+                  <div className="text-sm text-muted-foreground">{UI_COPY.myCategory.editorDialog.searching}</div>
                 )}
                 {!placeSearchLoading && placeResults.length > 0 && (
                   <div className="max-h-56 overflow-y-auto overflow-x-hidden border border-border rounded-lg divide-y divide-border">
@@ -744,7 +749,7 @@ const MyCategory = () => {
                           className="shrink-0"
                           onClick={() => handleAddPlace(place)}
                         >
-                          추가
+                          {UI_COPY.myCategory.editorDialog.addPlaceAction}
                         </Button>
                       </div>
                     ))}
@@ -754,7 +759,7 @@ const MyCategory = () => {
 
               <div className="flex justify-end gap-2">
                 <Button className="shrink-0" variant="outline" onClick={() => setCreateDialogOpen(false)}>
-                  취소
+                  {UI_COPY.myCategory.editorDialog.cancel}
                 </Button>
                 {/* UserRequest: 필수 입력값이 없으면 생성 버튼을 비활성화 */}
                 <Button
@@ -769,11 +774,11 @@ const MyCategory = () => {
                 >
                   {createSavedCategoryMutation.isPending || updateSavedCategoryMutation.isPending
                     ? categoryDialogMode === 'edit'
-                      ? '수정 중...'
-                      : '생성 중...'
+                      ? UI_COPY.myCategory.editorDialog.editing
+                      : UI_COPY.myCategory.editorDialog.creating
                     : categoryDialogMode === 'edit'
-                      ? '수정'
-                      : '생성'}
+                      ? UI_COPY.myCategory.editorDialog.edit
+                      : UI_COPY.myCategory.editorDialog.create}
                 </Button>
               </div>
             </div>
@@ -783,25 +788,25 @@ const MyCategory = () => {
         <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>{MESSAGES.savedCategory.deleteConfirmTitle}</AlertDialogTitle>
+              <AlertDialogTitle>{UI_COPY.myCategory.deleteDialog.title}</AlertDialogTitle>
               <AlertDialogDescription>
                 {selectedForDelete && (
                   <>
-                    {MESSAGES.savedCategory.deleteConfirmDescription(selectedForDelete.title)}
+                    {UI_COPY.myCategory.deleteDialog.description(selectedForDelete.title)}
                     <br />
-                    <span className="text-destructive">{MESSAGES.savedCategory.deleteConfirmWarning}</span>
+                    <span className="text-destructive">{UI_COPY.myCategory.deleteDialog.warning}</span>
                   </>
                 )}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>취소</AlertDialogCancel>
+              <AlertDialogCancel>{UI_COPY.common.cancel}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDeleteConfirm}
                 className="bg-destructive hover:bg-destructive/90"
                 disabled={deleteSavedCategoryMutation.isPending}
               >
-                {deleteSavedCategoryMutation.isPending ? '삭제 중...' : '삭제'}
+                {deleteSavedCategoryMutation.isPending ? UI_COPY.common.deleting : UI_COPY.common.delete}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

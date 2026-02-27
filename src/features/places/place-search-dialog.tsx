@@ -16,6 +16,7 @@ import { useAuthStore } from '@/shared/stores/auth-store';
 import { MESSAGES } from '@/shared/constants/messages';
 import type { SearchedPlace } from '@/entities/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 interface PlaceSearchDialogProps {
   open: boolean;
@@ -44,7 +45,7 @@ export const PlaceSearchDialog = ({
   const handleSearch = async () => {
     // 빈 검색어 입력 방지
     if (!query.trim()) {
-      toast.error(MESSAGES.place.searchKeywordRequired);
+      toast.error(UI_COPY.placeSearchDialog.keywordRequired);
       return;
     }
 
@@ -63,7 +64,7 @@ export const PlaceSearchDialog = ({
       
       // 검색 결과가 없을 경우 안내
       if (searchedPlaces.length === 0) {
-        toast.info(MESSAGES.place.searchNoResult);
+        toast.info(UI_COPY.placeSearchDialog.noResult);
       }
     }
 
@@ -105,7 +106,7 @@ export const PlaceSearchDialog = ({
 
   const handleAdd = (place: SearchedPlace) => {
     if (!token) {
-      toast.error(MESSAGES.common.loginRequired);
+      toast.error(UI_COPY.system.loginRequired);
       return;
     }
 
@@ -119,9 +120,9 @@ export const PlaceSearchDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[88vh] flex flex-col overflow-y-auto px-3 py-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle>{MESSAGES.place.searchDialogTitle}</DialogTitle>
+          <DialogTitle>{UI_COPY.placeSearchDialog.title}</DialogTitle>
           {/* UserRequest: 검색 제공자 혼선을 방지하기 위해 안내 문구를 중립적으로 변경한다. */}
-          <DialogDescription>{MESSAGES.place.searchDialogDescription}</DialogDescription>
+          <DialogDescription>{UI_COPY.placeSearchDialog.description}</DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4 min-h-0 flex-1">
@@ -129,7 +130,7 @@ export const PlaceSearchDialog = ({
           <div className="flex gap-2">
             <div className="flex-1 min-w-0">
               <Input
-                placeholder="장소 이름이나 주소 검색"
+                placeholder={UI_COPY.placeSearchDialog.placeholder}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => {
@@ -142,14 +143,14 @@ export const PlaceSearchDialog = ({
             </div>
             <Button onClick={handleSearch} disabled={loading} className="shrink-0 gap-2 px-3">
               <Search className="w-4 h-4" />
-              검색
+              {UI_COPY.placeSearchDialog.searchAction}
             </Button>
           </div>
 
           {/* 스크롤 가능한 결과 영역 */}
           <div className="flex-1 overflow-y-auto min-h-0">
             {loading && (
-              <div className="py-8 text-center text-muted-foreground">{MESSAGES.workspaceCategory.searching}</div>
+              <div className="py-8 text-center text-muted-foreground">{UI_COPY.placeSearchDialog.searching}</div>
             )}
 
             {!loading && results.length > 0 && (
@@ -178,7 +179,7 @@ export const PlaceSearchDialog = ({
                         onClick={() => handleAdd(place)}
                         disabled={adding === place.id}
                       >
-                        {adding === place.id ? '추가 중...' : '추가'}
+                        {adding === place.id ? UI_COPY.placeSearchDialog.addingAction : UI_COPY.placeSearchDialog.addAction}
                       </Button>
                     </div>
                   </div>

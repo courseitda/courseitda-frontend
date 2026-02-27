@@ -13,6 +13,7 @@ import SharedCategoryList from '@/components/community/shared-category-list';
 import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
 import PageHeader from '@/components/layout/page-header';
 import LoginRequiredDialog from '@/components/common/login-required-dialog';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 const SearchResult = () => {
   const navigate = useNavigate();
@@ -95,7 +96,7 @@ const SearchResult = () => {
   return (
     <div className="min-h-screen bg-gradient-card">
       {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
-      <PageHeader title="검색 결과" />
+      <PageHeader title={UI_COPY.searchResult.pageTitle} />
 
       <main className="container mx-auto px-4 py-6 md:py-8">
         <div className="max-w-6xl mx-auto space-y-6">
@@ -113,7 +114,7 @@ const SearchResult = () => {
 
           <section className="space-y-3">
             <div className="flex items-center justify-between mb-2 px-1">
-              <h2 className="text-base font-semibold pl-1">검색 결과</h2>
+              <h2 className="text-base font-semibold pl-1">{UI_COPY.searchResult.sectionTitle}</h2>
               <span className="text-xs text-muted-foreground">
                 {filteredCategories.length}개
               </span>

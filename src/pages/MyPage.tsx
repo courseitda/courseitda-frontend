@@ -8,6 +8,7 @@ import { useAuthStore } from '@/shared/stores/auth-store';
 import { useUserProfile } from '@/shared/hooks/use-user-info';
 import { Spinner } from '@/components/ui/spinner';
 import PageHeader from '@/components/layout/page-header';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 /**
  * 사용자 프로필 정보를 표시하는 마이페이지 컴포넌트
@@ -48,7 +49,7 @@ const MyPage = () => {
     <div className="min-h-screen bg-gradient-card">
       {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
       {/* UserRequest: 마이페이지 우측 상단에도 햄버거 메뉴를 노출 */}
-      <PageHeader title="마이페이지" />
+      <PageHeader title={UI_COPY.myPage.pageTitle} />
 
       <main className="container mx-auto px-4 py-12 md:py-8 max-w-2xl">
         <div className="space-y-6">
@@ -76,7 +77,7 @@ const MyPage = () => {
             onClick={handleLogout}
           >
             <LogOut className="w-4 h-4" />
-            로그아웃
+            {UI_COPY.myPage.logout}
           </Button>
         </div>
       </main>

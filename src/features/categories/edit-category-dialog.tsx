@@ -17,6 +17,7 @@ import { useSettingsStore } from '@/shared/stores/settings-store';
 import { Check, Palette } from 'lucide-react';
 import type { Category } from '@/entities/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 interface EditCategoryDialogProps {
   open: boolean;
@@ -126,7 +127,7 @@ export const EditCategoryDialog = ({ open, onOpenChange, category, workspaceIden
     
     // 빈 문자열이나 공백만 있는 경우 수정 방지
     if (!name.trim()) {
-      toast.error(MESSAGES.savedCategory.nameRequired);
+      toast.error(UI_COPY.myCategory.nameRequired);
       return;
     }
 
@@ -147,14 +148,14 @@ export const EditCategoryDialog = ({ open, onOpenChange, category, workspaceIden
         }}
       >
         <DialogHeader>
-          <DialogTitle>{MESSAGES.savedCategory.editDialogTitle}</DialogTitle>
+          <DialogTitle>{UI_COPY.categoryDialog.edit.title}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* UserRequest: 색상을 7개씩 2줄로 중앙 정렬하여 배치하고 시각적 균형 유지 */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label>색상 선택</Label>
+              <Label>{UI_COPY.categoryDialog.edit.colorLabel}</Label>
               <span className="text-xs text-muted-foreground">{PALETTE_NAMES[colorPaletteMode]}</span>
             </div>
             <div className="grid grid-cols-7 gap-2 justify-items-center">
@@ -184,10 +185,10 @@ export const EditCategoryDialog = ({ open, onOpenChange, category, workspaceIden
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="name">카테고리 이름</Label>
+            <Label htmlFor="name">{UI_COPY.categoryDialog.edit.nameLabel}</Label>
             <Input
               id="name"
-              placeholder="카테고리 이름"
+              placeholder={UI_COPY.categoryDialog.edit.namePlaceholder}
               value={name}
               onChange={(e) => setName(e.target.value)}
               autoFocus
@@ -196,10 +197,12 @@ export const EditCategoryDialog = ({ open, onOpenChange, category, workspaceIden
 
           <div className="flex gap-2 justify-end">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              취소
+              {UI_COPY.categoryDialog.edit.cancel}
             </Button>
             <Button type="submit" disabled={updateCategoryMutation.isPending || !name.trim()}>
-              {updateCategoryMutation.isPending ? '수정 중...' : '확인'}
+              {updateCategoryMutation.isPending
+                ? UI_COPY.categoryDialog.edit.submitting
+                : UI_COPY.categoryDialog.edit.submit}
             </Button>
           </div>
         </form>

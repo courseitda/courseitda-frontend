@@ -19,6 +19,7 @@ import { getCategoryColors, type PaletteMode } from '@/shared/constants/colors';
 import { useSettingsStore } from '@/shared/stores/settings-store';
 import { MESSAGES } from '@/shared/constants/messages';
 import type { Category, SavedCategory, SharedSavedCategory } from '@/entities/types';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 type ImportCategoryDialogProps = {
   open: boolean;
@@ -95,7 +96,7 @@ export const ImportCategoryDialog = ({
   const importMutation = useMutation({
     mutationFn: async (target: ImportTarget) => {
       if (!token) {
-        throw new Error(MESSAGES.common.authTokenRequired);
+        throw new Error(UI_COPY.system.authTokenRequired);
       }
 
       const { category, error } = await categoryApi.add({
@@ -158,29 +159,29 @@ export const ImportCategoryDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{MESSAGES.workspaceCategory.importDialogTitle}</DialogTitle>
+          <DialogTitle>{UI_COPY.importCategoryDialog.title}</DialogTitle>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'saved' | 'liked')}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="saved" className="flex items-center gap-1.5">
               <Folder className="w-4 h-4" />
-              내 보관함
+              {UI_COPY.importCategoryDialog.savedTab}
             </TabsTrigger>
             <TabsTrigger value="liked" className="flex items-center gap-1.5">
               <Heart className="w-4 h-4" />
-              찜
+              {UI_COPY.importCategoryDialog.likedTab}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="saved" className="mt-4">
             {isBusy ? (
               <div className={`${listViewportClassName} flex items-center justify-center text-sm text-muted-foreground`}>
-                {MESSAGES.common.loading}
+                {UI_COPY.common.loading}
               </div>
             ) : savedCategories.length === 0 ? (
               <div className={`${listViewportClassName} flex items-center justify-center text-sm text-muted-foreground`}>
-                {MESSAGES.savedCategory.noSavedCategories}
+                {UI_COPY.importCategoryDialog.savedEmpty}
               </div>
             ) : (
               <div className={`${listViewportClassName} overflow-y-auto overflow-x-visible space-y-2 px-1 py-1`}>
@@ -213,7 +214,7 @@ export const ImportCategoryDialog = ({
                         disabled={importMutation.isPending}
                       >
                         <FolderDown className="h-3.5 w-3.5" />
-                        추가
+                        {UI_COPY.common.add}
                       </Button>
                       <ChevronDown
                         className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${expandedCategoryId === category.id ? 'rotate-180' : ''}`}
@@ -243,11 +244,11 @@ export const ImportCategoryDialog = ({
           <TabsContent value="liked" className="mt-4">
             {isBusy ? (
               <div className={`${listViewportClassName} flex items-center justify-center text-sm text-muted-foreground`}>
-                {MESSAGES.common.loading}
+                {UI_COPY.common.loading}
               </div>
             ) : likedCategories.length === 0 ? (
               <div className={`${listViewportClassName} flex items-center justify-center text-sm text-muted-foreground`}>
-                {MESSAGES.likedCategory.noLikedCategories}
+                {UI_COPY.importCategoryDialog.likedEmpty}
               </div>
             ) : (
               <div className={`${listViewportClassName} overflow-y-auto overflow-x-visible space-y-2 px-1 py-1`}>
@@ -280,7 +281,7 @@ export const ImportCategoryDialog = ({
                         disabled={importMutation.isPending}
                       >
                         <FolderDown className="h-3.5 w-3.5" />
-                        추가
+                        {UI_COPY.common.add}
                       </Button>
                       <ChevronDown
                         className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${expandedCategoryId === category.id ? 'rotate-180' : ''}`}

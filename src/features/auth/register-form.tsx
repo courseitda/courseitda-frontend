@@ -8,6 +8,7 @@ import { authApi } from '@/services/api';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { MESSAGES } from '@/shared/constants/messages';
 import { Check, X, AlertCircle, Eye, EyeOff, User, Mail, Lock } from 'lucide-react';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 // 회원가입 폼 컴포넌트 - 닉네임, 이메일, 비밀번호 입력 및 검증 후 회원 등록
 // UserRequest: 백엔드 API 연동을 위해 토큰만 저장하도록 변경
@@ -96,7 +97,7 @@ export const RegisterForm = () => {
     
     // 백엔드 API 스펙: isDuplicated = true(중복), false(사용가능)
     if (response.data.isDuplicated) {
-      setNicknameError('사용중인 닉네임입니다');
+      setNicknameError(UI_COPY.auth.registerForm.nicknameDuplicated);
       setNicknameChecked(false);
     } else {
       setNicknameError('');
@@ -113,7 +114,7 @@ export const RegisterForm = () => {
     // 정규식을 통한 이메일 형식 검증
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (value.length > 0 && !emailRegex.test(value)) {
-      setEmailError('유효하지 않은 이메일 형식입니다');
+      setEmailError(UI_COPY.auth.registerForm.invalidEmailFormat);
     } else {
       setEmailError('');
     }
@@ -124,7 +125,7 @@ export const RegisterForm = () => {
     // 형식 검증 후 서버 요청 - 불필요한 API 호출 방지
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setEmailError('유효하지 않은 이메일 형식입니다');
+      setEmailError(UI_COPY.auth.registerForm.invalidEmailFormat);
       return;
     }
 
@@ -144,7 +145,7 @@ export const RegisterForm = () => {
     
     // 백엔드 API 스펙: isDuplicated = true(중복), false(사용가능)
     if (response.data.isDuplicated) {
-      setEmailError('이미 사용중인 이메일입니다');
+      setEmailError(UI_COPY.auth.registerForm.emailDuplicated);
       setEmailChecked(false);
     } else {
       setEmailError('');
@@ -226,7 +227,7 @@ export const RegisterForm = () => {
           <Input
             id="nickname"
             type="text"
-            placeholder="닉네임"
+            placeholder={UI_COPY.auth.registerForm.nicknamePlaceholder}
             value={nickname}
             onChange={handleNicknameChange}
             required
@@ -238,7 +239,7 @@ export const RegisterForm = () => {
             disabled={nicknameCheckLoading || !isNicknameLengthValid}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-xs bg-primary text-primary-foreground px-3 py-1 rounded hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {nicknameCheckLoading ? '확인 중...' : '확인'}
+            {nicknameCheckLoading ? UI_COPY.auth.registerForm.checkingAction : UI_COPY.auth.registerForm.checkAction}
           </button>
         </div>
 
@@ -253,7 +254,7 @@ export const RegisterForm = () => {
                   <X className="h-4 w-4 text-muted-foreground" />
                 )}
                 <span className={nicknameValidation.minLength ? 'text-green-600' : 'text-muted-foreground'}>
-                  최소 2자 이상
+                  {UI_COPY.auth.registerForm.nicknameMinLength}
                 </span>
               </div>
               <div className="flex items-center gap-2 text-xs">
@@ -263,7 +264,7 @@ export const RegisterForm = () => {
                   <X className="h-4 w-4 text-muted-foreground" />
                 )}
                 <span className={nicknameValidation.maxLength ? 'text-green-600' : 'text-muted-foreground'}>
-                  최대 20자 이하
+                  {UI_COPY.auth.registerForm.nicknameMaxLength}
                 </span>
               </div>
             </div>
@@ -278,7 +279,7 @@ export const RegisterForm = () => {
         )}
         {nicknameChecked && !nicknameError && isNicknameLengthValid && (
           <p className="text-xs text-green-600 flex items-center gap-1">
-            ✓ 사용 가능한 닉네임입니다
+            {UI_COPY.auth.registerForm.nicknameAvailable}
           </p>
         )}
       </div>
@@ -289,7 +290,7 @@ export const RegisterForm = () => {
           <Input
             id="register-email"
             type="email"
-            placeholder="이메일"
+            placeholder={UI_COPY.auth.registerForm.emailPlaceholder}
             value={email}
             onChange={handleEmailChange}
             required
@@ -301,7 +302,7 @@ export const RegisterForm = () => {
             disabled={emailCheckLoading || email.length === 0}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-xs bg-primary text-primary-foreground px-3 py-1 rounded hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {emailCheckLoading ? '확인 중...' : '확인'}
+            {emailCheckLoading ? UI_COPY.auth.registerForm.checkingAction : UI_COPY.auth.registerForm.checkAction}
           </button>
         </div>
         {emailError && (
@@ -311,7 +312,7 @@ export const RegisterForm = () => {
         )}
         {emailChecked && !emailError && (
           <p className="text-xs text-green-600 flex items-center gap-1">
-            ✓ 사용 가능한 이메일입니다
+            {UI_COPY.auth.registerForm.emailAvailable}
           </p>
         )}
       </div>
@@ -322,7 +323,7 @@ export const RegisterForm = () => {
           <Input
             id="register-password"
             type={showPassword ? 'text' : 'password'}
-            placeholder="비밀번호"
+            placeholder={UI_COPY.auth.registerForm.passwordPlaceholder}
             value={password}
             onChange={handlePasswordChange}
             required
@@ -356,7 +357,7 @@ export const RegisterForm = () => {
                 <X className="h-4 w-4 text-muted-foreground" />
               )}
               <span className={passwordValidation.minLength ? 'text-green-600' : 'text-muted-foreground'}>
-                최소 6자 이상
+                {UI_COPY.auth.registerForm.passwordMinLength}
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs">
@@ -366,7 +367,7 @@ export const RegisterForm = () => {
                 <X className="h-4 w-4 text-muted-foreground" />
               )}
               <span className={passwordValidation.maxLength ? 'text-green-600' : 'text-muted-foreground'}>
-                최대 20자 이하
+                {UI_COPY.auth.registerForm.passwordMaxLength}
               </span>
             </div>
           </div>
@@ -379,7 +380,7 @@ export const RegisterForm = () => {
           <Input
             id="register-confirm-password"
             type={showConfirmPassword ? 'text' : 'password'}
-            placeholder="비밀번호 확인"
+            placeholder={UI_COPY.auth.registerForm.confirmPasswordPlaceholder}
             value={confirmPassword}
             onChange={handleConfirmPasswordChange}
             required
@@ -405,13 +406,13 @@ export const RegisterForm = () => {
         </div>
         {confirmPassword && !passwordsMatch && (
           <p className="text-xs text-destructive flex items-center gap-1">
-            비밀번호가 일치하지 않습니다.
+            {UI_COPY.auth.registerForm.passwordMismatch}
           </p>
         )}
       </div>
 
       <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? '가입 중...' : '회원가입'}
+        {loading ? UI_COPY.auth.registerForm.submitting : UI_COPY.auth.registerForm.submit}
       </Button>
     </form>
   );

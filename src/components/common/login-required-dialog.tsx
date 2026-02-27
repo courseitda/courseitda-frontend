@@ -1,6 +1,6 @@
 import { Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { MESSAGES } from '@/shared/constants/messages';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 import {
   Dialog,
   DialogContent,
@@ -24,12 +24,12 @@ const LoginRequiredDialog = ({ open, onOpenChange, onStart }: LoginRequiredDialo
           <Lock className="w-8 h-8 text-primary" />
         </div>
         <DialogHeader className="items-center text-center">
-          <DialogTitle className="text-lg font-semibold">{MESSAGES.common.loginRequiredDialogTitle}</DialogTitle>
-          <DialogDescription>{MESSAGES.common.loginRequiredDialogDescription}</DialogDescription>
+          <DialogTitle className="text-lg font-semibold">{UI_COPY.loginRequiredDialog.title}</DialogTitle>
+          <DialogDescription>{UI_COPY.loginRequiredDialog.description}</DialogDescription>
         </DialogHeader>
       </div>
       <Button type="button" className="w-full mt-4" onClick={onStart}>
-        코스잇다 시작하기
+        {UI_COPY.loginRequiredDialog.action}
       </Button>
     </DialogContent>
   </Dialog>

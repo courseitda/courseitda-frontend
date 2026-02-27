@@ -15,6 +15,7 @@ import { useAuthStore } from '@/shared/stores/auth-store';
 import { useMySavedCategories } from '@/shared/hooks/use-my-storage';
 import { COMMUNITY_QUERY_KEYS } from '@/shared/hooks/use-community';
 import { MESSAGES } from '@/shared/constants/messages';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 import { communityApi } from '@/services/api';
 import type { SavedCategory } from '@/entities/types';
 
@@ -45,7 +46,7 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
   const shareMutation = useMutation({
     mutationFn: async (savedCategoryId: string) => {
       if (!token) {
-        throw new Error(MESSAGES.common.authTokenRequired);
+        throw new Error(UI_COPY.system.authTokenRequired);
       }
       const response = await communityApi.shareSavedCategory(token, savedCategoryId);
       if (!response.success || !response.data) {
@@ -85,12 +86,12 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl h-[65vh] flex flex-col px-4 py-5 sm:p-6">
         <DialogHeader>
-          <DialogTitle>{MESSAGES.sharedCategory.uploadDialogTitle}</DialogTitle>
+          <DialogTitle>{UI_COPY.uploadCategoryDialog.title}</DialogTitle>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto overflow-x-visible pr-1">
           {isLoading ? (
-            <div className="text-sm text-muted-foreground">{MESSAGES.common.loading}</div>
+            <div className="text-sm text-muted-foreground">{UI_COPY.common.loading}</div>
           ) : savedCategories.length === 0 ? (
             <div className="flex h-[90%] min-h-[90%] items-center justify-center px-1 py-1">
               {/* UserRequest: 업로드 가능한 보관 카테고리가 없을 때도 다이얼로그 안에 빈 상태 영역과 안내 문구를 표시한다. */}
@@ -141,7 +142,7 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
                         disabled={shareMutation.isPending}
                       >
                         <Upload className="w-4 h-4" />
-                        업로드
+                        {UI_COPY.common.upload}
                       </Button>
                       <ChevronDown
                         className={`w-4 h-4 shrink-0 text-muted-foreground transition-transform duration-200 ${expandedCategoryId === category.id ? 'rotate-180' : ''}`}

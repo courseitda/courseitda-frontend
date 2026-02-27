@@ -2,6 +2,7 @@ import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { communityApi } from '@/services/api';
 import { MESSAGES } from '@/shared/constants/messages';
 import type { MySharedCategory, SharedSavedCategory } from '@/entities/types';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 type SharedSavedCategoryPayload = {
   id: string;
@@ -106,13 +107,13 @@ export const useLikedSharedCategories = (
     enabled: !!token,
     queryFn: async () => {
       if (!token) {
-        throw new Error(MESSAGES.common.authTokenRequired);
+        throw new Error(UI_COPY.system.authTokenRequired);
       }
 
       const response = await communityApi.getLikedSharedCategories(token);
 
       if (!response.success || !response.data) {
-        throw new Error(response.error?.message ?? MESSAGES.likedCategory.noLikedCategories);
+        throw new Error(response.error?.message ?? MESSAGES.likedCategory.listLoadFailed);
       }
 
       return response.data.sharedCategories.map((category) =>
@@ -156,7 +157,7 @@ export const useMySharedCategories = (
     enabled: !!token,
     queryFn: async () => {
       if (!token) {
-        throw new Error(MESSAGES.common.authTokenRequired);
+        throw new Error(UI_COPY.system.authTokenRequired);
       }
 
       const response = await communityApi.getMySharedCategories(token);

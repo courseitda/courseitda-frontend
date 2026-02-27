@@ -66,6 +66,14 @@ Naver Maps SDK 기반 지도로 한눈에 시각화하는 코스 플래너 서�
   - Playwright – E2E 및 UI 테스트 (`tests-ui/`)
   - ESLint – 코드 품질 검사
 
+## 3-1. UI 문구 관리 원칙
+
+- 백엔드/서버 응답에 대한 **성공·실패 메시지**는 `src/shared/constants/messages.ts`에서 관리합니다.
+- 페이지 제목, 섹션 라벨, 다이얼로그 고정 문구, 빈 상태 안내, CTA, 클라이언트 검증/로컬 안내 문구와 같이 **화면 카피 중심 문구**는 `src/shared/constants/ui-copy.ts`에서 관리합니다.
+- 새 문구를 추가할 때는 서버 응답 결과인지, 화면에 고정적으로 노출되는 카피인지 먼저 구분한 뒤 각각의 상수 파일에 배치합니다.
+- 예시: `MyCategory`, `MyWorkspace`, `Community`, `Auth`, `Index`의 제목/섹션/빈 상태/버튼 카피와 `로그인이 필요합니다`, `검색어를 입력해주세요` 같은 클라이언트 안내 문구는 `ui-copy.ts`, 로그인 실패/삭제 실패/조회 실패 같은 서버 응답 기반 문구는 `messages.ts`에 둡니다.
+- 적용 예시 파일: `src/pages/MyCategory.tsx`, `src/pages/MyWorkspace.tsx`, `src/features/community/upload-category-dialog.tsx`, `src/features/auth/login-form.tsx`, `src/features/auth/register-form.tsx`
+
 ---
 
 ## 4. 설치 및 실행 방법 (Installation / Run)
@@ -207,4 +215,3 @@ courseitda-frontend/
 
 위 두 문서는 백엔드 스펙 변경 시 함께 갱신해야 하며,  
 프론트엔드 구현 시 항상 **단일 진실 소스(Single Source of Truth)** 로 활용됩니다.
-

@@ -1,6 +1,7 @@
 import type { FormEvent } from 'react';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 type SharedCategorySearchBarProps = {
   value: string;
@@ -33,7 +34,7 @@ const SharedCategorySearchBar = ({
       <Input
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        placeholder="장소 카테고리를 찾아 찜해보세요"
+        placeholder={UI_COPY.community.searchPlaceholder}
         readOnly={readOnly}
         autoFocus={autoFocus}
         onFocus={onFocus}

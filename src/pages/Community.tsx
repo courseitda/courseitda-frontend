@@ -13,6 +13,7 @@ import { useSharedCategoryLike } from '@/shared/hooks/use-shared-category-like';
 import PageHeader from '@/components/layout/page-header';
 import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
 import LoginRequiredDialog from '@/components/common/login-required-dialog';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 /**
  * 커뮤니티 메인 페이지 - 검색 입력 후 검색 결과 페이지로 이동
@@ -248,7 +249,7 @@ const Community = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
-      <PageHeader title="커뮤니티" />
+      <PageHeader title={UI_COPY.community.pageTitle} />
 
       <main className="min-h-[calc(100vh-72px)] flex flex-col">
 
@@ -259,7 +260,7 @@ const Community = () => {
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <Sparkles className="w-4 h-4" />
                 </span>
-                <h2 className="text-lg font-bold tracking-tight">코스잇다 추천 카테고리</h2>
+                <h2 className="text-lg font-bold tracking-tight">{UI_COPY.community.recommendedTitle}</h2>
               </div>
             </div>
           {filteredCategories.length > 0 && (
@@ -421,7 +422,7 @@ const Community = () => {
         <section className="container mx-auto px-4 pt-2 pb-8">
           {/* UserRequest: 섹션 문구를 "카테고리 게시판"으로 변경 */}
           <div className="flex items-center justify-between mb-2 px-1">
-            <h2 className="text-base font-semibold pl-1">카테고리 게시판</h2>
+            <h2 className="text-base font-semibold pl-1">{UI_COPY.community.boardTitle}</h2>
             <button
               type="button"
               className="text-xs font-medium text-muted-foreground hover:underline flex items-center gap-1"

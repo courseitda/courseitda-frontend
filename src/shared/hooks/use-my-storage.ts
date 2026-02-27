@@ -3,6 +3,7 @@ import { myStorageApi } from '@/services/api';
 import type { SavedCategory, SearchedPlace } from '@/entities/types';
 import { MESSAGES } from '@/shared/constants/messages';
 import { toast } from 'sonner';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 type SavedCategoryPayload = {
   id: string;
@@ -53,7 +54,7 @@ export const useMySavedCategories = (token: string | null): UseQueryResult<Saved
     enabled: !!token,
     queryFn: async () => {
       if (!token) {
-        throw new Error(MESSAGES.common.authTokenRequired);
+        throw new Error(UI_COPY.system.authTokenRequired);
       }
 
       const response = await myStorageApi.getMySavedCategories(token);
@@ -80,7 +81,7 @@ export const useCreateSavedCategory = (token: string | null) => {
   return useMutation({
     mutationFn: async (input: CreateSavedCategoryInput) => {
       if (!token) {
-        throw new Error(MESSAGES.common.authTokenRequired);
+        throw new Error(UI_COPY.system.authTokenRequired);
       }
 
       const response = await myStorageApi.createSavedCategory(token, {
@@ -119,7 +120,7 @@ export const useUpdateSavedCategory = (token: string | null) => {
   return useMutation({
     mutationFn: async (input: { id: string; title: string; places: SearchedPlace[] }) => {
       if (!token) {
-        throw new Error(MESSAGES.common.authTokenRequired);
+        throw new Error(UI_COPY.system.authTokenRequired);
       }
 
       const response = await myStorageApi.updateSavedCategory(token, input.id, {
@@ -158,7 +159,7 @@ export const useDeleteSavedCategory = (token: string | null) => {
   return useMutation({
     mutationFn: async (savedCategoryId: string) => {
       if (!token) {
-        throw new Error(MESSAGES.common.authTokenRequired);
+        throw new Error(UI_COPY.system.authTokenRequired);
       }
 
       const response = await myStorageApi.deleteSavedCategory(token, savedCategoryId);

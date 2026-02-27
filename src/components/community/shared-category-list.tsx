@@ -1,6 +1,7 @@
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Folder, Heart, SearchX, User as UserIcon } from 'lucide-react';
 import type { SharedSavedCategory } from '@/entities/types';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 type SharedCategoryListProps = {
   categories: SharedSavedCategory[];
@@ -26,7 +27,7 @@ const SharedCategoryList = ({
       <div className="h-full flex flex-col items-center justify-center gap-2 text-muted-foreground">
         {/* UserRequest: 검색 결과가 없을 때 이모티콘 대신 적절한 아이콘 사용 */}
         <SearchX className="w-10 h-10 text-muted-foreground/70" />
-        <p className="text-sm">검색 결과가 없습니다.</p>
+        <p className="text-sm">{UI_COPY.community.emptySearchResult}</p>
       </div>
     ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 items-start auto-rows-min">

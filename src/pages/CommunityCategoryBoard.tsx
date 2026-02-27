@@ -16,6 +16,7 @@ import SharedCategoryList from '@/components/community/shared-category-list';
 import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
 import PageHeader from '@/components/layout/page-header';
 import LoginRequiredDialog from '@/components/common/login-required-dialog';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 const CommunityCategoryBoard = () => {
   const navigate = useNavigate();
@@ -93,9 +94,9 @@ const CommunityCategoryBoard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-card">
+      <div className="min-h-screen bg-gradient-card">
       {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
-      <PageHeader title="카테고리 게시판" />
+      <PageHeader title={UI_COPY.community.boardPageTitle} />
 
       {/* UserRequest: 헤더와 검색 영역 사이 간격을 0.5배로 조정 */}
       <main className="min-h-[calc(100vh-72px)] flex flex-col pt-6 pb-6 md:pt-8 md:pb-8">
@@ -154,7 +155,7 @@ const CommunityCategoryBoard = () => {
           className="fixed bottom-6 right-6 shadow-lg gap-2 px-5 py-3 text-base rounded-full upload-fab-pop"
         >
           <Upload className="w-4 h-4" />
-          <span className="font-semibold">업로드</span>
+          <span className="font-semibold">{UI_COPY.community.uploadFabLabel}</span>
         </Button>
       )}
     </div>

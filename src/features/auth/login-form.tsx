@@ -8,6 +8,7 @@ import { authApi } from '@/services/api';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { MESSAGES } from '@/shared/constants/messages';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 // 로그인 폼 컴포넌트 - 이메일과 비밀번호를 입력받아 인증 처리
 // UserRequest: 백엔드 API 연동을 위해 토큰만 저장하도록 변경
@@ -52,7 +53,7 @@ export const LoginForm = () => {
           <Input
             id="email"
             type="email"
-            placeholder="이메일"
+            placeholder={UI_COPY.auth.loginForm.emailPlaceholder}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -67,7 +68,7 @@ export const LoginForm = () => {
           <Input
             id="password"
             type={showPassword ? 'text' : 'password'}
-            placeholder="비밀번호"
+            placeholder={UI_COPY.auth.loginForm.passwordPlaceholder}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -88,7 +89,7 @@ export const LoginForm = () => {
       </div>
 
       <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? '로그인 중...' : '로그인'}
+        {loading ? UI_COPY.auth.loginForm.submitting : UI_COPY.auth.loginForm.submit}
       </Button>
     </form>
   );

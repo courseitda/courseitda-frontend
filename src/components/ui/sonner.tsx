@@ -1,5 +1,6 @@
 import { useTheme } from "next-themes";
 import { Toaster as Sonner } from "sonner";
+import { UI_COPY } from "@/shared/constants/ui-copy";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
@@ -15,7 +16,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       duration={3000}
       // UserRequest: 토스트 메시지 우측에 흰색 '닫기' 버튼을 고정 배치
       icons={{
-        close: <span className="text-xs font-semibold tracking-tight">닫기</span>,
+        close: <span className="text-xs font-semibold tracking-tight">{UI_COPY.toaster.close}</span>,
       }}
       className="toaster group"
       toastOptions={{

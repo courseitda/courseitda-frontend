@@ -22,6 +22,7 @@ import type { Place } from '@/entities/types';
 import { Spinner } from '@/components/ui/spinner';
 import PageHeader from '@/components/layout/page-header';
 import { MESSAGES } from '@/shared/constants/messages';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 /**
  * 워크스페이스 상세 페이지 - 카테고리 관리 및 지도 표시
@@ -181,7 +182,7 @@ const WorkspaceDetail = () => {
   if (!workspace) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p>워크스페이스를 찾을 수 없습니다.</p>
+        <p>{UI_COPY.workspaceDetail.notFound}</p>
       </div>
     );
   }
@@ -257,7 +258,7 @@ const WorkspaceDetail = () => {
                     className="w-full flex items-center justify-center gap-2 px-2 py-1.5 text-sm rounded-sm border border-dashed border-border hover:bg-accent transition-colors"
                   >
                     <Plus className="w-4 h-4" />
-                    새 워크스페이스
+                    {UI_COPY.workspaceDetail.createAction}
                   </button>
                 </div>
               </DropdownMenuContent>
@@ -304,7 +305,7 @@ const WorkspaceDetail = () => {
                 <div className="h-full flex items-center justify-center p-6 text-center">
                   <div>
                     <p className="text-sm text-muted-foreground">
-                      네이버 지도 설정이 완료되지 않았습니다. 관리자에게 문의해주세요.
+                      {UI_COPY.workspaceDetail.mapNotReady}
                     </p>
                   </div>
                 </div>

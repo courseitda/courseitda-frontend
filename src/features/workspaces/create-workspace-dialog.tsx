@@ -14,6 +14,7 @@ import { workspaceApi } from '@/services/api';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { MESSAGES } from '@/shared/constants/messages';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 interface CreateWorkspaceDialogProps {
   open: boolean;
@@ -33,7 +34,7 @@ export const CreateWorkspaceDialog = ({ open, onOpenChange }: CreateWorkspaceDia
   const createWorkspaceMutation = useMutation({
     mutationFn: async (workspaceTitle: string) => {
       if (!token) {
-        throw new Error(MESSAGES.common.loginRequired);
+        throw new Error(UI_COPY.system.loginRequired);
       }
 
       const response = await workspaceApi.create(token, { title: workspaceTitle });
@@ -98,12 +99,12 @@ export const CreateWorkspaceDialog = ({ open, onOpenChange }: CreateWorkspaceDia
     if (createWorkspaceMutation.isPending) return;
 
     if (!title.trim()) {
-      toast.error(MESSAGES.workspace.titleRequired);
+      toast.error(UI_COPY.myWorkspace.titleRequired);
       return;
     }
 
     if (!token) {
-      toast.error(MESSAGES.common.loginRequired);
+      toast.error(UI_COPY.system.loginRequired);
       return;
     }
 
@@ -114,15 +115,15 @@ export const CreateWorkspaceDialog = ({ open, onOpenChange }: CreateWorkspaceDia
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent ref={dialogRef} className="max-h-[88vh] overflow-y-auto px-3 py-4 transition-transform duration-200 sm:p-6">
         <DialogHeader>
-          <DialogTitle>{MESSAGES.workspace.createDialogTitle}</DialogTitle>
+          <DialogTitle>{UI_COPY.workspaceDialog.create.title}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">제목</Label>
+            <Label htmlFor="title">{UI_COPY.workspaceDialog.create.fieldLabel}</Label>
             <Input
               id="title"
-              placeholder="예: 홍대 데이트 코스"
+              placeholder={UI_COPY.workspaceDialog.create.placeholder}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
@@ -131,11 +132,11 @@ export const CreateWorkspaceDialog = ({ open, onOpenChange }: CreateWorkspaceDia
 
           <div className="flex justify-end gap-2">
             <Button className="shrink-0" type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              취소
+              {UI_COPY.workspaceDialog.create.cancel}
             </Button>
             {/* UserRequest: 필수 입력값이 없으면 생성 버튼을 비활성화 */}
             <Button className="shrink-0" type="submit" disabled={createWorkspaceMutation.isPending || !title.trim()}>
-              {createWorkspaceMutation.isPending ? '생성 중...' : '생성'}
+              {createWorkspaceMutation.isPending ? UI_COPY.workspaceDialog.create.submitting : UI_COPY.workspaceDialog.create.submit}
             </Button>
           </div>
         </form>
