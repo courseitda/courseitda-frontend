@@ -574,6 +574,11 @@ const MyCategory = () => {
     setLikedDetailOpen(true);
   };
 
+  // UserRequest: 상세보기 장소 목록은 최소 3행 슬롯을 유지해 항목 수가 적어도 구분선이 보이도록 처리
+  const detailPlaces = selectedCategory?.places ?? [];
+  const detailMinRows = 3;
+  const detailEmptyRows = Math.max(0, detailMinRows - detailPlaces.length);
+
   if (savedCategoriesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -816,19 +821,35 @@ const MyCategory = () => {
               />
               <div className="space-y-2">
                 <p className="text-sm font-semibold">장소 목록</p>
-                {/* UserRequest: 장소 목록은 3개까지만 보이고 이후는 스크롤로 확인 */}
-                <div className="border border-border rounded-lg divide-y divide-border max-h-48 overflow-y-auto">
-                  {selectedCategory?.places.map((place) => (
+                {/* UserRequest: 장소 개수와 무관하게 상세보기 목록 영역 높이를 고정하고 최소 행 슬롯으로 구분선 유지 */}
+                <div className="h-48 border border-border rounded-lg divide-y divide-border overflow-y-auto bg-muted/20">
+                  {detailPlaces.length === 0 ? (
+                    <>
+                      <div className="h-14 px-3 flex items-center text-sm text-muted-foreground">
+                        표시할 장소가 없습니다.
+                      </div>
+                      {Array.from({ length: detailMinRows - 1 }).map((_, index) => (
+                        <div key={`detail-empty-initial-${index}`} className="h-14" />
+                      ))}
+                    </>
+                  ) : (
+                    <>
+                      {detailPlaces.map((place) => (
                       <button
                         key={place.id}
                         type="button"
                         onClick={() => setFocusedPlaceId(place.id)}
-                        className="w-full text-left p-3 flex flex-col gap-1 hover:bg-accent/40 transition-colors"
+                        className="w-full min-h-14 text-left p-3 flex flex-col justify-center gap-1 hover:bg-accent/40 transition-colors"
                       >
                         <span className="text-sm font-medium">{place.name}</span>
                         <span className="text-xs text-muted-foreground">{place.addressName}</span>
                       </button>
-                  ))}
+                      ))}
+                      {Array.from({ length: detailEmptyRows }).map((_, index) => (
+                        <div key={`detail-empty-tail-${index}`} className="h-14" />
+                      ))}
+                    </>
+                  )}
                 </div>
               </div>
             </div>
