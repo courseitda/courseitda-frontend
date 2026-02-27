@@ -1,28 +1,47 @@
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useUserDropdown, useUserNickname } from '@/shared/hooks/use-user-info';
-import { useNavigate } from 'react-router-dom';
-import { FileText, Folder, LayoutGrid, LogOut, Menu, User as UserIcon } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { FileText, Folder, House, LayoutGrid, LogOut, Menu, User as UserIcon } from 'lucide-react';
+import { useState } from 'react';
+import { Separator } from '@/components/ui/separator';
 
 const UserMenu = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, logout } = useAuthStore();
   const { nickname: navNickname } = useUserNickname();
-  const { nickname: dropdownNickname, email } = useUserDropdown();
+  const { nickname: dropdownNickname } = useUserDropdown();
+  const [open, setOpen] = useState(false);
 
   const handleLogout = () => {
+    setOpen(false);
     logout();
     navigate('/');
   };
+
+  const handleNavigate = (path: string) => {
+    setOpen(false);
+    navigate(path);
+  };
+
+  const isActive = (path: string) => location.pathname === path;
+  const menuItemClassName = (active: boolean) =>
+    [
+      'w-full justify-start gap-2 transition-all duration-150',
+      'hover:bg-accent/60 hover:text-foreground',
+      'focus-visible:ring-2 focus-visible:ring-primary/30',
+      'active:scale-[0.98]',
+      active ? 'bg-primary/10 text-primary' : '',
+    ].join(' ');
 
   if (!isAuthenticated || !navNickname) {
     return (
@@ -33,56 +52,105 @@ const UserMenu = () => {
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        {/* UserRequest: 모든 페이지의 사용자 드롭다운 트리거를 아바타 대신 햄버거 메뉴 아이콘으로 표시 */}
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        {/* UserRequest: 헤더 햄버거 메뉴를 드롭다운 대신 우측 Sheet/Drawer 형태로 전환 */}
         <Button variant="ghost" size="icon" className="h-10 w-10" aria-label="사용자 메뉴">
           <Menu className="w-5 h-5" />
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="font-normal">
-          {/* UserRequest: 사용자 메뉴 프로필 요약 영역에 아바타 아이콘을 왼쪽에 배치하고 우측에 닉네임/이메일을 기존 형태로 배치 */}
-          <div className="flex items-center gap-3">
-            <Avatar className="w-8 h-8">
-              <AvatarFallback className="bg-primary text-primary-foreground">
+      </SheetTrigger>
+      <SheetContent side="right" className="w-[80vw] max-w-sm flex flex-col">
+        <SheetHeader>
+          <SheetTitle>메뉴</SheetTitle>
+        </SheetHeader>
+
+        {/* UserRequest: 로그아웃은 마이페이지 바로 아래가 아닌 메뉴 하단 고정 영역에 배치 */}
+        <div className="mt-5 flex-1 overflow-y-auto pr-1">
+          <div className="space-y-4">
+            <div className="w-full rounded-lg border border-border/60 bg-card p-3 text-left">
+              <div className="flex items-center gap-3">
+                <Avatar className="w-11 h-11">
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    <UserIcon className="w-5 h-5" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <p className="text-base font-semibold leading-none truncate">{dropdownNickname}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <p className="px-2 text-xs font-semibold text-muted-foreground">보관함</p>
+              <Button
+                variant="ghost"
+                className={menuItemClassName(isActive('/my-workspaces'))}
+                onClick={() => handleNavigate('/my-workspaces')}
+              >
+                <LayoutGrid className="w-4 h-4" />
+                내 워크스페이스
+              </Button>
+              <Button
+                variant="ghost"
+                className={menuItemClassName(isActive('/my-category'))}
+                onClick={() => handleNavigate('/my-category')}
+              >
+                <Folder className="w-4 h-4" />
+                내 카테고리
+              </Button>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-1">
+              <p className="px-2 text-xs font-semibold text-muted-foreground">커뮤니티</p>
+              <Button
+                variant="ghost"
+                className={menuItemClassName(isActive('/community'))}
+                onClick={() => handleNavigate('/community')}
+              >
+                <House className="w-4 h-4" />
+                커뮤니티 둘러보기
+              </Button>
+              <Button
+                variant="ghost"
+                className={menuItemClassName(isActive('/my-posts'))}
+                onClick={() => handleNavigate('/my-posts')}
+              >
+                <FileText className="w-4 h-4" />
+                내 공유 목록
+              </Button>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-1">
+              <p className="px-2 text-xs font-semibold text-muted-foreground">계정</p>
+              <Button
+                variant="ghost"
+                className={menuItemClassName(isActive('/mypage'))}
+                onClick={() => handleNavigate('/mypage')}
+              >
                 <UserIcon className="w-4 h-4" />
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">{dropdownNickname}</p>
-              <p className="text-xs leading-none text-muted-foreground">
-                {email}
-              </p>
+                마이페이지
+              </Button>
             </div>
           </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => navigate('/mypage')} className="gap-2">
-          <UserIcon className="w-4 h-4" />
-          마이페이지
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => navigate('/my-workspaces')} className="gap-2">
-          <LayoutGrid className="w-4 h-4" />
-          내 워크스페이스
-        </DropdownMenuItem>
-        {/* UserRequest: 내 카테고리 메뉴를 사용자 드롭다운에 추가해 별도 페이지로 이동 */}
-        <DropdownMenuItem onClick={() => navigate('/my-category')} className="gap-2">
-          <Folder className="w-4 h-4" />
-          내 카테고리
-        </DropdownMenuItem>
-        {/* UserRequest: 커뮤니티 관리 페이지를 내 게시물 페이지로 노출 */}
-        <DropdownMenuItem onClick={() => navigate('/my-posts')} className="gap-2">
-          <FileText className="w-4 h-4" />
-          내 게시물
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive gap-2">
-          <LogOut className="w-4 h-4" />
-          로그아웃
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </div>
+
+        <div className="mt-3 pb-1">
+          <Separator className="mb-2" />
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-2 text-destructive transition-all duration-150 hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-destructive/30 active:scale-[0.98]"
+            onClick={handleLogout}
+          >
+            <LogOut className="w-4 h-4" />
+            로그아웃
+          </Button>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 };
 
