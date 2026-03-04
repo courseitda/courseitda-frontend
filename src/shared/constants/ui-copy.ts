@@ -20,7 +20,7 @@ export const UI_COPY = {
   loginRequiredDialog: {
     title: '로그인이 필요해요',
     description: '해당 기능을 이용하시려면 먼저 로그인해주세요.',
-    action: '코스잇다 시작하기',
+    action: '로그인 하기',
   },
   auth: {
     pageTitle: '인증',

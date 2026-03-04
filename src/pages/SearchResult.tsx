@@ -82,7 +82,7 @@ const SearchResult = () => {
   // UserRequest: 로그인 필요 안내는 안내창으로 노출되도록 처리
   const handleLoginStart = () => {
     setLoginDialogOpen(false);
-    navigate('/auth?tab=register');
+    navigate('/auth?tab=login');
   };
 
   if (sharedCategoriesLoading) {
@@ -145,6 +145,7 @@ const SearchResult = () => {
         open={loginDialogOpen}
         onOpenChange={setLoginDialogOpen}
         onStart={handleLoginStart}
+        featureName="찜 기능"
       />
     </div>
   );

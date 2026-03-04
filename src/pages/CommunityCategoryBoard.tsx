@@ -82,7 +82,7 @@ const CommunityCategoryBoard = () => {
   // UserRequest: 로그인 필요 안내는 안내창으로 노출되도록 처리
   const handleLoginStart = () => {
     setLoginDialogOpen(false);
-    navigate('/auth?tab=register');
+    navigate('/auth?tab=login');
   };
 
   if (sharedCategoriesLoading) {
@@ -145,6 +145,7 @@ const CommunityCategoryBoard = () => {
         open={loginDialogOpen}
         onOpenChange={setLoginDialogOpen}
         onStart={handleLoginStart}
+        featureName="찜 기능"
       />
 
       {/* UserRequest: 비회원에게는 업로드 버튼을 숨김 */}

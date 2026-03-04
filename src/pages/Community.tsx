@@ -96,7 +96,7 @@ const Community = () => {
   // UserRequest: 로그인 필요 안내는 안내창으로 노출되도록 처리
   const handleLoginStart = () => {
     setLoginDialogOpen(false);
-    navigate('/auth?tab=register');
+    navigate('/auth?tab=login');
   };
 
   // UserRequest: pagination dots 클릭 시 정상 이동을 보장하도록 드래그 상태를 초기화
@@ -497,6 +497,7 @@ const Community = () => {
         open={loginDialogOpen}
         onOpenChange={setLoginDialogOpen}
         onStart={handleLoginStart}
+        featureName="찜 기능"
       />
     </div>
   );

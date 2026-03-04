@@ -13,10 +13,11 @@ type LoginRequiredDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onStart: () => void;
+  featureName?: string;
 };
 
 // UserRequest: 로그인 필요 안내를 전용 안내창으로 제공
-const LoginRequiredDialog = ({ open, onOpenChange, onStart }: LoginRequiredDialogProps) => (
+const LoginRequiredDialog = ({ open, onOpenChange, onStart, featureName }: LoginRequiredDialogProps) => (
   <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent className="max-w-sm">
       <div className="flex flex-col items-center text-center gap-4">
@@ -25,7 +26,11 @@ const LoginRequiredDialog = ({ open, onOpenChange, onStart }: LoginRequiredDialo
         </div>
         <DialogHeader className="items-center text-center">
           <DialogTitle className="text-lg font-semibold">{UI_COPY.loginRequiredDialog.title}</DialogTitle>
-          <DialogDescription>{UI_COPY.loginRequiredDialog.description}</DialogDescription>
+          <DialogDescription>
+            {featureName
+              ? `${featureName}을 이용하시려면 먼저 로그인해주세요.`
+              : UI_COPY.loginRequiredDialog.description}
+          </DialogDescription>
         </DialogHeader>
       </div>
       <Button type="button" className="w-full mt-4" onClick={onStart}>
