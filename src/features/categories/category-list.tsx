@@ -117,21 +117,6 @@ export const CategoryList = ({
           <button
             type="button"
             className={`rounded-full p-2 transition-colors ${
-              !isOrderEditMode ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground/55 hover:text-muted-foreground'
-            }`}
-            onClick={() => {
-              setIsOrderEditMode(false);
-              setAddOptionOpen(false);
-            }}
-            aria-pressed={!isOrderEditMode}
-            aria-label="편집 모드"
-            title="편집 모드"
-          >
-            <SquarePen className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            className={`rounded-full p-2 transition-colors ${
               isOrderEditMode ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground/55 hover:text-muted-foreground'
             }`}
             onClick={() => {
@@ -143,6 +128,21 @@ export const CategoryList = ({
             title="보기 모드"
           >
             <ListOrdered className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            className={`rounded-full p-2 transition-colors ${
+              !isOrderEditMode ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground/55 hover:text-muted-foreground'
+            }`}
+            onClick={() => {
+              setIsOrderEditMode(false);
+              setAddOptionOpen(false);
+            }}
+            aria-pressed={!isOrderEditMode}
+            aria-label="편집 모드"
+            title="편집 모드"
+          >
+            <SquarePen className="h-4 w-4" />
           </button>
         </div>
       </div>
