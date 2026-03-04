@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Category, Place } from '@/entities/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -37,6 +37,8 @@ interface CategoryCardProps {
   canMoveDown: boolean;
   isReordering: boolean;
   isOrderEditMode: boolean;
+  showReorderControls: boolean;
+  collapseAllSignal: number;
 }
 
 // 카테고리 카드 컴포넌트 - 카테고리 정보와 포함된 장소 목록을 표시하며 접기/펼치기 가능
@@ -53,6 +55,8 @@ export const CategoryCard = ({
   canMoveDown,
   isReordering,
   isOrderEditMode,
+  showReorderControls,
+  collapseAllSignal,
 }: CategoryCardProps) => {
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -94,6 +98,11 @@ export const CategoryCard = ({
 
   const hasRepresentative = !!category.representativePlaceId;
 
+  useEffect(() => {
+    // UserRequest: 순서 조정 시작 시 열려 있던 카테고리를 모두 접어 정렬에 집중할 수 있게 한다.
+    setIsOpen(false);
+  }, [collapseAllSignal]);
+
   return (
     <>
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -108,59 +117,63 @@ export const CategoryCard = ({
                 {index + 1}
               </div>
               <CardTitle className={`text-base flex-1 md:truncate ${!isOpen ? 'truncate' : ''}`}>{category.name}</CardTitle>
-              {isOrderEditMode ? (
-                <div className="ml-2" onClick={(e) => e.stopPropagation()}>
-                  {/* UserRequest: 보기 모드에서는 위/아래 이동 버튼을 하나의 정렬 컨트롤처럼 보여 조작 대상을 명확히 한다. */}
-                  <div className="inline-flex items-center overflow-hidden rounded-full border border-border bg-muted/40 shadow-sm">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 rounded-none hover:bg-background/80 disabled:opacity-35"
-                      onClick={onMoveUp}
-                      disabled={!canMoveUp || isReordering}
-                      aria-label={`${category.name} 위로 이동`}
+              <div className="ml-2 flex h-8 w-[4.5rem] shrink-0 items-center justify-end" onClick={(e) => e.stopPropagation()}>
+                {showReorderControls ? (
+                  <>
+                    {/* UserRequest: 보기 모드에서는 위/아래 이동 버튼을 하나의 정렬 컨트롤처럼 보여 조작 대상을 명확히 한다. */}
+                    <div className="inline-flex items-center overflow-hidden rounded-full border border-border bg-muted/40 shadow-sm">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 rounded-none hover:bg-background/80 disabled:opacity-35"
+                        onClick={onMoveUp}
+                        disabled={!canMoveUp || isReordering}
+                        aria-label={`${category.name} 위로 이동`}
+                      >
+                        <ArrowUp className="w-4 h-4" />
+                      </Button>
+                      <div className="h-5 w-px bg-border/80" />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 rounded-none hover:bg-background/80 disabled:opacity-35"
+                        onClick={onMoveDown}
+                        disabled={!canMoveDown || isReordering}
+                        aria-label={`${category.name} 아래로 이동`}
+                      >
+                        <ArrowDown className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </>
+                ) : !isOrderEditMode ? (
+                  <>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditDialogOpen(true);
+                      }}
                     >
-                      <ArrowUp className="w-4 h-4" />
+                      <Pencil className="w-4 h-4" />
                     </Button>
-                    <div className="h-5 w-px bg-border/80" />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 rounded-none hover:bg-background/80 disabled:opacity-35"
-                      onClick={onMoveDown}
-                      disabled={!canMoveDown || isReordering}
-                      aria-label={`${category.name} 아래로 이동`}
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteClick();
+                      }}
                     >
-                      <ArrowDown className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4 text-destructive" />
                     </Button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 ml-2" 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setEditDialogOpen(true);
-                    }}
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 ml-2" 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteClick();
-                    }}
-                  >
-                    <Trash2 className="w-4 h-4 text-destructive" />
-                  </Button>
-                </>
-              )}
+                  </>
+                ) : (
+                  <div aria-hidden="true" className="h-8 w-full" />
+                )}
+              </div>
               <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ml-2 ${isOpen ? 'rotate-180' : ''}`} />
             </CardHeader>
           </CollapsibleTrigger>
@@ -189,9 +202,9 @@ export const CategoryCard = ({
                 </p>
               )}
 
-              {!isOrderEditMode && (
+              {!isOrderEditMode && !showReorderControls && (
                 <>
-                  {/* UserRequest: 순서 변경 모드에서는 정렬 작업에 집중할 수 있도록 장소 검색 버튼을 숨긴다. */}
+                  {/* UserRequest: 편집 모드 중에서도 순서 조정이 아닐 때만 장소 검색 버튼을 노출한다. */}
                   <Button
                     variant="outline"
                     size="sm"

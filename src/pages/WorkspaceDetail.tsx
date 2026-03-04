@@ -385,35 +385,35 @@ const WorkspaceDetail = () => {
         {/* Bottom Sheet - 모바일에서만 노출 */}
         {/* UserRequest: Bottom Sheet가 네이버 지도 로고/워터마크보다 위에 렌더되도록 z-index 보정 */}
         {/* UserRequest: 모바일에서는 시트가 화면 하단과 바로 맞닿도록 바깥 여백 제거 */}
-        {!fullscreenActive && (
-          <div className="md:hidden absolute inset-x-0 bottom-0 pb-0 pointer-events-none z-20">
-            <div
-              // UserRequest: 모바일 카테고리 수정 영역도 화면 가로폭을 모두 사용하되 기존 상단 곡률과 내부 여백은 유지한다.
-              className="pointer-events-auto rounded-t-3xl border border-border/60 bg-card shadow-xl flex flex-col transition-[height,transform] duration-300 ease-out"
-              style={{ height: mobileSheetHeight }}
-            >
-              {/* UserRequest: 시각적으로 강조된 Grabber Handle 제공 */}
-              <div className="py-3 flex justify-center">
-                <div
-                  className="w-20 h-2 rounded-full bg-muted-foreground/50 cursor-grab active:cursor-grabbing touch-none select-none"
-                  role="button"
-                  tabIndex={0}
-                  aria-label="카테고리 패널 높이 조절"
-                  onPointerDown={handleSheetDragStart}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      setIsSheetExpanded((previous) => !previous);
-                    }
-                  }}
-                />
-              </div>
-              <div className="flex-1 overflow-y-auto px-4 pb-4">
-                {categoryListSection}
-              </div>
+        <div className="md:hidden absolute inset-x-0 bottom-0 pb-0 pointer-events-none z-20">
+          <div
+            // UserRequest: 모바일에서 지도 전체보기 전환 시에도 카테고리 영역을 언마운트하지 않고 접어서 모드 상태를 유지한다.
+            className={`rounded-t-3xl border border-border/60 bg-card shadow-xl flex flex-col transition-[height,transform,opacity] duration-300 ease-out overflow-hidden ${
+              fullscreenActive ? 'pointer-events-none opacity-0 translate-y-full' : 'pointer-events-auto opacity-100 translate-y-0'
+            }`}
+            style={{ height: fullscreenActive ? '0px' : mobileSheetHeight }}
+          >
+            {/* UserRequest: 시각적으로 강조된 Grabber Handle 제공 */}
+            <div className="py-3 flex justify-center">
+              <div
+                className="w-20 h-2 rounded-full bg-muted-foreground/50 cursor-grab active:cursor-grabbing touch-none select-none"
+                role="button"
+                tabIndex={fullscreenActive ? -1 : 0}
+                aria-label="카테고리 패널 높이 조절"
+                onPointerDown={handleSheetDragStart}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    setIsSheetExpanded((previous) => !previous);
+                  }
+                }}
+              />
+            </div>
+            <div className="flex-1 overflow-y-auto px-4 pb-4">
+              {categoryListSection}
             </div>
           </div>
-        )}
+        </div>
       </main>
 
       <CreateWorkspaceDialog 
