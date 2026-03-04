@@ -18,6 +18,7 @@ interface PlaceItemProps {
   isRepresentative: boolean;
   hasRepresentative: boolean;
   onPlaceClick?: (place: Place) => void;
+  isViewMode?: boolean;
 }
 
 // 장소 아이템 컴포넌트 - 카테고리 내 장소 정보를 표시하며 대표 장소 설정 및 삭제 기능 제공
@@ -30,6 +31,7 @@ export const PlaceItem = ({
   isRepresentative,
   hasRepresentative,
   onPlaceClick,
+  isViewMode = false,
 }: PlaceItemProps) => {
   const queryClient = useQueryClient();
   const queryKey = ['workspace', workspaceIdentifier, 'categories'];
@@ -145,16 +147,21 @@ export const PlaceItem = ({
             <Check className="w-3.5 h-3.5 mr-2" />
             {isRepresentative ? '대표 장소 해제' : '대표 장소 지정'}
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={() => {
-              handleDelete();
-            }}
-            disabled={isProcessing}
-            className="text-destructive focus:text-destructive"
-          >
-            <Trash2 className="w-3.5 h-3.5 mr-2" />
-            삭제
-          </DropdownMenuItem>
+          {!isViewMode && (
+            <>
+              {/* UserRequest: 보기 모드에서는 장소 삭제 액션을 숨겨 정렬 중심 흐름을 유지한다. */}
+              <DropdownMenuItem
+                onSelect={() => {
+                  handleDelete();
+                }}
+                disabled={isProcessing}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="w-3.5 h-3.5 mr-2" />
+                삭제
+              </DropdownMenuItem>
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

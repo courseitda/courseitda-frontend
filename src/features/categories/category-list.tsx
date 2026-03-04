@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import type { Place } from '@/entities/types';
 import { Button } from '@/components/ui/button';
-import { Plus, FolderDown, FolderPlus } from 'lucide-react';
+import { Plus, FolderDown, FolderPlus, SquarePen, ListOrdered } from 'lucide-react';
 import { CategoryCard } from './category-card';
 import { AddCategoryDialog } from './add-category-dialog';
 import { ImportCategoryDialog } from './import-category-dialog';
@@ -21,7 +20,7 @@ interface CategoryListProps {
   isError?: boolean;
 }
 
-// 카테고리 목록 컴포넌트 - 드래그 앤 드롭으로 순서 변경 가능한 카테고리 카드 목록 표시
+// 카테고리 목록 컴포넌트 - 버튼 기반으로 카테고리 순서를 변경 가능한 카드 목록 표시
 // 사용 위치: pages/WorkspaceDetail
 export const CategoryList = ({
   workspaceIdentifier,
@@ -32,6 +31,8 @@ export const CategoryList = ({
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [addOptionOpen, setAddOptionOpen] = useState(false);
+  // UserRequest: 워크스페이스 상세보기 진입 시 기본 화면을 보기 모드로 노출한다.
+  const [isOrderEditMode, setIsOrderEditMode] = useState(true);
   const addOptionRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const queryKey = ['workspace', workspaceIdentifier, 'categories'];
@@ -69,20 +70,17 @@ export const CategoryList = ({
     },
   });
 
-  // 드래그 앤 드롭으로 카테고리 순서 변경 시 새로운 순서를 DB에 저장
-  const handleDragEnd = async (result: DropResult) => {
-    // 드롭 위치가 유효하지 않으면 아무것도 하지 않음
-    if (!result.destination) return;
-
+  // UserRequest: 드래그 대신 위/아래 이동 버튼으로 카테고리 순서를 재배치한다.
+  const handleMoveCategory = (sourceIndex: number, targetIndex: number) => {
     if (reorderMutation.isPending) return;
-
-    if (result.destination.index === result.source.index) return;
+    if (targetIndex < 0 || targetIndex >= categories.length) return;
+    if (targetIndex === sourceIndex) return;
 
     const previous = queryClient.getQueryData<WorkspaceCategory[]>(queryKey);
 
     const updatedOrder = Array.from(categories);
-    const [removed] = updatedOrder.splice(result.source.index, 1);
-    updatedOrder.splice(result.destination.index, 0, removed);
+    const [removed] = updatedOrder.splice(sourceIndex, 1);
+    updatedOrder.splice(targetIndex, 0, removed);
 
     const withUpdatedSequence = updatedOrder.map((item, index) => ({
       category: { ...item.category, sequence: index },
@@ -114,43 +112,38 @@ export const CategoryList = ({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">{UI_COPY.categoryList.title}</h2>
-        {/* UserRequest: 카테고리 추가 버튼이 좌/우로 분할되는 마이크로 인터랙션 제공 */}
-        <div ref={addOptionRef} className="relative min-h-[2.25rem]">
-          <Button
-            onClick={() => setAddOptionOpen((prev) => !prev)}
-            size="sm"
-            className={`gap-2 transition-all duration-200 ${addOptionOpen ? 'opacity-0 pointer-events-none scale-95' : 'opacity-100'}`}
+        {/* UserRequest: 모드 토글은 아이콘 형태를 유지하되 헤더 오른쪽에 배치한다. */}
+        <div className="inline-flex items-center rounded-full border border-border bg-muted/40 p-1">
+          <button
+            type="button"
+            className={`rounded-full p-2 transition-colors ${
+              !isOrderEditMode ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground/55 hover:text-muted-foreground'
+            }`}
+            onClick={() => {
+              setIsOrderEditMode(false);
+              setAddOptionOpen(false);
+            }}
+            aria-pressed={!isOrderEditMode}
+            aria-label="편집 모드"
+            title="편집 모드"
           >
-            <Plus className="w-4 h-4" />
-            {UI_COPY.categoryList.addAction}
-          </Button>
-          <div
-            className={`absolute right-0 top-0 flex items-center gap-2 transition-all duration-200 ${addOptionOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}
+            <SquarePen className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            className={`rounded-full p-2 transition-colors ${
+              isOrderEditMode ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground/55 hover:text-muted-foreground'
+            }`}
+            onClick={() => {
+              setIsOrderEditMode(true);
+              setAddOptionOpen(false);
+            }}
+            aria-pressed={isOrderEditMode}
+            aria-label="보기 모드"
+            title="보기 모드"
           >
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-2 order-1"
-              onClick={() => {
-                setAddOptionOpen(false);
-                setImportDialogOpen(true);
-              }}
-            >
-              <FolderDown className="w-4 h-4" />
-              {UI_COPY.categoryList.importAction}
-            </Button>
-            <Button
-              size="sm"
-              className="gap-2 order-2"
-              onClick={() => {
-                setAddOptionOpen(false);
-                setAddDialogOpen(true);
-              }}
-            >
-              <Plus className="w-4 h-4" />
-              {UI_COPY.categoryList.createAction}
-            </Button>
-          </div>
+            <ListOrdered className="h-4 w-4" />
+          </button>
         </div>
       </div>
 
@@ -166,35 +159,71 @@ export const CategoryList = ({
           <p className="text-muted-foreground mb-4">{UI_COPY.categoryList.emptyDescription}</p>
         </div>
       ) : (
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <Droppable droppableId="categories">
-            {(provided) => (
-              <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-1.5">
-                {categories.map((item, index) => (
-                  <Draggable key={item.category.id} draggableId={item.category.id} index={index}>
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        className={snapshot.isDragging ? 'opacity-50' : ''}
-                      >
-                        <CategoryCard 
-                          category={item.category}
-                          places={item.places}
-                          workspaceIdentifier={workspaceIdentifier} 
-                          index={index}
-                          onPlaceClick={onPlaceClick} 
-                        />
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
+        <div className="space-y-1.5">
+          {categories.map((item, index) => (
+            <CategoryCard
+              key={item.category.id}
+              category={item.category}
+              places={item.places}
+              workspaceIdentifier={workspaceIdentifier}
+              index={index}
+              onPlaceClick={onPlaceClick}
+              onMoveUp={() => handleMoveCategory(index, index - 1)}
+              onMoveDown={() => handleMoveCategory(index, index + 1)}
+              canMoveUp={index > 0}
+              canMoveDown={index < categories.length - 1}
+              isReordering={reorderMutation.isPending}
+              isOrderEditMode={isOrderEditMode}
+            />
+          ))}
+        </div>
+      )}
+
+      {!isOrderEditMode && (
+        <div
+          ref={addOptionRef}
+          className="fixed right-4 bottom-4 md:right-8 md:bottom-8 z-40 flex flex-col items-end gap-2"
+        >
+          <div
+            className={`flex flex-col items-end gap-2 transition-all duration-200 ${
+              addOptionOpen ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-95 pointer-events-none'
+            }`}
+          >
+            {/* UserRequest: 편집 모드의 추가 액션은 좌우가 아니라 상하 스택으로 분기한다. */}
+            <Button
+              size="default"
+              variant="outline"
+              className="h-11 gap-2 px-4 shadow-lg"
+              onClick={() => {
+                setAddOptionOpen(false);
+                setImportDialogOpen(true);
+              }}
+            >
+              <FolderDown className="w-4 h-4" />
+              {UI_COPY.categoryList.importAction}
+            </Button>
+            <Button
+              size="default"
+              className="h-11 gap-2 px-4 shadow-lg"
+              onClick={() => {
+                setAddOptionOpen(false);
+                setAddDialogOpen(true);
+              }}
+            >
+              <Plus className="w-4 h-4" />
+              {UI_COPY.categoryList.createAction}
+            </Button>
+          </div>
+          {/* UserRequest: 편집 모드에서만 카테고리 추가 버튼을 화면 오른쪽 하단의 플로팅 버튼으로 고정한다. */}
+          <Button
+            onClick={() => setAddOptionOpen((prev) => !prev)}
+            size="icon"
+            className={`h-14 w-14 rounded-full shadow-xl transition-transform duration-200 ${addOptionOpen ? 'rotate-45' : ''}`}
+            aria-label={UI_COPY.categoryList.addAction}
+          >
+            <Plus className="w-6 h-6" />
+          </Button>
+        </div>
       )}
 
       <AddCategoryDialog
