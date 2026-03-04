@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LoginForm } from '@/features/auth/login-form';
 import { RegisterForm } from '@/features/auth/register-form';
 import { useAuthStore } from '@/shared/stores/auth-store';
+import { useUserNickname } from '@/shared/hooks/use-user-info';
 import { MapPin } from 'lucide-react';
 import PageHeader from '@/components/layout/page-header';
 import { UI_COPY } from '@/shared/constants/ui-copy';
@@ -16,19 +17,28 @@ import { UI_COPY } from '@/shared/constants/ui-copy';
 const Auth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { isAuthenticated, logout } = useAuthStore();
+  const { nickname, loading } = useUserNickname();
 
   // URL 쿼리 파라미터에서 탭 정보를 읽어 초기 탭 설정 (기본값: login)
   const defaultTab = searchParams.get('tab') || 'login';
 
-  // 이미 로그인된 사용자가 인증 페이지 접근 시 커뮤니티 페이지로 자동 이동
+  // 토큰만 남은 비정상 상태를 정리하고, 실제 사용자 조회 성공 시에만 커뮤니티로 이동
   useEffect(() => {
-    if (isAuthenticated) {
+    if (!isAuthenticated || loading) {
+      return;
+    }
+
+    if (nickname) {
       // UserRequest: 로그인 후 커뮤니티 페이지로 이동한다.
       // UserRequest: 로그인 직후 뒤로가기가 인증 페이지로 되돌아가지 않도록 히스토리를 대체
       navigate('/community', { replace: true });
+      return;
     }
-  }, [isAuthenticated, navigate]);
+
+    // UserRequest: 비로그인 상태에서 로그인 버튼 클릭 시 인증 화면에 머물도록 잔존 토큰을 정리한다.
+    logout();
+  }, [isAuthenticated, loading, logout, navigate, nickname]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-accent/5 to-background">
