@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Place } from '@/entities/types';
 import { Button } from '@/components/ui/button';
-import { Plus, FolderDown, FolderPlus, SquarePen, ListOrdered } from 'lucide-react';
+import { Plus, Inbox, FolderPlus, SquarePen, ListOrdered } from 'lucide-react';
 import { CategoryCard } from './category-card';
 import { AddCategoryDialog } from './add-category-dialog';
 import { ImportCategoryDialog } from './import-category-dialog';
@@ -185,43 +185,67 @@ export const CategoryList = ({
           className="fixed right-4 bottom-4 md:right-8 md:bottom-8 z-40 flex flex-col items-end gap-2"
         >
           <div
-            className={`flex flex-col items-end gap-2 transition-all duration-200 ${
+            className={`flex flex-col items-end gap-2 transition-all duration-200 ease-out ${
               addOptionOpen ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-95 pointer-events-none'
             }`}
           >
-            {/* UserRequest: 편집 모드의 추가 액션은 좌우가 아니라 상하 스택으로 분기한다. */}
-            <Button
-              size="default"
-              variant="outline"
-              className="h-11 gap-2 px-4 shadow-lg"
-              onClick={() => {
-                setAddOptionOpen(false);
-                setImportDialogOpen(true);
-              }}
-            >
-              <FolderDown className="w-4 h-4" />
-              {UI_COPY.categoryList.importAction}
-            </Button>
-            <Button
-              size="default"
-              className="h-11 gap-2 px-4 shadow-lg"
-              onClick={() => {
-                setAddOptionOpen(false);
-                setAddDialogOpen(true);
-              }}
-            >
-              <Plus className="w-4 h-4" />
-              {UI_COPY.categoryList.createAction}
-            </Button>
+            {/* UserRequest: 펼쳐진 추가 액션은 상하 구조를 유지한 하나의 컨테이너 안에서 반씩 나뉜 2분할 버튼으로 표현한다. */}
+            <div className="flex w-full min-w-[9.25rem] flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-lg">
+              <button
+                type="button"
+                className="flex h-14 items-center gap-2 pl-4 pr-3 text-sm font-semibold transition-colors hover:bg-accent/60"
+                onClick={() => {
+                  setAddOptionOpen(false);
+                  setImportDialogOpen(true);
+                }}
+              >
+                <Inbox className="h-6 w-6" />
+                {UI_COPY.categoryList.importAction}
+              </button>
+              <button
+                type="button"
+                className="flex h-14 items-center gap-2 pl-4 pr-3 text-sm font-semibold transition-colors hover:bg-accent/60"
+                onClick={() => {
+                  setAddOptionOpen(false);
+                  setAddDialogOpen(true);
+                }}
+              >
+                <FolderPlus className="h-6 w-6" />
+                {UI_COPY.categoryList.createAction}
+              </button>
+            </div>
           </div>
-          {/* UserRequest: 편집 모드에서만 카테고리 추가 버튼을 화면 오른쪽 하단의 플로팅 버튼으로 고정한다. */}
           <Button
             onClick={() => setAddOptionOpen((prev) => !prev)}
-            size="icon"
-            className={`h-14 w-14 rounded-full shadow-xl transition-transform duration-200 ${addOptionOpen ? 'rotate-45' : ''}`}
+            size="default"
+            className={`relative z-10 inline-flex h-14 items-center overflow-hidden rounded-full px-5 font-semibold shadow-xl transition-all duration-200 ease-out origin-right ${
+              addOptionOpen
+                ? 'w-14 justify-center border-transparent bg-white px-0 text-black shadow-[0_10px_24px_rgba(15,23,42,0.18)] hover:bg-primary/5'
+                : 'gap-2 whitespace-nowrap'
+            }`}
             aria-label={UI_COPY.categoryList.addAction}
           >
-            <Plus className="w-6 h-6" />
+            <span
+              aria-hidden="true"
+              className={`absolute inset-0 rounded-full transition-colors duration-200 ${
+                addOptionOpen ? 'bg-white' : 'bg-primary'
+              }`}
+            />
+            {/* UserRequest: 닫기 상태 전환 시 + 회전이 더 잘 보이도록 확대와 느린 이징을 함께 적용한다. */}
+            <Plus
+              className={`z-10 h-6 w-6 transition-transform duration-300 ease-in-out ${
+                addOptionOpen
+                  ? 'absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rotate-45 scale-110 stroke-[3.1]'
+                  : 'rotate-0 scale-100 stroke-[2.6]'
+              }`}
+            />
+            <span
+              className={`relative z-10 overflow-hidden text-sm font-bold transition-all duration-200 ease-out ${
+                addOptionOpen ? 'ml-0 max-w-0 opacity-0' : 'ml-0.5 max-w-20 opacity-100'
+              }`}
+            >
+              추가하기
+            </span>
           </Button>
         </div>
       )}
