@@ -34,6 +34,15 @@ const UserMenu = () => {
     navigate(path);
   };
 
+  const handleLoginClick = () => {
+    // UserRequest: 닉네임 조회에 실패한 잔존 토큰 상태에서는 로그인 진입 전에 인증 정보를 정리한다.
+    if (isAuthenticated && !navNickname) {
+      logout();
+    }
+
+    navigate('/auth');
+  };
+
   const isActive = (path: string) => location.pathname === path;
   const menuItemClassName = (active: boolean) =>
     [
@@ -46,7 +55,7 @@ const UserMenu = () => {
 
   if (!isAuthenticated || !navNickname) {
     return (
-      <Button onClick={() => navigate('/auth')}>
+      <Button onClick={handleLoginClick}>
         {UI_COPY.userMenu.login}
       </Button>
     );

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, RefObject } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import UserMenu from '@/components/header/user-menu';
@@ -13,6 +13,8 @@ type PageHeaderProps = {
   showBackButton?: boolean;
   showBrand?: boolean;
   showBrandText?: boolean;
+  showBorder?: boolean;
+  headerRef?: RefObject<HTMLElement | null>;
   className?: string;
 };
 
@@ -26,6 +28,8 @@ const PageHeader = ({
   showBackButton = false,
   showBrand = true,
   showBrandText = true,
+  showBorder = true,
+  headerRef,
   className,
 }: PageHeaderProps) => {
   const navigate = useNavigate();
@@ -41,7 +45,10 @@ const PageHeader = ({
   const resolvedRight = rightContent ?? <UserMenu />;
 
   return (
-    <header className={`sticky top-0 z-30 border-b border-border/50 bg-background ${className ?? ''}`}>
+    <header
+      ref={headerRef}
+      className={`sticky top-0 z-30 bg-background ${showBorder ? 'border-b border-border/50' : ''} ${className ?? ''}`}
+    >
       <div className="container mx-auto px-4 py-4 md:py-3">
         <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
           <div className="flex items-center">

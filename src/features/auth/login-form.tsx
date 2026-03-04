@@ -47,8 +47,9 @@ export const LoginForm = () => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <div className="relative">
+      {/* UserRequest: 로그인 입력창은 개별 박스 대신 하나의 그룹 안에서 구분선으로 나뉘어 보이게 구성한다. */}
+      <div className="overflow-hidden rounded-xl border border-input bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+        <div className="relative border-b border-border/70">
           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
             id="email"
@@ -57,12 +58,9 @@ export const LoginForm = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="pl-10"
+            className="h-12 rounded-none border-0 bg-transparent pl-10 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
           />
         </div>
-      </div>
-
-      <div className="space-y-2">
         <div className="relative">
           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
@@ -72,7 +70,7 @@ export const LoginForm = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="pl-10 pr-10"
+            className="h-12 rounded-none border-0 bg-transparent pl-10 pr-10 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
           />
           <button
             type="button"
