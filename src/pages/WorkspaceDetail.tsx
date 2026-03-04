@@ -199,8 +199,8 @@ const WorkspaceDetail = () => {
 
   // UserRequest: half-open / full-open 전환에 따라 지도와 Bottom Sheet 높이를 동적으로 계산
   const collapsedSheetHeight = '45vh';
-  const layoutTopPadding = '0.625rem'; // 컨테이너 py-2.5 (단일 방향)
-  const layoutVerticalPadding = '2rem'; // 상하 여백 합산 (전체 화면 시 하단 여백 확보)
+  const layoutTopPadding = '0px'; // 컨테이너 상단 여백 제거로 지도가 헤더 바로 아래에서 시작
+  const layoutVerticalPadding = '1rem'; // 상단 여백 제거 후 하단 여백만 유지하여 전체 화면 시 답답함 방지
   // UserRequest: full-open 시 카테고리 영역 상단을 기존 지도 영역과 동일한 위치까지 끌어올림
   const fullscreenActive = isMobile && isMapFullscreen;
   const mobileSheetHeight = isSheetExpanded ? `calc(100vh - ${headerHeight} - ${layoutTopPadding})` : collapsedSheetHeight;
@@ -270,8 +270,11 @@ const WorkspaceDetail = () => {
       {/* 메인 콘텐츠 - 모바일: 지도 상단 + Bottom Sheet, 데스크톱: 좌우 분할 */}
       {/* UserRequest: 좌우 여백을 0.5배로 축소하여 다른 페이지와 통일성 유지 (px-8 → px-4) */}
       <main className="flex-1 min-h-0 relative">
-        <div className="container mx-auto px-4 h-full">
-          <div className="h-full py-2.5 md:py-4 flex flex-col md:grid md:grid-cols-2 gap-2.5 md:gap-4">
+        {/* UserRequest: 지도 영역과 카테고리 영역이 화면 가로폭을 최대한 사용하도록 container 최대폭 제한을 제거한다. */}
+        {/* UserRequest: 지도 카드와 카테고리 카드가 화면 양 끝까지 보이도록 메인 래퍼의 좌우 패딩을 제거한다. */}
+        <div className="w-full h-full">
+          {/* UserRequest: 지도 영역이 헤더 바로 아래에서 시작하도록 상단 패딩을 제거하고 하단 여백만 유지한다. */}
+          <div className="h-full pb-2.5 md:pb-4 flex flex-col md:grid md:grid-cols-2 gap-2.5 md:gap-4">
             {/* 지도 영역 - Bottom Sheet 상태에 따라 높이 전환 */}
             <div
               className="rounded-xl overflow-hidden border border-border/50 shadow-lg bg-card shrink-0 transition-all duration-300 ease-out relative z-0 md:!h-full"
@@ -335,8 +338,9 @@ const WorkspaceDetail = () => {
         {/* UserRequest: Bottom Sheet가 네이버 지도 로고/워터마크보다 위에 렌더되도록 z-index 보정 */}
         {/* UserRequest: 모바일에서는 시트가 화면 하단과 바로 맞닿도록 바깥 여백 제거 */}
         {!fullscreenActive && (
-          <div className="md:hidden absolute inset-x-0 bottom-0 px-4 pb-0 pointer-events-none z-20">
+          <div className="md:hidden absolute inset-x-0 bottom-0 pb-0 pointer-events-none z-20">
             <div
+              // UserRequest: 모바일 카테고리 수정 영역도 화면 가로폭을 모두 사용하되 기존 상단 곡률과 내부 여백은 유지한다.
               className="pointer-events-auto rounded-t-3xl border border-border/60 bg-card shadow-xl flex flex-col transition-[height,transform] duration-300 ease-out"
               style={{ height: mobileSheetHeight }}
             >
