@@ -197,6 +197,19 @@ const WorkspaceDetail = () => {
     />
   );
 
+  // UserRequest: 지도 크게 보기 상태에서 카테고리명과 대표 장소명을 한눈에 볼 수 있는 요약 데이터를 구성한다.
+  const categorySummaryItems = (workspaceCategories ?? []).map(({ category, places }, index) => {
+    const representativePlace = places.find((item) => item.id === category.representativePlaceId || item.isRepresentative);
+
+    return {
+      sequence: index + 1,
+      color: category.color,
+      categoryName: category.name,
+      representativePlace: representativePlace?.place ?? null,
+      representativePlaceName: representativePlace?.place.name ?? '미지정',
+    };
+  });
+
   // UserRequest: half-open / full-open 전환에 따라 지도와 Bottom Sheet 높이를 동적으로 계산
   const collapsedSheetHeight = '45vh';
   const layoutTopPadding = '0px'; // 컨테이너 상단 여백 제거로 지도가 헤더 바로 아래에서 시작
@@ -280,6 +293,41 @@ const WorkspaceDetail = () => {
               className="rounded-xl overflow-hidden border border-border/50 shadow-lg bg-card shrink-0 transition-all duration-300 ease-out relative z-0 md:!h-full"
               style={{ height: mobileMapHeight, opacity: fullscreenActive ? 1 : isSheetExpanded ? 0 : 1 }}
             >
+              {fullscreenActive && (
+                <div className="absolute bottom-3 left-3 z-20 w-[min(14rem,calc(100%-5rem))] rounded-xl border border-border/60 bg-background/88 p-2 shadow-xl backdrop-blur-sm">
+                  {/* UserRequest: 지도 크게 보기에서는 좌상단 요약 창을 더 작게 유지하고 불필요한 제목 문구는 제거한다. */}
+                  <div className="max-h-36 space-y-1 overflow-y-auto pr-1">
+                    {categorySummaryItems.map((item) => (
+                      <button
+                        type="button"
+                        key={item.categoryName}
+                        className={`flex w-full items-center gap-2 rounded-lg border border-border/50 bg-card/85 px-2 py-1.5 text-left transition-colors ${
+                          item.representativePlace
+                            ? 'hover:bg-accent/70 active:bg-accent'
+                            : 'cursor-default opacity-70'
+                        }`}
+                        onClick={() => {
+                          if (!item.representativePlace) return;
+                          setFocusedPlace(item.representativePlace);
+                        }}
+                        disabled={!item.representativePlace}
+                      >
+                        {/* UserRequest: 지도 요약 창에도 카테고리 목록과 같은 색상 원형 배지와 순번을 함께 표시한다. */}
+                        <div
+                          className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                          style={{ backgroundColor: item.color }}
+                        >
+                          {item.sequence}
+                        </div>
+                        <div className="flex min-w-0 items-center gap-2">
+                          <p className="truncate text-xs font-semibold">{item.categoryName}</p>
+                          <p className="truncate text-[11px] text-muted-foreground">{item.representativePlaceName}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               {/* UserRequest: 지도 전체 화면 토글 버튼을 아이콘 형태로 배치 */}
               <div className="absolute top-3 right-3 z-20 flex gap-2 md:hidden">
                 <Button
