@@ -115,8 +115,9 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
             <div className="space-y-2 px-1 py-1">
               {savedCategories.map((category) => (
                 <Card key={category.id} className="transition-colors hover:bg-muted/20">
+                  {/* UserRequest: 카테고리 업로드 카드에서 아이콘, 제목, 업로드 버튼을 모바일 포함 가로 1열로 정렬한다. */}
                   <CardHeader
-                    className="flex cursor-pointer flex-col items-start gap-3 py-3 sm:flex-row sm:items-center"
+                    className="flex flex-row cursor-pointer items-center gap-3 space-y-0 py-3"
                     onClick={() => handleTogglePlaces(category.id)}
                   >
                     <div className="relative shrink-0">
@@ -127,10 +128,10 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
                         {category.placeCount}
                       </span>
                     </div>
-                    <div className="flex min-w-0 flex-1 flex-col gap-1 self-stretch">
+                    <div className="min-w-0 flex-1">
                       <CardTitle className="truncate text-sm sm:text-base">{category.title}</CardTitle>
                     </div>
-                    <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
+                    <div className="ml-auto flex items-center gap-2">
                       <Button
                         size="sm"
                         variant="ghost"
