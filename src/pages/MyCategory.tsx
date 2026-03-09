@@ -26,7 +26,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { ArrowRight, Plus, Folder, Heart, Search, MapPin, X, Pencil, Trash2, MoreHorizontal } from 'lucide-react';
+import { ArrowRight, Plus, Folder, Heart, Search, MapPin, User as UserIcon, X, Pencil, Trash2, MoreHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Spinner } from '@/components/ui/spinner';
@@ -47,6 +47,7 @@ import { formatRelativeTimeKorean } from '@/shared/utils/relative-time';
 import { CategoryPlacesMap } from '@/components/map/category-places-map';
 import { LikedCategoryList } from '@/features/my-category/liked-category-list';
 import { UI_COPY } from '@/shared/constants/ui-copy';
+import { useUserNickname } from '@/shared/hooks/use-user-info';
 
 
 /**
@@ -57,6 +58,7 @@ import { UI_COPY } from '@/shared/constants/ui-copy';
 const MyCategory = () => {
   const navigate = useNavigate();
   const { isAuthenticated, token } = useAuthStore();
+  const { nickname: currentUserNickname, loading: currentUserNicknameLoading } = useUserNickname();
   // UserRequest: 내 카테고리 페이지에서는 카테고리/찜 탭만 제공하고 카테고리 탭을 기본값으로 설정
   const [activeSection, setActiveSection] = useState<'categories' | 'liked'>('categories');
   const [categoryDetailOpen, setCategoryDetailOpen] = useState(false);
@@ -575,6 +577,13 @@ const MyCategory = () => {
               <DialogTitle className="text-center">{selectedCategory?.title}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
+              {/* UserRequest: 보관 카테고리 상세보기 작성자 표시 형식을 찜 카테고리 상세보기와 동일하게 맞춘다. */}
+              <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground flex-wrap">
+                <span className="flex items-center gap-1.5">
+                  <UserIcon className="w-4 h-4 text-primary" />
+                  {currentUserNicknameLoading ? '불러오는 중...' : (currentUserNickname ?? '알 수 없음')}
+                </span>
+              </div>
               <CategoryPlacesMap
                 open={categoryDetailOpen}
                 places={(selectedCategory?.places ?? []).map((place) => ({
@@ -586,7 +595,14 @@ const MyCategory = () => {
                 focusedPlaceId={focusedPlaceId}
               />
               <div className="space-y-2">
-                <p className="text-sm font-semibold">{UI_COPY.myCategory.detailDialog.placeListTitle}</p>
+                {/* UserRequest: 보관 카테고리 상세보기 장소 목록 헤더를 찜 상세보기와 동일하게 아이콘 + 총 개수 형태로 표시한다. */}
+                <p className="text-sm font-semibold flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4 text-primary" />
+                  {UI_COPY.myCategory.detailDialog.placeListTitle}
+                  <span className="text-xs text-muted-foreground">
+                    ({selectedCategory?.placeCount ?? detailPlaces.length}곳)
+                  </span>
+                </p>
                 {/* UserRequest: 장소 개수와 무관하게 상세보기 목록 영역 높이를 고정하고 최소 행 슬롯으로 구분선 유지 */}
                 <div className="h-48 border border-border rounded-lg divide-y divide-border overflow-y-auto bg-muted/20">
                   {detailPlaces.length === 0 ? (
@@ -607,7 +623,11 @@ const MyCategory = () => {
                         onClick={() => setFocusedPlaceId(place.id)}
                         className="w-full min-h-14 text-left p-3 flex flex-col justify-center gap-1 hover:bg-accent/40 transition-colors"
                       >
-                        <span className="text-sm font-medium">{place.name}</span>
+                        {/* UserRequest: 보관 카테고리 상세보기 장소명 앞에 찜 상세보기와 동일한 MapPin 아이콘을 표시한다. */}
+                        <span className="text-sm font-medium flex items-center gap-1.5">
+                          <MapPin className="w-4 h-4 text-primary" />
+                          {place.name}
+                        </span>
                         <span className="text-xs text-muted-foreground">{place.addressName}</span>
                       </button>
                       ))}
