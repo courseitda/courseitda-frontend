@@ -4,13 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { Heart, Folder, User as UserIcon, Sparkles } from 'lucide-react';
+import { Heart, Sparkles } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { COMMUNITY_QUERY_KEYS, useRecommendedSharedCategories } from '@/shared/hooks/use-community';
 import { MESSAGES } from '@/shared/constants/messages';
 import type { SharedSavedCategory } from '@/entities/types';
 import { useSharedCategoryLike } from '@/shared/hooks/use-shared-category-like';
 import PageHeader from '@/components/layout/page-header';
+import SharedCategoryList from '@/components/community/shared-category-list';
 import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
 import LoginRequiredDialog from '@/components/common/login-required-dialog';
 import { UI_COPY } from '@/shared/constants/ui-copy';
@@ -436,52 +437,14 @@ const Community = () => {
           <div className="border border-border rounded-2xl bg-muted/30 p-3 md:p-4">
             {/* UserRequest: 전체 카테고리 카드 간격을 1/3 수준으로 축소 */}
             {/* UserRequest: 카테고리 게시판에는 최대 4개까지만 노출 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
-              {filteredCategories.slice(0, 4).map((category) => (
-                <Card
-                  key={category.id}
-                  className="hover-lift cursor-pointer"
-                  onClick={() => handleOpenDetail(category)}
-                >
-                  <CardHeader className="flex flex-row items-center gap-3 py-3">
-                    <div className="relative">
-                      <div className="w-9 h-9 rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground">
-                        <Folder className="w-4 h-4" />
-                      </div>
-                      <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[11px] leading-none px-1.5 py-0.5 rounded-full">
-                        {category.placeCount}
-                      </span>
-                    </div>
-                      <div className="flex flex-col gap-1 flex-1 min-w-0">
-                        <CardTitle className="text-base truncate">{category.title}</CardTitle>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                          <UserIcon className="w-4 h-4 text-primary" />
-                        {category.uploader}
-                        </p>
-                      </div>
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        handleToggleLike(category);
-                      }}
-                      aria-label={`${category.title} 찜하기`}
-                      aria-pressed={category.liked}
-                      className={`relative h-11 w-11 rounded-full flex items-center justify-center transition-transform duration-150 hover:scale-105 active:scale-90 focus:outline-none ${likePulse[category.id] ? 'scale-110' : ''}`}
-                    >
-                      {likePulse[category.id] && (
-                        <span className="absolute inset-0 rounded-full like-heart-ping animate-ping" />
-                      )}
-                      <Heart
-                        className={`w-7 h-7 ${isAuthenticated ? 'like-heart' : 'text-muted-foreground'} transition-transform duration-150 ${likePulse[category.id] ? 'scale-110' : ''}`}
-                        fill={isAuthenticated && category.liked ? 'currentColor' : 'none'}
-                        strokeWidth={isAuthenticated && category.liked ? 0 : 1.5}
-                      />
-                    </button>
-                  </CardHeader>
-                </Card>
-              ))}
-            </div>
+            {/* UserRequest: 커뮤니티 메인 카테고리 게시판 카드도 공통 SharedCategoryList를 사용한다. */}
+            <SharedCategoryList
+              categories={filteredCategories.slice(0, 4)}
+              isAuthenticated={isAuthenticated}
+              likePulse={likePulse}
+              onOpenDetail={handleOpenDetail}
+              onToggleLike={handleToggleLike}
+            />
           </div>
         </section>
 

@@ -1,5 +1,5 @@
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
-import { Folder, Heart, SearchX, User as UserIcon } from 'lucide-react';
+import { Calendar, Folder, Heart, SearchX } from 'lucide-react';
 import type { SharedSavedCategory } from '@/entities/types';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 
@@ -10,6 +10,15 @@ type SharedCategoryListProps = {
   onOpenDetail: (category: SharedSavedCategory) => void;
   onToggleLike: (category: SharedSavedCategory) => void;
   showEmptyState?: boolean;
+};
+
+const formatUploadedDate = (uploadedAt: string): string => {
+  const date = new Date(uploadedAt);
+  if (Number.isNaN(date.getTime())) return uploadedAt;
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}.${month}.${day}`;
 };
 
 // UserRequest: 공유 카테고리 목록 렌더링을 공통 컴포넌트로 분리
@@ -48,10 +57,16 @@ const SharedCategoryList = ({
               </div>
               <div className="flex flex-col gap-1 flex-1 min-w-0">
                 <CardTitle className="text-base truncate">{category.title}</CardTitle>
-                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                  <UserIcon className="w-4 h-4 text-primary" />
-                  {category.uploader}
-                </p>
+                {/* UserRequest: 작성자 닉네임 길이와 무관하게 등록일 위치를 고정한다. */}
+                <div className="text-xs text-muted-foreground flex items-center gap-2 min-w-0">
+                  {/* UserRequest: 목록 카드 메타 정보를 달력 아이콘 + 날짜 형식으로 표시한다. */}
+                  {category.uploadedAt && (
+                    <span className="shrink-0 inline-flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5 text-primary" />
+                      {formatUploadedDate(category.uploadedAt)}
+                    </span>
+                  )}
+                </div>
               </div>
               <button
                 type="button"
