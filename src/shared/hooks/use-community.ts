@@ -9,7 +9,6 @@ type SharedSavedCategoryPayload = {
   title: string;
   uploaderNickname: string;
   uploadedAt: string;
-  isLiked: boolean;
   placeCount: number;
   places: Array<{
     id: string;
@@ -29,7 +28,6 @@ const toSharedSavedCategoryEntity = (payload: SharedSavedCategoryPayload): Share
   title: payload.title,
   uploader: payload.uploaderNickname,
   uploadedAt: payload.uploadedAt,
-  liked: payload.isLiked,
   placeCount: payload.placeCount,
   places: payload.places.map((place) => ({
     id: place.id,
@@ -46,7 +44,6 @@ const toSharedSavedCategoryEntity = (payload: SharedSavedCategoryPayload): Share
 export const COMMUNITY_QUERY_KEYS = {
   recommended: ['community', 'shared-categories', 'recommended'] as const,
   search: (keyword: string) => ['community', 'shared-categories', 'search', keyword] as const,
-  liked: ['community', 'shared-categories', 'liked'] as const,
   myShared: ['community', 'shared-categories', 'me'] as const,
 };
 
@@ -96,34 +93,6 @@ export const useSharedCategorySearch = (
     placeholderData: (previousData) => previousData,
   });
 
-/**
- * 찜한 공유 카테고리 목록 조회 커스텀 훅
- */
-export const useLikedSharedCategories = (
-  token: string | null,
-): UseQueryResult<SharedSavedCategory[], Error> =>
-  useQuery<SharedSavedCategory[], Error>({
-    queryKey: COMMUNITY_QUERY_KEYS.liked,
-    enabled: !!token,
-    queryFn: async () => {
-      if (!token) {
-        throw new Error(UI_COPY.system.authTokenRequired);
-      }
-
-      const response = await communityApi.getLikedSharedCategories(token);
-
-      if (!response.success || !response.data) {
-        throw new Error(response.error?.message ?? MESSAGES.likedCategory.listLoadFailed);
-      }
-
-      return response.data.sharedCategories.map((category) =>
-        toSharedSavedCategoryEntity(category),
-      );
-    },
-    staleTime: 1000 * 15,
-    placeholderData: (previousData) => previousData,
-  });
-
 type MySharedCategoryPayload = {
   id: string;
   title: string;
@@ -139,7 +108,6 @@ const toMySharedCategoryEntity = (payload: MySharedCategoryPayload): MySharedCat
   title: payload.title,
   uploader: payload.uploaderNickname,
   uploadedAt: payload.uploadedAt,
-  liked: false,
   placeCount: payload.placeCount,
   places: [],
   savedCategoryId: payload.savedCategoryId,

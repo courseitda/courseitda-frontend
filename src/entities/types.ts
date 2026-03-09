@@ -113,7 +113,6 @@ export type SharedSavedCategory = {
   title: string; // 공유 카테고리 제목
   uploader: string; // 업로더 닉네임
   uploadedAt: string; // 업로드 일시 (ISO 8601)
-  liked: boolean; // 찜 여부(회원 기준)
   placeCount: number; // 포함된 장소 수
   places: SharedSavedCategoryPlace[]; // 상세 표시용 장소 목록(간략)
 };

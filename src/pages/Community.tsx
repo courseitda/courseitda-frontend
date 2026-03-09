@@ -1,19 +1,15 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { useAuthStore } from '@/shared/stores/auth-store';
-import { Heart, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
-import { COMMUNITY_QUERY_KEYS, useRecommendedSharedCategories } from '@/shared/hooks/use-community';
+import { useRecommendedSharedCategories } from '@/shared/hooks/use-community';
 import { MESSAGES } from '@/shared/constants/messages';
 import type { SharedSavedCategory } from '@/entities/types';
-import { useSharedCategoryLike } from '@/shared/hooks/use-shared-category-like';
 import PageHeader from '@/components/layout/page-header';
 import SharedCategoryList from '@/components/community/shared-category-list';
 import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
-import LoginRequiredDialog from '@/components/common/login-required-dialog';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 
 /**
@@ -22,11 +18,8 @@ import { UI_COPY } from '@/shared/constants/ui-copy';
  */
 const Community = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, token } = useAuthStore();
-  const [likePulse, setLikePulse] = useState<Record<string, boolean>>({});
   const [selectedCategory, setSelectedCategory] = useState<SharedSavedCategory | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
   const [recommendIndex, setRecommendIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(true);
   const sliderRef = useRef<HTMLDivElement>(null);
@@ -37,15 +30,7 @@ const Community = () => {
   const isLoopFixingRef = useRef(false);
   const loopFallbackTimerRef = useRef<number | null>(null);
   const [sliderWidth, setSliderWidth] = useState(0);
-  const { toggleLike } = useSharedCategoryLike({
-    queryKey: COMMUNITY_QUERY_KEYS.recommended,
-    token,
-    isAuthenticated,
-    setSelectedCategory,
-    onRequireLogin: () => setLoginDialogOpen(true),
-  });
-
-  // UserRequest: Community 페이지의 추천/검색/찜 로직은 service 계층 인터페이스를 통해 실행
+  // UserRequest: Community 페이지의 추천/검색 로직은 service 계층 인터페이스를 통해 실행
   const {
     data: sharedCategories = [],
     isLoading: sharedCategoriesLoading,
@@ -75,29 +60,9 @@ const Community = () => {
       : recommendIndex
     : 0;
 
-  // UserRequest: 공유 카테고리 찜 토글 로직을 공통 훅으로 대체
-  const triggerLikePulse = (categoryId: string) => {
-    setLikePulse((prev) => ({ ...prev, [categoryId]: true }));
-    setTimeout(() => {
-      setLikePulse((prev) => ({ ...prev, [categoryId]: false }));
-    }, 200);
-  };
-
-  const handleToggleLike = (category: SharedSavedCategory) => {
-    const didToggle = toggleLike({ sharedCategoryId: category.id, currentLiked: category.liked });
-    if (!didToggle) return;
-    triggerLikePulse(category.id);
-  };
-
   const handleOpenDetail = (category: SharedSavedCategory) => {
     setSelectedCategory(category);
     setDetailOpen(true);
-  };
-
-  // UserRequest: 로그인 필요 안내는 안내창으로 노출되도록 처리
-  const handleLoginStart = () => {
-    setLoginDialogOpen(false);
-    navigate('/auth?tab=login');
   };
 
   // UserRequest: pagination dots 클릭 시 정상 이동을 보장하도록 드래그 상태를 초기화
@@ -372,25 +337,6 @@ const Community = () => {
                           <CardContent className="p-5">
                             <div className="flex items-start justify-between gap-2">
                               <CardTitle className="text-lg truncate">{category.title}</CardTitle>
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        handleToggleLike(category);
-                      }}
-                      aria-label={`${category.title} 찜하기`}
-                      aria-pressed={category.liked}
-                      className={`relative h-10 w-10 rounded-full flex items-center justify-center transition-transform duration-150 hover:scale-105 active:scale-90 focus:outline-none ${likePulse[category.id] ? 'scale-110' : ''}`}
-                    >
-                      {likePulse[category.id] && (
-                        <span className="absolute inset-0 rounded-full bg-rose-200/70 animate-ping" />
-                      )}
-                      <Heart
-                        className={`w-6 h-6 ${isAuthenticated ? 'like-heart' : 'text-muted-foreground'} transition-transform duration-150 ${likePulse[category.id] ? 'scale-110' : ''}`}
-                        fill={isAuthenticated && category.liked ? 'currentColor' : 'none'}
-                        strokeWidth={isAuthenticated && category.liked ? 0 : 1.5}
-                      />
-                    </button>
                             </div>
                           </CardContent>
                         </Card>
@@ -440,10 +386,7 @@ const Community = () => {
             {/* UserRequest: 커뮤니티 메인 카테고리 게시판 카드도 공통 SharedCategoryList를 사용한다. */}
             <SharedCategoryList
               categories={filteredCategories.slice(0, 4)}
-              isAuthenticated={isAuthenticated}
-              likePulse={likePulse}
               onOpenDetail={handleOpenDetail}
-              onToggleLike={handleToggleLike}
             />
           </div>
         </section>
@@ -455,12 +398,6 @@ const Community = () => {
         open={detailOpen}
         onOpenChange={setDetailOpen}
         category={selectedCategory}
-      />
-      <LoginRequiredDialog
-        open={loginDialogOpen}
-        onOpenChange={setLoginDialogOpen}
-        onStart={handleLoginStart}
-        featureName="찜 기능"
       />
     </div>
   );

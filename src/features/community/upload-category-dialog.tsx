@@ -24,7 +24,7 @@ type UploadCategoryDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-// UserRequest: 내 게시물 업로드 팝업은 보관 카테고리만 노출하고 찜 카테고리는 제외
+// UserRequest: 내 게시물 업로드 팝업은 보관 카테고리만 노출
 export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialogProps) => {
   const navigate = useNavigate();
   const token = useAuthStore((state) => state.token);

@@ -1,14 +1,11 @@
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, Folder, Heart, SearchX } from 'lucide-react';
+import { Calendar, Folder, SearchX } from 'lucide-react';
 import type { SharedSavedCategory } from '@/entities/types';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 
 type SharedCategoryListProps = {
   categories: SharedSavedCategory[];
-  isAuthenticated: boolean;
-  likePulse: Record<string, boolean>;
   onOpenDetail: (category: SharedSavedCategory) => void;
-  onToggleLike: (category: SharedSavedCategory) => void;
   showEmptyState?: boolean;
 };
 
@@ -24,10 +21,7 @@ const formatUploadedDate = (uploadedAt: string): string => {
 // UserRequest: 공유 카테고리 목록 렌더링을 공통 컴포넌트로 분리
 const SharedCategoryList = ({
   categories,
-  isAuthenticated,
-  likePulse,
   onOpenDetail,
-  onToggleLike,
   showEmptyState = false,
 }: SharedCategoryListProps) => (
   <div className="h-[520px] overflow-y-auto pr-1">
@@ -68,25 +62,6 @@ const SharedCategoryList = ({
                   )}
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onToggleLike(category);
-                }}
-                aria-label={`${category.title} 찜하기`}
-                aria-pressed={category.liked}
-                className={`relative h-11 w-11 rounded-full flex items-center justify-center transition-transform duration-150 hover:scale-105 active:scale-90 focus:outline-none ${likePulse[category.id] ? 'scale-110' : ''}`}
-              >
-                {likePulse[category.id] && (
-                  <span className="absolute inset-0 rounded-full like-heart-ping animate-ping" />
-                )}
-                <Heart
-                  className={`w-7 h-7 ${isAuthenticated ? 'like-heart' : 'text-muted-foreground'} transition-transform duration-150 ${likePulse[category.id] ? 'scale-110' : ''}`}
-                  fill={isAuthenticated && category.liked ? 'currentColor' : 'none'}
-                  strokeWidth={isAuthenticated && category.liked ? 0 : 1.5}
-                />
-              </button>
             </CardHeader>
           </Card>
         ))}

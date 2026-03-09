@@ -180,18 +180,9 @@ export const UI_COPY = {
       title: '카테고리가 없습니다.',
       description: '지금 추가해보세요!',
     },
-    likedEmpty: {
-      title: '아직 찜한 카테고리가 없습니다.',
-      description: '커뮤니티에서 마음에 드는 카테고리를 찾아보세요.',
-      action: '찜하러 가기',
-    },
     detailDialog: {
       placeListTitle: '장소 목록',
       noPlacesInDetail: '표시할 장소가 없습니다.',
-      unlikeCancel: '취소',
-      unlikeConfirm: '해제하기',
-      unlikeTitle: '찜을 해제할까요?',
-      unlikeDescription: (title: string) => `"${title}"를 찜 목록에서 제거합니다.`,
     },
     editorDialog: {
       createTitle: '새 카테고리 추가',
@@ -264,7 +255,7 @@ export const UI_COPY = {
     boardTitle: '카테고리 게시판',
     boardPageTitle: '카테고리 게시판',
     uploadFabLabel: '업로드',
-    searchPlaceholder: '장소 카테고리를 찾아 찜해보세요',
+    searchPlaceholder: '장소 카테고리를 찾아보세요',
     emptySearchResult: '검색 결과가 없습니다.',
   },
   toaster: {
@@ -317,9 +308,7 @@ export const UI_COPY = {
   importCategoryDialog: {
     title: '카테고리 불러오기',
     savedTab: '내 보관함',
-    likedTab: '찜',
     savedEmpty: '내 보관함에 카테고리가 없습니다.',
-    likedEmpty: '찜한 카테고리가 없습니다.',
   },
   placeSearchDialog: {
     title: '장소 검색',

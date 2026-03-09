@@ -26,9 +26,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { ArrowRight, Plus, Folder, Heart, Search, MapPin, User as UserIcon, X, Pencil, Trash2, MoreHorizontal } from 'lucide-react';
+import { Plus, Folder, Search, MapPin, User as UserIcon, X, Pencil, Trash2, MoreHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Spinner } from '@/components/ui/spinner';
 import {
   useCreateSavedCategory,
@@ -36,40 +35,27 @@ import {
   useMySavedCategories,
   useUpdateSavedCategory,
 } from '@/shared/hooks/use-my-storage';
-import { COMMUNITY_QUERY_KEYS, useLikedSharedCategories } from '@/shared/hooks/use-community';
-import { useSharedCategoryLike } from '@/shared/hooks/use-shared-category-like';
 import { MESSAGES } from '@/shared/constants/messages';
-import type { SavedCategory, SearchedPlace, SharedSavedCategory } from '@/entities/types';
+import type { SavedCategory, SearchedPlace } from '@/entities/types';
 import PageHeader from '@/components/layout/page-header';
-import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
 import { placeApi } from '@/services/api';
 import { formatRelativeTimeKorean } from '@/shared/utils/relative-time';
 import { CategoryPlacesMap } from '@/components/map/category-places-map';
-import { LikedCategoryList } from '@/features/my-category/liked-category-list';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 import { useUserNickname } from '@/shared/hooks/use-user-info';
 
-
 /**
  * 내 카테고리 페이지 컴포넌트
- * 카테고리/찜 탭만 제공하며 워크스페이스 탭을 노출하지 않음
+ * 카테고리 목록 생성/수정/삭제와 상세 확인 흐름만 제공
  * UserRequest: 백엔드 API 연동을 위해 토큰 기반 인증으로 변경, 사용자 정보는 API 호출로 조회
  */
 const MyCategory = () => {
   const navigate = useNavigate();
   const { isAuthenticated, token } = useAuthStore();
   const { nickname: currentUserNickname, loading: currentUserNicknameLoading } = useUserNickname();
-  // UserRequest: 내 카테고리 페이지에서는 카테고리/찜 탭만 제공하고 카테고리 탭을 기본값으로 설정
-  const [activeSection, setActiveSection] = useState<'categories' | 'liked'>('categories');
   const [categoryDetailOpen, setCategoryDetailOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<SavedCategory | null>(null);
   const [focusedPlaceId, setFocusedPlaceId] = useState<string | null>(null);
-  const [likePulse, setLikePulse] = useState<Record<string, boolean>>({});
-  const [removingLikedIds, setRemovingLikedIds] = useState<Record<string, boolean>>({});
-  const [unlikeDialogOpen, setUnlikeDialogOpen] = useState(false);
-  const [pendingUnlike, setPendingUnlike] = useState<{ id: string; title: string } | null>(null);
-  const [likedDetailOpen, setLikedDetailOpen] = useState(false);
-  const [selectedLikedCategory, setSelectedLikedCategory] = useState<SharedSavedCategory | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [categoryDialogMode, setCategoryDialogMode] = useState<'create' | 'edit'>('create');
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
@@ -87,21 +73,9 @@ const MyCategory = () => {
     isLoading: savedCategoriesLoading,
     error: savedCategoriesError,
   } = useMySavedCategories(token);
-  const {
-    data: likedCategories = [],
-    isLoading: likedCategoriesLoading,
-    error: likedCategoriesError,
-  } = useLikedSharedCategories(token);
   const createSavedCategoryMutation = useCreateSavedCategory(token);
   const updateSavedCategoryMutation = useUpdateSavedCategory(token);
   const deleteSavedCategoryMutation = useDeleteSavedCategory(token);
-
-  // UserRequest: 내 카테고리 찜 탭에서도 찜 해제를 지원
-  const { toggleLike } = useSharedCategoryLike({
-    queryKey: COMMUNITY_QUERY_KEYS.liked,
-    token,
-    isAuthenticated,
-  });
 
   // 미인증 사용자 접근 차단 - 로그인 페이지로 리다이렉트하여 보안 유지
   useEffect(() => {
@@ -109,6 +83,13 @@ const MyCategory = () => {
       navigate('/auth');
     }
   }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    // UserRequest: 내 카테고리 목록 조회 실패 시 사용자에게 즉시 알림
+    if (savedCategoriesError) {
+      toast.error(savedCategoriesError.message || MESSAGES.savedCategory.listLoadFailed);
+    }
+  }, [savedCategoriesError]);
 
   // UserRequest: 카테고리 카드 클릭 시 상세 팝업을 표시하여 이름/지도(임시)/장소 목록을 보여줌
   const handleOpenCategory = (categoryId: string) => {
@@ -119,20 +100,6 @@ const MyCategory = () => {
     setFocusedPlaceId(null);
     setCategoryDetailOpen(true);
   };
-
-  useEffect(() => {
-    // UserRequest: 내 카테고리 목록 조회 실패 시 사용자에게 즉시 알림
-    if (savedCategoriesError) {
-      toast.error(savedCategoriesError.message || MESSAGES.savedCategory.listLoadFailed);
-    }
-  }, [savedCategoriesError]);
-
-  useEffect(() => {
-    // UserRequest: 찜 목록 조회 실패 시 사용자에게 즉시 알림
-    if (likedCategoriesError) {
-      toast.error(likedCategoriesError.message || MESSAGES.likedCategory.listLoadFailed);
-    }
-  }, [likedCategoriesError]);
 
   const handleSearchPlaces = async () => {
     if (!placeQuery.trim()) {
@@ -167,6 +134,13 @@ const MyCategory = () => {
     setSelectedPlaces((prev) => prev.filter((place) => place.id !== placeId));
   };
 
+  const resetCreateDialog = () => {
+    setNewCategoryTitle('');
+    setPlaceQuery('');
+    setPlaceResults([]);
+    setSelectedPlaces([]);
+  };
+
   const handleOpenCreateDialog = () => {
     // UserRequest: 새 카테고리 추가 버튼 클릭 시 생성 팝업 노출
     setCategoryDialogMode('create');
@@ -194,13 +168,6 @@ const MyCategory = () => {
       })),
     );
     setCreateDialogOpen(true);
-  };
-
-  const resetCreateDialog = () => {
-    setNewCategoryTitle('');
-    setPlaceQuery('');
-    setPlaceResults([]);
-    setSelectedPlaces([]);
   };
 
   const handleCreateCategory = async () => {
@@ -241,6 +208,22 @@ const MyCategory = () => {
     // UserRequest: 길게 누른 카테고리 카드의 "삭제하기"는 워크스페이스와 유사한 확인 팝업으로 진행
     setSelectedForDelete(category);
     setDeleteAlertOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!selectedForDelete || deleteSavedCategoryMutation.isPending) return;
+    deleteSavedCategoryMutation.mutate(selectedForDelete.id, {
+      onSuccess: () => {
+        if (selectedCategory?.id === selectedForDelete.id) {
+          setCategoryDetailOpen(false);
+          setSelectedCategory(null);
+        }
+      },
+      onSettled: () => {
+        setDeleteAlertOpen(false);
+        setSelectedForDelete(null);
+      },
+    });
   };
 
   // UserRequest: 내 카테고리 카드의 롱프레스를 제거하고 우측 더보기 버튼으로 수정/삭제 메뉴를 노출한다.
@@ -309,65 +292,6 @@ const MyCategory = () => {
     </Card>
   );
 
-  const handleDeleteConfirm = () => {
-    if (!selectedForDelete || deleteSavedCategoryMutation.isPending) return;
-    deleteSavedCategoryMutation.mutate(selectedForDelete.id, {
-      onSuccess: () => {
-        if (selectedCategory?.id === selectedForDelete.id) {
-          setCategoryDetailOpen(false);
-          setSelectedCategory(null);
-        }
-      },
-      onSettled: () => {
-        setDeleteAlertOpen(false);
-        setSelectedForDelete(null);
-      },
-    });
-  };
-
-  const triggerLikePulse = (categoryId: string) => {
-    setLikePulse((prev) => ({ ...prev, [categoryId]: true }));
-    setTimeout(() => {
-      setLikePulse((prev) => ({ ...prev, [categoryId]: false }));
-    }, 200);
-  };
-
-  const handleToggleLikedCategory = (categoryId: string, currentLiked: boolean) => {
-    if (currentLiked) {
-      // UserRequest: 찜 해제 시 카드가 자연스럽게 사라지는 전환 애니메이션 적용
-      setRemovingLikedIds((prev) => ({ ...prev, [categoryId]: true }));
-      setTimeout(() => {
-        setRemovingLikedIds((prev) => {
-          const next = { ...prev };
-          delete next[categoryId];
-          return next;
-        });
-      }, 220);
-    }
-    const didToggle = toggleLike({ sharedCategoryId: categoryId, currentLiked });
-    if (!didToggle) return;
-    triggerLikePulse(categoryId);
-  };
-
-  const requestUnlike = (categoryId: string, title: string) => {
-    // UserRequest: 찜 해제 시 안내 팝업을 띄워 확인 후 해제 처리
-    setPendingUnlike({ id: categoryId, title });
-    setUnlikeDialogOpen(true);
-  };
-
-  const confirmUnlike = () => {
-    if (!pendingUnlike) return;
-    handleToggleLikedCategory(pendingUnlike.id, true);
-    setUnlikeDialogOpen(false);
-    setPendingUnlike(null);
-  };
-
-  const handleOpenLikedDetail = (category: SharedSavedCategory) => {
-    // UserRequest: 찜 카드 클릭 시 카테고리 게시판과 동일한 상세 팝업을 표시
-    setSelectedLikedCategory(category);
-    setLikedDetailOpen(true);
-  };
-
   // UserRequest: 상세보기 장소 목록은 최소 3행 슬롯을 유지해 항목 수가 적어도 구분선이 보이도록 처리
   const detailPlaces = selectedCategory?.places ?? [];
   const detailMinRows = 3;
@@ -397,441 +321,306 @@ const MyCategory = () => {
     icon: ReactNode,
     message: string,
     className = 'h-[50vh]',
-    action?: ReactNode,
   ) => (
     <div className={`border-2 border-dashed border-border rounded-xl p-5 text-center flex flex-col items-center justify-center sm:p-8 md:p-10 ${className}`}>
       {icon}
       <p className="whitespace-pre-line text-sm leading-6 text-muted-foreground">{message}</p>
-      {action}
     </div>
   );
 
-  const handleMoveToCommunity = () => {
-    // UserRequest: 찜 카테고리 빈 상태에서 커뮤니티로 바로 이동할 수 있게 연결한다.
-    navigate('/community');
-  };
-
   return (
-      <div className="min-h-screen bg-gradient-card">
-        {/* UserRequest: 뒤로가기 버튼은 직전 페이지로 이동 */}
-        {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
-        <PageHeader title={UI_COPY.myCategory.pageTitle} />
+    <div className="min-h-screen bg-gradient-card">
+      {/* UserRequest: 뒤로가기 버튼은 직전 페이지로 이동 */}
+      {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
+      <PageHeader title={UI_COPY.myCategory.pageTitle} />
 
-        {/* 모바일 레이아웃 */}
-        {/* UserRequest: 모바일 뷰 좌우 여백을 0.5배로 축소하여 다른 페이지와 통일성 유지 (px-8 → px-4) */}
-        <main className="md:hidden container mx-auto px-4 py-6">
-          <Tabs value={activeSection} onValueChange={(value) => setActiveSection(value as 'categories' | 'liked')}>
-            <TabsList className="grid w-full grid-cols-2 mb-4">
-              {/* UserRequest: 워크스페이스 탭을 제거하고 카테고리/찜 탭만 노출 */}
-              <TabsTrigger value="categories" className="flex items-center gap-1.5">
-                <Folder className="w-4 h-4" />
-                카테고리
-              </TabsTrigger>
-              <TabsTrigger value="liked" className="flex items-center gap-1.5">
-                <Heart className="w-4 h-4" />
-                찜
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="categories" className="mt-0 space-y-3">
-              {/* UserRequest: 카테고리 탭에서도 생성 버튼과 목록을 워크스페이스와 동일한 형태로 표시 */}
-              <Card
-                  className="hover-lift cursor-pointer border-border bg-card hover:bg-accent/40 transition-colors"
-                  onClick={handleOpenCreateDialog}
-              >
-                <CardHeader className="flex flex-col items-center justify-center">
-                  <div className="flex items-center gap-2 text-primary">
-                    <Plus className="w-5 h-5" />
-                    <CardTitle className="text-base md:text-lg text-primary">{UI_COPY.myCategory.createAction}</CardTitle>
-                  </div>
-                </CardHeader>
-              </Card>
-
-              {savedCategories.length === 0
-                ? renderEmptyState(
-                  <Folder className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />,
-                  '카테고리가 없습니다.\n지금 추가해보세요!',
-                )
-                : savedCategories.map((category) => renderSavedCategoryCard(category))}
-            </TabsContent>
-
-            <TabsContent value="liked" className="mt-0">
-              {likedCategoriesLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Spinner className="w-6 h-6" />
-                </div>
-              ) : likedCategories.length === 0 ? (
-                renderEmptyState(
-                  <Heart className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />,
-                  `${UI_COPY.myCategory.likedEmpty.title}\n${UI_COPY.myCategory.likedEmpty.description}`,
-                  'h-[calc(50vh+5rem)]',
-                  <Button
-                    type="button"
-                    variant="link"
-                    className="mt-2 inline-flex h-auto max-w-full flex-wrap items-center justify-center gap-1 whitespace-normal p-0 text-center text-sm font-medium text-primary underline-offset-4 hover:underline"
-                    onClick={handleMoveToCommunity}
-                  >
-                    <ArrowRight className="h-4 w-4 shrink-0" />
-                    {UI_COPY.myCategory.likedEmpty.action}
-                  </Button>,
-                )
-              ) : (
-                <LikedCategoryList
-                  categories={likedCategories}
-                  isAuthenticated={isAuthenticated}
-                  likePulse={likePulse}
-                  removingLikedIds={removingLikedIds}
-                  onOpenDetail={handleOpenLikedDetail}
-                  onRequestUnlike={requestUnlike}
-                />
-              )}
-            </TabsContent>
-          </Tabs>
-        </main>
-
-        {/* 데스크톱 레이아웃 - 3단 구조 */}
-        {/* UserRequest: 데스크톱 화면에서도 카테고리/찜 탭만 제공하여 정보 구조를 단순화 */}
-        <main className="hidden md:block min-h-[calc(100vh-80px)]">
-          <div className="grid grid-cols-[1fr_2fr_1fr] min-h-[calc(100vh-80px)]">
-            {/* 좌측: 배경 영역 (primary/5 색상으로 시각적 여유 제공) */}
-            <div className="bg-primary/5 min-h-[calc(100vh-80px)]"></div>
-
-            {/* 중앙: 카테고리/찜 목록 콘텐츠 */}
-            <div className="px-4 py-4 overflow-y-auto min-h-[calc(100vh-80px)]">
-              <Tabs value={activeSection} onValueChange={(value) => setActiveSection(value as 'categories' | 'liked')}>
-                <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="categories" className="flex items-center gap-1.5">
-                    <Folder className="w-4 h-4" />
-                    카테고리
-                  </TabsTrigger>
-                  <TabsTrigger value="liked" className="flex items-center gap-1.5">
-                    <Heart className="w-4 h-4" />
-                    찜
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="categories" className="mt-0 space-y-2">
-                  {/* UserRequest: 카테고리 탭에서도 생성 버튼과 목록을 워크스페이스와 동일한 형태로 표시 */}
-                  <Card
-                      className="hover-lift cursor-pointer border-border bg-card hover:bg-accent/40 transition-colors"
-                      onClick={handleOpenCreateDialog}
-                  >
-                    <CardHeader className="flex flex-col items-center justify-center">
-                      <div className="flex items-center gap-2 text-primary">
-                        <Plus className="w-5 h-5" />
-                        <CardTitle className="text-base md:text-lg text-primary">{UI_COPY.myCategory.createAction}</CardTitle>
-                      </div>
-                    </CardHeader>
-                  </Card>
-
-                  {savedCategories.length === 0
-                    ? renderEmptyState(
-                      <Folder className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />,
-                      '카테고리가 없습니다.\n지금 추가해보세요!',
-                    )
-                    : savedCategories.map((category) => renderSavedCategoryCard(category))}
-                </TabsContent>
-
-                <TabsContent value="liked" className="mt-0">
-                  {likedCategoriesLoading ? (
-                    <div className="flex items-center justify-center py-10">
-                      <Spinner className="w-6 h-6" />
-                    </div>
-                  ) : likedCategories.length === 0 ? (
-                    renderEmptyState(
-                      <Heart className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />,
-                      `${UI_COPY.myCategory.likedEmpty.title}\n${UI_COPY.myCategory.likedEmpty.description}`,
-                      'h-[calc(50vh+5rem)]',
-                      <Button
-                        type="button"
-                        variant="link"
-                        className="mt-2 inline-flex h-auto max-w-full flex-wrap items-center justify-center gap-1 whitespace-normal p-0 text-center text-sm font-medium text-primary underline-offset-4 hover:underline"
-                        onClick={handleMoveToCommunity}
-                      >
-                        <ArrowRight className="h-4 w-4 shrink-0" />
-                        {UI_COPY.myCategory.likedEmpty.action}
-                      </Button>,
-                    )
-                  ) : (
-                    <LikedCategoryList
-                      categories={likedCategories}
-                      isAuthenticated={isAuthenticated}
-                      likePulse={likePulse}
-                      removingLikedIds={removingLikedIds}
-                      onOpenDetail={handleOpenLikedDetail}
-                      onRequestUnlike={requestUnlike}
-                    />
-                  )}
-                </TabsContent>
-              </Tabs>
+      {/* 모바일 레이아웃 */}
+      {/* UserRequest: 모바일 뷰 좌우 여백을 0.5배로 축소하여 다른 페이지와 통일성 유지 (px-8 → px-4) */}
+      <main className="md:hidden container mx-auto px-4 py-6 space-y-3">
+        {/* UserRequest: 카테고리 페이지에서 생성 버튼과 목록을 동일한 흐름으로 표시 */}
+        <Card
+          className="hover-lift cursor-pointer border-border bg-card hover:bg-accent/40 transition-colors"
+          onClick={handleOpenCreateDialog}
+        >
+          <CardHeader className="flex flex-col items-center justify-center">
+            <div className="flex items-center gap-2 text-primary">
+              <Plus className="w-5 h-5" />
+              <CardTitle className="text-base md:text-lg text-primary">{UI_COPY.myCategory.createAction}</CardTitle>
             </div>
+          </CardHeader>
+        </Card>
 
-            {/* 우측: 배경 영역 (primary/5 색상으로 시각적 여유 제공) */}
-            <div className="bg-primary/5 min-h-[calc(100vh-80px)]"></div>
+        {savedCategories.length === 0
+          ? renderEmptyState(
+            <Folder className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />,
+            '카테고리가 없습니다.\n지금 추가해보세요!',
+          )
+          : savedCategories.map((category) => renderSavedCategoryCard(category))}
+      </main>
+
+      {/* 데스크톱 레이아웃 - 3단 구조 */}
+      <main className="hidden md:block min-h-[calc(100vh-80px)]">
+        <div className="grid grid-cols-[1fr_2fr_1fr] min-h-[calc(100vh-80px)]">
+          <div className="bg-primary/5 min-h-[calc(100vh-80px)]"></div>
+
+          <div className="px-4 py-4 overflow-y-auto min-h-[calc(100vh-80px)] space-y-2">
+            {/* UserRequest: 카테고리 페이지에서 생성 버튼과 목록을 동일한 흐름으로 표시 */}
+            <Card
+              className="hover-lift cursor-pointer border-border bg-card hover:bg-accent/40 transition-colors"
+              onClick={handleOpenCreateDialog}
+            >
+              <CardHeader className="flex flex-col items-center justify-center">
+                <div className="flex items-center gap-2 text-primary">
+                  <Plus className="w-5 h-5" />
+                  <CardTitle className="text-base md:text-lg text-primary">{UI_COPY.myCategory.createAction}</CardTitle>
+                </div>
+              </CardHeader>
+            </Card>
+
+            {savedCategories.length === 0
+              ? renderEmptyState(
+                <Folder className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />,
+                '카테고리가 없습니다.\n지금 추가해보세요!',
+              )
+              : savedCategories.map((category) => renderSavedCategoryCard(category))}
           </div>
-        </main>
 
-        <Dialog open={categoryDetailOpen} onOpenChange={setCategoryDetailOpen}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className="text-center">{selectedCategory?.title}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              {/* UserRequest: 보관 카테고리 상세보기 작성자 표시 형식을 찜 카테고리 상세보기와 동일하게 맞춘다. */}
-              <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground flex-wrap">
-                <span className="flex items-center gap-1.5">
-                  <UserIcon className="w-4 h-4 text-primary" />
-                  {currentUserNicknameLoading ? '불러오는 중...' : (currentUserNickname ?? '알 수 없음')}
+          <div className="bg-primary/5 min-h-[calc(100vh-80px)]"></div>
+        </div>
+      </main>
+
+      <Dialog open={categoryDetailOpen} onOpenChange={setCategoryDetailOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-center">{selectedCategory?.title}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* UserRequest: 보관 카테고리 상세보기 작성자 정보를 상단 메타 영역에 표시한다. */}
+            <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground flex-wrap">
+              <span className="flex items-center gap-1.5">
+                <UserIcon className="w-4 h-4 text-primary" />
+                {currentUserNicknameLoading ? '불러오는 중...' : (currentUserNickname ?? '알 수 없음')}
+              </span>
+            </div>
+            <CategoryPlacesMap
+              open={categoryDetailOpen}
+              places={(selectedCategory?.places ?? []).map((place) => ({
+                id: place.id,
+                name: place.name,
+                latitude: place.latitude,
+                longitude: place.longitude,
+              }))}
+              focusedPlaceId={focusedPlaceId}
+            />
+            <div className="space-y-2">
+              {/* UserRequest: 보관 카테고리 상세보기 장소 목록 헤더를 아이콘 + 총 개수 형태로 표시한다. */}
+              <p className="text-sm font-semibold flex items-center gap-1.5">
+                <MapPin className="w-4 h-4 text-primary" />
+                {UI_COPY.myCategory.detailDialog.placeListTitle}
+                <span className="text-xs text-muted-foreground">
+                  ({selectedCategory?.placeCount ?? detailPlaces.length}곳)
                 </span>
-              </div>
-              <CategoryPlacesMap
-                open={categoryDetailOpen}
-                places={(selectedCategory?.places ?? []).map((place) => ({
-                  id: place.id,
-                  name: place.name,
-                  latitude: place.latitude,
-                  longitude: place.longitude,
-                }))}
-                focusedPlaceId={focusedPlaceId}
-              />
-              <div className="space-y-2">
-                {/* UserRequest: 보관 카테고리 상세보기 장소 목록 헤더를 찜 상세보기와 동일하게 아이콘 + 총 개수 형태로 표시한다. */}
-                <p className="text-sm font-semibold flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4 text-primary" />
-                  {UI_COPY.myCategory.detailDialog.placeListTitle}
-                  <span className="text-xs text-muted-foreground">
-                    ({selectedCategory?.placeCount ?? detailPlaces.length}곳)
-                  </span>
-                </p>
-                {/* UserRequest: 장소 개수와 무관하게 상세보기 목록 영역 높이를 고정하고 최소 행 슬롯으로 구분선 유지 */}
-                <div className="h-48 border border-border rounded-lg divide-y divide-border overflow-y-auto bg-muted/20">
-                  {detailPlaces.length === 0 ? (
-                    <>
-                      <div className="h-14 px-3 flex items-center text-sm text-muted-foreground">
-                        {UI_COPY.myCategory.detailDialog.noPlacesInDetail}
-                      </div>
-                      {Array.from({ length: detailMinRows - 1 }).map((_, index) => (
-                        <div key={`detail-empty-initial-${index}`} className="h-14" />
-                      ))}
-                    </>
-                  ) : (
-                    <>
-                      {detailPlaces.map((place) => (
+              </p>
+              {/* UserRequest: 장소 개수와 무관하게 상세보기 목록 영역 높이를 고정하고 최소 행 슬롯으로 구분선 유지 */}
+              <div className="h-48 border border-border rounded-lg divide-y divide-border overflow-y-auto bg-muted/20">
+                {detailPlaces.length === 0 ? (
+                  <>
+                    <div className="h-14 px-3 flex items-center text-sm text-muted-foreground">
+                      {UI_COPY.myCategory.detailDialog.noPlacesInDetail}
+                    </div>
+                    {Array.from({ length: detailMinRows - 1 }).map((_, index) => (
+                      <div key={`detail-empty-initial-${index}`} className="h-14" />
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    {detailPlaces.map((place) => (
                       <button
                         key={place.id}
                         type="button"
                         onClick={() => setFocusedPlaceId(place.id)}
                         className="w-full min-h-14 text-left p-3 flex flex-col justify-center gap-1 hover:bg-accent/40 transition-colors"
                       >
-                        {/* UserRequest: 보관 카테고리 상세보기 장소명 앞에 찜 상세보기와 동일한 MapPin 아이콘을 표시한다. */}
+                        {/* UserRequest: 보관 카테고리 상세보기 장소명 앞에 MapPin 아이콘을 표시한다. */}
                         <span className="text-sm font-medium flex items-center gap-1.5">
                           <MapPin className="w-4 h-4 text-primary" />
                           {place.name}
                         </span>
                         <span className="text-xs text-muted-foreground">{place.addressName}</span>
                       </button>
-                      ))}
-                      {Array.from({ length: detailEmptyRows }).map((_, index) => (
-                        <div key={`detail-empty-tail-${index}`} className="h-14" />
-                      ))}
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        <AlertDialog open={unlikeDialogOpen} onOpenChange={setUnlikeDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{UI_COPY.myCategory.detailDialog.unlikeTitle}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {pendingUnlike?.title
-                  ? UI_COPY.myCategory.detailDialog.unlikeDescription(pendingUnlike.title)
-                  : UI_COPY.myCategory.detailDialog.unlikeDescription('선택한 카테고리')}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>{UI_COPY.myCategory.detailDialog.unlikeCancel}</AlertDialogCancel>
-              <AlertDialogAction onClick={confirmUnlike}>{UI_COPY.myCategory.detailDialog.unlikeConfirm}</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        <SharedCategoryDetailDialog
-          open={likedDetailOpen}
-          onOpenChange={setLikedDetailOpen}
-          category={selectedLikedCategory}
-        />
-
-        <Dialog
-          open={createDialogOpen}
-          onOpenChange={(open) => {
-            setCreateDialogOpen(open);
-            if (!open) {
-              resetCreateDialog();
-              setCategoryDialogMode('create');
-              setEditingCategoryId(null);
-            }
-          }}
-        >
-          <DialogContent className="max-w-2xl max-h-[88vh] overflow-y-auto px-3 py-4 sm:p-6">
-            <DialogHeader>
-              <DialogTitle>
-                {categoryDialogMode === 'edit'
-                  ? UI_COPY.myCategory.editorDialog.editTitle
-                  : UI_COPY.myCategory.editorDialog.createTitle}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <p className="text-sm font-semibold">{UI_COPY.myCategory.editorDialog.nameLabel}</p>
-                <Input
-                  placeholder={UI_COPY.myCategory.editorDialog.namePlaceholder}
-                  value={newCategoryTitle}
-                  onChange={(event) => setNewCategoryTitle(event.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm font-semibold">{UI_COPY.myCategory.editorDialog.selectedPlacesLabel}</p>
-                {/* UserRequest: 검색 결과 영역과 동일한 높이로 고정하고 스크롤로 관리 */}
-                <div className="max-h-56 overflow-y-auto overflow-x-hidden border border-border rounded-lg divide-y divide-border">
-                  {selectedPlaces.length === 0 ? (
-                    <div className="p-4 text-sm text-muted-foreground">{UI_COPY.myCategory.editorDialog.noPlacesSelected}</div>
-                  ) : (
-                    selectedPlaces.map((place) => (
-                      <div key={place.id} className="flex items-center gap-2.5 p-3">
-                        <div className="text-primary shrink-0">
-                          <MapPin className="w-4 h-4" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{place.name}</p>
-                          <p className="text-xs text-muted-foreground truncate">{place.addressName}</p>
-                        </div>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="shrink-0"
-                          onClick={() => handleRemovePlace(place.id)}
-                          aria-label={UI_COPY.myCategory.editorDialog.removePlaceAriaLabel}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm font-semibold">{UI_COPY.myCategory.editorDialog.placeSearchLabel}</p>
-                <div className="flex w-full min-w-0 items-center gap-2">
-                  <Input
-                    className="min-w-0 flex-1"
-                    placeholder={UI_COPY.myCategory.editorDialog.placeSearchPlaceholder}
-                    value={placeQuery}
-                    onChange={(event) => setPlaceQuery(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter') {
-                        event.preventDefault();
-                        handleSearchPlaces();
-                      }
-                    }}
-                  />
-                  <Button
-                    onClick={handleSearchPlaces}
-                    disabled={placeSearchLoading}
-                    className="shrink-0 gap-2 px-3"
-                  >
-                    <Search className="w-4 h-4" />
-                    {UI_COPY.myCategory.editorDialog.searchAction}
-                  </Button>
-                </div>
-                {placeSearchLoading && (
-                  <div className="text-sm text-muted-foreground">{UI_COPY.myCategory.editorDialog.searching}</div>
-                )}
-                {!placeSearchLoading && placeResults.length > 0 && (
-                  <div className="max-h-56 overflow-y-auto overflow-x-hidden border border-border rounded-lg divide-y divide-border">
-                    {placeResults.map((place) => (
-                      <div key={place.id} className="flex items-start gap-2.5 p-3">
-                        <div className="mt-0.5 shrink-0 text-primary">
-                          <MapPin className="w-4 h-4" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{place.name}</p>
-                          <p className="text-xs text-muted-foreground truncate">{place.addressName}</p>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="shrink-0"
-                          onClick={() => handleAddPlace(place)}
-                        >
-                          {UI_COPY.myCategory.editorDialog.addPlaceAction}
-                        </Button>
-                      </div>
                     ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-end gap-2">
-                <Button className="shrink-0" variant="outline" onClick={() => setCreateDialogOpen(false)}>
-                  {UI_COPY.myCategory.editorDialog.cancel}
-                </Button>
-                {/* UserRequest: 필수 입력값이 없으면 생성 버튼을 비활성화 */}
-                <Button
-                  className="shrink-0"
-                  onClick={handleCreateCategory}
-                  disabled={
-                    createSavedCategoryMutation.isPending ||
-                    updateSavedCategoryMutation.isPending ||
-                    !newCategoryTitle.trim() ||
-                    selectedPlaces.length === 0
-                  }
-                >
-                  {createSavedCategoryMutation.isPending || updateSavedCategoryMutation.isPending
-                    ? categoryDialogMode === 'edit'
-                      ? UI_COPY.myCategory.editorDialog.editing
-                      : UI_COPY.myCategory.editorDialog.creating
-                    : categoryDialogMode === 'edit'
-                      ? UI_COPY.myCategory.editorDialog.edit
-                      : UI_COPY.myCategory.editorDialog.create}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{UI_COPY.myCategory.deleteDialog.title}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {selectedForDelete && (
-                  <>
-                    {UI_COPY.myCategory.deleteDialog.description(selectedForDelete.title)}
-                    <br />
-                    <span className="text-destructive">{UI_COPY.myCategory.deleteDialog.warning}</span>
+                    {Array.from({ length: detailEmptyRows }).map((_, index) => (
+                      <div key={`detail-empty-tail-${index}`} className="h-14" />
+                    ))}
                   </>
                 )}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>{UI_COPY.common.cancel}</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDeleteConfirm}
-                className="bg-destructive hover:bg-destructive/90"
-                disabled={deleteSavedCategoryMutation.isPending}
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={createDialogOpen}
+        onOpenChange={(open) => {
+          setCreateDialogOpen(open);
+          if (!open) {
+            resetCreateDialog();
+            setCategoryDialogMode('create');
+            setEditingCategoryId(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-2xl max-h-[88vh] overflow-y-auto px-3 py-4 sm:p-6">
+          <DialogHeader>
+            <DialogTitle>
+              {categoryDialogMode === 'edit'
+                ? UI_COPY.myCategory.editorDialog.editTitle
+                : UI_COPY.myCategory.editorDialog.createTitle}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <p className="text-sm font-semibold">{UI_COPY.myCategory.editorDialog.nameLabel}</p>
+              <Input
+                placeholder={UI_COPY.myCategory.editorDialog.namePlaceholder}
+                value={newCategoryTitle}
+                onChange={(event) => setNewCategoryTitle(event.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm font-semibold">{UI_COPY.myCategory.editorDialog.selectedPlacesLabel}</p>
+              {/* UserRequest: 검색 결과 영역과 동일한 높이로 고정하고 스크롤로 관리 */}
+              <div className="max-h-56 overflow-y-auto overflow-x-hidden border border-border rounded-lg divide-y divide-border">
+                {selectedPlaces.length === 0 ? (
+                  <div className="p-4 text-sm text-muted-foreground">{UI_COPY.myCategory.editorDialog.noPlacesSelected}</div>
+                ) : (
+                  selectedPlaces.map((place) => (
+                    <div key={place.id} className="flex items-center gap-2.5 p-3">
+                      <div className="text-primary shrink-0">
+                        <MapPin className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{place.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{place.addressName}</p>
+                      </div>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="shrink-0"
+                        onClick={() => handleRemovePlace(place.id)}
+                        aria-label={UI_COPY.myCategory.editorDialog.removePlaceAriaLabel}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm font-semibold">{UI_COPY.myCategory.editorDialog.placeSearchLabel}</p>
+              <div className="flex w-full min-w-0 items-center gap-2">
+                <Input
+                  className="min-w-0 flex-1"
+                  placeholder={UI_COPY.myCategory.editorDialog.placeSearchPlaceholder}
+                  value={placeQuery}
+                  onChange={(event) => setPlaceQuery(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault();
+                      handleSearchPlaces();
+                    }
+                  }}
+                />
+                <Button
+                  onClick={handleSearchPlaces}
+                  disabled={placeSearchLoading}
+                  className="shrink-0 gap-2 px-3"
+                >
+                  <Search className="w-4 h-4" />
+                  {UI_COPY.myCategory.editorDialog.searchAction}
+                </Button>
+              </div>
+              {placeSearchLoading && (
+                <div className="text-sm text-muted-foreground">{UI_COPY.myCategory.editorDialog.searching}</div>
+              )}
+              {!placeSearchLoading && placeResults.length > 0 && (
+                <div className="max-h-56 overflow-y-auto overflow-x-hidden border border-border rounded-lg divide-y divide-border">
+                  {placeResults.map((place) => (
+                    <div key={place.id} className="flex items-start gap-2.5 p-3">
+                      <div className="mt-0.5 shrink-0 text-primary">
+                        <MapPin className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium break-words">{place.name}</p>
+                        <p className="text-xs text-muted-foreground break-words">{place.addressName}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="shrink-0"
+                        onClick={() => handleAddPlace(place)}
+                      >
+                        {UI_COPY.myCategory.editorDialog.addPlaceAction}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setCreateDialogOpen(false)}
+                disabled={createSavedCategoryMutation.isPending || updateSavedCategoryMutation.isPending}
               >
-                {deleteSavedCategoryMutation.isPending ? UI_COPY.common.deleting : UI_COPY.common.delete}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
+                {UI_COPY.myCategory.editorDialog.cancel}
+              </Button>
+              <Button
+                onClick={handleCreateCategory}
+                disabled={createSavedCategoryMutation.isPending || updateSavedCategoryMutation.isPending}
+              >
+                {categoryDialogMode === 'edit'
+                  ? (updateSavedCategoryMutation.isPending
+                    ? UI_COPY.myCategory.editorDialog.editing
+                    : UI_COPY.myCategory.editorDialog.edit)
+                  : (createSavedCategoryMutation.isPending
+                    ? UI_COPY.myCategory.editorDialog.creating
+                    : UI_COPY.myCategory.editorDialog.create)}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{UI_COPY.myCategory.deleteDialog.title}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {selectedForDelete
+                ? UI_COPY.myCategory.deleteDialog.description(selectedForDelete.title)
+                : UI_COPY.myCategory.deleteDialog.description('선택한')}
+              <br />
+              <span className="text-destructive">{UI_COPY.myCategory.deleteDialog.warning}</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={deleteSavedCategoryMutation.isPending}
+            >
+              삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
 };
 

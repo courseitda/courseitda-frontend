@@ -1,30 +1,24 @@
 import type { FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuthStore } from '@/shared/stores/auth-store';
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
-import { COMMUNITY_QUERY_KEYS, useSharedCategorySearch } from '@/shared/hooks/use-community';
+import { useSharedCategorySearch } from '@/shared/hooks/use-community';
 import { MESSAGES } from '@/shared/constants/messages';
 import type { SharedSavedCategory } from '@/entities/types';
-import { useSharedCategoryLike } from '@/shared/hooks/use-shared-category-like';
 import SharedCategorySearchBar from '@/components/community/shared-category-search-bar';
 import SharedCategoryList from '@/components/community/shared-category-list';
 import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
 import PageHeader from '@/components/layout/page-header';
-import LoginRequiredDialog from '@/components/common/login-required-dialog';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 
 const SearchResult = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { isAuthenticated, token } = useAuthStore();
   const keyword = searchParams.get('keyword') || '';
   const [inputKeyword, setInputKeyword] = useState(keyword);
-  const [likePulse, setLikePulse] = useState<Record<string, boolean>>({});
   const [selectedCategory, setSelectedCategory] = useState<SharedSavedCategory | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
 
   // UserRequest: /community/search/results 결과는 service 계층 API + React Query로 로딩 (컴포넌트 내부 mock 제거)
   const {
@@ -46,28 +40,6 @@ const SearchResult = () => {
     }
   }, [sharedCategoriesError]);
 
-  // UserRequest: 공유 카테고리 찜 토글 로직을 공통 훅으로 대체
-  const { toggleLike } = useSharedCategoryLike({
-    queryKey: COMMUNITY_QUERY_KEYS.search(keyword),
-    token,
-    isAuthenticated,
-    setSelectedCategory,
-    onRequireLogin: () => setLoginDialogOpen(true),
-  });
-
-  const triggerLikePulse = (categoryId: string) => {
-    setLikePulse((prev) => ({ ...prev, [categoryId]: true }));
-    setTimeout(() => {
-      setLikePulse((prev) => ({ ...prev, [categoryId]: false }));
-    }, 200);
-  };
-
-  const handleToggleLike = (category: SharedSavedCategory) => {
-    const didToggle = toggleLike({ sharedCategoryId: category.id, currentLiked: category.liked });
-    if (!didToggle) return;
-    triggerLikePulse(category.id);
-  };
-
   const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     // UserRequest: 검색 결과 페이지에서는 제출 시 검색 전용 페이지로 이동
@@ -77,12 +49,6 @@ const SearchResult = () => {
   const handleOpenDetail = (category: SharedSavedCategory) => {
     setSelectedCategory(category);
     setDetailOpen(true);
-  };
-
-  // UserRequest: 로그인 필요 안내는 안내창으로 노출되도록 처리
-  const handleLoginStart = () => {
-    setLoginDialogOpen(false);
-    navigate('/auth?tab=login');
   };
 
   if (sharedCategoriesLoading) {
@@ -125,10 +91,7 @@ const SearchResult = () => {
               {/* UserRequest: 검색 결과 영역 높이를 고정하고 내부 스크롤로 표시 */}
               <SharedCategoryList
                 categories={filteredCategories}
-                isAuthenticated={isAuthenticated}
-                likePulse={likePulse}
                 onOpenDetail={handleOpenDetail}
-                onToggleLike={handleToggleLike}
                 showEmptyState
               />
             </div>
@@ -140,12 +103,6 @@ const SearchResult = () => {
         open={detailOpen}
         onOpenChange={setDetailOpen}
         category={selectedCategory}
-      />
-      <LoginRequiredDialog
-        open={loginDialogOpen}
-        onOpenChange={setLoginDialogOpen}
-        onStart={handleLoginStart}
-        featureName="찜 기능"
       />
     </div>
   );

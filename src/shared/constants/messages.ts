@@ -26,13 +26,11 @@ const workspace = {
   titleDuplicateCheckFailed: '워크스페이스 제목 중복 확인에 실패했습니다.',
 } as const;
 
-// UserRequest: 페이지 분리 없이 카테고리 메시지를 공유/보관/찜/워크스페이스로 나누어 관리
+// UserRequest: 페이지 분리 없이 카테고리 메시지를 공유/보관/워크스페이스로 나누어 관리
 // 공유 카테고리: 커뮤니티 노출/검색/업로드/내 게시물 삭제
 const sharedCategory = {
   fetchDetailFailed: '공유 카테고리를 불러올 수 없습니다.',
   myPostsLoadFailed: '커뮤니티 관리 정보를 불러오지 못했습니다.',
-  likeAdded: '찜했어요. 내 보관함에서 확인할 수 있습니다.',
-  likeRemoved: '찜을 해제했습니다.',
   deleteFailed: '공유 카테고리 삭제에 실패했습니다.',
   deleteSuccess: '공유 카테고리를 삭제했어요.',
   uploadFailed: '카테고리 업로드에 실패했습니다.',
@@ -50,11 +48,6 @@ const savedCategory = {
   deleteFailed: '카테고리 삭제에 실패했습니다.',
   deleteSuccess: '카테고리가 삭제되었습니다',
   listLoadFailed: '내 카테고리를 불러오지 못했습니다.',
-} as const;
-
-// 찜 카테고리: 찜 목록 조회
-const likedCategory = {
-  listLoadFailed: '찜한 카테고리를 불러오지 못했습니다.',
 } as const;
 
 // 워크스페이스 카테고리: 워크스페이스에 속한 카테고리(정렬/불러오기)
@@ -81,7 +74,6 @@ export const MESSAGES = {
   workspace,
   sharedCategory,
   savedCategory,
-  likedCategory,
   workspaceCategory,
   place,
 } as const;

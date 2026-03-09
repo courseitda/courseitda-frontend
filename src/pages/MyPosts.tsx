@@ -79,7 +79,6 @@ const MyPosts = () => {
         title: shared.title,
         uploader: shared.uploaderNickname,
         uploadedAt: shared.uploadedAt,
-        liked: shared.isLiked,
         placeCount: shared.placeCount,
         places: shared.places,
       });
