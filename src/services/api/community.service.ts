@@ -25,6 +25,8 @@ type SharedCategoryApiResponse = {
   title: string;
   uploaderNickname: string;
   uploadedAt: string;
+  isImmutableSnapshot: true;
+  forkCount: number;
   placeCount: number;
   places: SharedCategoryPlaceApiResponse[];
 };
@@ -34,6 +36,8 @@ type MySharedCategoryApiResponse = {
   title: string;
   uploaderNickname: string;
   uploadedAt: string;
+  isImmutableSnapshot: true;
+  forkCount: number;
   placeCount: number;
   savedCategoryId: number | string;
 };
@@ -45,6 +49,8 @@ export interface SharedCategoriesData {
     title: string;
     uploaderNickname: string;
     uploadedAt: string;
+    isImmutableSnapshot: true;
+    forkCount: number;
     placeCount: number;
     places: Array<{
       id: string;
@@ -65,8 +71,10 @@ export interface MySharedCategoriesData {
     title: string;
     uploaderNickname: string;
     uploadedAt: string;
+    isImmutableSnapshot: true;
+    forkCount: number;
     placeCount: number;
-    savedCategoryId: string;
+    publishedFromSavedCategoryId: string;
   }>;
 }
 
@@ -77,8 +85,10 @@ export interface ShareSavedCategoryData {
     title: string;
     uploaderNickname: string;
     uploadedAt: string;
+    isImmutableSnapshot: true;
+    forkCount: number;
     placeCount: number;
-    savedCategoryId: string;
+    publishedFromSavedCategoryId: string;
   };
 }
 
@@ -88,6 +98,8 @@ const adaptSharedCategories = (payload: SharedCategoryApiResponse[]): SharedCate
     title: category.title,
     uploaderNickname: category.uploaderNickname,
     uploadedAt: category.uploadedAt,
+    isImmutableSnapshot: true,
+    forkCount: category.forkCount,
     placeCount: category.placeCount,
     places: category.places.map((place) => ({
       id: String(place.id),
@@ -108,8 +120,10 @@ const adaptMySharedCategories = (payload: MySharedCategoryApiResponse[]): MyShar
     title: category.title,
     uploaderNickname: category.uploaderNickname,
     uploadedAt: category.uploadedAt,
+    isImmutableSnapshot: true,
+    forkCount: category.forkCount,
     placeCount: category.placeCount,
-    savedCategoryId: String(category.savedCategoryId),
+    publishedFromSavedCategoryId: String(category.savedCategoryId),
   })),
 });
 
@@ -207,8 +221,10 @@ export const communityApi = {
           title: response.data.title,
           uploaderNickname: response.data.uploaderNickname,
           uploadedAt: response.data.uploadedAt,
+          isImmutableSnapshot: true,
+          forkCount: response.data.forkCount,
           placeCount: response.data.placeCount,
-          savedCategoryId: String(response.data.savedCategoryId),
+          publishedFromSavedCategoryId: String(response.data.savedCategoryId),
         },
       });
     } catch (error) {

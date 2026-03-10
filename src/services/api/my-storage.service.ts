@@ -20,6 +20,12 @@ type SavedCategoryPlaceApiResponse = {
 type SavedCategoryApiResponse = {
   id: number | string;
   title: string;
+  sourceType: 'manual' | 'forked';
+  forkedFromSharedCategoryId: number | string | null;
+  sourceAuthorName: string | null;
+  sourceCategoryTitle: string | null;
+  canPublish: boolean;
+  publishBlockedReason: string | null;
   modifiedAt: string;
   placeCount: number;
   places: SavedCategoryPlaceApiResponse[];
@@ -27,6 +33,10 @@ type SavedCategoryApiResponse = {
 
 type CreateSavedCategoryRequest = {
   title: string;
+  sourceType?: 'manual' | 'forked';
+  forkedFromSharedCategoryId?: string | null;
+  sourceAuthorName?: string | null;
+  sourceCategoryTitle?: string | null;
   places: Array<{
     name: string;
     placeUrl: string;
@@ -44,6 +54,12 @@ export interface MySavedCategoriesData {
   categories: Array<{
     id: string;
     title: string;
+    sourceType: 'manual' | 'forked';
+    forkedFromSharedCategoryId: string | null;
+    sourceAuthorName: string | null;
+    sourceCategoryTitle: string | null;
+    canPublish: boolean;
+    publishBlockedReason: string | null;
     modifiedAt: string;
     placeCount: number;
     places: Array<{
@@ -63,6 +79,12 @@ export interface CreateSavedCategoryData {
   category: {
     id: string;
     title: string;
+    sourceType: 'manual' | 'forked';
+    forkedFromSharedCategoryId: string | null;
+    sourceAuthorName: string | null;
+    sourceCategoryTitle: string | null;
+    canPublish: boolean;
+    publishBlockedReason: string | null;
     modifiedAt: string;
     placeCount: number;
     places: Array<{
@@ -82,6 +104,12 @@ export interface UpdateSavedCategoryData {
   category: {
     id: string;
     title: string;
+    sourceType: 'manual' | 'forked';
+    forkedFromSharedCategoryId: string | null;
+    sourceAuthorName: string | null;
+    sourceCategoryTitle: string | null;
+    canPublish: boolean;
+    publishBlockedReason: string | null;
     modifiedAt: string;
     placeCount: number;
     places: Array<{
@@ -101,6 +129,12 @@ const adaptSavedCategory = (
 ): UpdateSavedCategoryData['category'] => ({
   id: String(category.id),
   title: category.title,
+  sourceType: category.sourceType,
+  forkedFromSharedCategoryId: category.forkedFromSharedCategoryId === null ? null : String(category.forkedFromSharedCategoryId),
+  sourceAuthorName: category.sourceAuthorName,
+  sourceCategoryTitle: category.sourceCategoryTitle,
+  canPublish: category.canPublish,
+  publishBlockedReason: category.publishBlockedReason,
   modifiedAt: category.modifiedAt,
   placeCount: category.placeCount,
   places: category.places.map((place) => ({
@@ -118,6 +152,12 @@ const adaptMySavedCategories = (payload: SavedCategoryApiResponse[]): MySavedCat
   categories: payload.map((category) => ({
     id: String(category.id),
     title: category.title,
+    sourceType: category.sourceType,
+    forkedFromSharedCategoryId: category.forkedFromSharedCategoryId === null ? null : String(category.forkedFromSharedCategoryId),
+    sourceAuthorName: category.sourceAuthorName,
+    sourceCategoryTitle: category.sourceCategoryTitle,
+    canPublish: category.canPublish,
+    publishBlockedReason: category.publishBlockedReason,
     modifiedAt: category.modifiedAt,
     placeCount: category.placeCount,
     places: category.places.map((place) => ({

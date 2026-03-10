@@ -9,6 +9,8 @@ type SharedSavedCategoryPayload = {
   title: string;
   uploaderNickname: string;
   uploadedAt: string;
+  isImmutableSnapshot: true;
+  forkCount: number;
   placeCount: number;
   places: Array<{
     id: string;
@@ -28,6 +30,8 @@ const toSharedSavedCategoryEntity = (payload: SharedSavedCategoryPayload): Share
   title: payload.title,
   uploader: payload.uploaderNickname,
   uploadedAt: payload.uploadedAt,
+  isImmutableSnapshot: true,
+  forkCount: payload.forkCount,
   placeCount: payload.placeCount,
   places: payload.places.map((place) => ({
     id: place.id,
@@ -98,8 +102,10 @@ type MySharedCategoryPayload = {
   title: string;
   uploaderNickname: string;
   uploadedAt: string;
+  isImmutableSnapshot: true;
+  forkCount: number;
   placeCount: number;
-  savedCategoryId: string;
+  publishedFromSavedCategoryId: string;
 };
 
 // UserRequest: 내가 공유한 카테고리 목록도 service 계층 + React Query로 관리
@@ -108,9 +114,11 @@ const toMySharedCategoryEntity = (payload: MySharedCategoryPayload): MySharedCat
   title: payload.title,
   uploader: payload.uploaderNickname,
   uploadedAt: payload.uploadedAt,
+  isImmutableSnapshot: true,
+  forkCount: payload.forkCount,
   placeCount: payload.placeCount,
   places: [],
-  savedCategoryId: payload.savedCategoryId,
+  publishedFromSavedCategoryId: payload.publishedFromSavedCategoryId,
 });
 
 /**

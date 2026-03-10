@@ -19,16 +19,19 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { Folder, MoreHorizontal, Trash2, Upload } from 'lucide-react';
+import { Folder, GitFork, MoreHorizontal, Trash2, Upload } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { communityApi } from '@/services/api';
 import { Spinner } from '@/components/ui/spinner';
 import { COMMUNITY_QUERY_KEYS, useMySharedCategories } from '@/shared/hooks/use-community';
+import { useMySavedCategories, useToggleSharedCategoryFork } from '@/shared/hooks/use-my-storage';
+import { useUserNickname } from '@/shared/hooks/use-user-info';
 import { MESSAGES } from '@/shared/constants/messages';
 import PageHeader from '@/components/layout/page-header';
 import { UploadCategoryDialog } from '@/features/community/upload-category-dialog';
 import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
+import SharedCategoryList from '@/components/community/shared-category-list';
 import type { SharedSavedCategory } from '@/entities/types';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 
@@ -40,6 +43,9 @@ const MyPosts = () => {
   const navigate = useNavigate();
   const { isAuthenticated, token } = useAuthStore();
   const queryClient = useQueryClient();
+  const { data: savedCategories = [] } = useMySavedCategories(token);
+  const { nickname } = useUserNickname();
+  const toggleForkMutation = useToggleSharedCategoryFork(token);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<SharedSavedCategory | null>(null);
@@ -52,6 +58,16 @@ const MyPosts = () => {
     error: mySharedCategoriesError,
   } = useMySharedCategories(token);
 
+  const forkedSharedCategoryMap = savedCategories.reduce<Record<string, boolean>>(
+    (accumulator, savedCategory) => {
+      if (savedCategory.forkedFromSharedCategoryId) {
+        accumulator[savedCategory.forkedFromSharedCategoryId] = true;
+      }
+      return accumulator;
+    },
+    {},
+  );
+
   // 로그인되지 않은 경우 관리 페이지 접근을 차단하고 인증 화면으로 이동
   useEffect(() => {
     if (!isAuthenticated) {
@@ -59,10 +75,10 @@ const MyPosts = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  const handleOpenDetail = (categoryId: string) => {
+  const handleOpenDetail = (category: SharedSavedCategory) => {
     // UserRequest: 업로드한 카테고리 클릭 시 카테고리 게시판과 동일한 상세 팝업 표시
     void (async () => {
-      const response = await communityApi.getSharedCategoryDetail(categoryId);
+      const response = await communityApi.getSharedCategoryDetail(category.id);
       if (!response.success || !response.data) {
         toast.error(response.error?.message ?? MESSAGES.sharedCategory.fetchDetailFailed);
         return;
@@ -74,17 +90,32 @@ const MyPosts = () => {
         return;
       }
 
+      const uploader =
+        shared.uploaderNickname === 'me'
+          ? nickname ?? (category.uploader === 'me' ? shared.uploaderNickname : category.uploader)
+          : shared.uploaderNickname;
+
       setSelectedCategory({
         id: shared.id,
         title: shared.title,
-        uploader: shared.uploaderNickname,
+        uploader,
         uploadedAt: shared.uploadedAt,
+        isImmutableSnapshot: true,
+        forkCount: shared.forkCount,
         placeCount: shared.placeCount,
         places: shared.places,
       });
       setDetailOpen(true);
     })();
   };
+
+  useEffect(() => {
+    if (!nickname) return;
+    setSelectedCategory((current) => {
+      if (!current || current.uploader !== 'me') return current;
+      return { ...current, uploader: nickname };
+    });
+  }, [nickname]);
 
   const deleteMutation = useMutation({
     mutationFn: async (sharedCategoryId: string) => {
@@ -119,6 +150,21 @@ const MyPosts = () => {
   const handleConfirmDelete = () => {
     if (!selectedForDelete || deleteMutation.isPending) return;
     deleteMutation.mutate(selectedForDelete.id);
+  };
+
+  const handleFork = async (category: SharedSavedCategory) => {
+    // UserRequest: 상세 모달의 fork 아이콘을 누르면 내 카테고리로 복사
+    const forkedSavedCategoryId = savedCategories.find(
+      (savedCategory) => savedCategory.forkedFromSharedCategoryId === category.id,
+    )?.id ?? null;
+
+    if (toggleForkMutation.isPending) return false;
+    try {
+      const result = await toggleForkMutation.mutateAsync({ category, forkedSavedCategoryId });
+      return result.action;
+    } catch {
+      return false;
+    }
   };
 
   if (mySharedCategoriesLoading) {
@@ -179,62 +225,43 @@ const MyPosts = () => {
                       </CardContent>
                     </Card>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 items-start auto-rows-min">
-                      {mySharedCategories.map((category) => (
-                        <Card
-                          key={category.id}
-                          className="hover-lift cursor-pointer"
-                          onClick={() => handleOpenDetail(category.id)}
-                        >
-                          <CardHeader className="flex flex-row items-center gap-3 py-3">
-                            <div className="relative">
-                              <div className="w-9 h-9 rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground">
-                                <Folder className="w-4 h-4" />
-                              </div>
-                              <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[11px] leading-none px-1.5 py-0.5 rounded-full">
-                                {category.placeCount}
-                              </span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <CardTitle className="text-base truncate">{category.title}</CardTitle>
-                              <CardDescription className="text-xs">
-                                업로드 {new Date(category.uploadedAt).toLocaleDateString('ko-KR')}
-                              </CardDescription>
-                            </div>
-                            {/* UserRequest: 삭제 액션은 카드에 직접 노출하지 않고 더보기 메뉴에서 실행 */}
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-8 w-8 rounded-full"
-                                  onClick={(event) => event.stopPropagation()}
-                                  aria-label="게시물 더보기"
-                                >
-                                  <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent
-                                align="end"
-                                onClick={(event) => event.stopPropagation()}
-                              >
-                                <DropdownMenuItem
-                                  className="text-destructive focus:text-destructive gap-2"
-                                  disabled={deleteMutation.isPending}
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    handleRequestDelete(category);
-                                  }}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                  삭제
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </CardHeader>
-                        </Card>
-                      ))}
-                    </div>
+                    <SharedCategoryList
+                      categories={mySharedCategories}
+                      forkedSharedCategoryMap={forkedSharedCategoryMap}
+                      onOpenDetail={handleOpenDetail}
+                      viewportClassName="h-[75vh]"
+                      renderTrailingAction={(category) => (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 rounded-full"
+                              onClick={(event) => event.stopPropagation()}
+                              aria-label="게시물 더보기"
+                            >
+                              <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="end"
+                            onClick={(event) => event.stopPropagation()}
+                          >
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive gap-2"
+                              disabled={deleteMutation.isPending}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handleRequestDelete(category);
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              삭제
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    />
                   )}
                 </div>
               </div>
@@ -249,6 +276,9 @@ const MyPosts = () => {
         open={detailOpen}
         onOpenChange={setDetailOpen}
         category={selectedCategory}
+        isForked={savedCategories.some((savedCategory) => savedCategory.forkedFromSharedCategoryId === selectedCategory?.id)}
+        onToggleFork={handleFork}
+        forkPending={toggleForkMutation.isPending}
       />
       <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
         <AlertDialogContent>

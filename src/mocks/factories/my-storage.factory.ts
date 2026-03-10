@@ -1,6 +1,12 @@
 export type SavedCategoryMock = {
     id: string;
     title: string;
+    sourceType: 'manual' | 'forked';
+    forkedFromSharedCategoryId: string | null;
+    sourceAuthorName: string | null;
+    sourceCategoryTitle: string | null;
+    canPublish: boolean;
+    publishBlockedReason: string | null;
     modifiedAt: string;
     placeCount: number;
     places: Array<{
@@ -21,6 +27,12 @@ export const createSavedCategoryMocks = (): SavedCategoryMock[] => [
     {
         id: 'cat-1',
         title: '점심 맛집',
+        sourceType: 'manual',
+        forkedFromSharedCategoryId: null,
+        sourceAuthorName: null,
+        sourceCategoryTitle: null,
+        canPublish: true,
+        publishBlockedReason: null,
         modifiedAt: new Date().toISOString(),
         placeCount: 2,
         places: [
@@ -47,6 +59,12 @@ export const createSavedCategoryMocks = (): SavedCategoryMock[] => [
     {
         id: 'cat-2',
         title: '카페 탐방',
+        sourceType: 'manual',
+        forkedFromSharedCategoryId: null,
+        sourceAuthorName: null,
+        sourceCategoryTitle: null,
+        canPublish: true,
+        publishBlockedReason: null,
         modifiedAt: new Date().toISOString(),
         placeCount: 2,
         places: [
@@ -72,7 +90,13 @@ export const createSavedCategoryMocks = (): SavedCategoryMock[] => [
     },
     {
         id: 'cat-3',
-        title: '산책 코스',
+        title: '한강 산책 코스 복사본',
+        sourceType: 'forked',
+        forkedFromSharedCategoryId: 'shared-3',
+        sourceAuthorName: 'hana',
+        sourceCategoryTitle: '한강 산책 코스',
+        canPublish: false,
+        publishBlockedReason: '공유 카테고리에서 복사한 카테고리는 장소를 수정한 뒤에만 다시 게시할 수 있습니다.',
         modifiedAt: new Date().toISOString(),
         placeCount: 2,
         places: [

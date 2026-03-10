@@ -7,21 +7,26 @@ import { Upload } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useSharedCategorySearch } from '@/shared/hooks/use-community';
+import { useMySavedCategories, useToggleSharedCategoryFork } from '@/shared/hooks/use-my-storage';
 import { MESSAGES } from '@/shared/constants/messages';
 import type { SharedSavedCategory } from '@/entities/types';
 import { sortSharedCategoriesById } from '@/shared/utils/shared-category-sort';
 import SharedCategorySearchBar from '@/components/community/shared-category-search-bar';
 import SharedCategoryList from '@/components/community/shared-category-list';
 import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
+import LoginRequiredDialog from '@/components/common/login-required-dialog';
 import PageHeader from '@/components/layout/page-header';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 
 const CommunityCategoryBoard = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, token } = useAuthStore();
   const [selectedCategory, setSelectedCategory] = useState<SharedSavedCategory | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
   const keyword = '';
+  const { data: savedCategories = [] } = useMySavedCategories(token);
+  const toggleForkMutation = useToggleSharedCategoryFork(token);
 
   // UserRequest: 공유된 카테고리 게시판 페이지는 검색 결과 페이지와 동일한 구성으로 구현
   const {
@@ -34,6 +39,16 @@ const CommunityCategoryBoard = () => {
     // UserRequest: 카테고리 게시판은 id 오름차순으로 기본 정렬
     return sortSharedCategoriesById(sharedCategories);
   }, [sharedCategories]);
+  const forkedSharedCategoryMap = useMemo(
+    () =>
+      savedCategories.reduce<Record<string, boolean>>((accumulator, savedCategory) => {
+        if (savedCategory.forkedFromSharedCategoryId) {
+          accumulator[savedCategory.forkedFromSharedCategoryId] = true;
+        }
+        return accumulator;
+      }, {}),
+    [savedCategories],
+  );
 
   useEffect(() => {
     // UserRequest: 공유된 카테고리 게시판 조회 실패 시 사용자에게 즉시 알림
@@ -51,6 +66,32 @@ const CommunityCategoryBoard = () => {
   const handleOpenDetail = (category: SharedSavedCategory) => {
     setSelectedCategory(category);
     setDetailOpen(true);
+  };
+
+  const handleFork = async (category: SharedSavedCategory) => {
+    // UserRequest: 상세 모달의 fork 아이콘을 누르면 내 카테고리로 복사
+    if (!isAuthenticated) {
+      setLoginDialogOpen(true);
+      return false;
+    }
+
+    const forkedSavedCategoryId = savedCategories.find(
+      (savedCategory) => savedCategory.forkedFromSharedCategoryId === category.id,
+    )?.id ?? null;
+
+    if (toggleForkMutation.isPending) return false;
+    try {
+      const result = await toggleForkMutation.mutateAsync({ category, forkedSavedCategoryId });
+      return result.action;
+    } catch {
+      return false;
+    }
+  };
+
+  // UserRequest: 로그인 필요 안내는 전용 안내창으로 노출
+  const handleLoginStart = () => {
+    setLoginDialogOpen(false);
+    navigate('/auth?tab=login');
   };
 
   if (sharedCategoriesLoading) {
@@ -94,7 +135,9 @@ const CommunityCategoryBoard = () => {
               {/* UserRequest: 정렬 드롭다운 제거 */}
               <SharedCategoryList
                 categories={filteredCategories}
+                forkedSharedCategoryMap={forkedSharedCategoryMap}
                 onOpenDetail={handleOpenDetail}
+                viewportClassName="h-[520px]"
               />
             </section>
           </div>
@@ -105,6 +148,15 @@ const CommunityCategoryBoard = () => {
         open={detailOpen}
         onOpenChange={setDetailOpen}
         category={selectedCategory}
+        isForked={savedCategories.some((savedCategory) => savedCategory.forkedFromSharedCategoryId === selectedCategory?.id)}
+        onToggleFork={handleFork}
+        forkPending={toggleForkMutation.isPending}
+      />
+      <LoginRequiredDialog
+        open={loginDialogOpen}
+        onOpenChange={setLoginDialogOpen}
+        onStart={handleLoginStart}
+        featureName="fork 기능"
       />
 
       {/* UserRequest: 비회원에게는 업로드 버튼을 숨김 */}

@@ -16,6 +16,8 @@ const mySharedCategories: Array<{
   title: string;
   uploaderNickname: string;
   uploadedAt: string;
+  isImmutableSnapshot: true;
+  forkCount: number;
   placeCount: number;
   savedCategoryId: string;
 }> = [
@@ -24,6 +26,8 @@ const mySharedCategories: Array<{
     title: mySavedCategories[0]?.title ?? '내 공유 카테고리',
     uploaderNickname: 'me',
     uploadedAt: new Date().toISOString(),
+    isImmutableSnapshot: true,
+    forkCount: 0,
     placeCount: mySavedCategories[0]?.placeCount ?? 0,
     savedCategoryId: mySavedCategories[0]?.id ?? 'cat-1',
   },
@@ -131,6 +135,19 @@ export const communityHandlers = [
       );
     }
 
+    if (!savedCategory.canPublish) {
+      return HttpResponse.json(
+        {
+          type: 'about:blank',
+          title: 'Forbidden',
+          status: 403,
+          detail: savedCategory.publishBlockedReason ?? '현재 상태의 카테고리는 게시할 수 없습니다.',
+          code: BackendErrorCode.ACCESS_FORBIDDEN,
+        },
+        { status: 403 },
+      );
+    }
+
     // UserRequest: 동일한 보관 카테고리의 중복 업로드를 허용
 
     const newShared = {
@@ -138,10 +155,21 @@ export const communityHandlers = [
       title: savedCategory.title,
       uploaderNickname: 'me',
       uploadedAt: new Date().toISOString(),
+      isImmutableSnapshot: true,
+      forkCount: 0,
       placeCount: savedCategory.placeCount,
       savedCategoryId: savedCategory.id,
     };
     mySharedCategories.unshift(newShared);
+    allSharedCategories.set(newShared.id, {
+      id: newShared.id,
+      title: newShared.title,
+      uploaderNickname: newShared.uploaderNickname,
+      uploadedAt: newShared.uploadedAt,
+      isImmutableSnapshot: true,
+      placeCount: savedCategory.placeCount,
+      places: savedCategory.places.map((place) => ({ ...place })),
+    });
 
     return HttpResponse.json(newShared, { status: 201 });
   }),
@@ -176,6 +204,7 @@ export const communityHandlers = [
     }
 
     mySharedCategories.splice(index, 1);
+    allSharedCategories.delete(sharedCategoryId);
     return HttpResponse.json(null, { status: 204 });
   }),
 ];

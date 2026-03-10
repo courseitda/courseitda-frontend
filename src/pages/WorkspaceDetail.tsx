@@ -1,28 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { useWorkspace, useWorkspacesByOwner } from '@/shared/hooks/use-workspace';
+import { useWorkspace } from '@/shared/hooks/use-workspace';
 import { useWorkspaceCategories } from '@/shared/hooks/use-categories';
 import { Button } from '@/components/ui/button';
 import { CategoryList } from '@/features/categories/category-list';
 import { MapCanvas } from '@/features/map/map-canvas';
+import { EditWorkspaceDialog } from '@/features/workspaces/edit-workspace-dialog';
 import { useSettingsStore } from '@/shared/stores/settings-store';
 import { toast } from 'sonner';
-import { ChevronDown, Check, Plus, Maximize2, Minimize2 } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { CreateWorkspaceDialog } from '@/features/workspaces/create-workspace-dialog';
+import { Check, Maximize2, Minimize2, PenLine } from 'lucide-react';
 import type { Place } from '@/entities/types';
 import { Spinner } from '@/components/ui/spinner';
 import PageHeader from '@/components/layout/page-header';
 import { MESSAGES } from '@/shared/constants/messages';
-import { UI_COPY } from '@/shared/constants/ui-copy';
 
 /**
  * 워크스페이스 상세 페이지 - 카테고리 관리 및 지도 표시
@@ -35,7 +26,7 @@ const WorkspaceDetail = () => {
   const { isAuthenticated } = useAuthStore();
   const naverMapKeyId = useSettingsStore((state) => state.naverMapKeyId);
   const [focusedPlace, setFocusedPlace] = useState<Place | null>(null);
-  const [createWorkspaceOpen, setCreateWorkspaceOpen] = useState(false);
+  const [editWorkspaceOpen, setEditWorkspaceOpen] = useState(false);
   // UserRequest: 모바일 뷰에서 Bottom Sheet 확장/축소 상태를 관리하여 지도/카테고리 높이를 전환
   const [isSheetExpanded, setIsSheetExpanded] = useState(false);
   const [isSheetDragging, setIsSheetDragging] = useState(false);
@@ -56,14 +47,6 @@ const WorkspaceDetail = () => {
     error: workspaceError,
   } = useWorkspace(id);
 
-  // UserRequest: Step 4 — 내 워크스페이스 목록을 React Query로 가져와 전환 드롭다운에 활용
-  const token = useAuthStore((state) => state.token);
-  const {
-    data: workspaces,
-    isLoading: workspacesLoading,
-    error: workspacesError,
-  } = useWorkspacesByOwner(token);
-
   const {
     data: workspaceCategories,
     isLoading: categoriesLoading,
@@ -83,13 +66,6 @@ const WorkspaceDetail = () => {
       toast.error(workspaceError.message || MESSAGES.workspace.loadFailed);
     }
   }, [workspaceError]);
-
-  useEffect(() => {
-    // UserRequest: Step 4 — 워크스페이스 목록 조회 실패 시 사용자에게 즉시 안내
-    if (workspacesError) {
-      toast.error(workspacesError.message || MESSAGES.workspace.loadFailed);
-    }
-  }, [workspacesError]);
 
   useEffect(() => {
     if (categoriesError) {
@@ -156,11 +132,6 @@ const WorkspaceDetail = () => {
     };
   }, [isSheetDragging]);
 
-  // 워크스페이스 전환 - 다른 워크스페이스의 상세 페이지로 이동 (identifier 사용)
-  const handleSelectWorkspace = (workspaceIdentifier: string) => {
-    navigate(`/workspace/${workspaceIdentifier}`);
-  };
-
   // UserRequest: Bottom Sheet 핸들 드래그 시작 시 기준 좌표를 기록하여 이동 방향 판단
   const handleSheetDragStart = (event: React.PointerEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -170,7 +141,7 @@ const WorkspaceDetail = () => {
 
   // 로그아웃 처리 후 인증 상태 초기화 및 랜딩 페이지로 이동
   // 데이터 로딩 중에는 스피너를 표시하여 진행 상황 안내
-  if (workspaceLoading || workspacesLoading || categoriesLoading) {
+  if (workspaceLoading || categoriesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Spinner className="w-8 h-8" />
@@ -236,46 +207,20 @@ const WorkspaceDetail = () => {
         showBrandText={false}
         className="z-20 shrink-0"
         centerContent={(
-          <div className="flex justify-center items-center min-w-0 relative">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="hover:opacity-70 transition-opacity">
-                  <div className="flex items-center gap-1">
-                    <h1 className="text-lg font-bold truncate max-w-[200px] md:max-w-[400px]">
-                      {workspace.title}
-                    </h1>
-                    <ChevronDown className="w-4 h-4 shrink-0" />
-                  </div>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="w-64">
-                <div className="max-h-[180px] overflow-y-auto">
-                  {workspaces?.map((ws) => (
-                    <DropdownMenuItem
-                      key={ws.id}
-                      onClick={() => handleSelectWorkspace(ws.identifier)}
-                      className={`cursor-pointer justify-center font-semibold ${
-                        ws.id === workspace.id
-                          ? 'bg-primary/10'
-                          : ''
-                      }`}
-                    >
-                      <span className="truncate">{ws.title}</span>
-                    </DropdownMenuItem>
-                  ))}
-                </div>
-                <DropdownMenuSeparator />
-                <div className="px-1 pb-1">
-                  <button
-                    onClick={() => setCreateWorkspaceOpen(true)}
-                    className="w-full flex items-center justify-center gap-2 px-2 py-1.5 text-sm rounded-sm border border-dashed border-border hover:bg-accent transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                    {UI_COPY.workspaceDetail.createAction}
-                  </button>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <div className="relative flex items-center justify-center min-w-0">
+            <h1 className="max-w-[180px] text-center text-lg font-bold truncate md:max-w-[320px]">
+              {workspace.title}
+            </h1>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="absolute left-full ml-1 h-8 w-8 shrink-0"
+              aria-label="워크스페이스 이름 변경"
+              onClick={() => setEditWorkspaceOpen(true)}
+            >
+              <PenLine className="w-4 h-4 text-muted-foreground" />
+            </Button>
           </div>
         )}
       />
@@ -415,10 +360,10 @@ const WorkspaceDetail = () => {
           </div>
         </div>
       </main>
-
-      <CreateWorkspaceDialog 
-        open={createWorkspaceOpen} 
-        onOpenChange={setCreateWorkspaceOpen} 
+      <EditWorkspaceDialog
+        open={editWorkspaceOpen}
+        onOpenChange={setEditWorkspaceOpen}
+        workspace={workspace}
       />
     </div>
   );

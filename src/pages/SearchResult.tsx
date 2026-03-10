@@ -4,21 +4,28 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import { useSharedCategorySearch } from '@/shared/hooks/use-community';
+import { useMySavedCategories, useToggleSharedCategoryFork } from '@/shared/hooks/use-my-storage';
 import { MESSAGES } from '@/shared/constants/messages';
 import type { SharedSavedCategory } from '@/entities/types';
 import SharedCategorySearchBar from '@/components/community/shared-category-search-bar';
 import SharedCategoryList from '@/components/community/shared-category-list';
 import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
+import LoginRequiredDialog from '@/components/common/login-required-dialog';
 import PageHeader from '@/components/layout/page-header';
 import { UI_COPY } from '@/shared/constants/ui-copy';
+import { useAuthStore } from '@/shared/stores/auth-store';
 
 const SearchResult = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { isAuthenticated, token } = useAuthStore();
   const keyword = searchParams.get('keyword') || '';
   const [inputKeyword, setInputKeyword] = useState(keyword);
   const [selectedCategory, setSelectedCategory] = useState<SharedSavedCategory | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
+  const { data: savedCategories = [] } = useMySavedCategories(token);
+  const toggleForkMutation = useToggleSharedCategoryFork(token);
 
   // UserRequest: /community/search/results 결과는 service 계층 API + React Query로 로딩 (컴포넌트 내부 mock 제거)
   const {
@@ -32,6 +39,16 @@ const SearchResult = () => {
   }, [keyword]);
 
   const filteredCategories = useMemo(() => sharedCategories, [sharedCategories]);
+  const forkedSharedCategoryMap = useMemo(
+    () =>
+      savedCategories.reduce<Record<string, boolean>>((accumulator, savedCategory) => {
+        if (savedCategory.forkedFromSharedCategoryId) {
+          accumulator[savedCategory.forkedFromSharedCategoryId] = true;
+        }
+        return accumulator;
+      }, {}),
+    [savedCategories],
+  );
 
   useEffect(() => {
     // UserRequest: 검색 결과 조회 실패 시 사용자에게 즉시 알림
@@ -49,6 +66,32 @@ const SearchResult = () => {
   const handleOpenDetail = (category: SharedSavedCategory) => {
     setSelectedCategory(category);
     setDetailOpen(true);
+  };
+
+  const handleFork = async (category: SharedSavedCategory) => {
+    // UserRequest: 상세 모달의 fork 아이콘을 누르면 내 카테고리로 복사
+    if (!isAuthenticated) {
+      setLoginDialogOpen(true);
+      return false;
+    }
+
+    const forkedSavedCategoryId = savedCategories.find(
+      (savedCategory) => savedCategory.forkedFromSharedCategoryId === category.id,
+    )?.id ?? null;
+
+    if (toggleForkMutation.isPending) return false;
+    try {
+      const result = await toggleForkMutation.mutateAsync({ category, forkedSavedCategoryId });
+      return result.action;
+    } catch {
+      return false;
+    }
+  };
+
+  // UserRequest: 로그인 필요 안내는 전용 안내창으로 노출
+  const handleLoginStart = () => {
+    setLoginDialogOpen(false);
+    navigate('/auth?tab=login');
   };
 
   if (sharedCategoriesLoading) {
@@ -91,8 +134,10 @@ const SearchResult = () => {
               {/* UserRequest: 검색 결과 영역 높이를 고정하고 내부 스크롤로 표시 */}
               <SharedCategoryList
                 categories={filteredCategories}
+                forkedSharedCategoryMap={forkedSharedCategoryMap}
                 onOpenDetail={handleOpenDetail}
                 showEmptyState
+                viewportClassName="h-[520px]"
               />
             </div>
           </section>
@@ -103,6 +148,15 @@ const SearchResult = () => {
         open={detailOpen}
         onOpenChange={setDetailOpen}
         category={selectedCategory}
+        isForked={savedCategories.some((savedCategory) => savedCategory.forkedFromSharedCategoryId === selectedCategory?.id)}
+        onToggleFork={handleFork}
+        forkPending={toggleForkMutation.isPending}
+      />
+      <LoginRequiredDialog
+        open={loginDialogOpen}
+        onOpenChange={setLoginDialogOpen}
+        onStart={handleLoginStart}
+        featureName="fork 기능"
       />
     </div>
   );

@@ -7,6 +7,8 @@ export const createRecommendedSharedCategoryMocks = (): SharedSavedCategoryMock[
     title: '강릉 바다 드라이브',
     uploaderNickname: 'courseitda',
     uploadedAt: new Date().toISOString(),
+    isImmutableSnapshot: true,
+    forkCount: 14,
     placeCount: 3,
     places: [
       {
@@ -43,6 +45,8 @@ export const createRecommendedSharedCategoryMocks = (): SharedSavedCategoryMock[
     title: '부산 야경 코스',
     uploaderNickname: 'courseitda',
     uploadedAt: new Date().toISOString(),
+    isImmutableSnapshot: true,
+    forkCount: 19,
     placeCount: 3,
     places: [
       {
@@ -79,6 +83,8 @@ export const createRecommendedSharedCategoryMocks = (): SharedSavedCategoryMock[
     title: '서울 야외 피크닉',
     uploaderNickname: 'courseitda',
     uploadedAt: new Date().toISOString(),
+    isImmutableSnapshot: true,
+    forkCount: 11,
     placeCount: 3,
     places: [
       {

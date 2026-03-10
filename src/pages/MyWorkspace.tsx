@@ -20,9 +20,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useWorkspacesByOwner } from '@/shared/hooks/use-workspace';
-import { Plus, Pencil, Trash2, LayoutGrid, MoreHorizontal } from 'lucide-react';
+import { Plus, Trash2, LayoutGrid, MoreHorizontal } from 'lucide-react';
 import { CreateWorkspaceDialog } from '@/features/workspaces/create-workspace-dialog';
-import { EditWorkspaceDialog } from '@/features/workspaces/edit-workspace-dialog';
 import { toast } from 'sonner';
 // API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
 import { workspaceApi } from '@/services/api';
@@ -43,8 +42,6 @@ const MyWorkspace = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
   const [createOpen, setCreateOpen] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
-  const [selectedForEdit, setSelectedForEdit] = useState<Workspace | null>(null);
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState<Workspace | null>(null);
   const queryClient = useQueryClient();
@@ -102,12 +99,6 @@ const MyWorkspace = () => {
     navigate(`/workspace/${identifier}`);
   };
 
-  // 워크스페이스 수정 다이얼로그 열기
-  const handleEdit = (workspace: Workspace) => {
-    setSelectedForEdit(workspace);
-    setEditOpen(true);
-  };
-
   // 워크스페이스 삭제 확인 다이얼로그 열기
   const handleDeleteClick = (workspace: Workspace) => {
     setSelectedForDelete(workspace);
@@ -150,16 +141,6 @@ const MyWorkspace = () => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              className="gap-2"
-              onClick={(event) => {
-                event.stopPropagation();
-                handleEdit(workspace);
-              }}
-            >
-              <Pencil className="w-4 h-4" />
-              이름 바꾸기
-            </DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive focus:text-destructive gap-2"
               onClick={(event) => {
@@ -292,14 +273,6 @@ const MyWorkspace = () => {
         </main>
 
         <CreateWorkspaceDialog open={createOpen} onOpenChange={setCreateOpen} />
-
-        {selectedForEdit && (
-            <EditWorkspaceDialog
-                open={editOpen}
-                onOpenChange={setEditOpen}
-                workspace={selectedForEdit}
-            />
-        )}
 
         <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
           <AlertDialogContent>

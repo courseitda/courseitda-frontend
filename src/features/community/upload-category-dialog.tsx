@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, ChevronDown, Folder, MapPin, Upload } from 'lucide-react';
+import { AlertCircle, ArrowRight, ChevronDown, Folder, MapPin, Megaphone, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/shared/stores/auth-store';
@@ -73,6 +73,10 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
 
   const handleUpload = (category: SavedCategory) => {
     if (shareMutation.isPending) return;
+    if (!category.canPublish) {
+      toast.error(category.publishBlockedReason ?? MESSAGES.sharedCategory.uploadFailed);
+      return;
+    }
     shareMutation.mutate(category.id);
   };
 
@@ -85,8 +89,17 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl h-[65vh] flex flex-col px-4 py-5 sm:p-6">
-        <DialogHeader>
+        <DialogHeader className="space-y-6">
           <DialogTitle>{UI_COPY.uploadCategoryDialog.title}</DialogTitle>
+          <div className="flex items-start gap-2 rounded-lg border border-border/70 bg-muted/20 px-3 py-2.5">
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+              <Megaphone className="h-3.5 w-3.5" />
+              안내
+            </span>
+            <p className="text-sm text-muted-foreground">
+              복사한 카테고리는 수정 후 업로드할 수 있어요!
+            </p>
+          </div>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto overflow-x-visible pr-1">
@@ -130,6 +143,12 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
                     </div>
                     <div className="min-w-0 flex-1">
                       <CardTitle className="truncate text-sm sm:text-base">{category.title}</CardTitle>
+                      {!category.canPublish && (
+                        <p className="mt-1 flex items-center gap-1 text-xs text-destructive">
+                          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                          수정 필요
+                        </p>
+                      )}
                     </div>
                     <div className="ml-auto flex items-center gap-2">
                       <Button
@@ -140,7 +159,7 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
                           event.stopPropagation();
                           handleUpload(category);
                         }}
-                        disabled={shareMutation.isPending}
+                        disabled={shareMutation.isPending || !category.canPublish}
                       >
                         <Upload className="w-4 h-4" />
                         {UI_COPY.common.upload}

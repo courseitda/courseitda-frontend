@@ -81,6 +81,8 @@
 | 공유 카테고리 삭제 | `/api/community/shared-categories/{id}` | `DELETE` | 내가 올린 공유 카테고리 제거, `Authorization` 필요 |
 
 - `communityApi`(`src/services/api/community.service.ts`)가 위 호출을 담당하며, 화면에서는 `useRecommendedSharedCategories`, `useSharedCategorySearch`, `useMySharedCategories`로 사용합니다.
+- 공유 카테고리는 `isImmutableSnapshot: true`로 취급합니다. 즉 publish 이후에는 수정하지 않고, 상세 조회는 publish 시점 장소 목록 스냅샷을 기준으로 표시합니다.
+- 내 공유 목록 응답은 `publishedFromSavedCategoryId`를 통해 어떤 보관 카테고리에서 게시되었는지 추적합니다.
 
 ### 내 보관함(보관 카테고리)
 
@@ -92,6 +94,9 @@
 | 내 보관 카테고리 삭제 | `/api/me/saved-categories/{savedCategoryId}` | `DELETE` | `Authorization` 필요 |
 
 - `myStorageApi`(`src/services/api/my-storage.service.ts`)가 호출을 담당하며, 화면에서는 `useMySavedCategories`, `useCreateSavedCategory`, `useUpdateSavedCategory`, `useDeleteSavedCategory`로 사용합니다.
+- 보관 카테고리는 `sourceType`으로 `manual` 또는 `forked`를 구분합니다.
+- 공유 카테고리를 복사해 생성할 때는 `forkedFromSharedCategoryId`를 함께 보냅니다.
+- 보관 카테고리 응답은 `canPublish`, `publishBlockedReason`을 포함하며, `forked` 카테고리는 장소를 한 번 수정하기 전까지 다시 게시할 수 없습니다.
 
 ## 6. 에러 처리 & 메시지 규약
 

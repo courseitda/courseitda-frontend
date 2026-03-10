@@ -160,7 +160,7 @@ export const UI_COPY = {
       submitting: '생성 중...',
     },
     edit: {
-      title: '워크스페이스 이름 바꾸기',
+      title: '워크스페이스명 수정',
       fieldLabel: '제목',
       placeholder: '예: 홍대 데이트 코스',
       cancel: '취소',
@@ -180,13 +180,17 @@ export const UI_COPY = {
       title: '카테고리가 없습니다.',
       description: '지금 추가해보세요!',
     },
+    source: {
+      manual: '직접 만든 카테고리',
+      forked: '공유 카테고리에서 복사함',
+    },
     detailDialog: {
       placeListTitle: '장소 목록',
       noPlacesInDetail: '표시할 장소가 없습니다.',
     },
     editorDialog: {
       createTitle: '새 카테고리 추가',
-      editTitle: '카테고리 수정',
+      editTitle: '카테고리명 수정',
       nameLabel: '카테고리 이름',
       namePlaceholder: '예: 맛집 투어',
       selectedPlacesLabel: '추가된 장소',
@@ -242,6 +246,13 @@ export const UI_COPY = {
       title: '게시물을 삭제할까요?',
       description: (title: string) => `"${title}" 게시물을 삭제합니다.`,
       warning: '삭제 후에는 복구할 수 없습니다.',
+    },
+  },
+  sharedCategoryDetail: {
+    unforkDialog: {
+      title: 'fork를 해제할까요?',
+      description: (title: string) => `"${title}"를 내 카테고리에서 제거합니다.`,
+      confirm: '해제하기',
     },
   },
   workspaceDetail: {

@@ -28,6 +28,7 @@ export const EditWorkspaceDialog = ({ open, onOpenChange, workspace }: EditWorks
   const [title, setTitle] = useState(workspace.title);
   const dialogRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
+  const isUnchangedTitle = title === workspace.title;
 
   // UserRequest: Step 5 — React Query 뮤테이션으로 수정 후 상세/목록 캐시 동기화
   const updateWorkspaceMutation = useMutation({
@@ -106,7 +107,11 @@ export const EditWorkspaceDialog = ({ open, onOpenChange, workspace }: EditWorks
       return;
     }
 
-    updateWorkspaceMutation.mutate(title.trim());
+    if (isUnchangedTitle) {
+      return;
+    }
+
+    updateWorkspaceMutation.mutate(title);
   };
 
   return (
@@ -132,7 +137,7 @@ export const EditWorkspaceDialog = ({ open, onOpenChange, workspace }: EditWorks
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {UI_COPY.workspaceDialog.edit.cancel}
             </Button>
-            <Button type="submit" disabled={updateWorkspaceMutation.isPending}>
+            <Button type="submit" disabled={updateWorkspaceMutation.isPending || !title.trim() || isUnchangedTitle}>
               {updateWorkspaceMutation.isPending
                 ? UI_COPY.workspaceDialog.edit.submitting
                 : UI_COPY.workspaceDialog.edit.submit}

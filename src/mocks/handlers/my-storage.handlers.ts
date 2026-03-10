@@ -20,6 +20,37 @@ const getPlaces = (body: unknown) => {
   return [];
 };
 
+const getSourceType = (body: unknown): 'manual' | 'forked' => {
+  if (body && typeof body === 'object' && 'sourceType' in body) {
+    return (body as { sourceType?: 'manual' | 'forked' }).sourceType === 'forked' ? 'forked' : 'manual';
+  }
+  return 'manual';
+};
+
+const getForkedFromSharedCategoryId = (body: unknown): string | null => {
+  if (body && typeof body === 'object' && 'forkedFromSharedCategoryId' in body) {
+    const value = (body as { forkedFromSharedCategoryId?: unknown }).forkedFromSharedCategoryId;
+    return typeof value === 'string' && value ? value : null;
+  }
+  return null;
+};
+
+const getSourceAuthorName = (body: unknown): string | null => {
+  if (body && typeof body === 'object' && 'sourceAuthorName' in body) {
+    const value = (body as { sourceAuthorName?: unknown }).sourceAuthorName;
+    return typeof value === 'string' && value ? value : null;
+  }
+  return null;
+};
+
+const getSourceCategoryTitle = (body: unknown): string | null => {
+  if (body && typeof body === 'object' && 'sourceCategoryTitle' in body) {
+    const value = (body as { sourceCategoryTitle?: unknown }).sourceCategoryTitle;
+    return typeof value === 'string' && value ? value : null;
+  }
+  return null;
+};
+
 const isAuthorized = (request: Request): boolean => {
   const authorization = request.headers.get('authorization');
   return typeof authorization === 'string' && authorization.toLowerCase().startsWith('bearer ');
@@ -61,6 +92,10 @@ export const myStorageHandlers = [
 
     const body = await request.json().catch(() => ({}));
     const title = getTitle(body);
+    const sourceType = getSourceType(body);
+    const forkedFromSharedCategoryId = getForkedFromSharedCategoryId(body);
+    const sourceAuthorName = getSourceAuthorName(body);
+    const sourceCategoryTitle = getSourceCategoryTitle(body);
     if (!title) {
       return HttpResponse.json(
         {
@@ -87,6 +122,14 @@ export const myStorageHandlers = [
     const newCategory = {
       id: `cat-${Date.now()}`,
       title,
+      sourceType,
+      forkedFromSharedCategoryId,
+      sourceAuthorName,
+      sourceCategoryTitle,
+      canPublish: sourceType === 'manual',
+      publishBlockedReason: sourceType === 'forked'
+        ? '공유 카테고리에서 복사한 카테고리는 장소를 수정한 뒤에만 다시 게시할 수 있습니다.'
+        : null,
       modifiedAt: new Date().toISOString(),
       placeCount: places.length,
       places,
@@ -157,6 +200,8 @@ export const myStorageHandlers = [
     savedCategories[targetIndex] = {
       ...savedCategories[targetIndex],
       title,
+      canPublish: true,
+      publishBlockedReason: null,
       modifiedAt: new Date().toISOString(),
       placeCount: places.length,
       places,

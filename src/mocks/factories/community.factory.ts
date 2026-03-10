@@ -3,6 +3,8 @@ export type SharedSavedCategoryMock = {
     title: string;
     uploaderNickname: string;
     uploadedAt: string;
+    isImmutableSnapshot: true;
+    forkCount: number;
     placeCount: number;
     places: Array<{
         id: string;
@@ -23,6 +25,8 @@ export const createSharedSavedCategoryMocks = (): SharedSavedCategoryMock[] => [
         title: '잠실 점심 식당',
         uploaderNickname: 'lucas',
         uploadedAt: new Date().toISOString(),
+        isImmutableSnapshot: true,
+        forkCount: 12,
         placeCount: 3,
         places: [
             {
@@ -59,6 +63,8 @@ export const createSharedSavedCategoryMocks = (): SharedSavedCategoryMock[] => [
         title: '건대 카페',
         uploaderNickname: 'selena',
         uploadedAt: new Date().toISOString(),
+        isImmutableSnapshot: true,
+        forkCount: 8,
         placeCount: 3,
         places: [
             {
@@ -95,6 +101,8 @@ export const createSharedSavedCategoryMocks = (): SharedSavedCategoryMock[] => [
         title: '한강 산책 코스',
         uploaderNickname: 'hana',
         uploadedAt: new Date().toISOString(),
+        isImmutableSnapshot: true,
+        forkCount: 21,
         placeCount: 3,
         places: [
             {
@@ -132,6 +140,8 @@ export const createSharedSavedCategoryMocks = (): SharedSavedCategoryMock[] => [
         title: '홍대 감성 카페',
         uploaderNickname: 'mori',
         uploadedAt: new Date().toISOString(),
+        isImmutableSnapshot: true,
+        forkCount: 17,
         placeCount: 6,
         places: [
             {
@@ -168,6 +178,8 @@ export const createSharedSavedCategoryMocks = (): SharedSavedCategoryMock[] => [
         title: '부산 바다 코스',
         uploaderNickname: 'jun',
         uploadedAt: new Date().toISOString(),
+        isImmutableSnapshot: true,
+        forkCount: 10,
         placeCount: 4,
         places: [
             {
@@ -204,6 +216,8 @@ export const createSharedSavedCategoryMocks = (): SharedSavedCategoryMock[] => [
         title: '을지로 저녁 맛집',
         uploaderNickname: 'mina',
         uploadedAt: new Date().toISOString(),
+        isImmutableSnapshot: true,
+        forkCount: 6,
         placeCount: 7,
         places: [
             {

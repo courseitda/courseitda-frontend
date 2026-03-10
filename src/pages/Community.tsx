@@ -1,16 +1,19 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Sparkles } from 'lucide-react';
+import { Calendar, GitFork, Sparkles } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { useRecommendedSharedCategories } from '@/shared/hooks/use-community';
+import { useMySavedCategories, useToggleSharedCategoryFork } from '@/shared/hooks/use-my-storage';
 import { MESSAGES } from '@/shared/constants/messages';
 import type { SharedSavedCategory } from '@/entities/types';
 import PageHeader from '@/components/layout/page-header';
 import SharedCategoryList from '@/components/community/shared-category-list';
 import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
+import LoginRequiredDialog from '@/components/common/login-required-dialog';
 import { UI_COPY } from '@/shared/constants/ui-copy';
+import { useAuthStore } from '@/shared/stores/auth-store';
 
 /**
  * 커뮤니티 메인 페이지 - 검색 입력 후 검색 결과 페이지로 이동
@@ -18,8 +21,10 @@ import { UI_COPY } from '@/shared/constants/ui-copy';
  */
 const Community = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, token } = useAuthStore();
   const [selectedCategory, setSelectedCategory] = useState<SharedSavedCategory | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
   const [recommendIndex, setRecommendIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(true);
   const sliderRef = useRef<HTMLDivElement>(null);
@@ -36,8 +41,20 @@ const Community = () => {
     isLoading: sharedCategoriesLoading,
     error: sharedCategoriesError,
   } = useRecommendedSharedCategories();
+  const { data: savedCategories = [] } = useMySavedCategories(token);
+  const toggleForkMutation = useToggleSharedCategoryFork(token);
 
   const filteredCategories = useMemo(() => sharedCategories, [sharedCategories]);
+  const forkedSharedCategoryMap = useMemo(
+    () =>
+      savedCategories.reduce<Record<string, boolean>>((accumulator, savedCategory) => {
+        if (savedCategory.forkedFromSharedCategoryId) {
+          accumulator[savedCategory.forkedFromSharedCategoryId] = true;
+        }
+        return accumulator;
+      }, {}),
+    [savedCategories],
+  );
   const hasLoop = filteredCategories.length > 1;
   const sliderCategories = useMemo(() => {
     if (filteredCategories.length === 0) return [];
@@ -60,9 +77,44 @@ const Community = () => {
       : recommendIndex
     : 0;
 
+  const formatUploadedDate = (uploadedAt: string): string => {
+    const date = new Date(uploadedAt);
+    if (Number.isNaN(date.getTime())) return uploadedAt;
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}.${month}.${day}`;
+  };
+
   const handleOpenDetail = (category: SharedSavedCategory) => {
     setSelectedCategory(category);
     setDetailOpen(true);
+  };
+
+  const handleFork = async (category: SharedSavedCategory) => {
+    // UserRequest: 상세 모달의 fork 아이콘을 누르면 내 카테고리로 복사
+    if (!isAuthenticated) {
+      setLoginDialogOpen(true);
+      return false;
+    }
+
+    const forkedSavedCategoryId = savedCategories.find(
+      (savedCategory) => savedCategory.forkedFromSharedCategoryId === category.id,
+    )?.id ?? null;
+
+    if (toggleForkMutation.isPending) return false;
+    try {
+      const result = await toggleForkMutation.mutateAsync({ category, forkedSavedCategoryId });
+      return result.action;
+    } catch {
+      return false;
+    }
+  };
+
+  // UserRequest: 로그인 필요 안내는 전용 안내창으로 노출
+  const handleLoginStart = () => {
+    setLoginDialogOpen(false);
+    navigate('/auth?tab=login');
   };
 
   // UserRequest: pagination dots 클릭 시 정상 이동을 보장하도록 드래그 상태를 초기화
@@ -171,7 +223,7 @@ const Community = () => {
     observer.observe(slider);
 
     return () => observer.disconnect();
-  }, [updateSliderWidth]);
+  }, [updateSliderWidth, filteredCategories.length, sharedCategoriesLoading]);
 
   useEffect(() => {
     // UserRequest: 다른 탭에서 복귀 시 애니메이션/중앙 정렬 상태를 즉시 복구
@@ -335,8 +387,27 @@ const Community = () => {
                             이미지 영역
                           </div>
                           <CardContent className="p-5">
-                            <div className="flex items-start justify-between gap-2">
-                              <CardTitle className="text-lg truncate">{category.title}</CardTitle>
+                            <div className="flex min-w-0 flex-1 flex-col gap-2">
+                              <CardTitle className="truncate text-lg">{category.title}</CardTitle>
+                              <div className="flex min-w-0 items-center gap-2 text-xs">
+                                {category.uploadedAt && (
+                                  <span className="inline-flex shrink-0 items-center gap-1 text-muted-foreground">
+                                    <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                                    {formatUploadedDate(category.uploadedAt)}
+                                  </span>
+                                )}
+                                <span
+                                  className={[
+                                    'inline-flex shrink-0 items-center gap-1',
+                                    forkedSharedCategoryMap[category.id]
+                                      ? 'text-violet-600'
+                                      : 'text-muted-foreground/70',
+                                  ].join(' ')}
+                                >
+                                  <GitFork className="h-3.5 w-3.5" />
+                                  {category.forkCount}
+                                </span>
+                              </div>
                             </div>
                           </CardContent>
                         </Card>
@@ -386,7 +457,9 @@ const Community = () => {
             {/* UserRequest: 커뮤니티 메인 카테고리 게시판 카드도 공통 SharedCategoryList를 사용한다. */}
             <SharedCategoryList
               categories={filteredCategories.slice(0, 4)}
+              forkedSharedCategoryMap={forkedSharedCategoryMap}
               onOpenDetail={handleOpenDetail}
+              viewportClassName="h-auto"
             />
           </div>
         </section>
@@ -398,6 +471,15 @@ const Community = () => {
         open={detailOpen}
         onOpenChange={setDetailOpen}
         category={selectedCategory}
+        isForked={savedCategories.some((savedCategory) => savedCategory.forkedFromSharedCategoryId === selectedCategory?.id)}
+        onToggleFork={handleFork}
+        forkPending={toggleForkMutation.isPending}
+      />
+      <LoginRequiredDialog
+        open={loginDialogOpen}
+        onOpenChange={setLoginDialogOpen}
+        onStart={handleLoginStart}
+        featureName="fork 기능"
       />
     </div>
   );

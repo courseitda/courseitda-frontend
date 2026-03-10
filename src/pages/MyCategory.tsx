@@ -2,12 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
   AlertDialog,
@@ -26,23 +21,20 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { Plus, Folder, Search, MapPin, User as UserIcon, X, Pencil, Trash2, MoreHorizontal } from 'lucide-react';
+import { Plus, Folder, Search, MapPin, X, Trash2, MoreHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import {
   useCreateSavedCategory,
   useDeleteSavedCategory,
   useMySavedCategories,
-  useUpdateSavedCategory,
 } from '@/shared/hooks/use-my-storage';
 import { MESSAGES } from '@/shared/constants/messages';
 import type { SavedCategory, SearchedPlace } from '@/entities/types';
 import PageHeader from '@/components/layout/page-header';
 import { placeApi } from '@/services/api';
 import { formatRelativeTimeKorean } from '@/shared/utils/relative-time';
-import { CategoryPlacesMap } from '@/components/map/category-places-map';
 import { UI_COPY } from '@/shared/constants/ui-copy';
-import { useUserNickname } from '@/shared/hooks/use-user-info';
 
 /**
  * 내 카테고리 페이지 컴포넌트
@@ -52,13 +44,7 @@ import { useUserNickname } from '@/shared/hooks/use-user-info';
 const MyCategory = () => {
   const navigate = useNavigate();
   const { isAuthenticated, token } = useAuthStore();
-  const { nickname: currentUserNickname, loading: currentUserNicknameLoading } = useUserNickname();
-  const [categoryDetailOpen, setCategoryDetailOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<SavedCategory | null>(null);
-  const [focusedPlaceId, setFocusedPlaceId] = useState<string | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [categoryDialogMode, setCategoryDialogMode] = useState<'create' | 'edit'>('create');
-  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState<SavedCategory | null>(null);
   const [newCategoryTitle, setNewCategoryTitle] = useState('');
@@ -74,7 +60,6 @@ const MyCategory = () => {
     error: savedCategoriesError,
   } = useMySavedCategories(token);
   const createSavedCategoryMutation = useCreateSavedCategory(token);
-  const updateSavedCategoryMutation = useUpdateSavedCategory(token);
   const deleteSavedCategoryMutation = useDeleteSavedCategory(token);
 
   // 미인증 사용자 접근 차단 - 로그인 페이지로 리다이렉트하여 보안 유지
@@ -91,14 +76,9 @@ const MyCategory = () => {
     }
   }, [savedCategoriesError]);
 
-  // UserRequest: 카테고리 카드 클릭 시 상세 팝업을 표시하여 이름/지도(임시)/장소 목록을 보여줌
+  // UserRequest: 카테고리 카드 클릭 시 상세 페이지로 이동하여 이름/지도/장소 목록을 보여줌
   const handleOpenCategory = (categoryId: string) => {
-    const target = savedCategories.find((category) => category.id === categoryId);
-    if (!target) return;
-    setSelectedCategory(target);
-    // UserRequest: 팝업 재진입 시 이전 선택 상태를 초기화
-    setFocusedPlaceId(null);
-    setCategoryDetailOpen(true);
+    navigate(`/my-category/${categoryId}`);
   };
 
   const handleSearchPlaces = async () => {
@@ -143,30 +123,7 @@ const MyCategory = () => {
 
   const handleOpenCreateDialog = () => {
     // UserRequest: 새 카테고리 추가 버튼 클릭 시 생성 팝업 노출
-    setCategoryDialogMode('create');
-    setEditingCategoryId(null);
     resetCreateDialog();
-    setCreateDialogOpen(true);
-  };
-
-  const handleOpenEditDialog = (category: SavedCategory) => {
-    // UserRequest: 길게 누른 카테고리 카드의 "수정하기"는 생성 팝업을 재사용하되 기존 값을 초기값으로 채운다.
-    setCategoryDialogMode('edit');
-    setEditingCategoryId(category.id);
-    setNewCategoryTitle(category.title);
-    setPlaceQuery('');
-    setPlaceResults([]);
-    setSelectedPlaces(
-      category.places.map((place) => ({
-        id: place.id,
-        name: place.name,
-        placeUrl: place.placeUrl,
-        roadAddressName: place.roadAddressName,
-        addressName: place.addressName,
-        latitude: place.latitude,
-        longitude: place.longitude,
-      })),
-    );
     setCreateDialogOpen(true);
   };
 
@@ -179,26 +136,15 @@ const MyCategory = () => {
       toast.error(UI_COPY.myCategory.atLeastOnePlace);
       return;
     }
-    if (createSavedCategoryMutation.isPending || updateSavedCategoryMutation.isPending) return;
+    if (createSavedCategoryMutation.isPending) return;
 
     try {
-      // UserRequest: 수정하기에서는 기존 카테고리 ID를 사용해 덮어쓰기 저장
-      if (categoryDialogMode === 'edit' && editingCategoryId) {
-        await updateSavedCategoryMutation.mutateAsync({
-          id: editingCategoryId,
-          title: newCategoryTitle.trim(),
-          places: selectedPlaces,
-        });
-      } else {
-        await createSavedCategoryMutation.mutateAsync({
-          title: newCategoryTitle.trim(),
-          places: selectedPlaces,
-        });
-      }
+      await createSavedCategoryMutation.mutateAsync({
+        title: newCategoryTitle.trim(),
+        places: selectedPlaces,
+      });
       setCreateDialogOpen(false);
       resetCreateDialog();
-      setCategoryDialogMode('create');
-      setEditingCategoryId(null);
     } catch {
       // UserRequest: 생성 실패 시 팝업은 유지하여 입력을 보존
     }
@@ -213,12 +159,6 @@ const MyCategory = () => {
   const handleDeleteConfirm = () => {
     if (!selectedForDelete || deleteSavedCategoryMutation.isPending) return;
     deleteSavedCategoryMutation.mutate(selectedForDelete.id, {
-      onSuccess: () => {
-        if (selectedCategory?.id === selectedForDelete.id) {
-          setCategoryDetailOpen(false);
-          setSelectedCategory(null);
-        }
-      },
       onSettled: () => {
         setDeleteAlertOpen(false);
         setSelectedForDelete(null);
@@ -267,16 +207,6 @@ const MyCategory = () => {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem
-              className="gap-2"
-              onClick={(event) => {
-                event.stopPropagation();
-                handleOpenEditDialog(category);
-              }}
-            >
-              <Pencil className="w-4 h-4" />
-              수정하기
-            </DropdownMenuItem>
-            <DropdownMenuItem
               className="text-destructive focus:text-destructive gap-2"
               onClick={(event) => {
                 event.stopPropagation();
@@ -291,11 +221,6 @@ const MyCategory = () => {
       </CardHeader>
     </Card>
   );
-
-  // UserRequest: 상세보기 장소 목록은 최소 3행 슬롯을 유지해 항목 수가 적어도 구분선이 보이도록 처리
-  const detailPlaces = selectedCategory?.places ?? [];
-  const detailMinRows = 3;
-  const detailEmptyRows = Math.max(0, detailMinRows - detailPlaces.length);
 
   if (savedCategoriesLoading) {
     return (
@@ -389,95 +314,18 @@ const MyCategory = () => {
         </div>
       </main>
 
-      <Dialog open={categoryDetailOpen} onOpenChange={setCategoryDetailOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-center">{selectedCategory?.title}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {/* UserRequest: 보관 카테고리 상세보기 작성자 정보를 상단 메타 영역에 표시한다. */}
-            <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground flex-wrap">
-              <span className="flex items-center gap-1.5">
-                <UserIcon className="w-4 h-4 text-primary" />
-                {currentUserNicknameLoading ? '불러오는 중...' : (currentUserNickname ?? '알 수 없음')}
-              </span>
-            </div>
-            <CategoryPlacesMap
-              open={categoryDetailOpen}
-              places={(selectedCategory?.places ?? []).map((place) => ({
-                id: place.id,
-                name: place.name,
-                latitude: place.latitude,
-                longitude: place.longitude,
-              }))}
-              focusedPlaceId={focusedPlaceId}
-            />
-            <div className="space-y-2">
-              {/* UserRequest: 보관 카테고리 상세보기 장소 목록 헤더를 아이콘 + 총 개수 형태로 표시한다. */}
-              <p className="text-sm font-semibold flex items-center gap-1.5">
-                <MapPin className="w-4 h-4 text-primary" />
-                {UI_COPY.myCategory.detailDialog.placeListTitle}
-                <span className="text-xs text-muted-foreground">
-                  ({selectedCategory?.placeCount ?? detailPlaces.length}곳)
-                </span>
-              </p>
-              {/* UserRequest: 장소 개수와 무관하게 상세보기 목록 영역 높이를 고정하고 최소 행 슬롯으로 구분선 유지 */}
-              <div className="h-48 border border-border rounded-lg divide-y divide-border overflow-y-auto bg-muted/20">
-                {detailPlaces.length === 0 ? (
-                  <>
-                    <div className="h-14 px-3 flex items-center text-sm text-muted-foreground">
-                      {UI_COPY.myCategory.detailDialog.noPlacesInDetail}
-                    </div>
-                    {Array.from({ length: detailMinRows - 1 }).map((_, index) => (
-                      <div key={`detail-empty-initial-${index}`} className="h-14" />
-                    ))}
-                  </>
-                ) : (
-                  <>
-                    {detailPlaces.map((place) => (
-                      <button
-                        key={place.id}
-                        type="button"
-                        onClick={() => setFocusedPlaceId(place.id)}
-                        className="w-full min-h-14 text-left p-3 flex flex-col justify-center gap-1 hover:bg-accent/40 transition-colors"
-                      >
-                        {/* UserRequest: 보관 카테고리 상세보기 장소명 앞에 MapPin 아이콘을 표시한다. */}
-                        <span className="text-sm font-medium flex items-center gap-1.5">
-                          <MapPin className="w-4 h-4 text-primary" />
-                          {place.name}
-                        </span>
-                        <span className="text-xs text-muted-foreground">{place.addressName}</span>
-                      </button>
-                    ))}
-                    {Array.from({ length: detailEmptyRows }).map((_, index) => (
-                      <div key={`detail-empty-tail-${index}`} className="h-14" />
-                    ))}
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
       <Dialog
         open={createDialogOpen}
         onOpenChange={(open) => {
           setCreateDialogOpen(open);
           if (!open) {
             resetCreateDialog();
-            setCategoryDialogMode('create');
-            setEditingCategoryId(null);
           }
         }}
       >
         <DialogContent className="max-w-2xl max-h-[88vh] overflow-y-auto px-3 py-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle>
-              {categoryDialogMode === 'edit'
-                ? UI_COPY.myCategory.editorDialog.editTitle
-                : UI_COPY.myCategory.editorDialog.createTitle}
-            </DialogTitle>
+            <DialogTitle>{UI_COPY.myCategory.editorDialog.createTitle}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -576,21 +424,17 @@ const MyCategory = () => {
               <Button
                 variant="outline"
                 onClick={() => setCreateDialogOpen(false)}
-                disabled={createSavedCategoryMutation.isPending || updateSavedCategoryMutation.isPending}
+                disabled={createSavedCategoryMutation.isPending}
               >
                 {UI_COPY.myCategory.editorDialog.cancel}
               </Button>
               <Button
                 onClick={handleCreateCategory}
-                disabled={createSavedCategoryMutation.isPending || updateSavedCategoryMutation.isPending}
+                disabled={createSavedCategoryMutation.isPending}
               >
-                {categoryDialogMode === 'edit'
-                  ? (updateSavedCategoryMutation.isPending
-                    ? UI_COPY.myCategory.editorDialog.editing
-                    : UI_COPY.myCategory.editorDialog.edit)
-                  : (createSavedCategoryMutation.isPending
-                    ? UI_COPY.myCategory.editorDialog.creating
-                    : UI_COPY.myCategory.editorDialog.create)}
+                {createSavedCategoryMutation.isPending
+                  ? UI_COPY.myCategory.editorDialog.creating
+                  : UI_COPY.myCategory.editorDialog.create}
               </Button>
             </div>
           </div>
