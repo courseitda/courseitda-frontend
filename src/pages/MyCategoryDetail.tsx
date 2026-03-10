@@ -220,7 +220,7 @@ const MyCategoryDetail = () => {
         <PageHeader
           showBackButton
           showBrand={false}
-          centerContent={<p className="text-base font-semibold">카테고리 상세</p>}
+          centerContent={<p className="text-base font-semibold">{UI_COPY.myCategory.pageTitleShort}</p>}
           rightContent={<div className="w-10 h-10" />}
         />
         <div className="container mx-auto px-4 py-10">
@@ -247,7 +247,7 @@ const MyCategoryDetail = () => {
               variant="ghost"
               size="icon"
               className="absolute left-full ml-1 h-8 w-8 shrink-0"
-              aria-label="카테고리 이름 변경"
+              aria-label={UI_COPY.myCategory.detailDialog.renameAriaLabel}
               onClick={handleOpenRenameDialog}
             >
               <PenLine className="w-4 h-4 text-muted-foreground" />
@@ -276,7 +276,7 @@ const MyCategoryDetail = () => {
             <div className="flex items-center justify-between gap-3">
               <p className="text-lg font-semibold flex items-center gap-1.5">
                 <MapPin className="w-4 h-4 text-primary" />
-                {isAddingPlace ? '추가된 장소' : UI_COPY.myCategory.detailDialog.placeListTitle}
+                {isAddingPlace ? UI_COPY.myCategory.detailDialog.editingPlaceListTitle : UI_COPY.myCategory.detailDialog.placeListTitle}
                 <span className="text-xs text-muted-foreground">
                   ({currentPlaces.length}곳)
                 </span>
@@ -313,7 +313,7 @@ const MyCategoryDetail = () => {
                     className="gap-2 rounded-full"
                   >
                     <PenLine className="w-4 h-4" />
-                    수정하기
+                    {UI_COPY.myCategory.detailDialog.editAction}
                   </Button>
                 )}
               </div>
@@ -405,7 +405,7 @@ const MyCategoryDetail = () => {
                               disabled={selectedPlaces.some((item) => item.id === place.id)}
                             >
                               {selectedPlaces.some((item) => item.id === place.id)
-                                ? '추가됨'
+                                ? UI_COPY.myCategory.detailDialog.addCompleted
                                 : UI_COPY.myCategory.editorDialog.addPlaceAction}
                             </Button>
                           </div>

@@ -1,6 +1,7 @@
 import { apiClient } from '@/lib/axios';
 import type { ApiResponse } from '@/types/api';
 import { BackendErrorCode } from '@/shared/utils/error-message';
+import { MESSAGES } from '@/shared/constants/messages';
 import { toError, toSuccess } from './http';
 
 // 내 보관함(MyStorage) 관련 백엔드 엔드포인트 상수 정의
@@ -195,7 +196,7 @@ export const myStorageApi = {
       return toError(
         error,
         BackendErrorCode.INVALID_TOKEN,
-        '내 카테고리를 불러올 수 없습니다.',
+        MESSAGES.savedCategory.listLoadFailed,
       );
     }
   },
@@ -227,7 +228,7 @@ export const myStorageApi = {
       return toError(
         error,
         BackendErrorCode.REQUEST_VALIDATION_FAILED,
-        '카테고리 생성에 실패했습니다.',
+        MESSAGES.savedCategory.addFailed,
       );
     }
   },
@@ -261,7 +262,7 @@ export const myStorageApi = {
       return toError(
         error,
         BackendErrorCode.REQUEST_VALIDATION_FAILED,
-        '카테고리 수정에 실패했습니다.',
+        MESSAGES.savedCategory.updateFailed,
       );
     }
   },
@@ -290,7 +291,7 @@ export const myStorageApi = {
       return toError(
         error,
         BackendErrorCode.SAVED_CATEGORY_NOT_FOUND,
-        '카테고리 삭제에 실패했습니다.',
+        MESSAGES.savedCategory.deleteFailed,
       );
     }
   },

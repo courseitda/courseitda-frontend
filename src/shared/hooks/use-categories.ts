@@ -1,8 +1,7 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { categoryApi } from '@/services/api';
 import type { WorkspaceCategory } from '@/services/api/category.service';
-
-const EMPTY_IDENTIFIER_ERROR = '워크스페이스 식별자가 필요합니다.';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 // 워크스페이스 카테고리/장소를 React Query로 가져와 Dexie 의존성 제거
 export const useWorkspaceCategories = (
@@ -14,7 +13,7 @@ export const useWorkspaceCategories = (
     staleTime: 30_000,
     queryFn: async () => {
       if (!workspaceIdentifier) {
-        throw new Error(EMPTY_IDENTIFIER_ERROR);
+        throw new Error(UI_COPY.system.workspaceIdentifierRequired);
       }
 
       const { categories, error } = await categoryApi.getByWorkspace(workspaceIdentifier);

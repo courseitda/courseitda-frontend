@@ -118,10 +118,10 @@ const HeroAnimation = () => {
                                 width="52"
                                 height="24"
                                 rx="12"
-                                fill="white"
+                                fill="hsl(var(--background))"
                                 stroke="hsl(var(--border))"
                                 strokeWidth="1"
-                                filter="drop-shadow(0 2px 4px rgba(0,0,0,0.08))"
+                                filter="drop-shadow(0 2px 4px hsl(var(--foreground) / 0.08))"
                             />
                             <text x={pin.x + 20} y={pin.y - 16} fontSize="11" textAnchor="start"
                                   fill="hsl(var(--foreground))" fontWeight="600">

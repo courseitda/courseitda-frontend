@@ -1,4 +1,7 @@
 // Naver Maps SDK 로딩 완료 시 호출될 전역 콜백 함수명
+import { MESSAGES } from '@/shared/constants/messages';
+
+// Naver Maps SDK 로딩 완료 시 호출될 전역 콜백 함수명
 const CALLBACK_NAME = '__NAVER_MAPS_ONLOAD__';
 
 // SDK 전역 객체 준비를 위한 폴링 설정 - 콜백 이후에도 객체 준비까지 대기
@@ -20,7 +23,7 @@ type WindowWithCallback = Window & {
 export const loadNaverMapScript = (keyId: string): Promise<void> => {
   // 서버 사이드 렌더링 환경 검증 - window 객체가 없는 경우 에러 반환
   if (typeof window === 'undefined') {
-    return Promise.reject(new Error('Naver Maps SDK는 브라우저 환경에서만 로드할 수 있습니다.'));
+    return Promise.reject(new Error(MESSAGES.map.browserOnly));
   }
 
   // SDK가 이미 로드된 경우 즉시 완료 처리 - 중복 로딩 방지
@@ -51,7 +54,7 @@ export const loadNaverMapScript = (keyId: string): Promise<void> => {
       if (existingScript) {
         existingScript.remove();
       }
-      reject(new Error('Naver Maps SDK 로딩에 실패했습니다.'));
+      reject(new Error(MESSAGES.map.sdkLoadFailed));
     };
 
     // SDK 전역 객체가 실제로 준비되었는지 확인 - 콜백 호출 직후 객체가 비어있는 경우가 있어 폴링 처리

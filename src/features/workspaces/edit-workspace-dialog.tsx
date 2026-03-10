@@ -15,6 +15,7 @@ import { MESSAGES } from '@/shared/constants/messages';
 import type { Workspace } from '@/entities/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { UI_COPY } from '@/shared/constants/ui-copy';
+import { useDialogViewportPosition } from '@/shared/hooks/use-dialog-viewport-position';
 
 interface EditWorkspaceDialogProps {
   open: boolean;
@@ -29,6 +30,7 @@ export const EditWorkspaceDialog = ({ open, onOpenChange, workspace }: EditWorks
   const dialogRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const isUnchangedTitle = title === workspace.title;
+  useDialogViewportPosition({ open, mode: 'center', dialogRef, keyboardOpenThreshold: 0.8 });
 
   // UserRequest: Step 5 — React Query 뮤테이션으로 수정 후 상세/목록 캐시 동기화
   const updateWorkspaceMutation = useMutation({
@@ -59,42 +61,6 @@ export const EditWorkspaceDialog = ({ open, onOpenChange, workspace }: EditWorks
       setTitle(workspace.title);
     }
   }, [open, workspace]);
-
-  // UserRequest: 모바일에서 키보드 올라올 때 팝업이 가려지지 않도록 키보드를 제외한 화면 중앙에 위치시켜 입력 편의성 향상
-  useEffect(() => {
-    if (!open) return;
-
-    const handleViewportResize = () => {
-      if (!dialogRef.current) return;
-      
-      const visualViewport = window.visualViewport;
-      if (!visualViewport) return;
-
-      // 키보드 표시 시 보이는 영역 높이 계산
-      const viewportHeight = visualViewport.height;
-      const windowHeight = window.innerHeight;
-      
-      // 보이는 영역이 80% 미만으로 줄어들면 키보드가 올라온 것으로 판단
-      if (viewportHeight < windowHeight * 0.8) {
-        // 보이는 영역의 중앙에 다이얼로그 배치
-        dialogRef.current.style.transform = `translate(-50%, calc(-50% - ${(windowHeight - viewportHeight) / 2}px))`;
-      } else {
-        // 키보드가 내려가면 화면 중앙으로 재배치
-        dialogRef.current.style.transform = 'translate(-50%, -50%)';
-      }
-    };
-
-    // visualViewport API를 지원하는 최신 모바일 브라우저에서만 동작
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleViewportResize);
-      window.visualViewport.addEventListener('scroll', handleViewportResize);
-      
-      return () => {
-        window.visualViewport?.removeEventListener('resize', handleViewportResize);
-        window.visualViewport?.removeEventListener('scroll', handleViewportResize);
-      };
-    }
-  }, [open]);
 
   // 워크스페이스 수정 요청 처리
   const handleSubmit = async (e: React.FormEvent) => {

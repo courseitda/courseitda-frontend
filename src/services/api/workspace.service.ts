@@ -123,7 +123,7 @@ export const workspaceApi = {
       return toError(
         error,
         BackendErrorCode.REQUEST_VALIDATION_FAILED,
-        '워크스페이스 입력값을 확인해주세요.',
+        MESSAGES.workspace.createFailed,
       );
     }
   },

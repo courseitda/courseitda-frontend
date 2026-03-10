@@ -18,6 +18,7 @@ import { Check, Palette } from 'lucide-react';
 import type { Category } from '@/entities/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { UI_COPY } from '@/shared/constants/ui-copy';
+import { useDialogViewportPosition } from '@/shared/hooks/use-dialog-viewport-position';
 
 interface AddCategoryDialogProps {
   open: boolean;
@@ -25,9 +26,6 @@ interface AddCategoryDialogProps {
   workspaceIdentifier: string;
   categories: Category[];
 }
-
-// 자주 사용하는 카테고리를 제안하여 빠른 입력 지원
-const SUGGESTED_CATEGORIES = ['점심', '카페', '산책', '쇼핑', '저녁'];
 
 // 카테고리 추가 다이얼로그 - 색상 선택과 이름 입력을 통해 새 카테고리 생성
 // 사용 위치: features/categories/category-list
@@ -37,9 +35,9 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceIdentifier, cat
   const [name, setName] = useState('');
   const [selectedColor, setSelectedColor] = useState<string>(colors[0]);
   const dialogRef = useRef<HTMLDivElement>(null);
-  const [keyboardOffset, setKeyboardOffset] = useState(0);
   const queryClient = useQueryClient();
   const queryKey = ['workspace', workspaceIdentifier, 'categories'];
+  const dialogStyle = useDialogViewportPosition({ open, mode: 'bottom', keyboardOpenThreshold: 0.85 });
 
   const computeNextAvailableColor = (paletteMode: PaletteMode, usedCategories: Category[]) => {
     const palette = getCategoryColors(paletteMode);
@@ -104,50 +102,6 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceIdentifier, cat
     setColorPaletteMode(nextMode);
   };
 
-  // UserRequest: 모바일에서 키보드가 올라오면 팝업창의 하단을 키보드 상단에 맞춰 입력 필드가 가려지지 않도록 처리
-  useEffect(() => {
-    if (!open) {
-      setKeyboardOffset(0);
-      return;
-    }
-
-    const handleViewportResize = () => {
-      const visualViewport = window.visualViewport;
-      if (!visualViewport) {
-        setKeyboardOffset(0);
-        return;
-      }
-
-      // 키보드 표시 시 실제 보이는 화면 높이와 전체 화면 높이 비교
-      const viewportHeight = visualViewport.height;
-      const windowHeight = window.innerHeight;
-      
-      // 보이는 영역이 85% 미만으로 줄어들면 키보드가 올라온 것으로 판단
-      if (viewportHeight < windowHeight * 0.85) {
-        // 키보드 높이만큼 오프셋 계산하여 팝업을 위로 이동
-        const keyboardHeight = windowHeight - viewportHeight;
-        setKeyboardOffset(keyboardHeight);
-      } else {
-        // 키보드가 내려가면 팝업을 화면 중앙으로 재배치
-        setKeyboardOffset(0);
-      }
-    };
-
-    // 초기 실행으로 현재 상태 반영
-    handleViewportResize();
-
-    // visualViewport API를 지원하는 최신 모바일 브라우저에서만 동작
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleViewportResize);
-      window.visualViewport.addEventListener('scroll', handleViewportResize);
-      
-      return () => {
-        window.visualViewport?.removeEventListener('resize', handleViewportResize);
-        window.visualViewport?.removeEventListener('scroll', handleViewportResize);
-      };
-    }
-  }, [open]);
-
   // 카테고리 추가 요청 처리 - 유효성 검증 후 Edge Function을 통해 DB에 저장
   const handleSubmit = (categoryName: string) => {
     // 빈 문자열이나 공백만 있는 경우 추가 방지
@@ -178,15 +132,11 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceIdentifier, cat
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent 
-        ref={dialogRef} 
-        className="transition-all duration-200"
-        style={{
-          top: keyboardOffset > 0 ? 'auto' : '50%',
-          bottom: keyboardOffset > 0 ? `${keyboardOffset}px` : 'auto',
-          transform: keyboardOffset > 0 ? 'translateX(-50%)' : 'translate(-50%, -50%)'
-        }}
-      >
+        <DialogContent 
+          ref={dialogRef} 
+          className="transition-all duration-200"
+          style={dialogStyle}
+        >
         <DialogHeader>
           <DialogTitle>{UI_COPY.categoryDialog.add.title}</DialogTitle>
         </DialogHeader>
@@ -206,7 +156,7 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceIdentifier, cat
                   onClick={() => setSelectedColor(color)}
                   className="w-10 h-10 rounded-full border-2 border-border hover:scale-110 transition-transform relative"
                   style={{ backgroundColor: color }}
-                  aria-label={`색상 ${color} 선택`}
+                  aria-label={UI_COPY.categoryDialog.colorSelectAriaLabel(color)}
                 >
                   {selectedColor === color && (
                     <Check className="w-5 h-5 text-white absolute inset-0 m-auto drop-shadow-md" />
@@ -217,7 +167,7 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceIdentifier, cat
                 type="button"
                 onClick={handleTogglePalette}
                 className="w-10 h-10 rounded-full border-2 border-dashed border-border hover:scale-110 transition-transform relative cursor-pointer flex items-center justify-center bg-background"
-                aria-label="색상 팔레트 변경"
+                aria-label={UI_COPY.categoryDialog.paletteToggleAriaLabel}
               >
                 <Palette className="w-5 h-5 text-muted-foreground" />
               </button>
@@ -227,7 +177,7 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceIdentifier, cat
           <div className="space-y-2">
             <Label>{UI_COPY.categoryDialog.add.suggestedLabel}</Label>
             <div className="flex justify-center gap-2">
-              {SUGGESTED_CATEGORIES.map((category) => (
+              {UI_COPY.categoryDialog.suggestedCategories.map((category) => (
                 <Button
                   key={category}
                   variant="outline"

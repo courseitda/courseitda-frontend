@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { loadNaverMapScript } from '@/shared/lib/naver';
+import { MESSAGES } from '@/shared/constants/messages';
 
 // Naver Maps SDK 로딩 상태를 관리하는 훅 - SDK 로딩 완료 여부와 에러 상태 제공
 // 참고 문서: https://api.ncloud-docs.com/docs/en/naveropenapi-map-javascript
@@ -14,7 +15,7 @@ export const useNaverLoader = (keyId: string | null) => {
     // API 키 검증 - 키가 없으면 에러 상태로 설정하고 SDK 로딩 시도 중단
     if (!keyId) {
       setReady(false);
-      setError(new Error('Naver Maps 환경 변수를 찾을 수 없습니다. 관리자에게 문의해주세요.'));
+      setError(new Error(MESSAGES.map.missingEnvironmentKey));
       return () => {
         cancelled = true;
       };
@@ -35,7 +36,7 @@ export const useNaverLoader = (keyId: string | null) => {
       .catch((err) => {
         // SDK 로딩 실패 시 에러 상태 설정 - 컴포넌트가 마운트된 상태에서만 처리
         if (!cancelled) {
-          setError(err instanceof Error ? err : new Error('Naver Maps SDK 로딩에 실패했습니다.'));
+          setError(err instanceof Error ? err : new Error(MESSAGES.map.sdkLoadFailed));
           setReady(false);
         }
       });

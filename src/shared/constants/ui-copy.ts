@@ -171,11 +171,13 @@ export const UI_COPY = {
   myCategory: {
     pageTitle: '내 카테고리',
     createAction: '새 카테고리',
+    pageTitleShort: '카테고리 상세',
     nameRequired: '카테고리 이름을 입력해주세요.',
     placeSearchKeywordRequired: '검색어를 입력해주세요.',
     placeSearchNoResult: '검색 결과가 없습니다.',
     placeAlreadyAdded: '이미 추가된 장소입니다.',
     atLeastOnePlace: '장소를 1개 이상 추가해주세요.',
+    moreActionAriaLabel: '카테고리 더보기',
     empty: {
       title: '카테고리가 없습니다.',
       description: '지금 추가해보세요!',
@@ -187,6 +189,10 @@ export const UI_COPY = {
     detailDialog: {
       placeListTitle: '장소 목록',
       noPlacesInDetail: '표시할 장소가 없습니다.',
+      editingPlaceListTitle: '추가된 장소',
+      renameAriaLabel: '카테고리 이름 변경',
+      editAction: '수정하기',
+      addCompleted: '추가됨',
     },
     editorDialog: {
       createTitle: '새 카테고리 추가',
@@ -233,6 +239,9 @@ export const UI_COPY = {
       submit: '확인',
       submitting: '수정 중...',
     },
+    suggestedCategories: ['점심', '카페', '산책', '쇼핑', '저녁'],
+    paletteToggleAriaLabel: '색상 팔레트 변경',
+    colorSelectAriaLabel: (color: string) => `색상 ${color} 선택`,
   },
   myPosts: {
     pageTitle: '내 게시물',
@@ -279,12 +288,36 @@ export const UI_COPY = {
     createAction: '생성하기',
     loadFailed: '카테고리를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.',
     emptyDescription: '카테고리를 추가해보세요',
+    reorderToggle: '순서 조정',
+    confirmAction: '확인',
+    viewModeAriaLabel: '보기 모드',
+    editModeAriaLabel: '편집 모드',
   },
   communitySearch: {
     sectionTitle: '추천 검색어',
     regionTitle: '🗺️ 지역',
     foodTitle: '🍽️ 식사',
     activityTitle: '🎯 활동',
+    regionKeywords: [
+      { value: '성수', label: '성수' },
+      { value: '연남', label: '연남' },
+      { value: '잠실', label: '잠실' },
+      { value: '강남', label: '강남' },
+    ],
+    foodKeywords: [
+      { value: '점심', label: '점심' },
+      { value: '저녁', label: '저녁' },
+      { value: '카페', label: '카페' },
+      { value: '브런치', label: '브런치' },
+      { value: '디저트', label: '디저트' },
+    ],
+    activityKeywords: [
+      { value: '전시', label: '전시' },
+      { value: '영화', label: '영화' },
+      { value: '공방', label: '공방' },
+      { value: '보드게임', label: '보드게임' },
+      { value: '방탈출', label: '방탈출' },
+    ],
   },
   searchResult: {
     pageTitle: '검색 결과',
@@ -335,6 +368,11 @@ export const UI_COPY = {
   place: {
     linkMissing: '장소 링크가 없습니다.',
     openSearchAction: '장소 검색',
+    menuOpenAriaLabel: '장소 메뉴 열기',
+    openInMapAction: '지도 바로가기',
+    setRepresentativeAction: '대표 장소 지정',
+    unsetRepresentativeAction: '대표 장소 해제',
+    deleteAction: '삭제',
   },
   map: {
     browserLocationUnsupported: '이 브라우저에서는 위치 정보를 지원하지 않습니다.',

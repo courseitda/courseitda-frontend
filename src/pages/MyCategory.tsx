@@ -197,7 +197,7 @@ const MyCategory = () => {
               type="button"
               variant="ghost"
               size="icon"
-              aria-label="카테고리 더보기"
+              aria-label={UI_COPY.myCategory.moreActionAriaLabel}
               className="h-8 w-8 shrink-0"
               onClick={(event) => event.stopPropagation()}
               onPointerDown={(event) => event.stopPropagation()}
@@ -275,11 +275,11 @@ const MyCategory = () => {
           </CardHeader>
         </Card>
 
-        {savedCategories.length === 0
-          ? renderEmptyState(
-            <Folder className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />,
-            '카테고리가 없습니다.\n지금 추가해보세요!',
-          )
+            {savedCategories.length === 0
+              ? renderEmptyState(
+              <Folder className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />,
+              `${UI_COPY.myCategory.empty.title}\n${UI_COPY.myCategory.empty.description}`,
+            )
           : savedCategories.map((category) => renderSavedCategoryCard(category))}
       </main>
 
@@ -304,9 +304,9 @@ const MyCategory = () => {
 
             {savedCategories.length === 0
               ? renderEmptyState(
-                <Folder className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />,
-                '카테고리가 없습니다.\n지금 추가해보세요!',
-              )
+              <Folder className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />,
+              `${UI_COPY.myCategory.empty.title}\n${UI_COPY.myCategory.empty.description}`,
+            )
               : savedCategories.map((category) => renderSavedCategoryCard(category))}
           </div>
 

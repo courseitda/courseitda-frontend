@@ -146,7 +146,7 @@ export const placeApi = {
             const apiError = toError(
                 error,
                 BackendErrorCode.NAVER_PLACE_SEARCH_ERROR,
-                '장소 검색에 실패했습니다.',
+                MESSAGES.place.searchFailed,
             );
             return {error: apiError.error?.message};
         }
@@ -201,7 +201,7 @@ export const placeApi = {
             return toError(
                 error,
                 BackendErrorCode.REQUEST_VALIDATION_FAILED,
-                '장소 정보를 확인해주세요.',
+                MESSAGES.common.defaultError,
             );
         }
     },

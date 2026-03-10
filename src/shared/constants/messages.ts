@@ -1,6 +1,12 @@
 // 공통 메시지 카탈로그 - 서버 응답 기반 성공/실패 메시지만 관리
 const common = {
   defaultError: '요청 처리 중 오류가 발생했습니다.',
+  accessForbidden: '접근 권한이 없습니다.',
+  resourceNotFound: '요청한 리소스를 찾을 수 없습니다.',
+  serverError: '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+  networkError: '네트워크 연결을 확인해주세요.',
+  timeoutError: '요청 시간이 초과되었습니다. 다시 시도해주세요.',
+  unknownError: '알 수 없는 오류가 발생했습니다.',
 } as const;
 
 const auth = {
@@ -13,6 +19,8 @@ const auth = {
   emailCheckFailed: '이메일 확인 중 오류가 발생했습니다.',
   nicknameLoadFailed: '닉네임을 불러올 수 없습니다.',
   userInfoLoadFailed: '사용자 정보를 불러올 수 없습니다.',
+  invalidCredentials: '이메일 또는 비밀번호가 올바르지 않습니다.',
+  loginExpired: '인증이 만료되었습니다. 다시 로그인해주세요.',
 } as const;
 
 const workspace = {
@@ -72,6 +80,12 @@ const place = {
   searchFailed: '장소 검색에 실패했습니다.',
 } as const;
 
+const map = {
+  browserOnly: 'Naver Maps SDK는 브라우저 환경에서만 로드할 수 있습니다.',
+  sdkLoadFailed: 'Naver Maps SDK 로딩에 실패했습니다.',
+  missingEnvironmentKey: 'Naver Maps 환경 변수를 찾을 수 없습니다. 관리자에게 문의해주세요.',
+} as const;
+
 export const MESSAGES = {
   common,
   auth,
@@ -80,4 +94,5 @@ export const MESSAGES = {
   savedCategory,
   workspaceCategory,
   place,
+  map,
 } as const;

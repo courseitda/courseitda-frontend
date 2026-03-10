@@ -175,7 +175,7 @@ export const CategoryList = ({
               onClick={handleToggleReorderControls}
               className={`inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold shadow-sm transition-all ${
                 isReorderControlsVisible
-                  ? 'bg-primary/10 text-primary ring-1 ring-primary/50 shadow-[0_0_0_1px_rgba(59,130,246,0.08)] hover:bg-primary/15'
+                  ? 'bg-primary/10 text-primary ring-1 ring-primary/50 shadow-[0_0_0_1px_hsl(var(--primary)/0.08)] hover:bg-primary/15'
                   : 'bg-background text-muted-foreground ring-1 ring-border hover:bg-muted/40'
               }`}
               aria-pressed={isReorderControlsVisible}
@@ -193,7 +193,7 @@ export const CategoryList = ({
                   <ArrowUpDown className="h-3 w-3" />
                 )}
               </span>
-              {isReorderControlsVisible ? '확인' : '순서 조정'}
+              {isReorderControlsVisible ? UI_COPY.categoryList.confirmAction : UI_COPY.categoryList.reorderToggle}
             </button>
           )}
         </div>
@@ -208,8 +208,8 @@ export const CategoryList = ({
                 }`}
                 onClick={handleSwitchToViewMode}
                 aria-pressed={isOrderEditMode}
-                aria-label="보기 모드"
-                title="보기 모드"
+                aria-label={UI_COPY.categoryList.viewModeAriaLabel}
+                title={UI_COPY.categoryList.viewModeAriaLabel}
               >
                 <ListOrdered className="h-4 w-4" />
               </button>
@@ -223,8 +223,8 @@ export const CategoryList = ({
                   setAddOptionOpen(false);
                 }}
                 aria-pressed={!isOrderEditMode}
-                aria-label="편집 모드"
-                title="편집 모드"
+                aria-label={UI_COPY.categoryList.editModeAriaLabel}
+                title={UI_COPY.categoryList.editModeAriaLabel}
               >
                 <SquarePen className="h-4 w-4" />
               </button>
@@ -310,7 +310,7 @@ export const CategoryList = ({
             size="default"
             className={`relative z-10 inline-flex h-12 items-center overflow-hidden rounded-full px-4 font-semibold shadow-xl transition-all duration-200 ease-out origin-right ${
               addOptionOpen
-                ? 'w-12 justify-center border-transparent bg-white px-0 text-black shadow-[0_10px_24px_rgba(15,23,42,0.18)] hover:bg-primary/5'
+                ? 'w-12 justify-center border-transparent bg-background px-0 text-foreground shadow-[0_10px_24px_hsl(var(--foreground)/0.18)] hover:bg-primary/5'
                 : 'gap-2 whitespace-nowrap'
             }`}
             aria-label={UI_COPY.categoryList.addAction}
@@ -318,7 +318,7 @@ export const CategoryList = ({
             <span
               aria-hidden="true"
               className={`absolute inset-0 rounded-full transition-colors duration-200 ${
-                addOptionOpen ? 'bg-white' : 'bg-primary'
+                addOptionOpen ? 'bg-background' : 'bg-primary'
               }`}
             />
             {/* UserRequest: 닫기 상태 전환 시 + 회전이 더 잘 보이도록 확대와 느린 이징을 함께 적용한다. */}
@@ -334,7 +334,7 @@ export const CategoryList = ({
                 addOptionOpen ? 'ml-0 max-w-0 opacity-0' : 'ml-0.5 max-w-16 opacity-100'
               }`}
             >
-              추가하기
+              {UI_COPY.categoryList.createAction}
             </span>
           </Button>
         </div>

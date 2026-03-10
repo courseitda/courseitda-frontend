@@ -1,6 +1,7 @@
 import { apiClient } from '@/lib/axios';
 import type { Category, Place } from '@/entities/types';
 import { BackendErrorCode } from '@/shared/utils/error-message';
+import { MESSAGES } from '@/shared/constants/messages';
 import { toError } from './http';
 
 // 카테고리 관련 백엔드 엔드포인트 상수 정의
@@ -215,7 +216,7 @@ export const categoryApi = {
       const apiError = toError(
         error,
         BackendErrorCode.CATEGORY_NOT_FOUND,
-        '카테고리를 불러올 수 없습니다.',
+        MESSAGES.workspaceCategory.listLoadFailed,
       );
       return { error: apiError.error?.message };
     }
@@ -239,7 +240,7 @@ export const categoryApi = {
       const apiError = toError(
         error,
         BackendErrorCode.REQUEST_VALIDATION_FAILED,
-        '카테고리 입력값을 확인해주세요.',
+        MESSAGES.common.defaultError,
       );
       return { error: apiError.error?.message };
     }
@@ -259,7 +260,7 @@ export const categoryApi = {
       const apiError = toError(
         error,
         BackendErrorCode.REQUEST_VALIDATION_FAILED,
-        '카테고리 입력값을 확인해주세요.',
+        MESSAGES.common.defaultError,
       );
       return { error: apiError.error?.message };
     }
@@ -278,7 +279,7 @@ export const categoryApi = {
       const apiError = toError(
         error,
         BackendErrorCode.TEMPORARY_ERROR,
-        '카테고리 삭제에 실패했습니다.',
+        MESSAGES.savedCategory.deleteFailed,
       );
       return { error: apiError.error?.message };
     }
@@ -317,7 +318,7 @@ export const categoryApi = {
       const apiError = toError(
         error,
         BackendErrorCode.DUPLICATE_CATEGORY_ORDER_IN_REQUEST,
-        '카테고리 순서 변경에 실패했습니다.',
+        MESSAGES.workspaceCategory.reorderFailed,
       );
       return { error: apiError.error?.message };
     }
@@ -342,7 +343,7 @@ export const categoryApi = {
       const apiError = toError(
         error,
         BackendErrorCode.INVALID_REPRESENTATIVE_PLACE_ASSIGNMENT,
-        '대표 장소 설정에 실패했습니다.',
+        MESSAGES.place.representativeFailed,
       );
       return { error: apiError.error?.message };
     }
@@ -361,7 +362,7 @@ export const categoryApi = {
       const apiError = toError(
         error,
         BackendErrorCode.INVALID_REPRESENTATIVE_PLACE_ASSIGNMENT,
-        '대표 장소 해제에 실패했습니다.',
+        MESSAGES.place.representativeFailed,
       );
       return { error: apiError.error?.message };
     }
@@ -416,7 +417,7 @@ export const categoryApi = {
       const apiError = toError(
         error,
         BackendErrorCode.WORKSPACE_NOT_FOUND,
-        '카테고리 목록을 불러올 수 없습니다.',
+        MESSAGES.workspaceCategory.listLoadFailed,
       );
       return {
         categories: [],
@@ -452,7 +453,7 @@ export const categoryApi = {
       const apiError = toError(
         error,
         BackendErrorCode.CATEGORY_PLACE_NOT_FOUND,
-        '카테고리 장소를 불러올 수 없습니다.',
+        MESSAGES.common.defaultError,
       );
       return {
         categoryPlaceResponses: [],
@@ -490,7 +491,7 @@ export const categoryApi = {
       const apiError = toError(
         error,
         BackendErrorCode.CATEGORY_PLACE_NOT_FOUND,
-        '카테고리 장소를 불러올 수 없습니다.',
+        MESSAGES.common.defaultError,
       );
       return { places: [], error: apiError.error?.message };
     }

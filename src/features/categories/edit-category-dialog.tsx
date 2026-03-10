@@ -18,6 +18,7 @@ import { Check, Palette } from 'lucide-react';
 import type { Category } from '@/entities/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { UI_COPY } from '@/shared/constants/ui-copy';
+import { useDialogViewportPosition } from '@/shared/hooks/use-dialog-viewport-position';
 
 interface EditCategoryDialogProps {
   open: boolean;
@@ -34,9 +35,9 @@ export const EditCategoryDialog = ({ open, onOpenChange, category, workspaceIden
   const [name, setName] = useState(category.name);
   const [selectedColor, setSelectedColor] = useState(category.color);
   const dialogRef = useRef<HTMLDivElement>(null);
-  const [keyboardOffset, setKeyboardOffset] = useState(0);
   const queryClient = useQueryClient();
   const queryKey = ['workspace', workspaceIdentifier, 'categories'];
+  const dialogStyle = useDialogViewportPosition({ open, mode: 'bottom', keyboardOpenThreshold: 0.85 });
 
   const updateCategoryMutation = useMutation({
     mutationFn: async () => {
@@ -77,50 +78,6 @@ export const EditCategoryDialog = ({ open, onOpenChange, category, workspaceIden
     }
   }, [open, category, setColorPaletteMode]);
 
-  // UserRequest: 모바일에서 키보드가 올라오면 팝업창의 하단을 키보드 상단에 맞춰 입력 필드가 가려지지 않도록 처리
-  useEffect(() => {
-    if (!open) {
-      setKeyboardOffset(0);
-      return;
-    }
-
-    const handleViewportResize = () => {
-      const visualViewport = window.visualViewport;
-      if (!visualViewport) {
-        setKeyboardOffset(0);
-        return;
-      }
-
-      // Calculate the available height when keyboard is open
-      const viewportHeight = visualViewport.height;
-      const windowHeight = window.innerHeight;
-      
-      // If viewport is significantly smaller than window, keyboard is open
-      if (viewportHeight < windowHeight * 0.85) {
-        // Calculate keyboard height
-        const keyboardHeight = windowHeight - viewportHeight;
-        setKeyboardOffset(keyboardHeight);
-      } else {
-        // Reset to center of full screen
-        setKeyboardOffset(0);
-      }
-    };
-
-    // Initial call
-    handleViewportResize();
-
-    // Check if visualViewport is supported (modern mobile browsers)
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleViewportResize);
-      window.visualViewport.addEventListener('scroll', handleViewportResize);
-      
-      return () => {
-        window.visualViewport?.removeEventListener('resize', handleViewportResize);
-        window.visualViewport?.removeEventListener('scroll', handleViewportResize);
-      };
-    }
-  }, [open]);
-
   // 카테고리 수정 요청 처리 - 유효성 검증 후 Edge Function을 통해 DB 업데이트
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,15 +95,11 @@ export const EditCategoryDialog = ({ open, onOpenChange, category, workspaceIden
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent 
-        ref={dialogRef} 
-        className="transition-all duration-200"
-        style={{
-          top: keyboardOffset > 0 ? 'auto' : '50%',
-          bottom: keyboardOffset > 0 ? `${keyboardOffset}px` : 'auto',
-          transform: keyboardOffset > 0 ? 'translateX(-50%)' : 'translate(-50%, -50%)'
-        }}
-      >
+        <DialogContent 
+          ref={dialogRef} 
+          className="transition-all duration-200"
+          style={dialogStyle}
+        >
         <DialogHeader>
           <DialogTitle>{UI_COPY.categoryDialog.edit.title}</DialogTitle>
         </DialogHeader>
@@ -166,7 +119,7 @@ export const EditCategoryDialog = ({ open, onOpenChange, category, workspaceIden
                   onClick={() => setSelectedColor(color)}
                   className="w-10 h-10 rounded-full border-2 border-border hover:scale-110 transition-transform relative"
                   style={{ backgroundColor: color }}
-                  aria-label={`색상 ${color} 선택`}
+                  aria-label={UI_COPY.categoryDialog.colorSelectAriaLabel(color)}
                 >
                   {selectedColor === color && (
                     <Check className="w-5 h-5 text-white absolute inset-0 m-auto drop-shadow-md" />
@@ -177,7 +130,7 @@ export const EditCategoryDialog = ({ open, onOpenChange, category, workspaceIden
                 type="button"
                 onClick={handleTogglePalette}
                 className="w-10 h-10 rounded-full border-2 border-dashed border-border hover:scale-110 transition-transform relative cursor-pointer flex items-center justify-center bg-background"
-                aria-label="색상 팔레트 변경"
+                aria-label={UI_COPY.categoryDialog.paletteToggleAriaLabel}
               >
                 <Palette className="w-5 h-5 text-muted-foreground" />
               </button>

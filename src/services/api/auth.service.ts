@@ -1,6 +1,7 @@
 import { apiClient } from '@/lib/axios';
 import type { ApiResponse } from '@/types/api';
 import { BackendErrorCode } from '@/shared/utils/error-message';
+import { MESSAGES } from '@/shared/constants/messages';
 import { toSuccess, toError } from './http';
 
 // 인증 관련 백엔드 엔드포인트 상수 정의
@@ -119,7 +120,7 @@ export const authApi = {
       return toError(
         error,
         BackendErrorCode.INCORRECT_PASSWORD,
-        '이메일 또는 비밀번호가 올바르지 않습니다.'
+        MESSAGES.auth.invalidCredentials
       );
     }
   },
@@ -143,7 +144,7 @@ export const authApi = {
       return toError(
         error,
         BackendErrorCode.REQUEST_VALIDATION_FAILED,
-        '회원가입 입력값을 확인해주세요.'
+        MESSAGES.auth.registerFailed
       );
     }
   },
@@ -166,7 +167,7 @@ export const authApi = {
       return toError(
         error,
         BackendErrorCode.DUPLICATE_EMAIL,
-        '이메일 중복 확인에 실패했습니다.'
+        MESSAGES.auth.emailCheckFailed
       );
     }
   },
@@ -189,7 +190,7 @@ export const authApi = {
       return toError(
         error,
         BackendErrorCode.DUPLICATE_NICKNAME,
-        '닉네임 중복 확인에 실패했습니다.'
+        MESSAGES.auth.nicknameCheckFailed
       );
     }
   },
@@ -213,7 +214,7 @@ export const authApi = {
       return toError(
         error,
         BackendErrorCode.INVALID_TOKEN,
-        '사용자 정보를 불러올 수 없습니다.'
+        MESSAGES.auth.userInfoLoadFailed
       );
     }
   },
@@ -237,7 +238,7 @@ export const authApi = {
       return toError(
         error,
         BackendErrorCode.INVALID_TOKEN,
-        '사용자 정보를 불러올 수 없습니다.'
+        MESSAGES.auth.userInfoLoadFailed
       );
     }
   },
@@ -261,7 +262,7 @@ export const authApi = {
       return toError(
         error,
         BackendErrorCode.INVALID_TOKEN,
-        '사용자 정보를 불러올 수 없습니다.'
+        MESSAGES.auth.userInfoLoadFailed
       );
     }
   },

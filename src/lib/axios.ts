@@ -5,6 +5,7 @@
 // - 백엔드 전환 시 baseURL만 변경하면 전체 API 엔드포인트 자동 전환
 
 import axios from 'axios';
+import { MESSAGES } from '@/shared/constants/messages';
 import type { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 
 const TOKEN_KEY = 'courseitda_token';
@@ -78,32 +79,32 @@ apiClient.interceptors.response.use(
       }
       
       // 에러 메시지를 더 명확하게 변경
-      return Promise.reject(new Error('인증이 만료되었습니다. 다시 로그인해주세요.'));
+      return Promise.reject(new Error(MESSAGES.auth.loginExpired));
     }
     
     // 403 Forbidden - 권한 없음
     if (error.response?.status === 403) {
-      return Promise.reject(new Error('접근 권한이 없습니다.'));
+      return Promise.reject(new Error(MESSAGES.common.accessForbidden));
     }
     
     // 404 Not Found - 리소스를 찾을 수 없음
     if (error.response?.status === 404) {
-      return Promise.reject(new Error('요청한 리소스를 찾을 수 없습니다.'));
+      return Promise.reject(new Error(MESSAGES.common.resourceNotFound));
     }
     
     // 500 Internal Server Error - 서버 오류
     if (error.response?.status === 500) {
-      return Promise.reject(new Error('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'));
+      return Promise.reject(new Error(MESSAGES.common.serverError));
     }
     
     // 네트워크 에러 (timeout, connection refused 등)
     if (error.code === 'ECONNABORTED' || error.message === 'Network Error') {
-      return Promise.reject(new Error('네트워크 연결을 확인해주세요.'));
+      return Promise.reject(new Error(MESSAGES.common.networkError));
     }
     
     // 타임아웃 에러
     if (error.code === 'ETIMEDOUT') {
-      return Promise.reject(new Error('요청 시간이 초과되었습니다. 다시 시도해주세요.'));
+      return Promise.reject(new Error(MESSAGES.common.timeoutError));
     }
     
     // 기타 에러는 서버 응답 메시지를 우선 사용하되 타입 안전하게 처리
@@ -113,7 +114,7 @@ apiClient.interceptors.response.use(
         ? (rawData as { message?: string }).message
         : undefined;
 
-    const errorMessage = responseMessage || error.message || '알 수 없는 오류가 발생했습니다.';
+    const errorMessage = responseMessage || error.message || MESSAGES.common.unknownError;
     return Promise.reject(new Error(errorMessage));
   }
 );
@@ -132,4 +133,3 @@ export const setApiTimeout = (timeout: number): void => {
 export const setUnauthorizedHandler = (handler: UnauthorizedHandler | null): void => {
   unauthorizedHandler = handler;
 };
-

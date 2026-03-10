@@ -1,6 +1,7 @@
 import { apiClient } from '@/lib/axios';
 import type { ApiResponse } from '@/types/api';
 import { BackendErrorCode } from '@/shared/utils/error-message';
+import { MESSAGES } from '@/shared/constants/messages';
 import { toError, toSuccess } from './http';
 
 // 커뮤니티 관련 백엔드 엔드포인트 상수 정의
@@ -146,7 +147,7 @@ export const communityApi = {
       return toError(
         error,
         BackendErrorCode.TEMPORARY_ERROR,
-        '추천 카테고리를 불러올 수 없습니다.',
+        MESSAGES.sharedCategory.recommendedLoadFailed,
       );
     }
   },
@@ -169,7 +170,7 @@ export const communityApi = {
       return toError(
         error,
         BackendErrorCode.INVALID_TOKEN,
-        '내 공유 카테고리를 불러올 수 없습니다.',
+        MESSAGES.sharedCategory.myPostsLoadFailed,
       );
     }
   },
@@ -192,7 +193,7 @@ export const communityApi = {
       return toError(
         error,
         BackendErrorCode.REQUEST_VALIDATION_FAILED,
-        '검색어를 확인해주세요.',
+        MESSAGES.common.defaultError,
       );
     }
   },
@@ -231,7 +232,7 @@ export const communityApi = {
       return toError(
         error,
         BackendErrorCode.ACCESS_FORBIDDEN,
-        '카테고리 공유에 실패했습니다.',
+        MESSAGES.sharedCategory.uploadFailed,
       );
     }
   },
@@ -257,7 +258,7 @@ export const communityApi = {
       return toError(
         error,
         BackendErrorCode.ACCESS_FORBIDDEN,
-        '공유 카테고리 삭제에 실패했습니다.',
+        MESSAGES.sharedCategory.deleteFailed,
       );
     }
   },
@@ -281,7 +282,7 @@ export const communityApi = {
       return toError(
         error,
         BackendErrorCode.SHARED_SAVED_CATEGORY_NOT_FOUND,
-        '공유 카테고리를 불러올 수 없습니다.',
+        MESSAGES.sharedCategory.fetchDetailFailed,
       );
     }
   },

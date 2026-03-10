@@ -117,7 +117,7 @@ export const PlaceItem = ({
             variant="ghost"
             size="icon"
             className="h-7 w-7"
-            aria-label="장소 메뉴 열기"
+            aria-label={UI_COPY.place.menuOpenAriaLabel}
             onClick={(event) => event.stopPropagation()}
           >
             <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
@@ -135,7 +135,7 @@ export const PlaceItem = ({
             className="gap-2"
           >
             <ExternalLink className="w-3.5 h-3.5" />
-            지도 바로가기
+            {UI_COPY.place.openInMapAction}
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => {
@@ -145,7 +145,7 @@ export const PlaceItem = ({
             className={isRepresentative ? 'font-semibold text-primary' : ''}
           >
             <Check className="w-3.5 h-3.5 mr-2" />
-            {isRepresentative ? '대표 장소 해제' : '대표 장소 지정'}
+            {isRepresentative ? UI_COPY.place.unsetRepresentativeAction : UI_COPY.place.setRepresentativeAction}
           </DropdownMenuItem>
           {!isViewMode && (
             <>
@@ -158,7 +158,7 @@ export const PlaceItem = ({
                 className="text-destructive focus:text-destructive"
               >
                 <Trash2 className="w-3.5 h-3.5 mr-2" />
-                삭제
+                {UI_COPY.place.deleteAction}
               </DropdownMenuItem>
             </>
           )}
