@@ -15,7 +15,11 @@ import { useState } from 'react';
 import { Separator } from '@/components/ui/separator';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 
-const UserMenu = () => {
+type UserMenuProps = {
+  onBeforeNavigate?: (proceed: () => void) => void;
+};
+
+const UserMenu = ({ onBeforeNavigate }: UserMenuProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, logout } = useAuthStore();
@@ -24,14 +28,32 @@ const UserMenu = () => {
   const [open, setOpen] = useState(false);
 
   const handleLogout = () => {
-    setOpen(false);
-    logout();
-    navigate('/');
+    const proceed = () => {
+      setOpen(false);
+      logout();
+      navigate('/');
+    };
+
+    if (onBeforeNavigate) {
+      onBeforeNavigate(proceed);
+      return;
+    }
+
+    proceed();
   };
 
   const handleNavigate = (path: string) => {
-    setOpen(false);
-    navigate(path);
+    const proceed = () => {
+      setOpen(false);
+      navigate(path);
+    };
+
+    if (onBeforeNavigate) {
+      onBeforeNavigate(proceed);
+      return;
+    }
+
+    proceed();
   };
 
   const handleLoginClick = () => {

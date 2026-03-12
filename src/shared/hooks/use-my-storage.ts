@@ -55,6 +55,7 @@ const toSavedCategoryEntity = (payload: SavedCategoryPayload): SavedCategory => 
 
 export const MY_STORAGE_QUERY_KEYS = {
   mySavedCategories: ['my-storage', 'saved-categories', 'me'] as const,
+  savedCategoryDetail: (savedCategoryId: string) => ['my-storage', 'saved-categories', savedCategoryId] as const,
 };
 
 const updateForkCount = <T extends { id: string; forkCount: number }>(
@@ -120,6 +121,35 @@ export const useMySavedCategories = (token: string | null): UseQueryResult<Saved
     placeholderData: (previousData) => previousData,
   });
 
+// UserRequest: 내 카테고리 상세 페이지는 목록 응답이 아닌 상세 API를 기준으로 데이터를 로드한다.
+export const useSavedCategoryDetail = (
+  token: string | null,
+  savedCategoryId: string | undefined,
+): UseQueryResult<SavedCategory | null, Error> =>
+  useQuery<SavedCategory | null, Error>({
+    queryKey: MY_STORAGE_QUERY_KEYS.savedCategoryDetail(savedCategoryId ?? ''),
+    enabled: !!token && !!savedCategoryId,
+    queryFn: async () => {
+      if (!token) {
+        throw new Error(UI_COPY.system.authTokenRequired);
+      }
+
+      if (!savedCategoryId) {
+        throw new Error(UI_COPY.myCategory.empty.title);
+      }
+
+      const response = await myStorageApi.getSavedCategoryDetail(token, savedCategoryId);
+
+      if (!response.success || !response.data) {
+        throw new Error(response.error?.message ?? MESSAGES.savedCategory.listLoadFailed);
+      }
+
+      return toSavedCategoryEntity(response.data.category);
+    },
+    staleTime: 1000 * 30,
+    placeholderData: (previousData) => previousData,
+  });
+
 type CreateSavedCategoryInput = {
   title: string;
   sourceType?: 'manual' | 'forked';
@@ -139,13 +169,9 @@ export const useCreateSavedCategory = (token: string | null) => {
         throw new Error(UI_COPY.system.authTokenRequired);
       }
 
-      const response = await myStorageApi.createSavedCategory(token, {
-        title: input.title,
-        sourceType: input.sourceType,
-        forkedFromSharedCategoryId: input.forkedFromSharedCategoryId,
-        sourceAuthorName: input.sourceAuthorName,
-        sourceCategoryTitle: input.sourceCategoryTitle,
-        places: input.places.map((place) => ({
+      const response = await myStorageApi.createSavedCategoryManual(token, {
+        name: input.title,
+        savedCategoryPlaces: input.places.map((place) => ({
           name: place.name,
           placeUrl: place.placeUrl,
           roadAddressName: place.roadAddressName,
@@ -183,13 +209,12 @@ export const useForkSharedCategory = (token: string | null) => {
       }
 
       const response = await myStorageApi.createSavedCategory(token, {
-        title: category.title,
+        name: category.title,
         sourceType: 'forked',
         forkedFromSharedCategoryId: category.id,
         sourceAuthorName: category.uploader,
         sourceCategoryTitle: category.title,
-        places: category.places.map((place) => ({
-          id: place.id,
+        savedCategoryPlaces: category.places.map((place) => ({
           name: place.name,
           placeUrl: place.placeUrl,
           roadAddressName: place.roadAddressName,
@@ -239,12 +264,12 @@ export const useToggleSharedCategoryFork = (token: string | null) => {
       }
 
       const response = await myStorageApi.createSavedCategory(token, {
-        title: input.category.title,
+        name: input.category.title,
         sourceType: 'forked',
         forkedFromSharedCategoryId: input.category.id,
         sourceAuthorName: input.category.uploader,
         sourceCategoryTitle: input.category.title,
-        places: input.category.places.map((place) => ({
+        savedCategoryPlaces: input.category.places.map((place) => ({
           name: place.name,
           placeUrl: place.placeUrl,
           roadAddressName: place.roadAddressName,
@@ -317,6 +342,7 @@ export const useUpdateSavedCategory = (token: string | null) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: MY_STORAGE_QUERY_KEYS.mySavedCategories });
+      queryClient.invalidateQueries({ queryKey: ['my-storage', 'saved-categories'] });
       toast.success(MESSAGES.savedCategory.updateSuccess);
     },
     onError: (error) => {

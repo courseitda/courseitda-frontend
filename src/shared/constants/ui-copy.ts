@@ -173,6 +173,7 @@ export const UI_COPY = {
     createAction: '새 카테고리',
     pageTitleShort: '카테고리 상세',
     nameRequired: '카테고리 이름을 입력해주세요.',
+    nameMaxLength: '카테고리 이름은 10자를 초과할 수 없습니다.',
     placeSearchKeywordRequired: '검색어를 입력해주세요.',
     placeSearchNoResult: '검색 결과가 없습니다.',
     placeAlreadyAdded: '이미 추가된 장소입니다.',
@@ -200,6 +201,7 @@ export const UI_COPY = {
       nameLabel: '카테고리 이름',
       namePlaceholder: '예: 맛집 투어',
       selectedPlacesLabel: '추가된 장소',
+      proceedToPlaceAction: '장소 추가하기',
       placeSearchLabel: '장소 검색',
       placeSearchPlaceholder: '장소 이름이나 주소 검색',
       searchAction: '검색',
@@ -212,6 +214,12 @@ export const UI_COPY = {
       creating: '생성 중...',
       edit: '수정',
       editing: '수정 중...',
+    },
+    leaveConfirm: {
+      title: '저장되지 않은 내용이 있어요',
+      description: '아직 저장하지 않은 카테고리 내용이 있습니다. 이동하면 작성 중인 내용이 사라집니다. 이동하시겠어요?',
+      stay: '계속 작성',
+      leave: '이동하기',
     },
     deleteDialog: {
       title: '카테고리 삭제',

@@ -12,7 +12,7 @@ import { placeApi } from '@/services/api';
 import type { SearchedPlace } from '@/entities/types';
 import { MESSAGES } from '@/shared/constants/messages';
 import { UI_COPY } from '@/shared/constants/ui-copy';
-import { useMySavedCategories, useUpdateSavedCategory } from '@/shared/hooks/use-my-storage';
+import { useSavedCategoryDetail, useUpdateSavedCategory } from '@/shared/hooks/use-my-storage';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { MapPin, PenLine, Search, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -31,13 +31,11 @@ const MyCategoryDetail = () => {
   const [selectedPlaces, setSelectedPlaces] = useState<SearchedPlace[]>([]);
 
   const {
-    data: savedCategories = [],
-    isLoading: savedCategoriesLoading,
-    error: savedCategoriesError,
-  } = useMySavedCategories(token);
+    data: category = null,
+    isLoading: savedCategoryLoading,
+    error: savedCategoryError,
+  } = useSavedCategoryDetail(token, id);
   const updateSavedCategoryMutation = useUpdateSavedCategory(token);
-
-  const category = savedCategories.find((item) => item.id === id) ?? null;
   const detailPlaces = category?.places ?? [];
   const isUnchangedRenameTitle = category ? renameTitle === category.title : true;
   const currentPlaces = isAddingPlace ? selectedPlaces : detailPlaces;
@@ -63,10 +61,10 @@ const MyCategoryDetail = () => {
   }, [isAuthenticated, navigate]);
 
   useEffect(() => {
-    if (savedCategoriesError) {
-      toast.error(savedCategoriesError.message || MESSAGES.savedCategory.listLoadFailed);
+    if (savedCategoryError) {
+      toast.error(savedCategoryError.message || MESSAGES.savedCategory.listLoadFailed);
     }
-  }, [savedCategoriesError]);
+  }, [savedCategoryError]);
 
   useEffect(() => {
     if (!category || isAddingPlace) return;
@@ -206,7 +204,7 @@ const MyCategoryDetail = () => {
     }
   };
 
-  if (savedCategoriesLoading) {
+  if (savedCategoryLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Spinner className="w-8 h-8" />

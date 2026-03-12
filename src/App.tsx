@@ -9,6 +9,7 @@ import MyWorkspace from "./pages/MyWorkspace";
 import WorkspaceDetail from "./pages/WorkspaceDetail";
 import MyCategory from "./pages/MyCategory";
 import MyCategoryDetail from "./pages/MyCategoryDetail";
+import MyCategoryCreate from "./pages/MyCategoryCreate";
 import MyPage from "./pages/MyPage";
 import NotFound from "./pages/NotFound";
 import Community from "./pages/Community";
@@ -38,6 +39,7 @@ const App = () => (
         <Route path="/community/category-board" element={<CommunityCategoryBoard />} />
         <Route path="/my-workspaces" element={<MyWorkspace />} />
         <Route path="/my-category" element={<MyCategory />} />
+        <Route path="/my-category/new" element={<MyCategoryCreate />} />
         <Route path="/my-category/:id" element={<MyCategoryDetail />} />
         <Route path="/workspace/:id" element={<WorkspaceDetail />} />
         <Route path="/mypage" element={<MyPage />} />

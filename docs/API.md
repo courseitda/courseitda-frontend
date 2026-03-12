@@ -33,7 +33,7 @@
 | 워크스페이스 수정 | `/api/workspaces/{identifier}` | `PATCH` | 성공 시 최신 `modifiedAt` 수신. |
 | 워크스페이스 삭제 | `/api/workspaces/{identifier}` | `DELETE` | 실패 시 메시지를 감싼 `ApiResponse` 반환. |
 | 단건 조회 | `/api/workspaces/{identifier}` | `GET` | 상세 페이지. |
-| 제목 중복 확인 | `/api/workspaces/validations/title` | `GET` | `value`, `ownerId` 쿼리 이용. |
+| 제목 중복 확인 | `/api/workspaces/validations/title` | `GET` | `value` 쿼리 이용. |
 
 - `workspaceApi`는 응답을 문자열 ID와 ISO 타임스탬프로 정규화합니다.
 - 생성/수정/삭제 후에는 `['workspaces','me']`, `['workspace', identifier]`를 무효화하여 목록과 상세가 동기화되도록 유지합니다.
@@ -89,11 +89,13 @@
 | 기능 | 엔드포인트 | 메서드 | 비고 |
 | --- | --- | --- | --- |
 | 내 보관 카테고리 목록 | `/api/me/saved-categories` | `GET` | `Authorization` 필요 |
-| 내 보관 카테고리 생성 | `/api/me/saved-categories` | `POST` | `Authorization` 필요, `title`, `places` |
+| 내 보관 카테고리 상세 | `/api/saved-categories/{savedCategoryId}` | `GET` | `Authorization` 필요, 상세 페이지 진입 시 사용 |
+| 내 보관 카테고리 생성 | `/api/saved-categories` | `POST` | `Authorization` 필요, `name`, `savedCategoryPlaces`, fork 시 `sourceType`, `forkedFromSharedCategoryId`, `sourceAuthorName`, `sourceCategoryTitle` 추가 |
 | 내 보관 카테고리 수정 | `/api/me/saved-categories/{savedCategoryId}` | `PATCH` | `Authorization` 필요, `title`, `places` |
-| 내 보관 카테고리 삭제 | `/api/me/saved-categories/{savedCategoryId}` | `DELETE` | `Authorization` 필요 |
+| 내 보관 카테고리 삭제 | `/api/saved-categories/{savedCategoryId}` | `DELETE` | `Authorization` 필요 |
 
 - `myStorageApi`(`src/services/api/my-storage.service.ts`)가 호출을 담당하며, 화면에서는 `useMySavedCategories`, `useCreateSavedCategory`, `useUpdateSavedCategory`, `useDeleteSavedCategory`로 사용합니다.
+- `MyCategoryDetail` 페이지는 목록 응답에 의존하지 않고 `GET /api/saved-categories/{savedCategoryId}`로 상세를 별도 조회합니다.
 - 보관 카테고리는 `sourceType`으로 `manual` 또는 `forked`를 구분합니다.
 - 공유 카테고리를 복사해 생성할 때는 `forkedFromSharedCategoryId`를 함께 보냅니다.
 - 보관 카테고리 응답은 `canPublish`, `publishBlockedReason`을 포함하며, `forked` 카테고리는 장소를 한 번 수정하기 전까지 다시 게시할 수 없습니다.

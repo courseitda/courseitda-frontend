@@ -6,6 +6,7 @@ import { toError, toSuccess } from './http';
 
 // 내 보관함(MyStorage) 관련 백엔드 엔드포인트 상수 정의
 const MY_SAVED_CATEGORIES_ENDPOINT = '/api/me/saved-categories';
+const SAVED_CATEGORIES_ENDPOINT = '/api/saved-categories';
 
 type SavedCategoryPlaceApiResponse = {
   id: number | string;
@@ -33,12 +34,12 @@ type SavedCategoryApiResponse = {
 };
 
 type CreateSavedCategoryRequest = {
-  title: string;
+  name: string;
   sourceType?: 'manual' | 'forked';
   forkedFromSharedCategoryId?: string | null;
   sourceAuthorName?: string | null;
   sourceCategoryTitle?: string | null;
-  places: Array<{
+  savedCategoryPlaces: Array<{
     name: string;
     placeUrl: string;
     roadAddressName: string | null;
@@ -49,6 +50,29 @@ type CreateSavedCategoryRequest = {
 };
 
 type UpdateSavedCategoryRequest = CreateSavedCategoryRequest;
+
+type CreateSavedCategoryManualRequest = {
+  name: string;
+  savedCategoryPlaces: Array<{
+    name: string;
+    placeUrl: string;
+    roadAddressName: string | null;
+    addressName: string;
+    latitude: number;
+    longitude: number;
+  }>;
+};
+
+type CreateSavedCategoryManualApiResponse = {
+  id: number | string;
+  name: string;
+};
+
+type SavedCategoryDetailApiResponse = {
+  id: number | string;
+  name: string;
+  savedCategoryPlaces: SavedCategoryPlaceApiResponse[];
+};
 
 // 내 보관 카테고리 목록 조회 응답 데이터 타입 - 백엔드 API 스펙과 일치
 export interface MySavedCategoriesData {
@@ -100,8 +124,39 @@ export interface CreateSavedCategoryData {
   };
 }
 
+export interface CreateSavedCategoryManualData {
+  category: {
+    id: string;
+    title: string;
+  };
+}
+
 // 내 보관 카테고리 수정 응답 데이터 타입
 export interface UpdateSavedCategoryData {
+  category: {
+    id: string;
+    title: string;
+    sourceType: 'manual' | 'forked';
+    forkedFromSharedCategoryId: string | null;
+    sourceAuthorName: string | null;
+    sourceCategoryTitle: string | null;
+    canPublish: boolean;
+    publishBlockedReason: string | null;
+    modifiedAt: string;
+    placeCount: number;
+    places: Array<{
+      id: string;
+      name: string;
+      placeUrl: string;
+      roadAddressName: string;
+      addressName: string;
+      latitude: number;
+      longitude: number;
+    }>;
+  };
+}
+
+export interface SavedCategoryDetailData {
   category: {
     id: string;
     title: string;
@@ -174,8 +229,97 @@ const adaptMySavedCategories = (payload: SavedCategoryApiResponse[]): MySavedCat
   })),
 });
 
+const adaptSavedCategoryDetail = (
+  payload: SavedCategoryDetailApiResponse,
+): SavedCategoryDetailData['category'] => ({
+  id: String(payload.id),
+  title: payload.name,
+  sourceType: 'manual',
+  forkedFromSharedCategoryId: null,
+  sourceAuthorName: null,
+  sourceCategoryTitle: null,
+  canPublish: true,
+  publishBlockedReason: null,
+  modifiedAt: new Date().toISOString(),
+  placeCount: payload.savedCategoryPlaces.length,
+  places: payload.savedCategoryPlaces.map((place) => ({
+    id: String(place.id),
+    name: place.name,
+    placeUrl: place.placeUrl,
+    roadAddressName: place.roadAddressName,
+    addressName: place.addressName,
+    latitude: place.latitude,
+    longitude: place.longitude,
+  })),
+});
+
 // 내 보관함 API 서비스 객체 - 내 카테고리(보관 카테고리) 관련 API 호출을 service 계층에서 중앙 관리
 export const myStorageApi = {
+  /**
+   * 내 보관 카테고리 생성 API 호출 (백엔드 명세 기준)
+   * @param token 인증 토큰
+   * @param payload 카테고리 이름 및 장소 목록
+   * @returns API 응답 (성공 시 생성된 카테고리 식별 정보, 실패 시 에러 정보)
+   *
+   * 백엔드 엔드포인트: POST /api/saved-categories
+   */
+  createSavedCategoryManual: async (
+    token: string,
+    payload: CreateSavedCategoryManualRequest,
+  ): Promise<ApiResponse<CreateSavedCategoryManualData>> => {
+    try {
+      // UserRequest: MyCategory 생성 기능은 백엔드 명세의 /api/saved-categories 계약을 사용한다.
+      const response = await apiClient.post<CreateSavedCategoryManualApiResponse>(
+        SAVED_CATEGORIES_ENDPOINT,
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      return toSuccess<CreateSavedCategoryManualData>({
+        category: {
+          id: String(response.data.id),
+          title: response.data.name,
+        },
+      });
+    } catch (error) {
+      return toError(
+        error,
+        BackendErrorCode.REQUEST_VALIDATION_FAILED,
+        MESSAGES.savedCategory.addFailed,
+      );
+    }
+  },
+
+  /**
+   * 내 보관 카테고리 상세 조회 API 호출
+   * @param token 인증 토큰
+   * @param savedCategoryId 조회할 카테고리 ID
+   * @returns API 응답 (성공 시 보관 카테고리 상세, 실패 시 에러 정보)
+   *
+   * 백엔드 엔드포인트: GET /api/saved-categories/{savedCategoryId}
+   */
+  getSavedCategoryDetail: async (
+    token: string,
+    savedCategoryId: string,
+  ): Promise<ApiResponse<SavedCategoryDetailData>> => {
+    try {
+      const response = await apiClient.get<SavedCategoryDetailApiResponse>(
+        `${SAVED_CATEGORIES_ENDPOINT}/${savedCategoryId}`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      return toSuccess<SavedCategoryDetailData>({
+        category: adaptSavedCategoryDetail(response.data),
+      });
+    } catch (error) {
+      return toError(
+        error,
+        BackendErrorCode.SAVED_CATEGORY_NOT_FOUND,
+        MESSAGES.savedCategory.listLoadFailed,
+      );
+    }
+  },
+
   /**
    * 내 보관 카테고리 목록 조회 API 호출
    * @param token 인증 토큰
@@ -207,22 +351,45 @@ export const myStorageApi = {
    * @param payload 카테고리 이름 및 장소 목록
    * @returns API 응답 (성공 시 생성된 카테고리, 실패 시 에러 정보)
    *
-   * 백엔드 엔드포인트: POST /api/me/saved-categories
+   * 백엔드 엔드포인트: POST /api/saved-categories
    */
   createSavedCategory: async (
     token: string,
     payload: CreateSavedCategoryRequest,
   ): Promise<ApiResponse<CreateSavedCategoryData>> => {
     try {
-      // UserRequest: 내 카테고리 생성은 service 계층 API 호출로 통일
-      const response = await apiClient.post<SavedCategoryApiResponse>(
-        MY_SAVED_CATEGORIES_ENDPOINT,
+      // UserRequest: fork 생성도 백엔드 명세의 /api/saved-categories 계약으로 통일한다.
+      const response = await apiClient.post<CreateSavedCategoryManualApiResponse>(
+        SAVED_CATEGORIES_ENDPOINT,
         payload,
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
       return toSuccess<CreateSavedCategoryData>({
-        category: adaptSavedCategory(response.data),
+        category: {
+          id: String(response.data.id),
+          title: response.data.name,
+          sourceType: payload.sourceType ?? 'manual',
+          forkedFromSharedCategoryId: payload.forkedFromSharedCategoryId ?? null,
+          sourceAuthorName: payload.sourceAuthorName ?? null,
+          sourceCategoryTitle: payload.sourceCategoryTitle ?? null,
+          canPublish: payload.sourceType === 'forked' ? false : true,
+          publishBlockedReason:
+            payload.sourceType === 'forked'
+              ? '공유 카테고리를 복사한 직후에는 다시 게시할 수 없습니다.'
+              : null,
+          modifiedAt: new Date().toISOString(),
+          placeCount: payload.savedCategoryPlaces.length,
+          places: payload.savedCategoryPlaces.map((place, index) => ({
+            id: `temp-${index}`,
+            name: place.name,
+            placeUrl: place.placeUrl,
+            roadAddressName: place.roadAddressName ?? '',
+            addressName: place.addressName,
+            latitude: place.latitude,
+            longitude: place.longitude,
+          })),
+        },
       });
     } catch (error) {
       return toError(
@@ -273,7 +440,7 @@ export const myStorageApi = {
    * @param savedCategoryId 삭제할 카테고리 ID
    * @returns API 응답 (성공 시 null, 실패 시 에러 정보)
    *
-   * 백엔드 엔드포인트: DELETE /api/me/saved-categories/{savedCategoryId}
+   * 백엔드 엔드포인트: DELETE /api/saved-categories/{savedCategoryId}
    */
   deleteSavedCategory: async (
     token: string,
@@ -282,7 +449,7 @@ export const myStorageApi = {
     try {
       // UserRequest: 내 카테고리 삭제는 service 계층 API 호출로 통일
       await apiClient.delete(
-        `${MY_SAVED_CATEGORIES_ENDPOINT}/${savedCategoryId}`,
+        `${SAVED_CATEGORIES_ENDPOINT}/${savedCategoryId}`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
 

@@ -164,6 +164,18 @@ const MyWorkspace = () => {
     deleteWorkspaceMutation.mutate(selectedForDelete.identifier);
   };
 
+  // UserRequest: 기기별 모바일 화면 끝 직전까지 빈 상태 테두리가 자연스럽게 이어지도록 높이를 유연하게 확장한다.
+  const renderEmptyState = (className: string) => (
+    <div className={`border-2 border-dashed border-border rounded-xl p-8 text-center flex flex-col items-center justify-center ${className}`}>
+      <LayoutGrid className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />
+      <p className="text-sm text-muted-foreground">
+        워크스페이스가 없습니다.
+        <br />
+        지금 추가해보세요!
+      </p>
+    </div>
+  );
+
   // 데이터 로딩 중에는 중앙에 스피너를 표시하여 진행 상황 안내
   if (workspacesLoading) {
     return (
@@ -185,15 +197,16 @@ const MyWorkspace = () => {
   }
 
   return (
-      <div className="min-h-screen bg-gradient-card">
+      <div className="flex min-h-dvh flex-col bg-gradient-card">
         {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
         <PageHeader title={UI_COPY.myWorkspace.pageTitle} />
 
         {/* 모바일 레이아웃 */}
+        {/* UserRequest: 모바일 하단 safe area와 동적 viewport를 반영해 빈 상태 영역이 화면 끝 직전까지 이어지게 조정한다. */}
         {/* UserRequest: 모바일 뷰 좌우 여백을 0.5배로 축소하여 다른 페이지와 통일성 유지 (px-8 → px-4) */}
-        <main className="md:hidden container mx-auto px-4 py-6">
+        <main className="container mx-auto flex flex-1 flex-col px-4 py-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] md:hidden">
           {/* UserRequest: 워크스페이스 목록 페이지에서 Tabs 제거 */}
-          <div className="space-y-2.5">
+          <div className="flex flex-1 flex-col">
             {/* UserRequest: 내 워크스페이스 페이지의 생성 진입 버튼을 이전 카드형 새 워크스페이스 UI로 되돌린다. */}
             <Card
                 className="hover-lift cursor-pointer border-border bg-card hover:bg-accent/40 transition-colors"
@@ -206,36 +219,32 @@ const MyWorkspace = () => {
                 </div>
               </CardHeader>
             </Card>
-            {sortedWorkspaces.length === 0 && (
-              <div className="border-2 border-dashed border-border rounded-xl p-8 text-center h-[50vh] flex flex-col items-center justify-center">
-                {/* UserRequest: 내 워크스페이스가 비어 있을 때도 영역이 보이도록 빈 상태 박스를 표시한다. */}
-                <LayoutGrid className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />
-                <p className="text-sm text-muted-foreground">
-                  워크스페이스가 없습니다.
-                  <br />
-                  지금 추가해보세요!
-                </p>
-              </div>
-            )}
-
-            {/* UserRequest: 워크스페이스 간격을 0.3배로 축소하여 공간 효율성 향상 (gap-8 → gap-2.5) */}
-            {sortedWorkspaces?.map((workspace) => (
-                renderWorkspaceCard(workspace)
-            ))}
+            <div className="mt-2.5 flex flex-1 flex-col">
+              {sortedWorkspaces.length === 0
+                ? renderEmptyState('flex-1 min-h-[clamp(18rem,calc(100dvh-12rem),40rem)]')
+                : (
+                  <div className="space-y-2.5">
+                    {/* UserRequest: 워크스페이스 간격을 0.3배로 축소하여 공간 효율성 향상 (gap-8 → gap-2.5) */}
+                    {sortedWorkspaces?.map((workspace) => (
+                      renderWorkspaceCard(workspace)
+                    ))}
+                  </div>
+                )}
+            </div>
           </div>
         </main>
 
         {/* 데스크톱 레이아웃 - 3단 구조 */}
         {/* UserRequest: 데스크톱 화면에서 워크스페이스가 적어도 전체 영역 높이를 보장하여 시각적 안정감 제공 (min-h-[calc(100vh-80px)]) */}
-        <main className="hidden md:block min-h-[calc(100vh-80px)]">
+        <main className="hidden flex-1 md:block min-h-[calc(100vh-80px)]">
           <div className="grid grid-cols-[1fr_2fr_1fr] min-h-[calc(100vh-80px)]">
             {/* 좌측: 배경 영역 (primary/5 색상으로 시각적 여유 제공) */}
             <div className="bg-primary/5 min-h-[calc(100vh-80px)]"></div>
 
             {/* 중앙: 워크스페이스 목록 콘텐츠 */}
-            <div className="px-4 py-4 overflow-y-auto min-h-[calc(100vh-80px)]">
+            <div className="flex min-h-[calc(100vh-80px)] flex-col overflow-y-auto px-4 py-4">
               {/* UserRequest: 워크스페이스 목록 페이지에서 Tabs 제거 */}
-              <div className="space-y-2">
+              <div className="flex flex-1 flex-col">
                 {/* UserRequest: 내 워크스페이스 페이지의 생성 진입 버튼을 이전 카드형 새 워크스페이스 UI로 되돌린다. */}
                 <Card
                     className="hover-lift cursor-pointer border-border bg-card hover:bg-accent/40 transition-colors"
@@ -248,22 +257,18 @@ const MyWorkspace = () => {
                     </div>
                   </CardHeader>
                 </Card>
-                {sortedWorkspaces.length === 0 && (
-                  <div className="border-2 border-dashed border-border rounded-xl p-10 text-center h-[50vh] flex flex-col items-center justify-center">
-                    {/* UserRequest: 내 워크스페이스가 비어 있을 때도 영역이 보이도록 빈 상태 박스를 표시한다. */}
-                    <LayoutGrid className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />
-                    <p className="text-sm text-muted-foreground">
-                      워크스페이스가 없습니다.
-                      <br />
-                      지금 추가해보세요!
-                    </p>
-                  </div>
-                )}
-
-                {/* UserRequest: 데스크톱 워크스페이스 간격을 space-y-2 (8px)로 설정하여 적절한 여백 제공 */}
-                {sortedWorkspaces?.map((workspace) => (
-                    renderWorkspaceCard(workspace)
-                ))}
+                <div className="mt-2 flex flex-1 flex-col">
+                  {sortedWorkspaces.length === 0
+                    ? renderEmptyState('flex-1 min-h-[clamp(20rem,calc(100vh-14rem),42rem)] p-10')
+                    : (
+                      <div className="space-y-2">
+                        {/* UserRequest: 데스크톱 워크스페이스 간격을 space-y-2 (8px)로 설정하여 적절한 여백 제공 */}
+                        {sortedWorkspaces?.map((workspace) => (
+                          renderWorkspaceCard(workspace)
+                        ))}
+                      </div>
+                    )}
+                </div>
               </div>
             </div>
 

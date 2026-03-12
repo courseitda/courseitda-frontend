@@ -249,17 +249,13 @@ export const workspaceApi = {
 
   /**
    * 워크스페이스 제목 중복 검증 API 호출
-   * @param ownerId 사용자 ID (백엔드 스펙에 따라 사용 여부 결정)
    * @param title 검증할 워크스페이스 제목
    * @returns 중복 여부 및 에러 정보
    */
-  checkTitleDuplicate: async (
-    ownerId: string,
-    title: string,
-  ): Promise<CheckWorkspaceTitleDuplicateResponse> => {
+  checkTitleDuplicate: async (title: string): Promise<CheckWorkspaceTitleDuplicateResponse> => {
     try {
       const response = await apiClient.get<TitleDuplicateApiResponse>(TITLE_VALIDATION_ENDPOINT, {
-        params: { value: title, ownerId },
+        params: { value: title },
       });
       return {
         isDuplicated: response.data.isDuplicated,

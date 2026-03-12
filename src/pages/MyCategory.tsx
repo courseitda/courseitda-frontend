@@ -15,24 +15,19 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { Plus, Folder, Search, MapPin, X, Trash2, MoreHorizontal } from 'lucide-react';
+import { Plus, Folder, Trash2, MoreHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import {
-  useCreateSavedCategory,
   useDeleteSavedCategory,
   useMySavedCategories,
 } from '@/shared/hooks/use-my-storage';
 import { MESSAGES } from '@/shared/constants/messages';
-import type { SavedCategory, SearchedPlace } from '@/entities/types';
+import type { SavedCategory } from '@/entities/types';
 import PageHeader from '@/components/layout/page-header';
-import { placeApi } from '@/services/api';
 import { formatRelativeTimeKorean } from '@/shared/utils/relative-time';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 
@@ -42,16 +37,13 @@ import { UI_COPY } from '@/shared/constants/ui-copy';
  * UserRequest: 백엔드 API 연동을 위해 토큰 기반 인증으로 변경, 사용자 정보는 API 호출로 조회
  */
 const MyCategory = () => {
+  const CATEGORY_NAME_MAX_LENGTH = 10;
   const navigate = useNavigate();
   const { isAuthenticated, token } = useAuthStore();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState<SavedCategory | null>(null);
   const [newCategoryTitle, setNewCategoryTitle] = useState('');
-  const [placeQuery, setPlaceQuery] = useState('');
-  const [placeResults, setPlaceResults] = useState<SearchedPlace[]>([]);
-  const [placeSearchLoading, setPlaceSearchLoading] = useState(false);
-  const [selectedPlaces, setSelectedPlaces] = useState<SearchedPlace[]>([]);
 
   // UserRequest: 내 카테고리 목록은 service 계층 API + React Query로 로딩 (컴포넌트 내부 mock 제거)
   const {
@@ -59,7 +51,6 @@ const MyCategory = () => {
     isLoading: savedCategoriesLoading,
     error: savedCategoriesError,
   } = useMySavedCategories(token);
-  const createSavedCategoryMutation = useCreateSavedCategory(token);
   const deleteSavedCategoryMutation = useDeleteSavedCategory(token);
 
   // 미인증 사용자 접근 차단 - 로그인 페이지로 리다이렉트하여 보안 유지
@@ -81,44 +72,8 @@ const MyCategory = () => {
     navigate(`/my-category/${categoryId}`);
   };
 
-  const handleSearchPlaces = async () => {
-    if (!placeQuery.trim()) {
-      toast.error(UI_COPY.myCategory.placeSearchKeywordRequired);
-      return;
-    }
-
-    setPlaceSearchLoading(true);
-    const { searchedPlaces, error } = await placeApi.search({ keyword: placeQuery.trim() });
-    if (error) {
-      toast.error(error || MESSAGES.place.searchFailed);
-      setPlaceResults([]);
-    } else {
-      setPlaceResults(searchedPlaces ?? []);
-      if (!searchedPlaces || searchedPlaces.length === 0) {
-        toast.info(UI_COPY.myCategory.placeSearchNoResult);
-      }
-    }
-    setPlaceSearchLoading(false);
-  };
-
-  const handleAddPlace = (place: SearchedPlace) => {
-    const exists = selectedPlaces.some((item) => item.id === place.id);
-    if (exists) {
-      toast.info(UI_COPY.myCategory.placeAlreadyAdded);
-      return;
-    }
-    setSelectedPlaces((prev) => [...prev, place]);
-  };
-
-  const handleRemovePlace = (placeId: string) => {
-    setSelectedPlaces((prev) => prev.filter((place) => place.id !== placeId));
-  };
-
   const resetCreateDialog = () => {
     setNewCategoryTitle('');
-    setPlaceQuery('');
-    setPlaceResults([]);
-    setSelectedPlaces([]);
   };
 
   const handleOpenCreateDialog = () => {
@@ -127,27 +82,33 @@ const MyCategory = () => {
     setCreateDialogOpen(true);
   };
 
-  const handleCreateCategory = async () => {
+  const handleChangeNewCategoryTitle = (value: string) => {
+    if (value.length > CATEGORY_NAME_MAX_LENGTH) {
+      toast.error(UI_COPY.myCategory.nameMaxLength);
+      return;
+    }
+
+    setNewCategoryTitle(value);
+  };
+
+  const handleProceedToCreatePage = () => {
     if (!newCategoryTitle.trim()) {
       toast.error(UI_COPY.myCategory.nameRequired);
       return;
     }
-    if (selectedPlaces.length === 0) {
-      toast.error(UI_COPY.myCategory.atLeastOnePlace);
+    if (newCategoryTitle.trim().length > CATEGORY_NAME_MAX_LENGTH) {
+      toast.error(UI_COPY.myCategory.nameMaxLength);
       return;
     }
-    if (createSavedCategoryMutation.isPending) return;
 
-    try {
-      await createSavedCategoryMutation.mutateAsync({
-        title: newCategoryTitle.trim(),
-        places: selectedPlaces,
-      });
-      setCreateDialogOpen(false);
-      resetCreateDialog();
-    } catch {
-      // UserRequest: 생성 실패 시 팝업은 유지하여 입력을 보존
-    }
+    // UserRequest: 내 카테고리 상세보기는 유지하고, 동일한 레이아웃의 생성 전용 페이지로 이동한다.
+    navigate('/my-category/new', {
+      state: {
+        draftTitle: newCategoryTitle.trim(),
+      },
+    });
+    setCreateDialogOpen(false);
+    resetCreateDialog();
   };
 
   const handleDeleteClick = (category: SavedCategory) => {
@@ -241,11 +202,11 @@ const MyCategory = () => {
     );
   }
 
-  // UserRequest: 빈 탭에서도 경계가 보이도록 공통 빈 상태 박스를 재사용한다.
+  // UserRequest: 기기별 모바일 화면 끝 직전까지 빈 상태 테두리가 자연스럽게 이어지도록 높이를 유연하게 확장한다.
   const renderEmptyState = (
     icon: ReactNode,
     message: string,
-    className = 'h-[50vh]',
+    className = 'flex-1 min-h-[clamp(18rem,calc(100dvh-12rem),40rem)]',
   ) => (
     <div className={`border-2 border-dashed border-border rounded-xl p-5 text-center flex flex-col items-center justify-center sm:p-8 md:p-10 ${className}`}>
       {icon}
@@ -254,14 +215,15 @@ const MyCategory = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-card">
+    <div className="flex min-h-dvh flex-col bg-gradient-card">
       {/* UserRequest: 뒤로가기 버튼은 직전 페이지로 이동 */}
       {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
       <PageHeader title={UI_COPY.myCategory.pageTitle} />
 
       {/* 모바일 레이아웃 */}
+      {/* UserRequest: 모바일 하단 safe area와 동적 viewport를 반영해 빈 상태 영역이 화면 끝 직전까지 이어지게 조정한다. */}
       {/* UserRequest: 모바일 뷰 좌우 여백을 0.5배로 축소하여 다른 페이지와 통일성 유지 (px-8 → px-4) */}
-      <main className="md:hidden container mx-auto px-4 py-6 space-y-3">
+      <main className="container mx-auto flex flex-1 flex-col px-4 py-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] md:hidden">
         {/* UserRequest: 카테고리 페이지에서 생성 버튼과 목록을 동일한 흐름으로 표시 */}
         <Card
           className="hover-lift cursor-pointer border-border bg-card hover:bg-accent/40 transition-colors"
@@ -275,20 +237,26 @@ const MyCategory = () => {
           </CardHeader>
         </Card>
 
-            {savedCategories.length === 0
-              ? renderEmptyState(
+        <div className="mt-3 flex flex-1 flex-col">
+          {savedCategories.length === 0
+            ? renderEmptyState(
               <Folder className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />,
               `${UI_COPY.myCategory.empty.title}\n${UI_COPY.myCategory.empty.description}`,
             )
-          : savedCategories.map((category) => renderSavedCategoryCard(category))}
+            : (
+              <div className="space-y-3">
+                {savedCategories.map((category) => renderSavedCategoryCard(category))}
+              </div>
+            )}
+        </div>
       </main>
 
       {/* 데스크톱 레이아웃 - 3단 구조 */}
-      <main className="hidden md:block min-h-[calc(100vh-80px)]">
+      <main className="hidden flex-1 md:block min-h-[calc(100vh-80px)]">
         <div className="grid grid-cols-[1fr_2fr_1fr] min-h-[calc(100vh-80px)]">
           <div className="bg-primary/5 min-h-[calc(100vh-80px)]"></div>
 
-          <div className="px-4 py-4 overflow-y-auto min-h-[calc(100vh-80px)] space-y-2">
+          <div className="flex min-h-[calc(100vh-80px)] flex-col overflow-y-auto px-4 py-4">
             {/* UserRequest: 카테고리 페이지에서 생성 버튼과 목록을 동일한 흐름으로 표시 */}
             <Card
               className="hover-lift cursor-pointer border-border bg-card hover:bg-accent/40 transition-colors"
@@ -302,12 +270,19 @@ const MyCategory = () => {
               </CardHeader>
             </Card>
 
-            {savedCategories.length === 0
-              ? renderEmptyState(
-              <Folder className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />,
-              `${UI_COPY.myCategory.empty.title}\n${UI_COPY.myCategory.empty.description}`,
-            )
-              : savedCategories.map((category) => renderSavedCategoryCard(category))}
+            <div className="mt-2 flex flex-1 flex-col">
+              {savedCategories.length === 0
+                ? renderEmptyState(
+                  <Folder className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />,
+                  `${UI_COPY.myCategory.empty.title}\n${UI_COPY.myCategory.empty.description}`,
+                  'flex-1 min-h-[clamp(20rem,calc(100vh-14rem),42rem)]',
+                )
+                : (
+                  <div className="space-y-2">
+                    {savedCategories.map((category) => renderSavedCategoryCard(category))}
+                  </div>
+                )}
+            </div>
           </div>
 
           <div className="bg-primary/5 min-h-[calc(100vh-80px)]"></div>
@@ -333,108 +308,28 @@ const MyCategory = () => {
               <Input
                 placeholder={UI_COPY.myCategory.editorDialog.namePlaceholder}
                 value={newCategoryTitle}
-                onChange={(event) => setNewCategoryTitle(event.target.value)}
+                onChange={(event) => handleChangeNewCategoryTitle(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault();
+                    handleProceedToCreatePage();
+                  }
+                }}
               />
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-sm font-semibold">{UI_COPY.myCategory.editorDialog.selectedPlacesLabel}</p>
-              {/* UserRequest: 검색 결과 영역과 동일한 높이로 고정하고 스크롤로 관리 */}
-              <div className="max-h-56 overflow-y-auto overflow-x-hidden border border-border rounded-lg divide-y divide-border">
-                {selectedPlaces.length === 0 ? (
-                  <div className="p-4 text-sm text-muted-foreground">{UI_COPY.myCategory.editorDialog.noPlacesSelected}</div>
-                ) : (
-                  selectedPlaces.map((place) => (
-                    <div key={place.id} className="flex items-center gap-2.5 p-3">
-                      <div className="text-primary shrink-0">
-                        <MapPin className="w-4 h-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{place.name}</p>
-                        <p className="text-xs text-muted-foreground truncate">{place.addressName}</p>
-                      </div>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="shrink-0"
-                        onClick={() => handleRemovePlace(place.id)}
-                        aria-label={UI_COPY.myCategory.editorDialog.removePlaceAriaLabel}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-sm font-semibold">{UI_COPY.myCategory.editorDialog.placeSearchLabel}</p>
-              <div className="flex w-full min-w-0 items-center gap-2">
-                <Input
-                  className="min-w-0 flex-1"
-                  placeholder={UI_COPY.myCategory.editorDialog.placeSearchPlaceholder}
-                  value={placeQuery}
-                  onChange={(event) => setPlaceQuery(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                      event.preventDefault();
-                      handleSearchPlaces();
-                    }
-                  }}
-                />
-                <Button
-                  onClick={handleSearchPlaces}
-                  disabled={placeSearchLoading}
-                  className="shrink-0 gap-2 px-3"
-                >
-                  <Search className="w-4 h-4" />
-                  {UI_COPY.myCategory.editorDialog.searchAction}
-                </Button>
-              </div>
-              {placeSearchLoading && (
-                <div className="text-sm text-muted-foreground">{UI_COPY.myCategory.editorDialog.searching}</div>
-              )}
-              {!placeSearchLoading && placeResults.length > 0 && (
-                <div className="max-h-56 overflow-y-auto overflow-x-hidden border border-border rounded-lg divide-y divide-border">
-                  {placeResults.map((place) => (
-                    <div key={place.id} className="flex items-start gap-2.5 p-3">
-                      <div className="mt-0.5 shrink-0 text-primary">
-                        <MapPin className="w-4 h-4" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium break-words">{place.name}</p>
-                        <p className="text-xs text-muted-foreground break-words">{place.addressName}</p>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="shrink-0"
-                        onClick={() => handleAddPlace(place)}
-                      >
-                        {UI_COPY.myCategory.editorDialog.addPlaceAction}
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
 
             <div className="flex justify-end gap-2">
               <Button
                 variant="outline"
                 onClick={() => setCreateDialogOpen(false)}
-                disabled={createSavedCategoryMutation.isPending}
               >
                 {UI_COPY.myCategory.editorDialog.cancel}
               </Button>
               <Button
-                onClick={handleCreateCategory}
-                disabled={createSavedCategoryMutation.isPending}
+                onClick={handleProceedToCreatePage}
+                disabled={!newCategoryTitle.trim()}
               >
-                {createSavedCategoryMutation.isPending
-                  ? UI_COPY.myCategory.editorDialog.creating
-                  : UI_COPY.myCategory.editorDialog.create}
+                {UI_COPY.myCategory.editorDialog.proceedToPlaceAction}
               </Button>
             </div>
           </div>
