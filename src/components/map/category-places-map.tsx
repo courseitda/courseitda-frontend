@@ -1,9 +1,13 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 import { useSettingsStore } from '@/shared/stores/settings-store';
 import { useNaverLoader } from '@/shared/hooks/use-naver-loader';
 import { PlaceInfoWindow } from '@/features/map/place-info-window';
+import { UI_COPY } from '@/shared/constants/ui-copy';
+import { Loader2, LocateFixed } from 'lucide-react';
 
 type CategoryMapPlace = {
   id: string;
@@ -30,6 +34,17 @@ export const CategoryPlacesMap = ({ open, places, focusedPlaceId }: CategoryPlac
   >(new Map());
   const currentInfoWindowRef = useRef<naver.maps.InfoWindow | null>(null);
   const openInfoTimeoutRef = useRef<number | null>(null);
+  const userLocationMarkerRef = useRef<naver.maps.Marker | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (userLocationMarkerRef.current) {
+        userLocationMarkerRef.current.setMap(null);
+        userLocationMarkerRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!open || !ready || !mapRef.current || !window.naver || !window.naver.maps || mapInstanceRef.current) {
@@ -195,9 +210,87 @@ export const CategoryPlacesMap = ({ open, places, focusedPlaceId }: CategoryPlac
         window.clearTimeout(openInfoTimeoutRef.current);
         openInfoTimeoutRef.current = null;
       }
+      if (userLocationMarkerRef.current) {
+        userLocationMarkerRef.current.setMap(null);
+        userLocationMarkerRef.current = null;
+      }
       mapInstanceRef.current = null;
     }
   }, [open]);
+
+  // UserRequest: 내 카테고리 상세/생성 지도에도 현재 위치 바로가기를 제공해 주변 장소 탐색을 빠르게 한다.
+  const handleLocateMe = () => {
+    if (!navigator.geolocation) {
+      toast.error(UI_COPY.map.browserLocationUnsupported);
+      return;
+    }
+
+    if (!ready || !mapInstanceRef.current || !window.naver || !window.naver.maps) {
+      toast.error(UI_COPY.map.mapNotReady);
+      return;
+    }
+
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setIsLocating(false);
+        const { latitude, longitude } = position.coords;
+        const { naver } = window;
+        const userLatLng = new naver.maps.LatLng(latitude, longitude);
+        const map = mapInstanceRef.current!;
+
+        // 현재 위치 마커를 재사용해 버튼 재클릭 시에도 위치만 갱신한다.
+        if (!userLocationMarkerRef.current) {
+          userLocationMarkerRef.current = new naver.maps.Marker({
+            position: userLatLng,
+            map,
+            icon: {
+              content: `
+                <div style="
+                  width: 22px;
+                  height: 22px;
+                  border-radius: 50%;
+                  border: 3px solid hsl(var(--map-user-location-border));
+                  background: hsl(var(--map-user-location-bg));
+                  box-shadow: 0 0 0 8px hsl(var(--map-user-location-ring)), var(--map-user-location-shadow);
+                "></div>
+              `,
+              anchor: new naver.maps.Point(11, 11),
+            },
+            zIndex: 200,
+          });
+        } else {
+          userLocationMarkerRef.current.setPosition(userLatLng);
+          userLocationMarkerRef.current.setMap(map);
+        }
+
+        const currentZoom = typeof map.getZoom === 'function' ? map.getZoom() : 13;
+        const targetZoom = Math.max(currentZoom, 15);
+        if (typeof map.morph === 'function') {
+          map.morph(userLatLng, targetZoom);
+        } else {
+          map.panTo(userLatLng);
+          window.setTimeout(() => {
+            if (map.getZoom() < targetZoom) {
+              map.setZoom(targetZoom);
+            }
+          }, 280);
+        }
+      },
+      (geoError) => {
+        setIsLocating(false);
+        if (geoError.code === geoError.PERMISSION_DENIED) {
+          toast.error(UI_COPY.map.locationPermissionDenied);
+        } else {
+          toast.error(UI_COPY.map.locationFetchFailed);
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+      },
+    );
+  };
 
   if (!naverMapKeyId || error) {
     return (
@@ -215,5 +308,23 @@ export const CategoryPlacesMap = ({ open, places, focusedPlaceId }: CategoryPlac
     );
   }
 
-  return <div ref={mapRef} className="w-full h-96 rounded-lg border border-border overflow-hidden" />;
+  return (
+    <div className="relative">
+      <div className="absolute bottom-4 right-4 z-20">
+        {/* UserRequest: 내 카테고리 상세/생성 지도에서도 워크스페이스 상세와 같은 내 위치 바로가기 버튼을 노출한다. */}
+        <Button
+          type="button"
+          size="icon"
+          variant="secondary"
+          className="h-11 w-11 rounded-full border border-border bg-background/90 shadow-lg backdrop-blur hover:bg-background focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary"
+          onClick={handleLocateMe}
+          disabled={isLocating || !ready}
+          aria-label="내 위치로 이동"
+        >
+          {isLocating ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}
+        </Button>
+      </div>
+      <div ref={mapRef} className="w-full h-96 rounded-lg border border-border overflow-hidden" />
+    </div>
+  );
 };
