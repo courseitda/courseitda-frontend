@@ -212,6 +212,8 @@ export const UI_COPY = {
       cancel: '취소',
       create: '생성',
       creating: '생성 중...',
+      save: '저장',
+      saving: '저장 중...',
       edit: '수정',
       editing: '수정 중...',
     },

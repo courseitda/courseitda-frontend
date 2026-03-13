@@ -27,19 +27,26 @@ const UserMenu = ({ onBeforeNavigate }: UserMenuProps) => {
   const { nickname: dropdownNickname } = useUserDropdown();
   const [open, setOpen] = useState(false);
 
+  const handleInterceptedAction = (action: () => void) => {
+    if (!onBeforeNavigate) {
+      action();
+      return;
+    }
+
+    // UserRequest: 생성 페이지 이탈 경고가 햄버거 메뉴 뒤에 가려지지 않도록 Sheet를 먼저 닫고 확인 모달을 연다.
+    setOpen(false);
+    window.setTimeout(() => {
+      onBeforeNavigate(action);
+    }, 0);
+  };
+
   const handleLogout = () => {
     const proceed = () => {
       setOpen(false);
       logout();
       navigate('/');
     };
-
-    if (onBeforeNavigate) {
-      onBeforeNavigate(proceed);
-      return;
-    }
-
-    proceed();
+    handleInterceptedAction(proceed);
   };
 
   const handleNavigate = (path: string) => {
@@ -47,13 +54,7 @@ const UserMenu = ({ onBeforeNavigate }: UserMenuProps) => {
       setOpen(false);
       navigate(path);
     };
-
-    if (onBeforeNavigate) {
-      onBeforeNavigate(proceed);
-      return;
-    }
-
-    proceed();
+    handleInterceptedAction(proceed);
   };
 
   const handleLoginClick = () => {

@@ -244,12 +244,13 @@ const MyCategoryCreate = () => {
                 <Button
                   type="button"
                   // UserRequest: 생성 전용 페이지에서는 장소를 1개 이상 추가해야 최종 생성 버튼이 활성화된다.
+                  // UserRequest: 카테고리 생성 전용 페이지의 최종 제출 버튼 텍스트를 저장으로 변경한다.
                   onClick={() => void handleCreateCategory()}
                   disabled={createSavedCategoryMutation.isPending || selectedPlaces.length === 0}
                 >
                   {createSavedCategoryMutation.isPending
-                    ? UI_COPY.myCategory.editorDialog.creating
-                    : UI_COPY.myCategory.editorDialog.create}
+                    ? UI_COPY.myCategory.editorDialog.saving
+                    : UI_COPY.myCategory.editorDialog.save}
                 </Button>
               </div>
             </div>
@@ -382,10 +383,11 @@ const MyCategoryCreate = () => {
                 {UI_COPY.myCategory.editorDialog.cancel}
               </Button>
               <Button
+                // UserRequest: 카테고리 생성 전용 페이지의 제목 수정 확인 버튼도 저장 문구를 사용한다.
                 onClick={handleRenameCategory}
                 disabled={createSavedCategoryMutation.isPending || !renameTitle.trim() || renameTitle.trim() === categoryTitle}
               >
-                {UI_COPY.myCategory.editorDialog.create}
+                {UI_COPY.myCategory.editorDialog.save}
               </Button>
             </div>
           </div>
