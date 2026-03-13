@@ -68,6 +68,12 @@ export default {
           DEFAULT: "hsl(var(--link))",
           hover: "hsl(var(--link-hover))",
         },
+        "fork-badge": {
+          bg: "hsl(var(--fork-badge-bg))",
+          border: "hsl(var(--fork-badge-border))",
+          text: "hsl(var(--fork-badge-text))",
+          dot: "hsl(var(--fork-badge-dot))",
+        },
         // Destructive Toast 강조 색상
         "destructive-toast": {
           light: "hsl(var(--destructive-light))",

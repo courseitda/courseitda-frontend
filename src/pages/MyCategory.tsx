@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -18,7 +19,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { Plus, Folder, Trash2, MoreHorizontal } from 'lucide-react';
+import { Plus, Folder, Trash2, MoreHorizontal, GitFork } from 'lucide-react';
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import {
@@ -145,7 +146,19 @@ const MyCategory = () => {
             </span>
           </div>
           <div className="flex min-w-0 flex-col gap-1">
-            <CardTitle className="text-base truncate">{category.title}</CardTitle>
+            {/* UserRequest: fork 생성 여부만 카드 한 줄 안에서 표시해 카드 높이가 달라지지 않게 유지한다. */}
+            <div className="flex min-w-0 items-center gap-2">
+              <CardTitle className="min-w-0 truncate text-base">{category.title}</CardTitle>
+              {category.sourceType === 'forked' && (
+                <Badge
+                  variant="outline"
+                  className="shrink-0 gap-1 border-fork-badge-border bg-fork-badge-bg px-2 py-0 text-[11px] font-semibold text-fork-badge-dot"
+                >
+                  <GitFork className="h-3 w-3 text-fork-badge-dot" aria-hidden="true" />
+                  복사본
+                </Badge>
+              )}
+            </div>
             {/* UserRequest: 수정 시간을 주/개월/년 단위까지 포함한 상대시간으로 표시한다. */}
             <p className="text-xs text-muted-foreground">
               업데이트 {formatRelativeTimeKorean(category.updatedAt)}
