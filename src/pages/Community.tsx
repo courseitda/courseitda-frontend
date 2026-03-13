@@ -70,8 +70,11 @@ const Community = () => {
     const last = filteredCategories[filteredCategories.length - 1];
     return [last, ...filteredCategories, first];
   }, [filteredCategories, hasLoop]);
-  const CARD_WIDTH = 280;
-  const CARD_GAP = 16;
+  // UserRequest: 커뮤니티 추천 카테고리 카드를 현재 대비 5/6 크기로 축소한다.
+  const RECOMMEND_CARD_SCALE = 5 / 6;
+  const CARD_WIDTH = Math.round(280 * RECOMMEND_CARD_SCALE);
+  const CARD_GAP = Math.round(16 * RECOMMEND_CARD_SCALE);
+  const CARD_IMAGE_HEIGHT = Math.round(192 * RECOMMEND_CARD_SCALE);
   // UserRequest: 클린 코드 기준 Hook 의존성 경고를 제거하기 위해 계산 함수를 메모이제이션
   const getBaseTranslate = useCallback(
     (index: number) =>
@@ -396,16 +399,19 @@ const Community = () => {
                             transition: 'transform 0.35s ease, opacity 0.35s ease, filter 0.35s ease',
                           }}
                         >
-                          <div className="h-48 rounded-t-xl bg-muted/60 border-b border-border flex items-center justify-center text-sm text-muted-foreground">
+                          <div
+                            className="rounded-t-xl border-b border-border bg-muted/60 flex items-center justify-center text-xs text-muted-foreground"
+                            style={{ height: CARD_IMAGE_HEIGHT }}
+                          >
                             이미지 영역
                           </div>
-                          <CardContent className="p-5">
-                            <div className="flex min-w-0 flex-1 flex-col gap-2">
-                              <CardTitle className="truncate text-lg">{category.title}</CardTitle>
+                          <CardContent className="p-4">
+                            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                              <CardTitle className="truncate text-base">{category.title}</CardTitle>
                               <div className="flex min-w-0 items-center gap-2 text-xs">
                                 {category.uploadedAt && (
                                   <span className="inline-flex shrink-0 items-center gap-1 text-muted-foreground">
-                                    <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <Calendar className="h-3 w-3 text-muted-foreground" />
                                     {formatUploadedDate(category.uploadedAt)}
                                   </span>
                                 )}
@@ -417,7 +423,7 @@ const Community = () => {
                                       : 'text-muted-foreground/70',
                                   ].join(' ')}
                                 >
-                                  <GitFork className="h-3.5 w-3.5" />
+                                  <GitFork className="h-3 w-3" />
                                   {category.forkCount}
                                 </span>
                               </div>
