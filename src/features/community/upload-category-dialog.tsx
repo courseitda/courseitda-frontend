@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useMySavedCategories } from '@/shared/hooks/use-my-storage';
-import { useSavedCategoryPlaces } from '@/shared/hooks/use-my-storage';
+import { useSavedCategoryDetail } from '@/shared/hooks/use-my-storage';
 import { COMMUNITY_QUERY_KEYS } from '@/shared/hooks/use-community';
 import { MESSAGES } from '@/shared/constants/messages';
 import { UI_COPY } from '@/shared/constants/ui-copy';
@@ -38,14 +38,22 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
     error,
   } = useMySavedCategories(token, 15);
   const {
-    data: expandedPlaces = [],
-  } = useSavedCategoryPlaces(token, expandedCategoryId);
+    data: expandedCategoryDetail,
+    isLoading: isExpandedCategoryLoading,
+    error: expandedCategoryError,
+  } = useSavedCategoryDetail(token, expandedCategoryId ?? undefined);
 
   useEffect(() => {
     if (error) {
       toast.error(error.message);
     }
   }, [error]);
+
+  useEffect(() => {
+    if (expandedCategoryError) {
+      toast.error(expandedCategoryError.message);
+    }
+  }, [expandedCategoryError]);
 
   const shareMutation = useMutation({
     mutationFn: async (savedCategoryId: string) => {
@@ -71,7 +79,7 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
   });
 
   const handleTogglePlaces = (categoryId: string) => {
-    // UserRequest: 카테고리 클릭 시 포함된 장소 목록을 펼쳐서 확인 가능하도록 처리
+    // UserRequest: 카테고리 클릭 시 상세 조회 API를 기준으로 내부 장소를 확인하도록 처리
     setExpandedCategoryId((prev) => (prev === categoryId ? null : categoryId));
   };
 
@@ -175,17 +183,22 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
                   </CardHeader>
                   {expandedCategoryId === category.id && (
                     <div className="px-4 pb-4 pt-2 border-t border-border/60">
-                      <div className="space-y-2">
-                        {expandedPlaces.map((place) => (
-                          <div key={place.id} className="flex flex-col gap-0.5">
-                            <div className="flex items-center gap-1.5 text-sm font-medium">
-                              <MapPin className="w-4 h-4 text-primary" />
-                              <span className="truncate">{place.name}</span>
+                      {isExpandedCategoryLoading ? (
+                        // 상세 조회 API 응답 대기 중에는 확장 영역에서 즉시 로딩 상태를 보여준다.
+                        <div className="text-sm text-muted-foreground">{UI_COPY.common.loading}</div>
+                      ) : (
+                        <div className="space-y-2">
+                          {(expandedCategoryDetail?.places ?? []).map((place) => (
+                            <div key={place.id} className="flex flex-col gap-0.5">
+                              <div className="flex items-center gap-1.5 text-sm font-medium">
+                                <MapPin className="w-4 h-4 text-primary" />
+                                <span className="truncate">{place.name}</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground truncate">{place.addressName}</p>
                             </div>
-                            <p className="text-xs text-muted-foreground truncate">{place.addressName}</p>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                 </Card>

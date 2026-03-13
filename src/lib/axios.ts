@@ -15,6 +15,13 @@ const DEFAULT_BASE_URL = 'http://localhost:8080';
 type UnauthorizedHandler = () => void;
 let unauthorizedHandler: UnauthorizedHandler | null = null;
 
+const normalizeAuthorizationHeader = (token: string, tokenType: string): string => {
+  const normalizedToken = token.replace(/^Bearer\s+/i, '').trim();
+  const normalizedTokenType = tokenType.replace(/\s+/g, ' ').trim() || 'Bearer';
+
+  return `${normalizedTokenType} ${normalizedToken}`;
+};
+
 // Axios 인스턴스 생성 - 모든 API 요청에 공통 설정 적용
 export const apiClient: AxiosInstance = axios.create({
   // 백엔드 API 기본 URL (환경 변수로 관리)
@@ -40,10 +47,16 @@ apiClient.interceptors.request.use(
     // 토큰 키는 auth-store.ts와 동일하게 유지 (courseitda_token)
     const token = localStorage.getItem(TOKEN_KEY);
     const tokenType = localStorage.getItem(TOKEN_TYPE_KEY) || 'Bearer';
-    
+
+    // UserRequest: 실제 API 연동 시 명시된 Authorization 헤더는 유지하고, 저장 토큰은 Bearer 중복 없이 정규화한다.
+    const existingAuthorization = config.headers?.Authorization;
+    if (existingAuthorization) {
+      return config;
+    }
+
     // 토큰이 존재하면 Authorization 헤더에 Bearer 방식으로 추가
     if (token && config.headers) {
-      config.headers.Authorization = `${tokenType} ${token}`;
+      config.headers.Authorization = normalizeAuthorizationHeader(token, tokenType);
     }
     
     return config;

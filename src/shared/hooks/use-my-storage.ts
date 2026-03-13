@@ -56,6 +56,8 @@ const toSavedCategoryEntity = (payload: SavedCategoryPayload): SavedCategory => 
 export const MY_STORAGE_QUERY_KEYS = {
   mySavedCategories: ['my-storage', 'saved-categories', 'me'] as const,
   savedCategoryDetail: (savedCategoryId: string) => ['my-storage', 'saved-categories', savedCategoryId] as const,
+  savedCategoryPlaces: (savedCategoryId: string) =>
+    ['my-storage', 'saved-categories', savedCategoryId, 'places'] as const,
   forkedSharedCategoryIds: (sharedCategoryIds: string[]) =>
     ['my-storage', 'saved-categories', 'contains', ...sharedCategoryIds] as const,
 };
@@ -117,15 +119,38 @@ export const useMySavedCategories = (
       const categories: SavedCategory[] = [];
       let cursor: number | null | undefined = null;
       let hasNext = true;
+      const visitedCursors = new Set<number | null>();
 
+      // UserRequest: 내 카테고리가 0개일 때도 무한 로딩 없이 빈 상태 화면으로 진입되도록 페이지네이션 종료 조건을 방어한다.
       while (hasNext) {
+        // 잘못된 nextCursor 반복 응답으로 인한 무한 루프를 사전에 차단
+        if (visitedCursors.has(cursor)) {
+          break;
+        }
+        visitedCursors.add(cursor);
+
         const response = await myStorageApi.getMySavedCategories(token, { cursor, size: pageSize });
 
         if (!response.success || !response.data) {
           throw new Error(response.error?.message ?? MESSAGES.savedCategory.listLoadFailed);
         }
 
-        categories.push(...response.data.categories.map((category) => toSavedCategoryEntity(category)));
+        const pageCategories = response.data.categories.map((category) => toSavedCategoryEntity(category));
+        categories.push(...pageCategories);
+
+        // 빈 페이지거나 다음 커서가 없으면 즉시 종료하여 빈 목록을 정상 상태로 처리
+        if (pageCategories.length === 0 || response.data.nextCursor === null) {
+          hasNext = false;
+          cursor = null;
+          continue;
+        }
+
+        // 현재 커서와 동일한 nextCursor가 오면 백엔드 응답 이상으로 간주하고 종료
+        if (response.data.nextCursor === cursor) {
+          hasNext = false;
+          cursor = null;
+          continue;
+        }
 
         hasNext = response.data.hasNext;
         cursor = response.data.nextCursor;
@@ -216,7 +241,8 @@ export const useSavedCategoryPlaces = (
   savedCategoryId: string | null,
 ): UseQueryResult<SavedCategory['places'], Error> =>
   useQuery<SavedCategory['places'], Error>({
-    queryKey: MY_STORAGE_QUERY_KEYS.savedCategoryDetail(savedCategoryId ?? ''),
+    // 상세 객체 캐시와 장소 배열 캐시를 분리하여 데이터 형태 충돌을 방지한다.
+    queryKey: MY_STORAGE_QUERY_KEYS.savedCategoryPlaces(savedCategoryId ?? ''),
     enabled: !!token && !!savedCategoryId,
     queryFn: async () => {
       if (!token) {
