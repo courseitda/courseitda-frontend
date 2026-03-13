@@ -13,6 +13,7 @@ import { Check, Maximize2, Minimize2, PenLine } from 'lucide-react';
 import type { Place } from '@/entities/types';
 import { Spinner } from '@/components/ui/spinner';
 import PageHeader from '@/components/layout/page-header';
+import UserMenu from '@/components/header/user-menu';
 import { MESSAGES } from '@/shared/constants/messages';
 
 /**
@@ -232,6 +233,7 @@ const WorkspaceDetail = () => {
             </Button>
           </div>
         )}
+        rightContent={<UserMenu currentWorkspaceLabel={workspace.title} />}
       />
 
       {/* 메인 콘텐츠 - 모바일: 지도 상단 + Bottom Sheet, 데스크톱: 좌우 분할 */}

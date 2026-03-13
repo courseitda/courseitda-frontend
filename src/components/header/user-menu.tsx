@@ -18,9 +18,10 @@ import { UI_COPY } from '@/shared/constants/ui-copy';
 type UserMenuProps = {
   onBeforeNavigate?: (proceed: () => void) => void;
   currentMyCategoryLabel?: string;
+  currentWorkspaceLabel?: string;
 };
 
-const UserMenu = ({ onBeforeNavigate, currentMyCategoryLabel }: UserMenuProps) => {
+const UserMenu = ({ onBeforeNavigate, currentMyCategoryLabel, currentWorkspaceLabel }: UserMenuProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, logout } = useAuthStore();
@@ -68,6 +69,8 @@ const UserMenu = ({ onBeforeNavigate, currentMyCategoryLabel }: UserMenuProps) =
   };
 
   const isActive = (path: string) => location.pathname === path;
+  const isWorkspaceDetailActive = location.pathname.startsWith('/workspace/');
+  const isMyWorkspaceSectionActive = location.pathname === '/my-workspaces';
   const isMyCategoryDetailActive = location.pathname.startsWith('/my-category/');
   const isMyCategorySectionActive = location.pathname === '/my-category';
   const menuItemClassName = (active: boolean) =>
@@ -120,12 +123,29 @@ const UserMenu = ({ onBeforeNavigate, currentMyCategoryLabel }: UserMenuProps) =
               <p className="px-2 text-xs font-semibold text-muted-foreground">{UI_COPY.userMenu.storageSection}</p>
               <Button
                 variant="ghost"
-                className={menuItemClassName(isActive('/my-workspaces'))}
+                className={menuItemClassName(isMyWorkspaceSectionActive)}
                 onClick={() => handleNavigate('/my-workspaces')}
               >
                 <LayoutGrid className="w-4 h-4" />
                 {UI_COPY.userMenu.myWorkspace}
               </Button>
+              {currentWorkspaceLabel && (
+                <button
+                  type="button"
+                  className={[
+                    'flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent/60',
+                    isWorkspaceDetailActive ? 'bg-primary/10 text-primary' : 'text-primary',
+                  ].join(' ')}
+                  onClick={() => {
+                    setOpen(false);
+                  }}
+                >
+                  {/* UserRequest: 워크스페이스 상세보기에서는 햄버거 메뉴에 현재 워크스페이스를 하위 페이지처럼 표시한다. */}
+                  <CornerDownRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <LayoutGrid className="h-4 w-4 shrink-0" />
+                  <span className="truncate font-medium">{currentWorkspaceLabel}</span>
+                </button>
+              )}
               <Button
                 variant="ghost"
                 className={menuItemClassName(isMyCategorySectionActive)}
