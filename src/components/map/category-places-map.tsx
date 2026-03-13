@@ -146,6 +146,9 @@ export const CategoryPlacesMap = ({ open, places, focusedPlaceId }: CategoryPlac
         currentInfoWindowRef.current = infoWindow;
       };
 
+      // UserRequest: 내 카테고리 상세 지도도 워크스페이스 상세와 동일하게 마커 클릭 시 장소명을 즉시 표시한다.
+      naver.maps.Event.addListener(marker, 'click', openInfoWindow);
+
       markerMapRef.current.set(place.id, {
         marker,
         position,
