@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -23,6 +23,7 @@ interface PlaceSearchDialogProps {
   onOpenChange: (open: boolean) => void;
   categoryId: string;
   workspaceIdentifier: string;
+  existingPlaceIds?: string[];
 }
 
 // 장소 검색 다이얼로그 - Naver Places API 응답을 활용하여 장소를 검색하고 카테고리에 추가
@@ -32,14 +33,21 @@ export const PlaceSearchDialog = ({
   onOpenChange,
   categoryId,
   workspaceIdentifier,
+  existingPlaceIds = [],
 }: PlaceSearchDialogProps) => {
   const token = useAuthStore((state) => state.token); // 인증 토큰 추출
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchedPlace[]>([]);
   const [loading, setLoading] = useState(false);
   const [adding, setAdding] = useState<string | null>(null);
+  const [addedPlaceIds, setAddedPlaceIds] = useState<string[]>(existingPlaceIds);
   const queryClient = useQueryClient();
   const queryKey = ['workspace', workspaceIdentifier, 'categories'];
+
+  useEffect(() => {
+    // UserRequest: 장소 검색 팝업은 현재 카테고리에 이미 있는 장소를 즉시 "추가됨" 상태로 표시한다.
+    setAddedPlaceIds(existingPlaceIds);
+  }, [categoryId, open]);
 
   // API 서비스 레이어를 통해 장소 검색 수행 (백엔드 연동 시 placeApi.search만 수정)
   const handleSearch = async () => {
@@ -91,7 +99,11 @@ export const PlaceSearchDialog = ({
 
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      // UserRequest: 워크스페이스 상세 검색 결과도 생성 페이지와 같이 추가 직후 버튼을 "추가됨"으로 유지한다.
+      setAddedPlaceIds((previous) => (
+        previous.includes(variables.place.id) ? previous : [...previous, variables.place.id]
+      ));
       queryClient.invalidateQueries({ queryKey });
       toast.success(MESSAGES.place.addSuccess);
     },
@@ -156,30 +168,27 @@ export const PlaceSearchDialog = ({
             {!loading && results.length > 0 && (
               <div className="space-y-2 pr-2">
                 {results.map((place) => (
-                  <div
-                    key={place.id}
-                    className="rounded-lg border border-border p-4 transition-colors hover:bg-accent/50"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <h4 className="mb-1 truncate text-sm font-medium sm:text-base">{place.name}</h4>
-                        <div className="space-y-1 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3 flex-shrink-0" />
-                            <span className="truncate">{place.addressName}</span>
-                          </div>
-                          {place.roadAddressName && (
-                            <div className="text-xs truncate">{place.roadAddressName}</div>
-                          )}
-                        </div>
+                  <div key={place.id} className="rounded-lg border border-border bg-card shadow-sm">
+                    <div className="flex items-start gap-2.5 p-3">
+                      <div className="mt-0.5 shrink-0 text-primary">
+                        <MapPin className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium break-words">{place.name}</p>
+                        <p className="text-xs text-muted-foreground break-words">{place.addressName}</p>
                       </div>
                       <Button
                         size="sm"
+                        variant={addedPlaceIds.includes(place.id) ? 'secondary' : 'outline'}
                         className="shrink-0"
                         onClick={() => handleAdd(place)}
-                        disabled={adding === place.id}
+                        disabled={adding === place.id || addedPlaceIds.includes(place.id)}
                       >
-                        {adding === place.id ? UI_COPY.placeSearchDialog.addingAction : UI_COPY.placeSearchDialog.addAction}
+                        {adding === place.id
+                          ? UI_COPY.placeSearchDialog.addingAction
+                          : addedPlaceIds.includes(place.id)
+                            ? UI_COPY.myCategory.detailDialog.addCompleted
+                            : UI_COPY.placeSearchDialog.addAction}
                       </Button>
                     </div>
                   </div>

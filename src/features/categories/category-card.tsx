@@ -217,6 +217,7 @@ export const CategoryCard = ({
         onOpenChange={setSearchDialogOpen}
         categoryId={category.id}
         workspaceIdentifier={workspaceIdentifier}
+        existingPlaceIds={places.map((item) => item.place.id)}
       />
 
       <EditCategoryDialog
