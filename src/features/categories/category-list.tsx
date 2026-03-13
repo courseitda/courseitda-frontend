@@ -137,16 +137,15 @@ export const CategoryList = ({
       sequence: index,
     }));
 
+    queryClient.setQueryData<WorkspaceCategory[]>(
+      queryKey,
+      draftCategories.map((item, index) => ({
+        category: { ...item.category, sequence: index },
+        places: item.places,
+      })),
+    );
+
     reorderMutation.mutate(payload, {
-      onMutate: () => {
-        queryClient.setQueryData<WorkspaceCategory[]>(
-          queryKey,
-          draftCategories.map((item, index) => ({
-            category: { ...item.category, sequence: index },
-            places: item.places,
-          })),
-        );
-      },
       onSuccess: () => {
         setIsReorderControlsVisible(false);
       },

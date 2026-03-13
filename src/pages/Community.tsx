@@ -4,7 +4,7 @@ import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Calendar, GitFork, Sparkles } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
-import { useRecommendedSharedCategories, useSharedCategories } from '@/shared/hooks/use-community';
+import { useSharedCategories } from '@/shared/hooks/use-community';
 import { useForkedSharedCategoryIds, useMySavedCategories, useToggleSharedCategoryFork } from '@/shared/hooks/use-my-storage';
 import { MESSAGES } from '@/shared/constants/messages';
 import type { SharedSavedCategory } from '@/entities/types';
@@ -36,15 +36,16 @@ const Community = () => {
   const loopFallbackTimerRef = useRef<number | null>(null);
   const [sliderWidth, setSliderWidth] = useState(0);
   // UserRequest: Community 페이지의 추천/검색 로직은 service 계층 인터페이스를 통해 실행
+  // TODO: 다음 스프린트에서 recommendations API가 준비되면 추천 영역 조회를 전용 API로 교체한다.
   const {
     data: sharedCategories = [],
     isLoading: sharedCategoriesLoading,
     error: sharedCategoriesError,
-  } = useRecommendedSharedCategories();
+  } = useSharedCategories(5, false);
   const {
     data: boardCategories = [],
     error: boardCategoriesError,
-  } = useSharedCategories(3);
+  } = useSharedCategories(3, false);
   const { data: savedCategories = [] } = useMySavedCategories(token);
   const { data: forkedSharedCategoryIds = [] } = useForkedSharedCategoryIds(
     token,

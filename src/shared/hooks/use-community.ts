@@ -54,9 +54,10 @@ export const COMMUNITY_QUERY_KEYS = {
 
 export const useSharedCategories = (
   size = 20,
+  fetchAll = true,
 ): UseQueryResult<SharedSavedCategory[], Error> =>
   useQuery<SharedSavedCategory[], Error>({
-    queryKey: COMMUNITY_QUERY_KEYS.list(size),
+    queryKey: [...COMMUNITY_QUERY_KEYS.list(size), fetchAll],
     queryFn: async () => {
       const categories: SharedSavedCategory[] = [];
       let cursor: number | null | undefined = null;
@@ -78,7 +79,7 @@ export const useSharedCategories = (
         hasNext = response.data.hasNext;
         cursor = response.data.nextCursor;
 
-        if (size === 3) {
+        if (!fetchAll) {
           break;
         }
       }
