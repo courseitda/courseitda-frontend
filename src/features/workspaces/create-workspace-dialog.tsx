@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -27,6 +28,7 @@ interface CreateWorkspaceDialogProps {
 // 사용 위치: features/layout/navigation-drawer, pages/WorkspaceDetail, pages/Workspaces
 export const CreateWorkspaceDialog = ({ open, onOpenChange }: CreateWorkspaceDialogProps) => {
   const token = useAuthStore((state) => state.token); // 인증 토큰 추출
+  const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const dialogRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
@@ -47,11 +49,15 @@ export const CreateWorkspaceDialog = ({ open, onOpenChange }: CreateWorkspaceDia
 
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (createdWorkspace) => {
       queryClient.invalidateQueries({ queryKey: ['workspaces', 'me'] });
       toast.success(MESSAGES.workspace.createSuccess);
       setTitle('');
       onOpenChange(false);
+      // UserRequest: 워크스페이스 생성 후 목록 대신 생성된 워크스페이스 상세보기로 즉시 이동한다.
+      navigate(`/workspace/${createdWorkspace.identifier}`, {
+        state: { startInCategoryEditMode: true },
+      });
     },
     onError: (error) => {
       const message = error instanceof Error ? error.message : MESSAGES.workspace.createFailed;

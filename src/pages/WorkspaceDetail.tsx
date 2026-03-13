@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useWorkspace } from '@/shared/hooks/use-workspace';
 import { useWorkspaceCategories } from '@/shared/hooks/use-categories';
@@ -23,6 +23,7 @@ import { MESSAGES } from '@/shared/constants/messages';
 const WorkspaceDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated } = useAuthStore();
   const naverMapKeyId = useSettingsStore((state) => state.naverMapKeyId);
   const [focusedPlace, setFocusedPlace] = useState<Place | null>(null);
@@ -33,6 +34,7 @@ const WorkspaceDetail = () => {
   const sheetDragStartY = useRef(0);
   // UserRequest: 지도 전체 화면 토글 상태를 관리하여 카테고리 영역 대신 지도 집중 모드 제공
   const [isMapFullscreen, setIsMapFullscreen] = useState(false);
+  const [startInCategoryEditMode] = useState(() => location.state?.startInCategoryEditMode === true);
   // UserRequest: 전체 화면 토글은 모바일에서만 제공되므로 뷰포트 폭을 추적
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window === 'undefined') return false;
@@ -94,6 +96,12 @@ const WorkspaceDetail = () => {
 
     return undefined;
   }, []);
+
+  useEffect(() => {
+    // UserRequest: 워크스페이스 생성 직후에만 편집 모드로 진입하고 새로고침/재방문 시에는 기본 보기 모드로 되돌린다.
+    if (!startInCategoryEditMode) return;
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.pathname, navigate, startInCategoryEditMode]);
 
   useEffect(() => {
     // UserRequest: 지도 전체 화면 진입 시 Bottom Sheet를 강제로 접어 이중 스크롤 방지
@@ -165,6 +173,7 @@ const WorkspaceDetail = () => {
       categories={workspaceCategories ?? []}
       isError={Boolean(categoriesError)}
       onPlaceClick={setFocusedPlace}
+      initialIsOrderEditMode={!startInCategoryEditMode}
     />
   );
 

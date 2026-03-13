@@ -18,6 +18,7 @@ interface CategoryListProps {
   categories: WorkspaceCategory[];
   onPlaceClick?: (place: Place) => void;
   isError?: boolean;
+  initialIsOrderEditMode?: boolean;
 }
 
 // 카테고리 목록 컴포넌트 - 버튼 기반으로 카테고리 순서를 변경 가능한 카드 목록 표시
@@ -27,12 +28,13 @@ export const CategoryList = ({
   categories,
   onPlaceClick,
   isError,
+  initialIsOrderEditMode = true,
 }: CategoryListProps) => {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [addOptionOpen, setAddOptionOpen] = useState(false);
   // UserRequest: 워크스페이스 상세보기 진입 시 기본 화면을 보기 모드로 노출한다.
-  const [isOrderEditMode, setIsOrderEditMode] = useState(true);
+  const [isOrderEditMode, setIsOrderEditMode] = useState(initialIsOrderEditMode);
   const [isReorderControlsVisible, setIsReorderControlsVisible] = useState(false);
   const [collapseAllSignal, setCollapseAllSignal] = useState(0);
   const [draftCategories, setDraftCategories] = useState<WorkspaceCategory[]>(categories);
@@ -78,6 +80,13 @@ export const CategoryList = ({
       setDraftCategories(categories);
     }
   }, [categories, isOrderEditMode]);
+
+  useEffect(() => {
+    // UserRequest: 워크스페이스 생성 직후 상세보기로 이동하면 전달된 초기 모드에 맞춰 토글 상태를 다시 맞춘다.
+    setIsOrderEditMode(initialIsOrderEditMode);
+    setIsReorderControlsVisible(false);
+    setAddOptionOpen(false);
+  }, [initialIsOrderEditMode, workspaceIdentifier]);
 
   const reorderMutation = useMutation<void, Error, Array<{ id: string; sequence: number }>>({
     mutationFn: async (items) => {
