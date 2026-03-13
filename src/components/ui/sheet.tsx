@@ -70,7 +70,12 @@ const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Con
     return (
       <SheetPortal>
         <SheetOverlay />
-        <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
+        <SheetPrimitive.Content
+          ref={ref}
+          // UserRequest: 모바일 하단에 붙는 시트/패널도 safe area를 반영해 하단 조작 영역과 겹치지 않게 한다.
+          className={cn(sheetVariants({ side }), "pb-[env(safe-area-inset-bottom)]", className)}
+          {...props}
+        >
           {children}
           {/* 방향에 따라 위치가 다른 닫기 버튼 */}
           <SheetPrimitive.Close className={cn("absolute top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-secondary hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none", closePosition)}>

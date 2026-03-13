@@ -341,7 +341,7 @@ const WorkspaceDetail = () => {
         {/* Bottom Sheet - 모바일에서만 노출 */}
         {/* UserRequest: Bottom Sheet가 네이버 지도 로고/워터마크보다 위에 렌더되도록 z-index 보정 */}
         {/* UserRequest: 모바일에서는 시트가 화면 하단과 바로 맞닿도록 바깥 여백 제거 */}
-        <div className="md:hidden absolute inset-x-0 bottom-0 pb-0 pointer-events-none z-20">
+        <div className="md:hidden absolute inset-x-0 bottom-0 pb-[env(safe-area-inset-bottom)] pointer-events-none z-20">
           <div
             // UserRequest: 모바일에서 지도 전체보기 전환 시에도 카테고리 영역을 언마운트하지 않고 접어서 모드 상태를 유지한다.
             className={`rounded-t-3xl border border-border/60 bg-card shadow-xl flex flex-col transition-[height,transform,opacity] duration-300 ease-out overflow-hidden ${

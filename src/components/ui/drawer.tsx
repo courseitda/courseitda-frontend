@@ -31,7 +31,8 @@ const DrawerContent = React.forwardRef<
     <DrawerPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background",
+        // UserRequest: 바텀 드로어 내부 콘텐츠가 모바일 하단 safe area 위에서 마무리되도록 하단 패딩을 추가한다.
+        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background pb-[env(safe-area-inset-bottom)]",
         className,
       )}
       {...props}

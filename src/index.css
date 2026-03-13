@@ -6,6 +6,9 @@
 
 @layer base {
   :root {
+    /* UserRequest: 현재 레이아웃 구조를 유지한 채 전체 UI를 같은 비율로 축소한다. */
+    --ui-scale: 0.94;
+
     /* ============================================
        기본 배경 및 텍스트 색상
        ============================================ */
@@ -163,7 +166,8 @@
 
 @layer base {
   html {
-    font-size: 16px;
+    /* 전체 rem 기반 크기를 한 번에 축소해 폰트, 간격, 아이콘 비율을 함께 맞춘다. */
+    font-size: calc(16px * var(--ui-scale));
   }
 
   * {
@@ -184,12 +188,21 @@
 
 @media (max-width: 430px) {
   html {
-    /* UserRequest: 기기 폭에 따라 전체 UI가 비율로 커지고 작아지도록 모바일 기준 루트 폰트 크기를 유동적으로 조정한다. */
-    font-size: clamp(14.5px, calc(100vw * 0.0415), 16px);
+    /* 모바일에서도 동일한 축소 비율을 유지하면서 기존 유동 타이포그래피를 보존한다. */
+    font-size: clamp(
+      calc(14.5px * var(--ui-scale)),
+      calc(100vw * 0.0415 * var(--ui-scale)),
+      calc(16px * var(--ui-scale))
+    );
   }
 }
 
 @layer components {
+  /* UserRequest: 모바일 브라우저 상단 안전 영역과 헤더가 겹치지 않도록 safe area 여백을 적용한다. */
+  .safe-top-header {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
   .hover-lift {
     @apply transition-transform duration-200 hover:scale-[1.02];
   }

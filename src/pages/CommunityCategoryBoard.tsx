@@ -165,7 +165,8 @@ const CommunityCategoryBoard = () => {
         <Button
           type="button"
           onClick={() => navigate('/my-posts')}
-          className="fixed bottom-6 right-6 shadow-lg gap-2 px-5 py-3 text-base rounded-full upload-fab-pop"
+          // UserRequest: 모바일 브라우저 하단 UI와 겹치지 않도록 업로드 FAB의 하단 위치에 safe area를 반영한다.
+          className="fixed right-6 bottom-[calc(env(safe-area-inset-bottom)+1.5rem)] shadow-lg gap-2 px-5 py-3 text-base rounded-full upload-fab-pop"
         >
           <Upload className="w-4 h-4" />
           <span className="font-semibold">{UI_COPY.community.uploadFabLabel}</span>

@@ -18,7 +18,8 @@ const SearchHeader = ({
     return (
         <header
             className="sticky top-0 z-20 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="container mx-auto px-4 py-4 md:py-3">
+            {/* UserRequest: 검색 헤더도 모바일 브라우저 상단 UI와 겹치지 않도록 safe area 상단 여백을 적용한다. */}
+            <div className="safe-top-header container mx-auto px-4 py-4 md:py-3">
                 <div className="flex items-center">
                     <SharedCategorySearchBar
                         value={value}
