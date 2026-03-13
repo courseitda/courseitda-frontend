@@ -5,16 +5,6 @@ import {Badge} from '@/components/ui/badge';
 import {Card, CardHeader, CardTitle} from '@/components/ui/card';
 import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/components/ui/dialog';
 import {Input} from '@/components/ui/input';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,} from '@/components/ui/dropdown-menu';
 import {useAuthStore} from '@/shared/stores/auth-store';
 import {Folder, GitFork, MoreHorizontal, Plus, Trash2} from 'lucide-react';
@@ -26,6 +16,7 @@ import type {SavedCategory} from '@/entities/types';
 import PageHeader from '@/components/layout/page-header';
 import {formatRelativeTimeKorean} from '@/shared/utils/relative-time';
 import {UI_COPY} from '@/shared/constants/ui-copy';
+import DeleteConfirmDialog from '@/components/common/delete-confirm-dialog';
 
 /**
  * 내 카테고리 페이지 컴포넌트
@@ -352,29 +343,22 @@ const MyCategory = () => {
                 </DialogContent>
             </Dialog>
 
-            <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>{UI_COPY.myCategory.deleteDialog.title}</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            {selectedForDelete
-                                ? UI_COPY.myCategory.deleteDialog.description(selectedForDelete.title)
-                                : UI_COPY.myCategory.deleteDialog.description('선택한')}
-                            <br/>
-                            <span className="text-destructive">{UI_COPY.myCategory.deleteDialog.warning}</span>
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>취소</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={handleDeleteConfirm}
-                            disabled={deleteSavedCategoryMutation.isPending}
-                        >
-                            삭제
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            <DeleteConfirmDialog
+                open={deleteAlertOpen}
+                onOpenChange={setDeleteAlertOpen}
+                title={UI_COPY.myCategory.deleteDialog.title}
+                description={
+                    <>
+                        {selectedForDelete
+                            ? UI_COPY.myCategory.deleteDialog.description(selectedForDelete.title)
+                            : UI_COPY.myCategory.deleteDialog.description('선택한')}
+                        <br/>
+                        <span className="text-destructive">{UI_COPY.myCategory.deleteDialog.warning}</span>
+                    </>
+                }
+                onConfirm={handleDeleteConfirm}
+                pending={deleteSavedCategoryMutation.isPending}
+            />
         </div>
     );
 };

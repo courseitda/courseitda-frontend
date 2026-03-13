@@ -14,16 +14,6 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Menu, Plus, Trash2, User as UserIcon, Pencil } from 'lucide-react';
 import type { Workspace, User } from '@/entities/types';
@@ -35,6 +25,7 @@ import { workspaceApi } from '@/services/api';
 import { MESSAGES } from '@/shared/constants/messages';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { UI_COPY } from '@/shared/constants/ui-copy';
+import DeleteConfirmDialog from '@/components/common/delete-confirm-dialog';
 
 interface NavigationDrawerProps {
   workspaces: Workspace[];
@@ -209,32 +200,22 @@ export const NavigationDrawer = ({
         />
       )}
       
-      <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{UI_COPY.myWorkspace.deleteDialog.title}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {selectedForDelete && (
-                <>
-                  {UI_COPY.myWorkspace.deleteDialog.description(selectedForDelete.title)}
-                  <br />
-                  <span className="text-destructive">{UI_COPY.myWorkspace.deleteDialog.warning}</span>
-                </>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{UI_COPY.common.cancel}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteConfirm}
-              className="bg-destructive hover:bg-destructive/90"
-              disabled={deleteWorkspaceMutation.isPending}
-            >
-              {deleteWorkspaceMutation.isPending ? UI_COPY.common.deleting : UI_COPY.common.delete}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteConfirmDialog
+        open={deleteAlertOpen}
+        onOpenChange={setDeleteAlertOpen}
+        title={UI_COPY.myWorkspace.deleteDialog.title}
+        description={
+          selectedForDelete ? (
+            <>
+              {UI_COPY.myWorkspace.deleteDialog.description(selectedForDelete.title)}
+              <br />
+              <span className="text-destructive">{UI_COPY.myWorkspace.deleteDialog.warning}</span>
+            </>
+          ) : null
+        }
+        onConfirm={handleDeleteConfirm}
+        pending={deleteWorkspaceMutation.isPending}
+      />
     </Sheet>
   );
 };

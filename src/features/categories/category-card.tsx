@@ -3,16 +3,6 @@ import type { Category, Place } from '@/entities/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { Plus, Trash2, ChevronDown, Pencil, ArrowUp, ArrowDown } from 'lucide-react';
 // API 서비스 레이어로 변경 - 백엔드 연동 시 서비스 레이어만 수정하면 됨
 import { categoryApi } from '@/services/api';
@@ -24,6 +14,7 @@ import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { CategoryPlaceView } from '@/services/api/category.service';
 import { UI_COPY } from '@/shared/constants/ui-copy';
+import DeleteConfirmDialog from '@/components/common/delete-confirm-dialog';
 
 interface CategoryCardProps {
   category: Category;
@@ -235,28 +226,20 @@ export const CategoryCard = ({
         workspaceIdentifier={workspaceIdentifier}
       />
       
-      <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{UI_COPY.myCategory.deleteDialog.title}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {UI_COPY.myCategory.deleteDialog.description(category.name)}
-              <br />
-              <span className="text-destructive">{UI_COPY.myCategory.deleteDialog.warning}</span>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{UI_COPY.common.cancel}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteConfirm}
-              className="bg-destructive hover:bg-destructive/90"
-              disabled={deleteCategoryMutation.isPending}
-            >
-              {deleteCategoryMutation.isPending ? UI_COPY.common.deleting : UI_COPY.common.delete}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteConfirmDialog
+        open={deleteAlertOpen}
+        onOpenChange={setDeleteAlertOpen}
+        title={UI_COPY.myCategory.deleteDialog.title}
+        description={
+          <>
+            {UI_COPY.myCategory.deleteDialog.description(category.name)}
+            <br />
+            <span className="text-destructive">{UI_COPY.myCategory.deleteDialog.warning}</span>
+          </>
+        }
+        onConfirm={handleDeleteConfirm}
+        pending={deleteCategoryMutation.isPending}
+      />
     </>
   );
 };

@@ -3,16 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -32,6 +22,7 @@ import PageHeader from '@/components/layout/page-header';
 import { formatRelativeTimeKorean } from '@/shared/utils/relative-time';
 import { MESSAGES } from '@/shared/constants/messages';
 import { UI_COPY } from '@/shared/constants/ui-copy';
+import DeleteConfirmDialog from '@/components/common/delete-confirm-dialog';
 
 /**
  * 워크스페이스 목록 페이지 컴포넌트
@@ -279,32 +270,22 @@ const MyWorkspace = () => {
 
         <CreateWorkspaceDialog open={createOpen} onOpenChange={setCreateOpen} />
 
-        <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{UI_COPY.myWorkspace.deleteDialog.title}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {selectedForDelete && (
-                    <>
-                      {UI_COPY.myWorkspace.deleteDialog.description(selectedForDelete.title)}
-                      <br />
-                      <span className="text-destructive">{UI_COPY.myWorkspace.deleteDialog.warning}</span>
-                    </>
-                )}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>{UI_COPY.common.cancel}</AlertDialogCancel>
-              <AlertDialogAction
-                  onClick={handleDeleteConfirm}
-                  className="bg-destructive hover:bg-destructive/90"
-                  disabled={deleteWorkspaceMutation.isPending}
-              >
-                {deleteWorkspaceMutation.isPending ? UI_COPY.common.deleting : UI_COPY.common.delete}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <DeleteConfirmDialog
+          open={deleteAlertOpen}
+          onOpenChange={setDeleteAlertOpen}
+          title={UI_COPY.myWorkspace.deleteDialog.title}
+          description={
+            selectedForDelete ? (
+              <>
+                {UI_COPY.myWorkspace.deleteDialog.description(selectedForDelete.title)}
+                <br />
+                <span className="text-destructive">{UI_COPY.myWorkspace.deleteDialog.warning}</span>
+              </>
+            ) : null
+          }
+          onConfirm={handleDeleteConfirm}
+          pending={deleteWorkspaceMutation.isPending}
+        />
       </div>
   );
 };

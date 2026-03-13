@@ -1,17 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,6 +24,7 @@ import SharedCategoryDetailDialog from '@/components/community/shared-category-d
 import SharedCategoryList from '@/components/community/shared-category-list';
 import type { SharedSavedCategory } from '@/entities/types';
 import { UI_COPY } from '@/shared/constants/ui-copy';
+import DeleteConfirmDialog from '@/components/common/delete-confirm-dialog';
 
 /**
  * 커뮤니티 관리 페이지 - 회원만 접근 가능, 보관 카테고리를 공유/삭제 관리
@@ -282,32 +273,22 @@ const MyPosts = () => {
         onToggleFork={handleFork}
         forkPending={toggleForkMutation.isPending}
       />
-      <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{UI_COPY.myPosts.deleteDialog.title}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {selectedForDelete && (
-                <>
-                  {UI_COPY.myPosts.deleteDialog.description(selectedForDelete.title)}
-                  <br />
-                  <span className="text-destructive">{UI_COPY.myPosts.deleteDialog.warning}</span>
-                </>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteMutation.isPending}>{UI_COPY.common.cancel}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmDelete}
-              className="bg-destructive hover:bg-destructive/90"
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? UI_COPY.common.deleting : UI_COPY.common.delete}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteConfirmDialog
+        open={deleteAlertOpen}
+        onOpenChange={setDeleteAlertOpen}
+        title={UI_COPY.myPosts.deleteDialog.title}
+        description={
+          selectedForDelete ? (
+            <>
+              {UI_COPY.myPosts.deleteDialog.description(selectedForDelete.title)}
+              <br />
+              <span className="text-destructive">{UI_COPY.myPosts.deleteDialog.warning}</span>
+            </>
+          ) : null
+        }
+        onConfirm={handleConfirmDelete}
+        pending={deleteMutation.isPending}
+      />
     </>
   );
 };
