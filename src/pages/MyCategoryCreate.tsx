@@ -13,18 +13,9 @@ import { MESSAGES } from '@/shared/constants/messages';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 import { useCreateSavedCategory } from '@/shared/hooks/use-my-storage';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { MapPin, PenLine, Search, X } from 'lucide-react';
 import { toast } from 'sonner';
+import InfoConfirmDialog from '@/components/common/info-confirm-dialog';
 
 type MyCategoryCreateLocationState = {
   draftTitle?: string;
@@ -394,24 +385,17 @@ const MyCategoryCreate = () => {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={leaveAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{UI_COPY.myCategory.leaveConfirm.title}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {UI_COPY.myCategory.leaveConfirm.description}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleStayOnPage}>
-              {UI_COPY.myCategory.leaveConfirm.stay}
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={handleLeavePage}>
-              {UI_COPY.myCategory.leaveConfirm.leave}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* UserRequest: 생성 페이지 이탈 안내는 공통 안내 팝업을 사용하고 왼쪽 계속 작성, 오른쪽 이동하기 순서를 유지한다. */}
+      <InfoConfirmDialog
+        open={leaveAlertOpen}
+        onOpenChange={setLeaveAlertOpen}
+        title={UI_COPY.myCategory.leaveConfirm.title}
+        description={UI_COPY.myCategory.leaveConfirm.description}
+        leftLabel={UI_COPY.myCategory.leaveConfirm.stay}
+        rightLabel={UI_COPY.myCategory.leaveConfirm.leave}
+        onLeftAction={handleStayOnPage}
+        onRightAction={handleLeavePage}
+      />
     </div>
   );
 };
