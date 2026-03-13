@@ -222,7 +222,7 @@ const MyCategoryCreate = () => {
       />
 
       <main className="space-y-2.5 pb-4 md:space-y-2.5 md:pb-4">
-        <section className="rounded-none bg-card p-0 shadow-sm md:rounded-xl md:mx-4 md:p-4 md:container md:max-w-2xl">
+        <section className="rounded-none bg-card p-0 shadow-sm md:rounded-xl md:mx-8 md:p-4 md:container md:max-w-2xl">
           <CategoryPlacesMap
             open
             places={selectedPlaces.map((place) => ({
@@ -242,7 +242,7 @@ const MyCategoryCreate = () => {
           />
         </section>
 
-        <div className="container mx-auto max-w-2xl px-4 pt-3 md:pt-4">
+        <div className="container mx-auto max-w-2xl px-8 pt-3 md:pt-4">
           <section className="space-y-3">
             <div className="flex items-center justify-between gap-3">
               <p className="text-lg font-semibold flex items-center gap-1.5">

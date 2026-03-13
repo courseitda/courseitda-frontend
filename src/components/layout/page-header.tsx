@@ -50,7 +50,7 @@ const PageHeader = ({
       className={`sticky top-0 z-30 bg-background ${showBorder ? 'border-b border-border/50' : ''} ${className ?? ''}`}
     >
       {/* UserRequest: 모바일 브라우저 상단 UI와 겹치지 않도록 헤더에 safe area 상단 여백을 적용한다. */}
-      <div className="safe-top-header container mx-auto px-4 py-4 md:py-3">
+      <div className="safe-top-header container mx-auto px-8 py-4 md:py-3">
         <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
           <div className="flex items-center">
             {showBackButton ? (

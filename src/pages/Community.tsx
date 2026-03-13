@@ -288,7 +288,7 @@ const Community = () => {
       <main className="min-h-[calc(100vh-72px)] flex flex-col">
 
         {/* UserRequest: 검색 제거 후 섹션 간 여백 재조정 */}
-        <section className="container mx-auto px-4 pb-4 pt-6 md:pt-8">
+        <section className="container mx-auto px-8 pb-4 pt-6 md:pt-8">
             <div className="flex flex-col gap-3 mb-6">
               <div className="inline-flex items-center gap-2">
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -456,7 +456,7 @@ const Community = () => {
 
         {/* UserRequest: 커뮤니티 페이지에서 검색 영역 제거 */}
 
-        <section className="container mx-auto px-4 pt-2 pb-8">
+        <section className="container mx-auto px-8 pt-2 pb-8">
           {/* UserRequest: 섹션 문구를 "카테고리 게시판"으로 변경 */}
           <div className="flex items-center justify-between mb-2 px-1">
             <h2 className="text-base font-semibold pl-1">{UI_COPY.community.boardTitle}</h2>
@@ -479,6 +479,7 @@ const Community = () => {
               forkedSharedCategoryMap={forkedSharedCategoryMap}
               onOpenDetail={handleOpenDetail}
               viewportClassName="h-auto"
+              size="compact"
             />
           </div>
         </section>

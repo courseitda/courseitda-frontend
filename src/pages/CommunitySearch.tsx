@@ -35,7 +35,7 @@ const CommunitySearch = () => {
                 autoFocus
             />
 
-            <main className="container mx-auto px-4 py-8 md:py-10">
+            <main className="container mx-auto px-8 py-8 md:py-10">
                 {/* UserRequest: 추천 검색어 영역은 상단 제목과 분류 카드를 분리해 더 깔끔하게 구성 */}
                 <section className="max-w-2xl mx-auto space-y-5">
                     <h2 className="text-base font-semibold">{UI_COPY.communitySearch.sectionTitle}</h2>

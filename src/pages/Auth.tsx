@@ -44,7 +44,7 @@ const Auth = () => {
         showBorder={false}
         rightContent={<div className="h-10 w-10" aria-hidden="true" />}
       />
-      <main className="flex justify-center px-8 pb-8 pt-8 md:px-4 md:pb-4 md:pt-4">
+      <main className="flex justify-center px-8 pb-8 pt-8 md:px-8 md:pb-4 md:pt-4">
         <div className="w-full max-w-md space-y-20">
           {/* UserRequest: 로그인/회원가입 폼 상단 중앙에 클릭 기능 없는 브랜드 워드마크를 배치한다. */}
           <div className="flex justify-center">

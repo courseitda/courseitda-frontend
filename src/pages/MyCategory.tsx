@@ -228,7 +228,7 @@ const MyCategory = () => {
             {/* UserRequest: 모바일 하단 safe area와 동적 viewport를 반영해 빈 상태 영역이 화면 끝 직전까지 이어지게 조정한다. */}
             {/* UserRequest: 모바일 뷰 좌우 여백을 0.5배로 축소하여 다른 페이지와 통일성 유지 (px-8 → px-4) */}
             <main
-                className="container mx-auto flex flex-1 flex-col px-4 py-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] md:hidden">
+                className="container mx-auto flex flex-1 flex-col px-8 py-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] md:hidden">
                 {/* UserRequest: 카테고리 페이지에서 생성 버튼과 목록을 동일한 흐름으로 표시 */}
                 <Card
                     className="hover-lift cursor-pointer border-border bg-card hover:bg-accent/40 transition-colors"
@@ -262,7 +262,7 @@ const MyCategory = () => {
                 <div className="grid grid-cols-[1fr_2fr_1fr] min-h-[calc(100vh-80px)]">
                     <div className="bg-primary/5 min-h-[calc(100vh-80px)]"></div>
 
-                    <div className="flex min-h-[calc(100vh-80px)] flex-col overflow-y-auto px-4 py-4">
+                    <div className="flex min-h-[calc(100vh-80px)] flex-col overflow-y-auto px-8 py-4">
                         {/* UserRequest: 카테고리 페이지에서 생성 버튼과 목록을 동일한 흐름으로 표시 */}
                         <Card
                             className="hover-lift cursor-pointer border-border bg-card hover:bg-accent/40 transition-colors"

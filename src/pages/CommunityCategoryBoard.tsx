@@ -110,7 +110,7 @@ const CommunityCategoryBoard = () => {
 
       {/* UserRequest: 헤더와 검색 영역 사이 간격을 0.5배로 조정 */}
       <main className="min-h-[calc(100vh-72px)] flex flex-col pt-6 pb-6 md:pt-8 md:pb-8">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-8">
           <div className="max-w-6xl mx-auto space-y-6">
             {/* UserRequest: 검색 영역 클릭 시 검색 전용 페이지로 이동 */}
             <section className="space-y-3">
@@ -131,7 +131,7 @@ const CommunityCategoryBoard = () => {
 
         {/* UserRequest: 구분선 아래 전체 배경을 회색으로 표시 */}
         <div className="bg-muted/30 flex-1">
-          <div className="container mx-auto px-4">
+          <div className="container mx-auto px-8">
             <section className="max-w-6xl mx-auto space-y-3 p-3 md:p-4">
               {/* UserRequest: 정렬 드롭다운 제거 */}
               <SharedCategoryList

@@ -109,7 +109,7 @@ const SearchResult = () => {
       {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
       <PageHeader title={UI_COPY.searchResult.pageTitle} />
 
-      <main className="container mx-auto px-4 py-6 md:py-8">
+      <main className="container mx-auto px-8 py-6 md:py-8">
         <div className="max-w-6xl mx-auto space-y-6">
           <section className="space-y-3">
             {/* UserRequest: 검색 결과 페이지 검색창을 커뮤니티 페이지와 동일한 형태로 변경 */}

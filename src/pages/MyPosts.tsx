@@ -188,7 +188,7 @@ const MyPosts = () => {
       <PageHeader title={UI_COPY.myPosts.pageTitle} />
 
       <main className="min-h-[calc(100vh-72px)] flex flex-col pt-6 pb-6 md:pt-8 md:pb-8">
-        <div className="container mx-auto px-4 mt-2">
+        <div className="container mx-auto px-8 mt-2">
           {/* UserRequest: 커뮤니티 카테고리 게시판의 회색 박스 영역처럼 컨테이너를 구성 */}
           <div className="relative max-w-6xl mx-auto">
             <section className="relative z-10 rounded-2xl bg-muted/30 border border-border/60 p-3 md:p-4">

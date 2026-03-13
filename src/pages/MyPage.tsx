@@ -51,7 +51,7 @@ const MyPage = () => {
       {/* UserRequest: 마이페이지 우측 상단에도 햄버거 메뉴를 노출 */}
       <PageHeader title={UI_COPY.myPage.pageTitle} />
 
-      <main className="container mx-auto px-4 py-12 md:py-8 max-w-2xl">
+      <main className="container mx-auto max-w-2xl px-8 py-12 md:py-8">
         <div className="space-y-6">
           {/* 사용자 정보 카드 */}
           <Card>

@@ -195,7 +195,7 @@ const MyWorkspace = () => {
         {/* 모바일 레이아웃 */}
         {/* UserRequest: 모바일 하단 safe area와 동적 viewport를 반영해 빈 상태 영역이 화면 끝 직전까지 이어지게 조정한다. */}
         {/* UserRequest: 모바일 뷰 좌우 여백을 0.5배로 축소하여 다른 페이지와 통일성 유지 (px-8 → px-4) */}
-        <main className="container mx-auto flex flex-1 flex-col px-4 py-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] md:hidden">
+        <main className="container mx-auto flex flex-1 flex-col px-8 py-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] md:hidden">
           {/* UserRequest: 워크스페이스 목록 페이지에서 Tabs 제거 */}
           <div className="flex flex-1 flex-col">
             {/* UserRequest: 내 워크스페이스 페이지의 생성 진입 버튼을 이전 카드형 새 워크스페이스 UI로 되돌린다. */}
@@ -233,7 +233,7 @@ const MyWorkspace = () => {
             <div className="bg-primary/5 min-h-[calc(100vh-80px)]"></div>
 
             {/* 중앙: 워크스페이스 목록 콘텐츠 */}
-            <div className="flex min-h-[calc(100vh-80px)] flex-col overflow-y-auto px-4 py-4">
+            <div className="flex min-h-[calc(100vh-80px)] flex-col overflow-y-auto px-8 py-4">
               {/* UserRequest: 워크스페이스 목록 페이지에서 Tabs 제거 */}
               <div className="flex flex-1 flex-col">
                 {/* UserRequest: 내 워크스페이스 페이지의 생성 진입 버튼을 이전 카드형 새 워크스페이스 UI로 되돌린다. */}

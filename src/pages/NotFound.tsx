@@ -19,7 +19,7 @@ const NotFound = () => {
     <div className="min-h-screen bg-gradient-card">
       {/* UserRequest: 404 페이지도 공통 헤더를 사용해 전 페이지 헤더 구조 통일 */}
       <PageHeader title={UI_COPY.notFound.pageTitle} />
-      <main className="flex items-center justify-center py-16 px-4">
+      <main className="flex items-center justify-center px-8 py-16">
         <div className="text-center space-y-4">
           <h1 className="text-6xl font-bold text-primary">404</h1>
           <p className="text-xl text-muted-foreground">{UI_COPY.notFound.title}</p>

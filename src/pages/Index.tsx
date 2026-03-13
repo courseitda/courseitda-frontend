@@ -90,7 +90,7 @@ const Index = () => {
 
             <main className="w-full pb-10 md:pb-12">
                 <section
-                    className="relative overflow-hidden border-b border-border/60 px-4 pb-12 pt-10 md:px-10 md:pb-16 md:pt-14">
+                    className="relative overflow-hidden border-b border-border/60 px-8 pb-12 pt-10 md:px-12 md:pb-16 md:pt-14">
                     <div
                         className="absolute inset-0 bg-[radial-gradient(120%_100%_at_95%_0%,hsl(var(--primary)/0.2),transparent_55%),radial-gradient(70%_80%_at_0%_100%,hsl(var(--accent-foreground)/0.12),transparent_50%)]"/>
                     <div className="relative z-10">
@@ -177,7 +177,7 @@ const Index = () => {
                     </div>
                 </section>
 
-                <section className="border-b border-border/60 px-4 py-12 md:px-6 md:py-16">
+                <section className="border-b border-border/60 px-8 py-12 md:px-10 md:py-16">
                     <motion.h2
                         initial={{opacity: 0, y: 14}}
                         whileInView={{opacity: 1, y: 0}}
@@ -213,7 +213,7 @@ const Index = () => {
                     </div>
                 </section>
 
-                <section className="border-b border-border/60 bg-accent/70 px-4 py-12 md:px-6 md:py-16">
+                <section className="border-b border-border/60 bg-accent/70 px-8 py-12 md:px-10 md:py-16">
                     <motion.h2
                         initial={{opacity: 0, y: 14}}
                         whileInView={{opacity: 1, y: 0}}
@@ -248,7 +248,7 @@ const Index = () => {
                     </div>
                 </section>
 
-                <section className="border-b border-border/60 px-4 py-12 md:px-6 md:py-16">
+                <section className="border-b border-border/60 px-8 py-12 md:px-10 md:py-16">
                     <motion.h2
                         initial={{opacity: 0, y: 14}}
                         whileInView={{opacity: 1, y: 0}}
