@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useMySavedCategories } from '@/shared/hooks/use-my-storage';
+import { useSavedCategoryPlaces } from '@/shared/hooks/use-my-storage';
 import { COMMUNITY_QUERY_KEYS } from '@/shared/hooks/use-community';
 import { MESSAGES } from '@/shared/constants/messages';
 import { UI_COPY } from '@/shared/constants/ui-copy';
@@ -35,7 +36,10 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
     data: savedCategories = [],
     isLoading,
     error,
-  } = useMySavedCategories(token);
+  } = useMySavedCategories(token, 15);
+  const {
+    data: expandedPlaces = [],
+  } = useSavedCategoryPlaces(token, expandedCategoryId);
 
   useEffect(() => {
     if (error) {
@@ -74,7 +78,7 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
   const handleUpload = (category: SavedCategory) => {
     if (shareMutation.isPending) return;
     if (!category.canPublish) {
-      toast.error(category.publishBlockedReason ?? MESSAGES.sharedCategory.uploadFailed);
+      toast.error('공유 카테고리를 복사한 직후에는 다시 게시할 수 없습니다.');
       return;
     }
     shareMutation.mutate(category.id);
@@ -172,7 +176,7 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
                   {expandedCategoryId === category.id && (
                     <div className="px-4 pb-4 pt-2 border-t border-border/60">
                       <div className="space-y-2">
-                        {category.places.map((place) => (
+                        {expandedPlaces.map((place) => (
                           <div key={place.id} className="flex flex-col gap-0.5">
                             <div className="flex items-center gap-1.5 text-sm font-medium">
                               <MapPin className="w-4 h-4 text-primary" />

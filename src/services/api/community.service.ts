@@ -6,9 +6,9 @@ import { toError, toSuccess } from './http';
 
 // 커뮤니티 관련 백엔드 엔드포인트 상수 정의
 const RECOMMENDED_SHARED_CATEGORIES_ENDPOINT = '/api/community/shared-categories/recommendations';
-const SEARCH_SHARED_CATEGORIES_ENDPOINT = '/api/community/shared-categories/search';
-const MY_SHARED_CATEGORIES_ENDPOINT = '/api/community/shared-categories/me';
-const SHARED_CATEGORY_ENDPOINT = '/api/community/shared-categories';
+const SEARCH_SHARED_CATEGORIES_ENDPOINT = '/api/shared-categories/search';
+const MY_SHARED_CATEGORIES_ENDPOINT = '/api/me/shared-categories';
+const SHARED_CATEGORY_ENDPOINT = '/api/shared-categories';
 
 type SharedCategoryPlaceApiResponse = {
   id: number | string;
@@ -23,24 +23,20 @@ type SharedCategoryPlaceApiResponse = {
 
 type SharedCategoryApiResponse = {
   id: number | string;
-  title: string;
-  uploaderNickname: string;
-  uploadedAt: string;
-  isImmutableSnapshot: true;
+  name: string;
+  authorNickname: string;
+  createdAt: string;
   forkCount: number;
   placeCount: number;
-  places: SharedCategoryPlaceApiResponse[];
+  sharedCategoryPlaces: SharedCategoryPlaceApiResponse[];
 };
 
 type MySharedCategoryApiResponse = {
   id: number | string;
-  title: string;
-  uploaderNickname: string;
-  uploadedAt: string;
-  isImmutableSnapshot: true;
+  name: string;
+  createdAt: string;
   forkCount: number;
   placeCount: number;
-  savedCategoryId: number | string;
 };
 
 // 공유 카테고리 목록 조회 응답 데이터 타입 - 백엔드 API 스펙과 일치
@@ -63,6 +59,8 @@ export interface SharedCategoriesData {
       longitude: number;
     }>;
   }>;
+  hasNext: boolean;
+  nextCursor: number | null;
 }
 
 // 내 공유 카테고리 목록 조회 응답 데이터 타입
@@ -77,6 +75,8 @@ export interface MySharedCategoriesData {
     placeCount: number;
     publishedFromSavedCategoryId: string;
   }>;
+  hasNext: boolean;
+  nextCursor: number | null;
 }
 
 // 보관 카테고리를 공유할 때 응답 데이터 타입
@@ -96,13 +96,13 @@ export interface ShareSavedCategoryData {
 const adaptSharedCategories = (payload: SharedCategoryApiResponse[]): SharedCategoriesData => ({
   sharedCategories: payload.map((category) => ({
     id: String(category.id),
-    title: category.title,
-    uploaderNickname: category.uploaderNickname,
-    uploadedAt: category.uploadedAt,
+    title: category.name,
+    uploaderNickname: category.authorNickname,
+    uploadedAt: category.createdAt,
     isImmutableSnapshot: true,
     forkCount: category.forkCount,
     placeCount: category.placeCount,
-    places: category.places.map((place) => ({
+    places: category.sharedCategoryPlaces.map((place) => ({
       id: String(place.id),
       name: place.name,
       // UserRequest: 공유 카테고리 장소 응답 필드 확장 반영
@@ -113,23 +113,63 @@ const adaptSharedCategories = (payload: SharedCategoryApiResponse[]): SharedCate
       longitude: place.longitude,
     })),
   })),
+  hasNext: false,
+  nextCursor: null,
 });
 
 const adaptMySharedCategories = (payload: MySharedCategoryApiResponse[]): MySharedCategoriesData => ({
   sharedCategories: payload.map((category) => ({
     id: String(category.id),
-    title: category.title,
-    uploaderNickname: category.uploaderNickname,
-    uploadedAt: category.uploadedAt,
+    title: category.name,
+    uploaderNickname: 'me',
+    uploadedAt: category.createdAt,
     isImmutableSnapshot: true,
     forkCount: category.forkCount,
     placeCount: category.placeCount,
-    publishedFromSavedCategoryId: String(category.savedCategoryId),
+    publishedFromSavedCategoryId: '',
   })),
+  hasNext: false,
+  nextCursor: null,
 });
 
 // 커뮤니티 API 서비스 객체 - 모든 커뮤니티 관련 API 호출을 service 계층에서 중앙 관리
 export const communityApi = {
+  /**
+   * 전체 공유 카테고리 목록 조회 API 호출
+   * @param params 커서 기반 페이지네이션
+   * @returns API 응답 (성공 시 공유 카테고리 목록, 실패 시 에러 정보)
+   *
+   * 백엔드 엔드포인트: GET /api/shared-categories
+   */
+  getSharedCategories: async (
+    params?: { cursor?: number | null; size?: number },
+  ): Promise<ApiResponse<SharedCategoriesData>> => {
+    try {
+      const response = await apiClient.get<{
+        sharedCategories: SharedCategoryApiResponse[];
+        hasNext: boolean;
+        nextCursor: number | null;
+      }>(SHARED_CATEGORY_ENDPOINT, {
+        params: {
+          cursor: params?.cursor ?? undefined,
+          size: params?.size ?? 20,
+        },
+      });
+
+      return toSuccess<SharedCategoriesData>({
+        ...adaptSharedCategories(response.data.sharedCategories),
+        hasNext: response.data.hasNext,
+        nextCursor: response.data.nextCursor,
+      });
+    } catch (error) {
+      return toError(
+        error,
+        BackendErrorCode.TEMPORARY_ERROR,
+        MESSAGES.sharedCategory.searchLoadFailed,
+      );
+    }
+  },
+
   /**
    * 추천 공유 카테고리 목록 조회 API 호출
    * @returns API 응답 (성공 시 공유 카테고리 목록, 실패 시 에러 정보)
@@ -157,15 +197,30 @@ export const communityApi = {
    * @param token 인증 토큰
    * @returns API 응답 (성공 시 공유 카테고리 목록, 실패 시 에러 정보)
    *
-   * 백엔드 엔드포인트: GET /api/community/shared-categories/me
+   * 백엔드 엔드포인트: GET /api/me/shared-categories
    */
-  getMySharedCategories: async (token: string): Promise<ApiResponse<MySharedCategoriesData>> => {
+  getMySharedCategories: async (
+    token: string,
+    params?: { cursor?: number | null; size?: number },
+  ): Promise<ApiResponse<MySharedCategoriesData>> => {
     try {
-      const response = await apiClient.get<MySharedCategoryApiResponse[]>(MY_SHARED_CATEGORIES_ENDPOINT, {
+      const response = await apiClient.get<{
+        sharedCategories: MySharedCategoryApiResponse[];
+        hasNext: boolean;
+        nextCursor: number | null;
+      }>(MY_SHARED_CATEGORIES_ENDPOINT, {
         headers: { Authorization: `Bearer ${token}` },
+        params: {
+          cursor: params?.cursor ?? undefined,
+          size: params?.size ?? 20,
+        },
       });
 
-      return toSuccess<MySharedCategoriesData>(adaptMySharedCategories(response.data));
+      return toSuccess<MySharedCategoriesData>({
+        ...adaptMySharedCategories(response.data.sharedCategories),
+        hasNext: response.data.hasNext,
+        nextCursor: response.data.nextCursor,
+      });
     } catch (error) {
       return toError(
         error,
@@ -180,15 +235,32 @@ export const communityApi = {
    * @param keyword 검색어 (제목 기준)
    * @returns API 응답 (성공 시 검색 결과 목록, 실패 시 에러 정보)
    *
-   * 백엔드 엔드포인트: GET /api/community/shared-categories/search?keyword=...
+   * 백엔드 엔드포인트: GET /api/shared-categories/search?keyword=...
    */
-  searchSharedCategories: async (keyword: string): Promise<ApiResponse<SharedCategoriesData>> => {
+  searchSharedCategories: async (
+    keyword: string,
+    params?: { cursor?: number | null; size?: number },
+  ): Promise<ApiResponse<SharedCategoriesData>> => {
     try {
-      const response = await apiClient.get<SharedCategoryApiResponse[]>(
+      const response = await apiClient.get<{
+        sharedCategories: SharedCategoryApiResponse[];
+        hasNext: boolean;
+        nextCursor: number | null;
+      }>(
         SEARCH_SHARED_CATEGORIES_ENDPOINT,
-        { params: { keyword } },
+        {
+          params: {
+            keyword,
+            cursor: params?.cursor ?? undefined,
+            size: params?.size ?? 20,
+          },
+        },
       );
-      return toSuccess<SharedCategoriesData>(adaptSharedCategories(response.data));
+      return toSuccess<SharedCategoriesData>({
+        ...adaptSharedCategories(response.data.sharedCategories),
+        hasNext: response.data.hasNext,
+        nextCursor: response.data.nextCursor,
+      });
     } catch (error) {
       return toError(
         error,
@@ -203,14 +275,14 @@ export const communityApi = {
    * @param token 인증 토큰
    * @param savedCategoryId 보관 카테고리 ID
    *
-   * 백엔드 엔드포인트: POST /api/community/shared-categories
+   * 백엔드 엔드포인트: POST /api/shared-categories
    */
   shareSavedCategory: async (
     token: string,
     savedCategoryId: string,
   ): Promise<ApiResponse<ShareSavedCategoryData>> => {
     try {
-      const response = await apiClient.post<MySharedCategoryApiResponse>(
+      const response = await apiClient.post<{ id: number | string; name: string }>(
         SHARED_CATEGORY_ENDPOINT,
         { savedCategoryId },
         { headers: { Authorization: `Bearer ${token}` } },
@@ -219,13 +291,13 @@ export const communityApi = {
       return toSuccess<ShareSavedCategoryData>({
         sharedCategory: {
           id: String(response.data.id),
-          title: response.data.title,
-          uploaderNickname: response.data.uploaderNickname,
-          uploadedAt: response.data.uploadedAt,
+          title: response.data.name,
+          uploaderNickname: 'me',
+          uploadedAt: new Date().toISOString(),
           isImmutableSnapshot: true,
-          forkCount: response.data.forkCount,
-          placeCount: response.data.placeCount,
-          publishedFromSavedCategoryId: String(response.data.savedCategoryId),
+          forkCount: 0,
+          placeCount: 0,
+          publishedFromSavedCategoryId: '',
         },
       });
     } catch (error) {
@@ -242,7 +314,7 @@ export const communityApi = {
    * @param token 인증 토큰
    * @param sharedCategoryId 공유 카테고리 ID
    *
-   * 백엔드 엔드포인트: DELETE /api/community/shared-categories/{id}
+   * 백엔드 엔드포인트: DELETE /api/shared-categories/{id}
    */
   deleteMySharedCategory: async (
     token: string,
@@ -268,7 +340,7 @@ export const communityApi = {
    * @param sharedCategoryId 공유 카테고리 ID
    * @returns API 응답 (성공 시 공유 카테고리 상세, 실패 시 에러 정보)
    *
-   * 백엔드 엔드포인트: GET /api/community/shared-categories/{id}
+   * 백엔드 엔드포인트: GET /api/shared-categories/{id}
    */
   getSharedCategoryDetail: async (
     sharedCategoryId: string,

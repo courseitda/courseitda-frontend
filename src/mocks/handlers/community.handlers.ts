@@ -13,23 +13,17 @@ const mySavedCategories = createSavedCategoryMocks();
 
 const mySharedCategories: Array<{
   id: string;
-  title: string;
-  uploaderNickname: string;
-  uploadedAt: string;
-  isImmutableSnapshot: true;
+  name: string;
+  createdAt: string;
   forkCount: number;
   placeCount: number;
-  savedCategoryId: string;
 }> = [
   {
     id: 'my-shared-1',
-    title: mySavedCategories[0]?.title ?? '내 공유 카테고리',
-    uploaderNickname: 'me',
-    uploadedAt: new Date().toISOString(),
-    isImmutableSnapshot: true,
+    name: mySavedCategories[0]?.title ?? '내 공유 카테고리',
+    createdAt: new Date().toISOString(),
     forkCount: 0,
     placeCount: mySavedCategories[0]?.placeCount ?? 0,
-    savedCategoryId: mySavedCategories[0]?.id ?? 'cat-1',
   },
 ];
 
@@ -46,7 +40,38 @@ const getSavedCategoryId = (body: unknown): string => {
   return '';
 };
 
-const toApiResponse = (categories: typeof sharedSavedCategories) => categories;
+const paginate = <T>(items: T[], cursorParam: string | null, sizeParam: string | null) => {
+  const size = Number(sizeParam ?? '20');
+  const cursor = cursorParam ? Number(cursorParam) : null;
+  const startIndex = cursor === null || Number.isNaN(cursor) ? 0 : cursor;
+  const pagedItems = items.slice(startIndex, startIndex + size);
+  const nextCursor = startIndex + size < items.length ? startIndex + size : null;
+
+  return {
+    items: pagedItems,
+    hasNext: nextCursor !== null,
+    nextCursor,
+  };
+};
+
+const toApiResponse = (categories: typeof sharedSavedCategories) =>
+  categories.map((category) => ({
+    id: category.id,
+    name: category.title,
+    authorNickname: category.uploaderNickname,
+    createdAt: category.uploadedAt,
+    forkCount: category.forkCount,
+    placeCount: category.placeCount,
+    sharedCategoryPlaces: category.places.map((place) => ({
+      id: place.id,
+      name: place.name,
+      placeUrl: place.placeUrl,
+      roadAddressName: place.roadAddressName,
+      addressName: place.addressName,
+      latitude: place.latitude,
+      longitude: place.longitude,
+    })),
+  }));
 
 export const communityHandlers = [
   // UserRequest: API baseURL이 다른 origin이어도 매칭되도록 와일드카드(`*`)를 사용
@@ -54,20 +79,43 @@ export const communityHandlers = [
     return HttpResponse.json(toApiResponse(recommendedSharedCategories));
   }),
 
-  http.get('*/api/community/shared-categories/search', ({ request }) => {
+  http.get('*/api/shared-categories/search', ({ request }) => {
     const url = new URL(request.url);
     const keyword = (url.searchParams.get('keyword') ?? '').trim().toLowerCase();
 
     const base = toApiResponse(sharedSavedCategories);
-    if (!keyword) {
-      return HttpResponse.json(base);
-    }
+    const filtered = !keyword
+      ? base
+      : base.filter((category) => category.name.toLowerCase().includes(keyword));
+    const paged = paginate(
+      filtered,
+      url.searchParams.get('cursor'),
+      url.searchParams.get('size'),
+    );
 
-    const filtered = base.filter((category) => category.title.toLowerCase().includes(keyword));
-    return HttpResponse.json(filtered);
+    return HttpResponse.json({
+      sharedCategories: paged.items,
+      hasNext: paged.hasNext,
+      nextCursor: paged.nextCursor,
+    });
   }),
 
-  http.get('*/api/community/shared-categories/me', ({ request }) => {
+  http.get('*/api/shared-categories', ({ request }) => {
+    const url = new URL(request.url);
+    const paged = paginate(
+      toApiResponse(sharedSavedCategories),
+      url.searchParams.get('cursor'),
+      url.searchParams.get('size'),
+    );
+
+    return HttpResponse.json({
+      sharedCategories: paged.items,
+      hasNext: paged.hasNext,
+      nextCursor: paged.nextCursor,
+    });
+  }),
+
+  http.get('*/api/me/shared-categories', ({ request }) => {
     if (!isAuthorized(request)) {
       return HttpResponse.json(
         {
@@ -81,10 +129,21 @@ export const communityHandlers = [
       );
     }
 
-    return HttpResponse.json(mySharedCategories);
+    const url = new URL(request.url);
+    const paged = paginate(
+      mySharedCategories,
+      url.searchParams.get('cursor'),
+      url.searchParams.get('size'),
+    );
+
+    return HttpResponse.json({
+      sharedCategories: paged.items,
+      hasNext: paged.hasNext,
+      nextCursor: paged.nextCursor,
+    });
   }),
 
-  http.get('*/api/community/shared-categories/:sharedCategoryId', ({ params }) => {
+  http.get('*/api/shared-categories/:sharedCategoryId', ({ params }) => {
     const sharedCategoryId = String(params.sharedCategoryId ?? '');
     const category = allSharedCategories.get(sharedCategoryId);
 
@@ -104,7 +163,7 @@ export const communityHandlers = [
     return HttpResponse.json(category);
   }),
 
-  http.post('*/api/community/shared-categories', async ({ request }) => {
+  http.post('*/api/shared-categories', async ({ request }) => {
     if (!isAuthorized(request)) {
       return HttpResponse.json(
         {
@@ -152,29 +211,30 @@ export const communityHandlers = [
 
     const newShared = {
       id: `my-shared-${Date.now()}`,
-      title: savedCategory.title,
-      uploaderNickname: 'me',
-      uploadedAt: new Date().toISOString(),
-      isImmutableSnapshot: true,
+      name: savedCategory.title,
+      createdAt: new Date().toISOString(),
       forkCount: 0,
       placeCount: savedCategory.placeCount,
-      savedCategoryId: savedCategory.id,
     };
     mySharedCategories.unshift(newShared);
     allSharedCategories.set(newShared.id, {
       id: newShared.id,
-      title: newShared.title,
-      uploaderNickname: newShared.uploaderNickname,
-      uploadedAt: newShared.uploadedAt,
+      title: newShared.name,
+      uploaderNickname: 'me',
+      uploadedAt: newShared.createdAt,
       isImmutableSnapshot: true,
+      forkCount: 0,
       placeCount: savedCategory.placeCount,
       places: savedCategory.places.map((place) => ({ ...place })),
     });
 
-    return HttpResponse.json(newShared, { status: 201 });
+    return HttpResponse.json(
+      { id: newShared.id, name: newShared.name },
+      { status: 201 },
+    );
   }),
 
-  http.delete('*/api/community/shared-categories/:sharedCategoryId', ({ request, params }) => {
+  http.delete('*/api/shared-categories/:sharedCategoryId', ({ request, params }) => {
     if (!isAuthorized(request)) {
       return HttpResponse.json(
         {

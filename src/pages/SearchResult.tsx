@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import { useSharedCategorySearch } from '@/shared/hooks/use-community';
-import { useMySavedCategories, useToggleSharedCategoryFork } from '@/shared/hooks/use-my-storage';
+import { useForkedSharedCategoryIds, useMySavedCategories, useToggleSharedCategoryFork } from '@/shared/hooks/use-my-storage';
 import { MESSAGES } from '@/shared/constants/messages';
 import type { SharedSavedCategory } from '@/entities/types';
 import SharedCategorySearchBar from '@/components/community/shared-category-search-bar';
@@ -33,6 +33,10 @@ const SearchResult = () => {
     isLoading: sharedCategoriesLoading,
     error: sharedCategoriesError,
   } = useSharedCategorySearch(keyword);
+  const { data: forkedSharedCategoryIds = [] } = useForkedSharedCategoryIds(
+    token,
+    sharedCategories.map((category) => category.id),
+  );
 
   useEffect(() => {
     setInputKeyword(keyword);
@@ -41,13 +45,11 @@ const SearchResult = () => {
   const filteredCategories = useMemo(() => sharedCategories, [sharedCategories]);
   const forkedSharedCategoryMap = useMemo(
     () =>
-      savedCategories.reduce<Record<string, boolean>>((accumulator, savedCategory) => {
-        if (savedCategory.forkedFromSharedCategoryId) {
-          accumulator[savedCategory.forkedFromSharedCategoryId] = true;
-        }
+      forkedSharedCategoryIds.reduce<Record<string, boolean>>((accumulator, sharedCategoryId) => {
+        accumulator[sharedCategoryId] = true;
         return accumulator;
       }, {}),
-    [savedCategories],
+    [forkedSharedCategoryIds],
   );
 
   useEffect(() => {
@@ -148,7 +150,7 @@ const SearchResult = () => {
         open={detailOpen}
         onOpenChange={setDetailOpen}
         category={selectedCategory}
-        isForked={savedCategories.some((savedCategory) => savedCategory.forkedFromSharedCategoryId === selectedCategory?.id)}
+        isForked={selectedCategory ? forkedSharedCategoryIds.includes(selectedCategory.id) : false}
         onToggleFork={handleFork}
         forkPending={toggleForkMutation.isPending}
       />

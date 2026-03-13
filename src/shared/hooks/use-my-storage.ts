@@ -56,6 +56,8 @@ const toSavedCategoryEntity = (payload: SavedCategoryPayload): SavedCategory => 
 export const MY_STORAGE_QUERY_KEYS = {
   mySavedCategories: ['my-storage', 'saved-categories', 'me'] as const,
   savedCategoryDetail: (savedCategoryId: string) => ['my-storage', 'saved-categories', savedCategoryId] as const,
+  forkedSharedCategoryIds: (sharedCategoryIds: string[]) =>
+    ['my-storage', 'saved-categories', 'contains', ...sharedCategoryIds] as const,
 };
 
 const updateForkCount = <T extends { id: string; forkCount: number }>(
@@ -100,22 +102,36 @@ const syncSharedCategoryForkCount = (
  * 내 보관 카테고리 목록 조회 커스텀 훅
  * UserRequest: MyCategory 페이지도 React Query + service 계층 호출로 통일
  */
-export const useMySavedCategories = (token: string | null): UseQueryResult<SavedCategory[], Error> =>
+export const useMySavedCategories = (
+  token: string | null,
+  pageSize = 20,
+): UseQueryResult<SavedCategory[], Error> =>
   useQuery<SavedCategory[], Error>({
-    queryKey: MY_STORAGE_QUERY_KEYS.mySavedCategories,
+    queryKey: [...MY_STORAGE_QUERY_KEYS.mySavedCategories, pageSize],
     enabled: !!token,
     queryFn: async () => {
       if (!token) {
         throw new Error(UI_COPY.system.authTokenRequired);
       }
 
-      const response = await myStorageApi.getMySavedCategories(token);
+      const categories: SavedCategory[] = [];
+      let cursor: number | null | undefined = null;
+      let hasNext = true;
 
-      if (!response.success || !response.data) {
-        throw new Error(response.error?.message ?? MESSAGES.savedCategory.listLoadFailed);
+      while (hasNext) {
+        const response = await myStorageApi.getMySavedCategories(token, { cursor, size: pageSize });
+
+        if (!response.success || !response.data) {
+          throw new Error(response.error?.message ?? MESSAGES.savedCategory.listLoadFailed);
+        }
+
+        categories.push(...response.data.categories.map((category) => toSavedCategoryEntity(category)));
+
+        hasNext = response.data.hasNext;
+        cursor = response.data.nextCursor;
       }
 
-      return response.data.categories.map((category) => toSavedCategoryEntity(category));
+      return categories;
     },
     staleTime: 1000 * 30,
     placeholderData: (previousData) => previousData,
@@ -152,10 +168,6 @@ export const useSavedCategoryDetail = (
 
 type CreateSavedCategoryInput = {
   title: string;
-  sourceType?: 'manual' | 'forked';
-  forkedFromSharedCategoryId?: string | null;
-  sourceAuthorName?: string | null;
-  sourceCategoryTitle?: string | null;
   places: SearchedPlace[];
 };
 
@@ -169,7 +181,7 @@ export const useCreateSavedCategory = (token: string | null) => {
         throw new Error(UI_COPY.system.authTokenRequired);
       }
 
-      const response = await myStorageApi.createSavedCategoryManual(token, {
+      const response = await myStorageApi.createSavedCategory(token, {
         name: input.title,
         savedCategoryPlaces: input.places.map((place) => ({
           name: place.name,
@@ -198,6 +210,59 @@ export const useCreateSavedCategory = (token: string | null) => {
   });
 };
 
+// UserRequest: 업로드 다이얼로그에서 장소 목록은 상세 API로 재조회한다.
+export const useSavedCategoryPlaces = (
+  token: string | null,
+  savedCategoryId: string | null,
+): UseQueryResult<SavedCategory['places'], Error> =>
+  useQuery<SavedCategory['places'], Error>({
+    queryKey: MY_STORAGE_QUERY_KEYS.savedCategoryDetail(savedCategoryId ?? ''),
+    enabled: !!token && !!savedCategoryId,
+    queryFn: async () => {
+      if (!token) {
+        throw new Error(UI_COPY.system.authTokenRequired);
+      }
+
+      if (!savedCategoryId) {
+        throw new Error(UI_COPY.myCategory.empty.title);
+      }
+
+      const response = await myStorageApi.getSavedCategoryDetail(token, savedCategoryId);
+
+      if (!response.success || !response.data) {
+        throw new Error(response.error?.message ?? MESSAGES.savedCategory.listLoadFailed);
+      }
+
+      return toSavedCategoryEntity(response.data.category).places;
+    },
+    staleTime: 1000 * 30,
+    placeholderData: (previousData) => previousData,
+  });
+
+// UserRequest: 공유 카테고리 포크 여부는 contains API로 조회한다.
+export const useForkedSharedCategoryIds = (
+  token: string | null,
+  sharedCategoryIds: string[],
+): UseQueryResult<string[], Error> =>
+  useQuery<string[], Error>({
+    queryKey: MY_STORAGE_QUERY_KEYS.forkedSharedCategoryIds(sharedCategoryIds),
+    enabled: !!token && sharedCategoryIds.length > 0,
+    queryFn: async () => {
+      if (!token) {
+        throw new Error(UI_COPY.system.authTokenRequired);
+      }
+
+      const response = await myStorageApi.containsForkedSharedCategories(token, sharedCategoryIds);
+      if (!response.success || !response.data) {
+        throw new Error(response.error?.message ?? MESSAGES.sharedCategory.forkFailed);
+      }
+
+      return response.data.forkedSharedCategoryIds;
+    },
+    staleTime: 1000 * 15,
+    placeholderData: (previousData) => previousData,
+  });
+
 // UserRequest: 공유 카테고리를 내 보관 카테고리로 fork 하는 흐름을 React Query 뮤테이션으로 관리
 export const useForkSharedCategory = (token: string | null) => {
   const queryClient = useQueryClient();
@@ -208,21 +273,7 @@ export const useForkSharedCategory = (token: string | null) => {
         throw new Error(UI_COPY.system.authTokenRequired);
       }
 
-      const response = await myStorageApi.createSavedCategory(token, {
-        name: category.title,
-        sourceType: 'forked',
-        forkedFromSharedCategoryId: category.id,
-        sourceAuthorName: category.uploader,
-        sourceCategoryTitle: category.title,
-        savedCategoryPlaces: category.places.map((place) => ({
-          name: place.name,
-          placeUrl: place.placeUrl,
-          roadAddressName: place.roadAddressName,
-          addressName: place.addressName,
-          latitude: place.latitude,
-          longitude: place.longitude,
-        })),
-      });
+      const response = await myStorageApi.forkSavedCategory(token, category.id);
 
       if (!response.success || !response.data) {
         throw new Error(response.error?.message ?? MESSAGES.sharedCategory.forkFailed);
@@ -232,6 +283,7 @@ export const useForkSharedCategory = (token: string | null) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: MY_STORAGE_QUERY_KEYS.mySavedCategories });
+      queryClient.invalidateQueries({ queryKey: ['my-storage', 'saved-categories', 'contains'] });
       queryClient.invalidateQueries({ queryKey: COMMUNITY_QUERY_KEYS.recommended });
       queryClient.invalidateQueries({ queryKey: COMMUNITY_QUERY_KEYS.search('') });
       queryClient.invalidateQueries({ queryKey: COMMUNITY_QUERY_KEYS.myShared });
@@ -263,21 +315,7 @@ export const useToggleSharedCategoryFork = (token: string | null) => {
         return { action: 'unforked' as const, sharedCategoryId: input.category.id };
       }
 
-      const response = await myStorageApi.createSavedCategory(token, {
-        name: input.category.title,
-        sourceType: 'forked',
-        forkedFromSharedCategoryId: input.category.id,
-        sourceAuthorName: input.category.uploader,
-        sourceCategoryTitle: input.category.title,
-        savedCategoryPlaces: input.category.places.map((place) => ({
-          name: place.name,
-          placeUrl: place.placeUrl,
-          roadAddressName: place.roadAddressName,
-          addressName: place.addressName,
-          latitude: place.latitude,
-          longitude: place.longitude,
-        })),
-      });
+      const response = await myStorageApi.forkSavedCategory(token, input.category.id);
 
       if (!response.success || !response.data) {
         throw new Error(response.error?.message ?? MESSAGES.sharedCategory.forkFailed);
@@ -291,6 +329,7 @@ export const useToggleSharedCategoryFork = (token: string | null) => {
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: MY_STORAGE_QUERY_KEYS.mySavedCategories });
+      queryClient.invalidateQueries({ queryKey: ['my-storage', 'saved-categories', 'contains'] });
       syncSharedCategoryForkCount(
         queryClient,
         result.sharedCategoryId,
@@ -317,14 +356,15 @@ export const useUpdateSavedCategory = (token: string | null) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: { id: string; title: string; places: SearchedPlace[] }) => {
+    mutationFn: async (input: { id: string; title: string; places: SearchedPlace[]; originalPlaceIds: string[] }) => {
       if (!token) {
         throw new Error(UI_COPY.system.authTokenRequired);
       }
 
       const response = await myStorageApi.updateSavedCategory(token, input.id, {
-        title: input.title,
-        places: input.places.map((place) => ({
+        name: input.title,
+        savedCategoryPlaces: input.places.map((place) => ({
+          savedCategoryPlaceId: input.originalPlaceIds.includes(place.id) ? place.id : null,
           name: place.name,
           placeUrl: place.placeUrl,
           roadAddressName: place.roadAddressName,

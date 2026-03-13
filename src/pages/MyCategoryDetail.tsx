@@ -103,6 +103,7 @@ const MyCategoryDetail = () => {
       await updateSavedCategoryMutation.mutateAsync({
         id: category.id,
         title: renameTitle,
+        originalPlaceIds: category.places.map((place) => place.id),
         places: category.places.map((place) => ({
           id: place.id,
           name: place.name,
@@ -194,6 +195,7 @@ const MyCategoryDetail = () => {
       await updateSavedCategoryMutation.mutateAsync({
         id: category.id,
         title: category.title,
+        originalPlaceIds: category.places.map((place) => place.id),
         places: selectedPlaces,
       });
       setIsAddingPlace(false);

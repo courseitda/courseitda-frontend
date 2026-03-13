@@ -4,8 +4,8 @@ import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Calendar, GitFork, Sparkles } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
-import { useRecommendedSharedCategories } from '@/shared/hooks/use-community';
-import { useMySavedCategories, useToggleSharedCategoryFork } from '@/shared/hooks/use-my-storage';
+import { useRecommendedSharedCategories, useSharedCategories } from '@/shared/hooks/use-community';
+import { useForkedSharedCategoryIds, useMySavedCategories, useToggleSharedCategoryFork } from '@/shared/hooks/use-my-storage';
 import { MESSAGES } from '@/shared/constants/messages';
 import type { SharedSavedCategory } from '@/entities/types';
 import PageHeader from '@/components/layout/page-header';
@@ -41,19 +41,25 @@ const Community = () => {
     isLoading: sharedCategoriesLoading,
     error: sharedCategoriesError,
   } = useRecommendedSharedCategories();
+  const {
+    data: boardCategories = [],
+    error: boardCategoriesError,
+  } = useSharedCategories(3);
   const { data: savedCategories = [] } = useMySavedCategories(token);
+  const { data: forkedSharedCategoryIds = [] } = useForkedSharedCategoryIds(
+    token,
+    Array.from(new Set([...sharedCategories, ...boardCategories].map((category) => category.id))),
+  );
   const toggleForkMutation = useToggleSharedCategoryFork(token);
 
   const filteredCategories = useMemo(() => sharedCategories, [sharedCategories]);
   const forkedSharedCategoryMap = useMemo(
     () =>
-      savedCategories.reduce<Record<string, boolean>>((accumulator, savedCategory) => {
-        if (savedCategory.forkedFromSharedCategoryId) {
-          accumulator[savedCategory.forkedFromSharedCategoryId] = true;
-        }
+      forkedSharedCategoryIds.reduce<Record<string, boolean>>((accumulator, sharedCategoryId) => {
+        accumulator[sharedCategoryId] = true;
         return accumulator;
       }, {}),
-    [savedCategories],
+    [forkedSharedCategoryIds],
   );
   const hasLoop = filteredCategories.length > 1;
   const sliderCategories = useMemo(() => {
@@ -136,6 +142,12 @@ const Community = () => {
       toast.error(sharedCategoriesError.message || MESSAGES.sharedCategory.recommendedLoadFailed);
     }
   }, [sharedCategoriesError]);
+
+  useEffect(() => {
+    if (boardCategoriesError) {
+      toast.error(boardCategoriesError.message || MESSAGES.sharedCategory.searchLoadFailed);
+    }
+  }, [boardCategoriesError]);
 
   // 추천 카드 자동 전환 - 일정 간격으로 다음 카드로 이동
   useEffect(() => {
@@ -456,7 +468,7 @@ const Community = () => {
             {/* UserRequest: 카테고리 게시판에는 최대 4개까지만 노출 */}
             {/* UserRequest: 커뮤니티 메인 카테고리 게시판 카드도 공통 SharedCategoryList를 사용한다. */}
             <SharedCategoryList
-              categories={filteredCategories.slice(0, 4)}
+              categories={boardCategories}
               forkedSharedCategoryMap={forkedSharedCategoryMap}
               onOpenDetail={handleOpenDetail}
               viewportClassName="h-auto"
@@ -471,7 +483,7 @@ const Community = () => {
         open={detailOpen}
         onOpenChange={setDetailOpen}
         category={selectedCategory}
-        isForked={savedCategories.some((savedCategory) => savedCategory.forkedFromSharedCategoryId === selectedCategory?.id)}
+        isForked={selectedCategory ? forkedSharedCategoryIds.includes(selectedCategory.id) : false}
         onToggleFork={handleFork}
         forkPending={toggleForkMutation.isPending}
       />

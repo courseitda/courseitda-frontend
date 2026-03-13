@@ -25,7 +25,7 @@ import { toast } from 'sonner';
 import { communityApi } from '@/services/api';
 import { Spinner } from '@/components/ui/spinner';
 import { COMMUNITY_QUERY_KEYS, useMySharedCategories } from '@/shared/hooks/use-community';
-import { useMySavedCategories, useToggleSharedCategoryFork } from '@/shared/hooks/use-my-storage';
+import { useForkedSharedCategoryIds, useMySavedCategories, useToggleSharedCategoryFork } from '@/shared/hooks/use-my-storage';
 import { useUserNickname } from '@/shared/hooks/use-user-info';
 import { MESSAGES } from '@/shared/constants/messages';
 import PageHeader from '@/components/layout/page-header';
@@ -57,12 +57,14 @@ const MyPosts = () => {
     isLoading: mySharedCategoriesLoading,
     error: mySharedCategoriesError,
   } = useMySharedCategories(token);
+  const { data: forkedSharedCategoryIds = [] } = useForkedSharedCategoryIds(
+    token,
+    mySharedCategories.map((category) => category.id),
+  );
 
-  const forkedSharedCategoryMap = savedCategories.reduce<Record<string, boolean>>(
-    (accumulator, savedCategory) => {
-      if (savedCategory.forkedFromSharedCategoryId) {
-        accumulator[savedCategory.forkedFromSharedCategoryId] = true;
-      }
+  const forkedSharedCategoryMap = forkedSharedCategoryIds.reduce<Record<string, boolean>>(
+    (accumulator, sharedCategoryId) => {
+      accumulator[sharedCategoryId] = true;
       return accumulator;
     },
     {},
@@ -276,7 +278,7 @@ const MyPosts = () => {
         open={detailOpen}
         onOpenChange={setDetailOpen}
         category={selectedCategory}
-        isForked={savedCategories.some((savedCategory) => savedCategory.forkedFromSharedCategoryId === selectedCategory?.id)}
+        isForked={selectedCategory ? forkedSharedCategoryIds.includes(selectedCategory.id) : false}
         onToggleFork={handleFork}
         forkPending={toggleForkMutation.isPending}
       />

@@ -66,19 +66,32 @@ export const useWorkspacesByOwner = (token?: string): UseQueryResult<Workspace[]
         throw new Error(UI_COPY.system.authTokenRequired);
       }
 
-      const response = await workspaceApi.getMyWorkspaces(token);
+      const workspaces: Workspace[] = [];
+      let cursor: number | null | undefined = null;
+      let hasNext = true;
 
-      if (!response.success || !response.data) {
-        throw new Error(response.error?.message ?? MESSAGES.workspace.loadFailed);
+      while (hasNext) {
+        const response = await workspaceApi.getMyWorkspaces(token, { cursor, size: 20 });
+
+        if (!response.success || !response.data) {
+          throw new Error(response.error?.message ?? MESSAGES.workspace.loadFailed);
+        }
+
+        workspaces.push(
+          ...response.data.workspaces.map((workspace) =>
+            toWorkspaceEntity({
+              identifier: workspace.identifier,
+              title: workspace.title,
+              modifiedAt: workspace.modifiedAt,
+            }),
+          ),
+        );
+
+        hasNext = response.data.hasNext;
+        cursor = response.data.nextCursor;
       }
 
-      return response.data.workspaces.map((workspace) =>
-        toWorkspaceEntity({
-          identifier: workspace.identifier,
-          title: workspace.title,
-          modifiedAt: workspace.modifiedAt,
-        }),
-      );
+      return workspaces;
     },
     staleTime: 1000 * 30,
     placeholderData: (previousData) => previousData,

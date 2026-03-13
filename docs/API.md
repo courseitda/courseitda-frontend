@@ -74,15 +74,15 @@
 | 기능 | 엔드포인트 | 메서드 | 비고 |
 | --- | --- | --- | --- |
 | 추천 목록 조회 | `/api/community/shared-categories/recommendations` | `GET` | 비회원도 조회 가능 |
-| 제목 검색 | `/api/community/shared-categories/search` | `GET` | `keyword` 쿼리(옵션) |
-| 공유 카테고리 상세 조회 | `/api/community/shared-categories/{id}` | `GET` | 공유 카테고리 상세(장소 포함) |
-| 내 공유 목록 | `/api/community/shared-categories/me` | `GET` | 내가 공유한 카테고리 목록, `Authorization` 필요 |
-| 보관 카테고리 공유 | `/api/community/shared-categories` | `POST` | `{ savedCategoryId }` 바디, `Authorization` 필요 |
-| 공유 카테고리 삭제 | `/api/community/shared-categories/{id}` | `DELETE` | 내가 올린 공유 카테고리 제거, `Authorization` 필요 |
+| 제목 검색 | `/api/shared-categories/search` | `GET` | `keyword` 쿼리(옵션) |
+| 공유 카테고리 상세 조회 | `/api/shared-categories/{id}` | `GET` | 공유 카테고리 상세(장소 포함) |
+| 내 공유 목록 | `/api/me/shared-categories` | `GET` | 내가 공유한 카테고리 목록, `Authorization` 필요 |
+| 보관 카테고리 공유 | `/api/shared-categories` | `POST` | `{ savedCategoryId }` 바디, `Authorization` 필요 |
+| 공유 카테고리 삭제 | `/api/shared-categories/{id}` | `DELETE` | 내가 올린 공유 카테고리 제거, `Authorization` 필요 |
 
 - `communityApi`(`src/services/api/community.service.ts`)가 위 호출을 담당하며, 화면에서는 `useRecommendedSharedCategories`, `useSharedCategorySearch`, `useMySharedCategories`로 사용합니다.
 - 공유 카테고리는 `isImmutableSnapshot: true`로 취급합니다. 즉 publish 이후에는 수정하지 않고, 상세 조회는 publish 시점 장소 목록 스냅샷을 기준으로 표시합니다.
-- 내 공유 목록 응답은 `publishedFromSavedCategoryId`를 통해 어떤 보관 카테고리에서 게시되었는지 추적합니다.
+- 서비스 계층은 백엔드 응답의 `name`, `authorNickname`, `createdAt`, `sharedCategoryPlaces`를 화면용 `title`, `uploader`, `uploadedAt`, `places`로 변환합니다.
 
 ### 내 보관함(보관 카테고리)
 
@@ -90,15 +90,19 @@
 | --- | --- | --- | --- |
 | 내 보관 카테고리 목록 | `/api/me/saved-categories` | `GET` | `Authorization` 필요 |
 | 내 보관 카테고리 상세 | `/api/saved-categories/{savedCategoryId}` | `GET` | `Authorization` 필요, 상세 페이지 진입 시 사용 |
-| 내 보관 카테고리 생성 | `/api/saved-categories` | `POST` | `Authorization` 필요, `name`, `savedCategoryPlaces`, fork 시 `sourceType`, `forkedFromSharedCategoryId`, `sourceAuthorName`, `sourceCategoryTitle` 추가 |
-| 내 보관 카테고리 수정 | `/api/me/saved-categories/{savedCategoryId}` | `PATCH` | `Authorization` 필요, `title`, `places` |
+| 내 보관 카테고리 생성 | `/api/saved-categories` | `POST` | `Authorization` 필요, `name`만 전달 |
+| 보관 카테고리 장소 추가 | `/api/saved-categories/{savedCategoryId}/places` | `POST` | 생성 직후 장소 입력에 사용 |
+| 보관 카테고리 수정 | `/api/saved-categories/{savedCategoryId}` | `PATCH` | `Authorization` 필요, `name` 수정 |
+| 보관 카테고리 장소 동기화 | `/api/saved-categories/{savedCategoryId}/places` | `PATCH` | 장소 추가/수정/삭제를 일괄 반영 |
+| 공유 카테고리 포크 | `/api/saved-categories/fork` | `POST` | `sharedCategoryId` 전달 |
+| 포크 여부 확인 | `/api/me/saved-categories/contains` | `GET` | `sharedCategoryIds` 쿼리 사용 |
 | 내 보관 카테고리 삭제 | `/api/saved-categories/{savedCategoryId}` | `DELETE` | `Authorization` 필요 |
 
 - `myStorageApi`(`src/services/api/my-storage.service.ts`)가 호출을 담당하며, 화면에서는 `useMySavedCategories`, `useCreateSavedCategory`, `useUpdateSavedCategory`, `useDeleteSavedCategory`로 사용합니다.
 - `MyCategoryDetail` 페이지는 목록 응답에 의존하지 않고 `GET /api/saved-categories/{savedCategoryId}`로 상세를 별도 조회합니다.
-- 보관 카테고리는 `sourceType`으로 `manual` 또는 `forked`를 구분합니다.
-- 공유 카테고리를 복사해 생성할 때는 `forkedFromSharedCategoryId`를 함께 보냅니다.
-- 보관 카테고리 응답은 `canPublish`, `publishBlockedReason`을 포함하며, `forked` 카테고리는 장소를 한 번 수정하기 전까지 다시 게시할 수 없습니다.
+- 보관 카테고리는 목록 응답의 `sourceSharedCategoryId` 유무로 `sourceType`을 파생합니다.
+- 공유 카테고리 복사는 `POST /api/saved-categories/fork`, 포크 여부 표시는 `GET /api/me/saved-categories/contains`로 처리합니다.
+- `forked` 카테고리는 장소 동기화 이후에만 다시 게시 가능하므로, 프론트는 `canPublish` 값과 고정 안내 문구를 함께 사용합니다.
 
 ## 6. 에러 처리 & 메시지 규약
 

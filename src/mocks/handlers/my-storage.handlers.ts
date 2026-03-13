@@ -1,39 +1,14 @@
 import { http, HttpResponse } from 'msw';
 import { BackendErrorCode } from '@/shared/utils/error-message';
 import { createSavedCategoryMocks } from '../factories/my-storage.factory';
+import { createSharedSavedCategoryMocks } from '../factories/community.factory';
+import { createRecommendedSharedCategoryMocks } from '../factories/recommended-community.factory';
 
 const savedCategories = createSavedCategoryMocks();
-
-const getTitle = (body: unknown): string => {
-  if (body && typeof body === 'object' && 'title' in body) {
-    const value = (body as { title?: unknown }).title;
-    return typeof value === 'string' ? value.trim() : '';
-  }
-  return '';
-};
-
-const getPlaces = (body: unknown) => {
-  if (body && typeof body === 'object' && 'places' in body) {
-    const value = (body as { places?: unknown }).places;
-    return Array.isArray(value) ? value : [];
-  }
-  return [];
-};
-
-const getSourceType = (body: unknown): 'manual' | 'forked' => {
-  if (body && typeof body === 'object' && 'sourceType' in body) {
-    return (body as { sourceType?: 'manual' | 'forked' }).sourceType === 'forked' ? 'forked' : 'manual';
-  }
-  return 'manual';
-};
-
-const getForkedFromSharedCategoryId = (body: unknown): string | null => {
-  if (body && typeof body === 'object' && 'forkedFromSharedCategoryId' in body) {
-    const value = (body as { forkedFromSharedCategoryId?: unknown }).forkedFromSharedCategoryId;
-    return typeof value === 'string' && value ? value : null;
-  }
-  return null;
-};
+const sharedCategories = [
+  ...createSharedSavedCategoryMocks(),
+  ...createRecommendedSharedCategoryMocks(),
+];
 
 const getName = (body: unknown): string => {
   if (body && typeof body === 'object' && 'name' in body) {
@@ -51,25 +26,60 @@ const getSavedCategoryPlaces = (body: unknown) => {
   return [];
 };
 
-const getSourceAuthorName = (body: unknown): string | null => {
-  if (body && typeof body === 'object' && 'sourceAuthorName' in body) {
-    const value = (body as { sourceAuthorName?: unknown }).sourceAuthorName;
-    return typeof value === 'string' && value ? value : null;
+const getSharedCategoryId = (body: unknown): string => {
+  if (body && typeof body === 'object' && 'sharedCategoryId' in body) {
+    const value = (body as { sharedCategoryId?: unknown }).sharedCategoryId;
+    return typeof value === 'string' ? value : '';
   }
-  return null;
-};
-
-const getSourceCategoryTitle = (body: unknown): string | null => {
-  if (body && typeof body === 'object' && 'sourceCategoryTitle' in body) {
-    const value = (body as { sourceCategoryTitle?: unknown }).sourceCategoryTitle;
-    return typeof value === 'string' && value ? value : null;
-  }
-  return null;
+  return '';
 };
 
 const isAuthorized = (request: Request): boolean => {
   const authorization = request.headers.get('authorization');
   return typeof authorization === 'string' && authorization.toLowerCase().startsWith('bearer ');
+};
+
+const mapPlaces = (places: unknown[], savedCategoryId?: string) =>
+  places.map((place, index) => ({
+    id:
+      typeof place === 'object' && place && 'savedCategoryPlaceId' in place && typeof place.savedCategoryPlaceId === 'string'
+        ? place.savedCategoryPlaceId
+        : `place-${savedCategoryId ?? Date.now()}-${Date.now()}-${index}`,
+    name: typeof place === 'object' && place && 'name' in place && typeof place.name === 'string' ? place.name : '알 수 없는 장소',
+    placeUrl:
+      typeof place === 'object' && place && 'placeUrl' in place && typeof place.placeUrl === 'string'
+        ? place.placeUrl
+        : '',
+    roadAddressName:
+      typeof place === 'object' && place && 'roadAddressName' in place && typeof place.roadAddressName === 'string'
+        ? place.roadAddressName
+        : '',
+    addressName:
+      typeof place === 'object' && place && 'addressName' in place && typeof place.addressName === 'string'
+        ? place.addressName
+        : '',
+    latitude:
+      typeof place === 'object' && place && 'latitude' in place
+        ? Number(place.latitude ?? 0)
+        : 0,
+    longitude:
+      typeof place === 'object' && place && 'longitude' in place
+        ? Number(place.longitude ?? 0)
+        : 0,
+  }));
+
+const paginate = <T>(items: T[], cursorParam: string | null, sizeParam: string | null) => {
+  const size = Number(sizeParam ?? '20');
+  const cursor = cursorParam ? Number(cursorParam) : null;
+  const startIndex = cursor === null || Number.isNaN(cursor) ? 0 : cursor;
+  const pagedItems = items.slice(startIndex, startIndex + size);
+  const nextCursor = startIndex + size < items.length ? startIndex + size : null;
+
+  return {
+    items: pagedItems,
+    hasNext: nextCursor !== null,
+    nextCursor,
+  };
 };
 
 export const myStorageHandlers = [
@@ -88,7 +98,25 @@ export const myStorageHandlers = [
       );
     }
 
-    return HttpResponse.json(savedCategories);
+    const url = new URL(request.url);
+    const paged = paginate(
+      savedCategories.map((category) => ({
+        id: category.id,
+        name: category.title,
+        placeCount: category.placeCount,
+        sourceSharedCategoryId: category.forkedFromSharedCategoryId,
+        canPublish: category.canPublish,
+        modifiedAt: category.modifiedAt,
+      })),
+      url.searchParams.get('cursor'),
+      url.searchParams.get('size'),
+    );
+
+    return HttpResponse.json({
+      savedCategories: paged.items,
+      hasNext: paged.hasNext,
+      nextCursor: paged.nextCursor,
+    });
   }),
 
   // UserRequest: 내 카테고리 상세 페이지는 보관 카테고리 단건 조회 API를 사용한다.
@@ -167,34 +195,18 @@ export const myStorageHandlers = [
       );
     }
 
-    const places = getSavedCategoryPlaces(body).map((place, index) => ({
-      id: `place-${Date.now()}-${index}`,
-      name: typeof place?.name === 'string' ? place.name : '알 수 없는 장소',
-      placeUrl: typeof place?.placeUrl === 'string' ? place.placeUrl : '',
-      roadAddressName: typeof place?.roadAddressName === 'string' ? place.roadAddressName : '',
-      addressName: typeof place?.addressName === 'string' ? place.addressName : '',
-      latitude: Number(place?.latitude ?? 0),
-      longitude: Number(place?.longitude ?? 0),
-    }));
-
-    const sourceType = getSourceType(body);
-    const forkedFromSharedCategoryId = getForkedFromSharedCategoryId(body);
-    const sourceAuthorName = getSourceAuthorName(body);
-    const sourceCategoryTitle = getSourceCategoryTitle(body);
-
     const newCategory = {
       id: `cat-${Date.now()}`,
       title: name,
-      sourceType,
-      forkedFromSharedCategoryId,
-      sourceAuthorName,
-      sourceCategoryTitle,
-      canPublish: sourceType !== 'forked',
-      publishBlockedReason:
-        sourceType === 'forked' ? '공유 카테고리를 복사한 직후에는 다시 게시할 수 없습니다.' : null,
+      sourceType: 'manual' as const,
+      forkedFromSharedCategoryId: null,
+      sourceAuthorName: null,
+      sourceCategoryTitle: null,
+      canPublish: true,
+      publishBlockedReason: null,
       modifiedAt: new Date().toISOString(),
-      placeCount: places.length,
-      places,
+      placeCount: 0,
+      places: [],
     };
 
     savedCategories.unshift(newCategory);
@@ -207,8 +219,8 @@ export const myStorageHandlers = [
     );
   }),
 
-  // UserRequest: 내 보관 카테고리 수정 API를 MSW로 제공
-  http.patch('*/api/me/saved-categories/:savedCategoryId', async ({ params, request }) => {
+  // UserRequest: 보관 카테고리 최초 장소 추가는 전용 places 엔드포인트를 사용한다.
+  http.post('*/api/saved-categories/:savedCategoryId/places', async ({ params, request }) => {
     if (!isAuthorized(request)) {
       return HttpResponse.json(
         {
@@ -238,8 +250,115 @@ export const myStorageHandlers = [
     }
 
     const body = await request.json().catch(() => ({}));
-    const title = getTitle(body);
-    if (!title) {
+    const places = mapPlaces(getSavedCategoryPlaces(body), savedCategoryId);
+    savedCategories[targetIndex] = {
+      ...savedCategories[targetIndex],
+      modifiedAt: new Date().toISOString(),
+      placeCount: places.length,
+      places,
+    };
+
+    return HttpResponse.json({ savedCategoryPlaces: places }, { status: 201 });
+  }),
+
+  // UserRequest: 공유 카테고리 포크는 전용 fork 엔드포인트를 사용한다.
+  http.post('*/api/saved-categories/fork', async ({ request }) => {
+    if (!isAuthorized(request)) {
+      return HttpResponse.json(
+        {
+          type: 'about:blank',
+          title: 'Unauthorized',
+          status: 401,
+          detail: '인증이 필요합니다.',
+          code: BackendErrorCode.MISSING_AUTH_HEADER,
+        },
+        { status: 401 },
+      );
+    }
+
+    const body = await request.json().catch(() => ({}));
+    const sharedCategoryId = getSharedCategoryId(body);
+    if (!sharedCategoryId) {
+      return HttpResponse.json(
+        {
+          type: 'about:blank',
+          title: 'Bad Request',
+          status: 400,
+          detail: '공유 카테고리 ID가 필요합니다.',
+          code: BackendErrorCode.REQUEST_VALIDATION_FAILED,
+        },
+        { status: 400 },
+      );
+    }
+
+    const sourceSharedCategory = sharedCategories.find((category) => category.id === sharedCategoryId);
+    if (!sourceSharedCategory) {
+      return HttpResponse.json(
+        {
+          type: 'about:blank',
+          title: 'Not Found',
+          status: 404,
+          detail: '존재하지 않는 공유 카테고리입니다.',
+          code: BackendErrorCode.SHARED_SAVED_CATEGORY_NOT_FOUND,
+        },
+        { status: 404 },
+      );
+    }
+
+    const newCategory = {
+      id: `cat-${Date.now()}`,
+      title: sourceSharedCategory.title,
+      sourceType: 'forked' as const,
+      forkedFromSharedCategoryId: sharedCategoryId,
+      sourceAuthorName: sourceSharedCategory.uploaderNickname,
+      sourceCategoryTitle: sourceSharedCategory.title,
+      canPublish: false,
+      publishBlockedReason: '공유 카테고리를 복사한 직후에는 다시 게시할 수 없습니다.',
+      modifiedAt: new Date().toISOString(),
+      placeCount: sourceSharedCategory.placeCount,
+      places: sourceSharedCategory.places.map((place) => ({
+        ...place,
+        id: `forked-${sharedCategoryId}-${place.id}`,
+      })),
+    };
+
+    savedCategories.unshift(newCategory);
+    return HttpResponse.json({ id: newCategory.id, name: newCategory.title }, { status: 201 });
+  }),
+
+  // UserRequest: 내 보관 카테고리 수정 API를 MSW로 제공
+  http.patch('*/api/saved-categories/:savedCategoryId', async ({ params, request }) => {
+    if (!isAuthorized(request)) {
+      return HttpResponse.json(
+        {
+          type: 'about:blank',
+          title: 'Unauthorized',
+          status: 401,
+          detail: '인증이 필요합니다.',
+          code: BackendErrorCode.MISSING_AUTH_HEADER,
+        },
+        { status: 401 },
+      );
+    }
+
+    const savedCategoryId = String(params.savedCategoryId ?? '');
+    const targetIndex = savedCategories.findIndex((category) => category.id === savedCategoryId);
+    if (targetIndex < 0) {
+      return HttpResponse.json(
+        {
+          type: 'about:blank',
+          title: 'Not Found',
+          status: 404,
+          detail: '존재하지 않는 보관 카테고리입니다.',
+          code: BackendErrorCode.SAVED_CATEGORY_NOT_FOUND,
+        },
+        { status: 404 },
+      );
+    }
+
+    const body = await request.json().catch(() => ({}));
+    const name = getName(body);
+    if (!name) {
       return HttpResponse.json(
         {
           type: 'about:blank',
@@ -252,22 +371,52 @@ export const myStorageHandlers = [
       );
     }
 
-    const places = getPlaces(body).map((place, index) => ({
-      id:
-        typeof place?.id === 'string'
-          ? place.id
-          : `place-${savedCategoryId}-${Date.now()}-${index}`,
-      name: typeof place?.name === 'string' ? place.name : '알 수 없는 장소',
-      placeUrl: typeof place?.placeUrl === 'string' ? place.placeUrl : '',
-      roadAddressName: typeof place?.roadAddressName === 'string' ? place.roadAddressName : '',
-      addressName: typeof place?.addressName === 'string' ? place.addressName : '',
-      latitude: Number(place?.latitude ?? 0),
-      longitude: Number(place?.longitude ?? 0),
-    }));
-
     savedCategories[targetIndex] = {
       ...savedCategories[targetIndex],
-      title,
+      title: name,
+      modifiedAt: new Date().toISOString(),
+    };
+
+    return HttpResponse.json({
+      id: savedCategories[targetIndex].id,
+      name: savedCategories[targetIndex].title,
+    });
+  }),
+
+  // UserRequest: 보관 카테고리 장소 수정은 places 동기화 엔드포인트를 사용한다.
+  http.patch('*/api/saved-categories/:savedCategoryId/places', async ({ params, request }) => {
+    if (!isAuthorized(request)) {
+      return HttpResponse.json(
+        {
+          type: 'about:blank',
+          title: 'Unauthorized',
+          status: 401,
+          detail: '인증이 필요합니다.',
+          code: BackendErrorCode.MISSING_AUTH_HEADER,
+        },
+        { status: 401 },
+      );
+    }
+
+    const savedCategoryId = String(params.savedCategoryId ?? '');
+    const targetIndex = savedCategories.findIndex((category) => category.id === savedCategoryId);
+    if (targetIndex < 0) {
+      return HttpResponse.json(
+        {
+          type: 'about:blank',
+          title: 'Not Found',
+          status: 404,
+          detail: '존재하지 않는 보관 카테고리입니다.',
+          code: BackendErrorCode.SAVED_CATEGORY_NOT_FOUND,
+        },
+        { status: 404 },
+      );
+    }
+
+    const body = await request.json().catch(() => ({}));
+    const places = mapPlaces(getSavedCategoryPlaces(body), savedCategoryId);
+    savedCategories[targetIndex] = {
+      ...savedCategories[targetIndex],
       canPublish: true,
       publishBlockedReason: null,
       modifiedAt: new Date().toISOString(),
@@ -275,7 +424,35 @@ export const myStorageHandlers = [
       places,
     };
 
-    return HttpResponse.json(savedCategories[targetIndex]);
+    return HttpResponse.json({ savedCategoryPlaces: places });
+  }),
+
+  // UserRequest: 공유 카테고리 포크 여부는 contains 엔드포인트로 확인한다.
+  http.get('*/api/me/saved-categories/contains', ({ request }) => {
+    if (!isAuthorized(request)) {
+      return HttpResponse.json(
+        {
+          type: 'about:blank',
+          title: 'Unauthorized',
+          status: 401,
+          detail: '인증이 필요합니다.',
+          code: BackendErrorCode.MISSING_AUTH_HEADER,
+        },
+        { status: 401 },
+      );
+    }
+
+    const url = new URL(request.url);
+    const sharedCategoryIds = (url.searchParams.get('sharedCategoryIds') ?? '')
+      .split(',')
+      .map((id) => id.trim())
+      .filter(Boolean);
+
+    return HttpResponse.json({
+      forkedSharedCategoryIds: savedCategories
+        .filter((category) => category.forkedFromSharedCategoryId && sharedCategoryIds.includes(category.forkedFromSharedCategoryId))
+        .map((category) => category.forkedFromSharedCategoryId),
+    });
   }),
 
   // UserRequest: 내 보관 카테고리 삭제 API를 MSW로 제공

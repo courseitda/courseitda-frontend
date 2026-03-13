@@ -83,6 +83,8 @@ export interface MyWorkspacesData {
     title: string;        // 워크스페이스 제목
     modifiedAt: string;   // 수정일시 (yyyy-MM-dd'T'HH:mm:ss)
   }>;
+  hasNext: boolean;
+  nextCursor: number | null;
 }
 
 type MyWorkspaceApiResponse = {
@@ -91,6 +93,8 @@ type MyWorkspaceApiResponse = {
     title: string;
     modifiedAt: string;
   }>;
+  hasNext: boolean;
+  nextCursor: number | null;
 };
 
 // 워크스페이스 API 서비스 객체 - 모든 워크스페이스 관련 API 호출을 중앙 관리
@@ -207,14 +211,23 @@ export const workspaceApi = {
    *
    * 백엔드 엔드포인트: GET /api/me/workspaces
    */
-  getMyWorkspaces: async (token: string): Promise<ApiResponse<MyWorkspacesData>> => {
+  getMyWorkspaces: async (
+    token: string,
+    params?: { cursor?: number | null; size?: number },
+  ): Promise<ApiResponse<MyWorkspacesData>> => {
     try {
       const response = await apiClient.get<MyWorkspaceApiResponse>(MY_WORKSPACES_ENDPOINT, {
         headers: { Authorization: `Bearer ${token}` },
+        params: {
+          cursor: params?.cursor ?? undefined,
+          size: params?.size ?? 20,
+        },
       });
 
       return toSuccess<MyWorkspacesData>({
         workspaces: response.data.workspaces,
+        hasNext: response.data.hasNext,
+        nextCursor: response.data.nextCursor,
       });
     } catch (error) {
       return toError(

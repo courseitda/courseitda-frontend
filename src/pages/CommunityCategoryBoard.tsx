@@ -6,8 +6,8 @@ import { toast } from 'sonner';
 import { Upload } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { useSharedCategorySearch } from '@/shared/hooks/use-community';
-import { useMySavedCategories, useToggleSharedCategoryFork } from '@/shared/hooks/use-my-storage';
+import { useSharedCategories } from '@/shared/hooks/use-community';
+import { useForkedSharedCategoryIds, useMySavedCategories, useToggleSharedCategoryFork } from '@/shared/hooks/use-my-storage';
 import { MESSAGES } from '@/shared/constants/messages';
 import type { SharedSavedCategory } from '@/entities/types';
 import { sortSharedCategoriesById } from '@/shared/utils/shared-category-sort';
@@ -24,7 +24,6 @@ const CommunityCategoryBoard = () => {
   const [selectedCategory, setSelectedCategory] = useState<SharedSavedCategory | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);
-  const keyword = '';
   const { data: savedCategories = [] } = useMySavedCategories(token);
   const toggleForkMutation = useToggleSharedCategoryFork(token);
 
@@ -33,7 +32,11 @@ const CommunityCategoryBoard = () => {
     data: sharedCategories = [],
     isLoading: sharedCategoriesLoading,
     error: sharedCategoriesError,
-  } = useSharedCategorySearch(keyword);
+  } = useSharedCategories();
+  const { data: forkedSharedCategoryIds = [] } = useForkedSharedCategoryIds(
+    token,
+    sharedCategories.map((category) => category.id),
+  );
 
   const filteredCategories = useMemo(() => {
     // UserRequest: 카테고리 게시판은 id 오름차순으로 기본 정렬
@@ -41,13 +44,11 @@ const CommunityCategoryBoard = () => {
   }, [sharedCategories]);
   const forkedSharedCategoryMap = useMemo(
     () =>
-      savedCategories.reduce<Record<string, boolean>>((accumulator, savedCategory) => {
-        if (savedCategory.forkedFromSharedCategoryId) {
-          accumulator[savedCategory.forkedFromSharedCategoryId] = true;
-        }
+      forkedSharedCategoryIds.reduce<Record<string, boolean>>((accumulator, sharedCategoryId) => {
+        accumulator[sharedCategoryId] = true;
         return accumulator;
       }, {}),
-    [savedCategories],
+    [forkedSharedCategoryIds],
   );
 
   useEffect(() => {
@@ -148,7 +149,7 @@ const CommunityCategoryBoard = () => {
         open={detailOpen}
         onOpenChange={setDetailOpen}
         category={selectedCategory}
-        isForked={savedCategories.some((savedCategory) => savedCategory.forkedFromSharedCategoryId === selectedCategory?.id)}
+        isForked={selectedCategory ? forkedSharedCategoryIds.includes(selectedCategory.id) : false}
         onToggleFork={handleFork}
         forkPending={toggleForkMutation.isPending}
       />

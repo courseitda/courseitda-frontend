@@ -47,9 +47,47 @@ const toSharedSavedCategoryEntity = (payload: SharedSavedCategoryPayload): Share
 
 export const COMMUNITY_QUERY_KEYS = {
   recommended: ['community', 'shared-categories', 'recommended'] as const,
+  list: (size: number) => ['community', 'shared-categories', 'list', size] as const,
   search: (keyword: string) => ['community', 'shared-categories', 'search', keyword] as const,
   myShared: ['community', 'shared-categories', 'me'] as const,
 };
+
+export const useSharedCategories = (
+  size = 20,
+): UseQueryResult<SharedSavedCategory[], Error> =>
+  useQuery<SharedSavedCategory[], Error>({
+    queryKey: COMMUNITY_QUERY_KEYS.list(size),
+    queryFn: async () => {
+      const categories: SharedSavedCategory[] = [];
+      let cursor: number | null | undefined = null;
+      let hasNext = true;
+
+      while (hasNext) {
+        const response = await communityApi.getSharedCategories({ cursor, size });
+
+        if (!response.success || !response.data) {
+          throw new Error(response.error?.message ?? MESSAGES.sharedCategory.searchLoadFailed);
+        }
+
+        categories.push(
+          ...response.data.sharedCategories.map((category) =>
+            toSharedSavedCategoryEntity(category),
+          ),
+        );
+
+        hasNext = response.data.hasNext;
+        cursor = response.data.nextCursor;
+
+        if (size === 3) {
+          break;
+        }
+      }
+
+      return categories;
+    },
+    staleTime: 1000 * 15,
+    placeholderData: (previousData) => previousData,
+  });
 
 /**
  * 추천 공유 카테고리 목록 조회 커스텀 훅
@@ -83,15 +121,28 @@ export const useSharedCategorySearch = (
   useQuery<SharedSavedCategory[], Error>({
     queryKey: COMMUNITY_QUERY_KEYS.search(keyword),
     queryFn: async () => {
-      const response = await communityApi.searchSharedCategories(keyword);
+      const categories: SharedSavedCategory[] = [];
+      let cursor: number | null | undefined = null;
+      let hasNext = true;
 
-      if (!response.success || !response.data) {
-        throw new Error(response.error?.message ?? MESSAGES.sharedCategory.searchLoadFailed);
+      while (hasNext) {
+        const response = await communityApi.searchSharedCategories(keyword, { cursor, size: 20 });
+
+        if (!response.success || !response.data) {
+          throw new Error(response.error?.message ?? MESSAGES.sharedCategory.searchLoadFailed);
+        }
+
+        categories.push(
+          ...response.data.sharedCategories.map((category) =>
+            toSharedSavedCategoryEntity(category),
+          ),
+        );
+
+        hasNext = response.data.hasNext;
+        cursor = response.data.nextCursor;
       }
 
-      return response.data.sharedCategories.map((category) =>
-        toSharedSavedCategoryEntity(category),
-      );
+      return categories;
     },
     staleTime: 1000 * 15,
     placeholderData: (previousData) => previousData,
@@ -136,13 +187,26 @@ export const useMySharedCategories = (
         throw new Error(UI_COPY.system.authTokenRequired);
       }
 
-      const response = await communityApi.getMySharedCategories(token);
+      const categories: MySharedCategory[] = [];
+      let cursor: number | null | undefined = null;
+      let hasNext = true;
 
-      if (!response.success || !response.data) {
-        throw new Error(response.error?.message ?? MESSAGES.sharedCategory.myPostsLoadFailed);
+      while (hasNext) {
+        const response = await communityApi.getMySharedCategories(token, { cursor, size: 20 });
+
+        if (!response.success || !response.data) {
+          throw new Error(response.error?.message ?? MESSAGES.sharedCategory.myPostsLoadFailed);
+        }
+
+        categories.push(
+          ...response.data.sharedCategories.map((category) => toMySharedCategoryEntity(category)),
+        );
+
+        hasNext = response.data.hasNext;
+        cursor = response.data.nextCursor;
       }
 
-      return response.data.sharedCategories.map((category) => toMySharedCategoryEntity(category));
+      return categories;
     },
     staleTime: 1000 * 15,
     placeholderData: (previousData) => previousData,
