@@ -23,12 +23,16 @@ type SharedCategoryPlaceApiResponse = {
 
 type SharedCategoryApiResponse = {
   id: number | string;
-  name: string;
-  authorNickname: string;
-  createdAt: string;
-  forkCount: number;
-  placeCount: number;
-  sharedCategoryPlaces: SharedCategoryPlaceApiResponse[];
+  name?: string;
+  title?: string;
+  authorNickname?: string;
+  uploaderNickname?: string;
+  createdAt?: string;
+  uploadedAt?: string;
+  forkCount?: number;
+  placeCount?: number;
+  sharedCategoryPlaces?: SharedCategoryPlaceApiResponse[];
+  places?: SharedCategoryPlaceApiResponse[];
 };
 
 type MySharedCategoryApiResponse = {
@@ -37,6 +41,12 @@ type MySharedCategoryApiResponse = {
   createdAt: string;
   forkCount: number;
   placeCount: number;
+};
+
+type SharedCategoriesListApiResponse = {
+  sharedCategories: SharedCategoryApiResponse[];
+  hasNext?: boolean;
+  nextCursor?: number | null;
 };
 
 // 공유 카테고리 목록 조회 응답 데이터 타입 - 백엔드 API 스펙과 일치
@@ -93,26 +103,33 @@ export interface ShareSavedCategoryData {
   };
 }
 
+const adaptSharedCategoryPlaces = (places: SharedCategoryPlaceApiResponse[] | undefined) =>
+  (places ?? []).map((place) => ({
+    id: String(place.id),
+    name: place.name,
+    // UserRequest: 공유 카테고리 장소 응답 필드 확장 반영
+    placeUrl: place.placeUrl,
+    roadAddressName: place.roadAddressName,
+    addressName: place.addressName,
+    latitude: place.latitude,
+    longitude: place.longitude,
+  }));
+
 const adaptSharedCategories = (payload: SharedCategoryApiResponse[]): SharedCategoriesData => ({
-  sharedCategories: payload.map((category) => ({
-    id: String(category.id),
-    title: category.name,
-    uploaderNickname: category.authorNickname,
-    uploadedAt: category.createdAt,
-    isImmutableSnapshot: true,
-    forkCount: category.forkCount,
-    placeCount: category.placeCount,
-    places: category.sharedCategoryPlaces.map((place) => ({
-      id: String(place.id),
-      name: place.name,
-      // UserRequest: 공유 카테고리 장소 응답 필드 확장 반영
-      placeUrl: place.placeUrl,
-      roadAddressName: place.roadAddressName,
-      addressName: place.addressName,
-      latitude: place.latitude,
-      longitude: place.longitude,
-    })),
-  })),
+  sharedCategories: payload.map((category) => {
+    const categoryPlaces = category.sharedCategoryPlaces ?? category.places ?? [];
+
+    return {
+      id: String(category.id),
+      title: category.name ?? category.title ?? '',
+      uploaderNickname: category.authorNickname ?? category.uploaderNickname ?? '',
+      uploadedAt: category.createdAt ?? category.uploadedAt ?? new Date().toISOString(),
+      isImmutableSnapshot: true,
+      forkCount: category.forkCount ?? 0,
+      placeCount: category.placeCount ?? categoryPlaces.length,
+      places: adaptSharedCategoryPlaces(categoryPlaces),
+    };
+  }),
   hasNext: false,
   nextCursor: null,
 });
@@ -132,6 +149,21 @@ const adaptMySharedCategories = (payload: MySharedCategoryApiResponse[]): MyShar
   nextCursor: null,
 });
 
+// UserRequest: 공유 카테고리 목록 API는 배열/페이지네이션 객체 응답 모두 허용하여 게시판 진입 오류를 방지한다.
+const normalizeSharedCategoriesResponse = (
+  payload: SharedCategoryApiResponse[] | SharedCategoriesListApiResponse,
+): SharedCategoriesData => {
+  if (Array.isArray(payload)) {
+    return adaptSharedCategories(payload);
+  }
+
+  return {
+    ...adaptSharedCategories(payload.sharedCategories ?? []),
+    hasNext: payload.hasNext ?? false,
+    nextCursor: payload.nextCursor ?? null,
+  };
+};
+
 // 커뮤니티 API 서비스 객체 - 모든 커뮤니티 관련 API 호출을 service 계층에서 중앙 관리
 export const communityApi = {
   /**
@@ -145,22 +177,15 @@ export const communityApi = {
     params?: { cursor?: number | null; size?: number },
   ): Promise<ApiResponse<SharedCategoriesData>> => {
     try {
-      const response = await apiClient.get<{
-        sharedCategories: SharedCategoryApiResponse[];
-        hasNext: boolean;
-        nextCursor: number | null;
-      }>(SHARED_CATEGORY_ENDPOINT, {
+      const response = await apiClient.get<SharedCategoryApiResponse[] | SharedCategoriesListApiResponse>(
+        SHARED_CATEGORY_ENDPOINT,
+        {
         params: {
           cursor: params?.cursor ?? undefined,
           size: params?.size ?? 20,
         },
       });
-
-      return toSuccess<SharedCategoriesData>({
-        ...adaptSharedCategories(response.data.sharedCategories),
-        hasNext: response.data.hasNext,
-        nextCursor: response.data.nextCursor,
-      });
+      return toSuccess<SharedCategoriesData>(normalizeSharedCategoriesResponse(response.data));
     } catch (error) {
       return toError(
         error,

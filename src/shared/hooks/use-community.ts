@@ -62,8 +62,15 @@ export const useSharedCategories = (
       const categories: SharedSavedCategory[] = [];
       let cursor: number | null | undefined = null;
       let hasNext = true;
+      const visitedCursors = new Set<number | null>();
 
       while (hasNext) {
+        // 잘못된 nextCursor 반복 응답으로 인한 무한 조회를 방지한다.
+        if (visitedCursors.has(cursor)) {
+          break;
+        }
+        visitedCursors.add(cursor);
+
         const response = await communityApi.getSharedCategories({ cursor, size });
 
         if (!response.success || !response.data) {
@@ -76,8 +83,16 @@ export const useSharedCategories = (
           ),
         );
 
-        hasNext = response.data.hasNext;
-        cursor = response.data.nextCursor;
+        if (response.data.sharedCategories.length === 0 || response.data.nextCursor === null) {
+          hasNext = false;
+          cursor = null;
+        } else if (response.data.nextCursor === cursor) {
+          hasNext = false;
+          cursor = null;
+        } else {
+          hasNext = response.data.hasNext;
+          cursor = response.data.nextCursor;
+        }
 
         if (!fetchAll) {
           break;
@@ -125,8 +140,15 @@ export const useSharedCategorySearch = (
       const categories: SharedSavedCategory[] = [];
       let cursor: number | null | undefined = null;
       let hasNext = true;
+      const visitedCursors = new Set<number | null>();
 
       while (hasNext) {
+        // 검색 페이지도 반복 커서 응답이 오면 즉시 종료해 오류 전파를 막는다.
+        if (visitedCursors.has(cursor)) {
+          break;
+        }
+        visitedCursors.add(cursor);
+
         const response = await communityApi.searchSharedCategories(keyword, { cursor, size: 20 });
 
         if (!response.success || !response.data) {
@@ -139,8 +161,16 @@ export const useSharedCategorySearch = (
           ),
         );
 
-        hasNext = response.data.hasNext;
-        cursor = response.data.nextCursor;
+        if (response.data.sharedCategories.length === 0 || response.data.nextCursor === null) {
+          hasNext = false;
+          cursor = null;
+        } else if (response.data.nextCursor === cursor) {
+          hasNext = false;
+          cursor = null;
+        } else {
+          hasNext = response.data.hasNext;
+          cursor = response.data.nextCursor;
+        }
       }
 
       return categories;

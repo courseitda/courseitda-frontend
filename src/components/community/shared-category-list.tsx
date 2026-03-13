@@ -40,7 +40,10 @@ const SharedCategoryList = ({
         <p className="text-sm">{UI_COPY.community.emptySearchResult}</p>
       </div>
     ) : (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 items-start auto-rows-min">
+      <div
+        className="grid gap-1.5 items-start auto-rows-min"
+        style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}
+      >
         {categories.map((category) => {
           const isForked = !!forkedSharedCategoryMap[category.id];
           const forkMetaClassName = isForked ? 'text-violet-600' : 'text-muted-foreground/70';
