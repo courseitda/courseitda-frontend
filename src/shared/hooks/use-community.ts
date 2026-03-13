@@ -50,6 +50,8 @@ export const COMMUNITY_QUERY_KEYS = {
   list: (size: number) => ['community', 'shared-categories', 'list', size] as const,
   search: (keyword: string) => ['community', 'shared-categories', 'search', keyword] as const,
   myShared: ['community', 'shared-categories', 'me'] as const,
+  detail: (sharedCategoryId: string | null) =>
+    ['community', 'shared-categories', 'detail', sharedCategoryId] as const,
 };
 
 export const useSharedCategories = (
@@ -241,4 +243,36 @@ export const useMySharedCategories = (
     },
     staleTime: 1000 * 15,
     placeholderData: (previousData) => previousData,
+  });
+
+/**
+ * 공유 카테고리 상세 조회 커스텀 훅
+ * UserRequest: 공유 카테고리 상세 모달은 열릴 때 상세 API를 호출해 장소 목록/마커를 항상 최신 상태로 표시
+ */
+export const useSharedCategoryDetail = (
+  sharedCategoryId: string | null,
+  enabled = true,
+): UseQueryResult<SharedSavedCategory | null, Error> =>
+  useQuery<SharedSavedCategory | null, Error>({
+    queryKey: COMMUNITY_QUERY_KEYS.detail(sharedCategoryId),
+    enabled: enabled && !!sharedCategoryId,
+    queryFn: async () => {
+      if (!sharedCategoryId) {
+        return null;
+      }
+
+      const response = await communityApi.getSharedCategoryDetail(sharedCategoryId);
+
+      if (!response.success || !response.data) {
+        throw new Error(response.error?.message ?? MESSAGES.sharedCategory.fetchDetailFailed);
+      }
+
+      const detail = response.data.sharedCategories[0];
+      if (!detail) {
+        throw new Error(MESSAGES.sharedCategory.fetchDetailFailed);
+      }
+
+      return toSharedSavedCategoryEntity(detail);
+    },
+    staleTime: 1000 * 15,
   });

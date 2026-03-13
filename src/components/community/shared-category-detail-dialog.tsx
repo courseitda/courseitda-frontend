@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,6 +15,9 @@ import { Calendar, GitFork, MapPin, User as UserIcon } from 'lucide-react';
 import type { SharedSavedCategory } from '@/entities/types';
 import { CategoryPlacesMap } from '@/components/map/category-places-map';
 import { UI_COPY } from '@/shared/constants/ui-copy';
+import { useSharedCategoryDetail } from '@/shared/hooks/use-community';
+import { Spinner } from '@/components/ui/spinner';
+import { MESSAGES } from '@/shared/constants/messages';
 
 type SharedCategoryDetailDialogProps = {
   open: boolean;
@@ -56,6 +60,12 @@ const SharedCategoryDetailDialog = ({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [displayForkCount, setDisplayForkCount] = useState(0);
   const [displayIsForked, setDisplayIsForked] = useState(isForked);
+  const {
+    data: detailCategory,
+    isLoading: detailLoading,
+    error: detailError,
+  } = useSharedCategoryDetail(category?.id ?? null, open);
+  const displayCategory = detailCategory ?? category;
 
   useEffect(() => {
     // UserRequest: 팝업 재진입 시 이전 선택 상태를 초기화
@@ -73,10 +83,23 @@ const SharedCategoryDetailDialog = ({
     setDisplayForkCount(category?.forkCount ?? 0);
   }, [category?.forkCount, category?.id]);
 
-  const runToggleFork = async () => {
-    if (!category || !onToggleFork || forkPending) return;
+  useEffect(() => {
+    // UserRequest: 공유 카테고리 상세 조회 실패를 모달 내부에서 즉시 안내한다.
+    if (detailError && open) {
+      toast.error(detailError.message || MESSAGES.sharedCategory.fetchDetailFailed);
+    }
+  }, [detailError, open]);
 
-    const result = await onToggleFork(category);
+  useEffect(() => {
+    if (detailCategory) {
+      setDisplayForkCount(detailCategory.forkCount);
+    }
+  }, [detailCategory]);
+
+  const runToggleFork = async () => {
+    if (!displayCategory || !onToggleFork || forkPending) return;
+
+    const result = await onToggleFork(displayCategory);
     if (result === 'forked') {
       setDisplayIsForked(true);
       setDisplayForkCount((previous) => previous + 1);
@@ -106,25 +129,25 @@ const SharedCategoryDetailDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-center">{category?.title}</DialogTitle>
+          <DialogTitle className="text-center">{displayCategory?.title}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground flex-wrap">
             <span className="flex items-center gap-1.5">
               <UserIcon className="w-4 h-4 text-primary" />
-              {category?.uploader}
+              {displayCategory?.uploader}
             </span>
-            {category?.uploadedAt && (
+            {displayCategory?.uploadedAt && (
               <span className="flex items-center gap-1.5">
                 <Calendar className="w-4 h-4 text-primary" />
-                {new Date(category.uploadedAt).toLocaleDateString('ko-KR', {
+                {new Date(displayCategory.uploadedAt).toLocaleDateString('ko-KR', {
                   year: 'numeric',
                   month: 'short',
                   day: 'numeric',
                 })}
               </span>
             )}
-            {category && onToggleFork && (
+            {displayCategory && onToggleFork && (
               <button
                 type="button"
                 onClick={() => void handleForkClick()}
@@ -136,7 +159,7 @@ const SharedCategoryDetailDialog = ({
                     : 'border-primary/30 bg-primary/10 text-primary hover:scale-105 hover:bg-primary/15',
                   'disabled:cursor-not-allowed disabled:opacity-60',
                 ].join(' ')}
-                aria-label={displayIsForked ? `${category.title} fork 해제` : `${category.title} 내 카테고리로 복사`}
+                aria-label={displayIsForked ? `${displayCategory.title} fork 해제` : `${displayCategory.title} 내 카테고리로 복사`}
                 title={displayIsForked ? 'fork 해제' : '내 카테고리로 복사'}
               >
                 <GitFork className="h-4 w-4" />
@@ -144,19 +167,25 @@ const SharedCategoryDetailDialog = ({
               </button>
             )}
           </div>
-          <SharedCategoryMap open={open} places={category?.places ?? []} focusedPlaceId={focusedPlaceId} />
+          {detailLoading && !detailCategory ? (
+            <div className="h-64 rounded-lg border border-border bg-muted/20 flex items-center justify-center">
+              <Spinner className="w-8 h-8" />
+            </div>
+          ) : (
+            <SharedCategoryMap open={open} places={displayCategory?.places ?? []} focusedPlaceId={focusedPlaceId} />
+          )}
           <div className="space-y-2">
             <p className="text-sm font-semibold">
               장소 목록
-              {category?.placeCount !== undefined && (
+              {displayCategory?.placeCount !== undefined && (
                 <span className="ml-1 text-xs text-muted-foreground">
-                  ({category.placeCount}곳)
+                  ({displayCategory.placeCount}곳)
                 </span>
               )}
             </p>
             {/* UserRequest: 장소 목록은 3개까지만 보이고 이후는 스크롤로 확인 */}
             <div className="border border-border rounded-lg divide-y divide-border max-h-48 overflow-y-auto">
-              {category?.places.map((place) => (
+              {displayCategory?.places.map((place) => (
                 <button
                   key={place.id}
                   type="button"
@@ -179,7 +208,7 @@ const SharedCategoryDetailDialog = ({
           <AlertDialogHeader>
             <AlertDialogTitle>{UI_COPY.sharedCategoryDetail.unforkDialog.title}</AlertDialogTitle>
             <AlertDialogDescription>
-              {category ? UI_COPY.sharedCategoryDetail.unforkDialog.description(category.title) : ''}
+              {displayCategory ? UI_COPY.sharedCategoryDetail.unforkDialog.description(displayCategory.title) : ''}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

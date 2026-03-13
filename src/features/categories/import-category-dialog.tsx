@@ -11,7 +11,7 @@ import { ChevronDown, Folder, FolderDown, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { useMySavedCategories } from '@/shared/hooks/use-my-storage';
+import { useMySavedCategories, useSavedCategoryPlaces } from '@/shared/hooks/use-my-storage';
 import { categoryApi, placeApi } from '@/services/api';
 import { getCategoryColors, type PaletteMode } from '@/shared/constants/colors';
 import { useSettingsStore } from '@/shared/stores/settings-store';
@@ -52,6 +52,22 @@ const toImportTarget = (category: SavedCategory): ImportTarget => ({
   })),
 });
 
+const toImportTargetWithPlaces = (
+  category: SavedCategory,
+  places: SavedCategory['places'],
+): ImportTarget => ({
+  id: category.id,
+  title: category.title,
+  places: places.map((place) => ({
+    name: place.name,
+    placeUrl: place.placeUrl,
+    roadAddressName: place.roadAddressName ?? null,
+    addressName: place.addressName,
+    latitude: place.latitude,
+    longitude: place.longitude,
+  })),
+});
+
 // UserRequest: 보관함 카테고리를 워크스페이스로 불러오는 다이얼로그 추가
 export const ImportCategoryDialog = ({
   open,
@@ -70,10 +86,20 @@ export const ImportCategoryDialog = ({
     isLoading: savedLoading,
     error: savedError,
   } = useMySavedCategories(token);
+  const {
+    data: expandedCategoryPlaces = [],
+    isLoading: savedCategoryPlacesLoading,
+    error: savedCategoryPlacesError,
+  } = useSavedCategoryPlaces(token, expandedCategoryId);
 
   useEffect(() => {
     if (savedError) toast.error(savedError.message);
   }, [savedError]);
+
+  useEffect(() => {
+    // UserRequest: 보관 카테고리 펼침 시 상세 API 조회 실패를 즉시 안내한다.
+    if (savedCategoryPlacesError) toast.error(savedCategoryPlacesError.message);
+  }, [savedCategoryPlacesError]);
 
   const nextColor = useMemo(() => {
     const palette = getCategoryColors(colorPaletteMode as PaletteMode);
@@ -130,7 +156,12 @@ export const ImportCategoryDialog = ({
 
   const handleImport = (category: SavedCategory) => {
     if (importMutation.isPending) return;
-    importMutation.mutate(toImportTarget(category));
+    // UserRequest: 불러오기 창에서도 상세 API 장소 목록을 기준으로 가져오기 대상을 생성한다.
+    const target =
+      expandedCategoryId === category.id && expandedCategoryPlaces.length > 0
+        ? toImportTargetWithPlaces(category, expandedCategoryPlaces)
+        : toImportTarget(category);
+    importMutation.mutate(target);
   };
 
   const handleTogglePlaces = (categoryId: string) => {
@@ -195,17 +226,24 @@ export const ImportCategoryDialog = ({
                 </CardHeader>
                 {expandedCategoryId === category.id && (
                   <div className="px-4 pb-4 pt-2 border-t border-border/60">
-                    <div className="space-y-2">
-                      {category.places.map((place) => (
-                        <div key={place.id} className="flex flex-col gap-0.5">
-                          <div className="flex items-center gap-1.5 text-sm font-medium">
-                            <MapPin className="w-4 h-4 text-primary" />
-                            <span className="flex-1 min-w-0 break-words leading-snug">{place.name}</span>
+                    {/* UserRequest: 보관 카테고리 클릭 시 상세 API 장소 목록을 펼쳐서 표시한다. */}
+                    {savedCategoryPlacesLoading ? (
+                      <div className="py-4 text-sm text-muted-foreground">{UI_COPY.common.loading}</div>
+                    ) : expandedCategoryPlaces.length === 0 ? (
+                      <div className="py-4 text-sm text-muted-foreground">{UI_COPY.importCategoryDialog.savedEmpty}</div>
+                    ) : (
+                      <div className="space-y-2">
+                        {expandedCategoryPlaces.map((place) => (
+                          <div key={place.id} className="flex flex-col gap-0.5">
+                            <div className="flex items-center gap-1.5 text-sm font-medium">
+                              <MapPin className="w-4 h-4 text-primary" />
+                              <span className="flex-1 min-w-0 break-words leading-snug">{place.name}</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground break-words leading-snug">{place.addressName}</p>
                           </div>
-                          <p className="text-xs text-muted-foreground break-words leading-snug">{place.addressName}</p>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </Card>
