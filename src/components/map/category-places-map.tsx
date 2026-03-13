@@ -20,10 +20,33 @@ type CategoryPlacesMapProps = {
   open: boolean;
   places: CategoryMapPlace[];
   focusedPlaceId: string | null;
+  searchPlaces?: CategoryMapPlace[];
+  highlightedSearchPlaceId?: string | null;
 };
 
+const MAIN_MARKER_PREFIX = 'main:';
+const SEARCH_MARKER_PREFIX = 'search:';
+
+// 워크스페이스 상세보기 지도와 동일한 원형점 형태의 마커 HTML 생성
+const createCircleMarkerContent = (backgroundColor: string, borderColor: string, size: number) => `
+  <div style="
+    width: ${size}px;
+    height: ${size}px;
+    background-color: ${backgroundColor};
+    border: 2px solid ${borderColor};
+    border-radius: 50%;
+    box-shadow: var(--map-marker-shadow);
+  "></div>
+`;
+
 // UserRequest: 내 카테고리/공유 카테고리 상세 지도 로직을 공통 컴포넌트로 통합
-export const CategoryPlacesMap = ({ open, places, focusedPlaceId }: CategoryPlacesMapProps) => {
+export const CategoryPlacesMap = ({
+  open,
+  places,
+  focusedPlaceId,
+  searchPlaces = [],
+  highlightedSearchPlaceId = null,
+}: CategoryPlacesMapProps) => {
   const naverMapKeyId = useSettingsStore((state) => state.naverMapKeyId);
   const { ready, error } = useNaverLoader(naverMapKeyId);
   const mapRef = useRef<HTMLDivElement>(null);
@@ -97,8 +120,11 @@ export const CategoryPlacesMap = ({ open, places, focusedPlaceId }: CategoryPlac
     const validPlaces = places.filter(
       (place) => Number.isFinite(place.latitude) && Number.isFinite(place.longitude),
     );
+    const validSearchPlaces = searchPlaces.filter(
+      (place) => Number.isFinite(place.latitude) && Number.isFinite(place.longitude),
+    );
 
-    if (validPlaces.length === 0) {
+    if (validPlaces.length === 0 && validSearchPlaces.length === 0) {
       map.panTo(new naver.maps.LatLng(37.5665, 126.9780));
       map.setZoom(13);
       return;
@@ -164,7 +190,68 @@ export const CategoryPlacesMap = ({ open, places, focusedPlaceId }: CategoryPlac
       // UserRequest: 내 카테고리 상세 지도도 워크스페이스 상세와 동일하게 마커 클릭 시 장소명을 즉시 표시한다.
       naver.maps.Event.addListener(marker, 'click', openInfoWindow);
 
-      markerMapRef.current.set(place.id, {
+      markerMapRef.current.set(`${MAIN_MARKER_PREFIX}${place.id}`, {
+        marker,
+        position,
+        openInfoWindow,
+      });
+      bounds.extend(position);
+    });
+
+    // UserRequest: 카테고리 상세 검색 결과는 워크스페이스 지도와 같은 원형점으로 표시하고 선택한 결과만 파란색으로 강조한다.
+    validSearchPlaces.forEach((place) => {
+      const position = new naver.maps.LatLng(place.latitude, place.longitude);
+      const isHighlighted = highlightedSearchPlaceId === place.id;
+      const marker = new naver.maps.Marker({
+        position,
+        map,
+        icon: {
+          content: createCircleMarkerContent(
+            isHighlighted ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))',
+            isHighlighted ? 'hsl(var(--card))' : 'hsl(var(--card))',
+            18,
+          ),
+          anchor: new naver.maps.Point(9, 9),
+        },
+        zIndex: isHighlighted ? 90 : 40,
+      });
+
+      const createInfoWindowElement = () => {
+        const container = document.createElement('div');
+        const root = createRoot(container);
+        flushSync(() => {
+          root.render(
+            <PlaceInfoWindow
+              placeName={place.name}
+              isRepresentative={false}
+              onToggleRepresentative={() => undefined}
+              showRepresentativeAction={false}
+            />,
+          );
+        });
+        return container;
+      };
+
+      const openInfoWindow = () => {
+        if (currentInfoWindowRef.current) {
+          currentInfoWindowRef.current.close();
+          currentInfoWindowRef.current = null;
+        }
+
+        const infoWindow = new naver.maps.InfoWindow({
+          content: createInfoWindowElement(),
+          borderWidth: 0,
+          backgroundColor: 'transparent',
+          pixelOffset: new naver.maps.Point(0, -18),
+          disableAnchor: true,
+        });
+        infoWindow.open(map, marker);
+        currentInfoWindowRef.current = infoWindow;
+      };
+
+      naver.maps.Event.addListener(marker, 'click', openInfoWindow);
+      markersRef.current.push(marker);
+      markerMapRef.current.set(`${SEARCH_MARKER_PREFIX}${place.id}`, {
         marker,
         position,
         openInfoWindow,
@@ -174,13 +261,13 @@ export const CategoryPlacesMap = ({ open, places, focusedPlaceId }: CategoryPlac
 
     naver.maps.Event.trigger(map, 'resize');
     map.fitBounds(bounds);
-  }, [open, ready, places]);
+  }, [open, ready, places, searchPlaces, highlightedSearchPlaceId]);
 
   useEffect(() => {
     if (!open || !ready || !mapInstanceRef.current || !window.naver || !window.naver.maps) return;
     if (!focusedPlaceId) return;
 
-    const target = markerMapRef.current.get(focusedPlaceId);
+    const target = markerMapRef.current.get(`${MAIN_MARKER_PREFIX}${focusedPlaceId}`);
     if (!target) return;
 
     const { naver } = window;
@@ -196,6 +283,25 @@ export const CategoryPlacesMap = ({ open, places, focusedPlaceId }: CategoryPlac
       openInfoTimeoutRef.current = null;
     }, 140);
   }, [open, ready, focusedPlaceId]);
+
+  useEffect(() => {
+    if (!open || !ready || !mapInstanceRef.current || !window.naver || !window.naver.maps) return;
+    if (!highlightedSearchPlaceId) return;
+
+    const target = markerMapRef.current.get(`${SEARCH_MARKER_PREFIX}${highlightedSearchPlaceId}`);
+    if (!target) return;
+
+    const map = mapInstanceRef.current;
+    map.panTo(target.position);
+    if (openInfoTimeoutRef.current) {
+      window.clearTimeout(openInfoTimeoutRef.current);
+      openInfoTimeoutRef.current = null;
+    }
+    openInfoTimeoutRef.current = window.setTimeout(() => {
+      target.openInfoWindow();
+      openInfoTimeoutRef.current = null;
+    }, 140);
+  }, [open, ready, highlightedSearchPlaceId]);
 
   useEffect(() => {
     if (!open) {

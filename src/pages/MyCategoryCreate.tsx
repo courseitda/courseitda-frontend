@@ -36,6 +36,7 @@ const MyCategoryCreate = () => {
   const [placeResults, setPlaceResults] = useState<SearchedPlace[]>([]);
   const [placeSearchLoading, setPlaceSearchLoading] = useState(false);
   const [selectedPlaces, setSelectedPlaces] = useState<SearchedPlace[]>([]);
+  const [highlightedSearchPlaceId, setHighlightedSearchPlaceId] = useState<string | null>(null);
   const [leaveAlertOpen, setLeaveAlertOpen] = useState(false);
   const [pendingNavigationAction, setPendingNavigationAction] = useState<(() => void) | null>(null);
 
@@ -107,6 +108,7 @@ const MyCategoryCreate = () => {
       setPlaceResults([]);
     } else {
       setPlaceResults(searchedPlaces ?? []);
+      setHighlightedSearchPlaceId(null);
       if (!searchedPlaces || searchedPlaces.length === 0) {
         toast.info(UI_COPY.myCategory.placeSearchNoResult);
       }
@@ -129,6 +131,18 @@ const MyCategoryCreate = () => {
     if (focusedPlaceId === placeId) {
       setFocusedPlaceId(null);
     }
+  };
+
+  const handleFocusPlace = (placeId: string) => {
+    // UserRequest: 생성 페이지 장소 목록 클릭 시 해당 장소로 이동하면서 이름표를 함께 표시한다.
+    setHighlightedSearchPlaceId(null);
+    setFocusedPlaceId(placeId);
+  };
+
+  const handleSelectSearchPlace = (placeId: string) => {
+    // UserRequest: 생성 페이지 검색 결과 클릭 시 해당 장소 점만 파란색으로 강조하고 이름표를 표시한다.
+    setFocusedPlaceId(null);
+    setHighlightedSearchPlaceId(placeId);
   };
 
   const handleCreateCategory = async () => {
@@ -218,6 +232,13 @@ const MyCategoryCreate = () => {
               longitude: place.longitude,
             }))}
             focusedPlaceId={focusedPlaceId}
+            searchPlaces={placeResults.map((place) => ({
+              id: place.id,
+              name: place.name,
+              latitude: place.latitude,
+              longitude: place.longitude,
+            }))}
+            highlightedSearchPlaceId={highlightedSearchPlaceId}
           />
         </section>
 
@@ -258,15 +279,21 @@ const MyCategoryCreate = () => {
                       <Card key={place.id} className="border-border bg-card shadow-sm">
                         <div className="flex items-center">
                           <div className="flex-1 min-w-0">
-                            <CardHeader className="flex-row items-center space-y-0 py-1.5">
-                              <CardTitle className="text-base flex flex-1 items-center gap-1.5 truncate">
-                                <MapPin className="w-4 h-4 shrink-0 text-primary" />
-                                <span className="truncate">{place.name}</span>
-                              </CardTitle>
-                            </CardHeader>
-                            <CardContent className="pt-0 pb-1.5">
-                              <p className="text-sm text-muted-foreground truncate">{place.addressName}</p>
-                            </CardContent>
+                            <button
+                              type="button"
+                              className="w-full text-left"
+                              onClick={() => handleFocusPlace(place.id)}
+                            >
+                              <CardHeader className="flex-row items-center space-y-0 py-1.5">
+                                <CardTitle className="text-base flex flex-1 items-center gap-1.5 truncate">
+                                  <MapPin className="w-4 h-4 shrink-0 text-primary" />
+                                  <span className="truncate">{place.name}</span>
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent className="pt-0 pb-1.5">
+                                <p className="text-sm text-muted-foreground truncate">{place.addressName}</p>
+                              </CardContent>
+                            </button>
                           </div>
                           <Button
                             size="icon"
@@ -315,7 +342,13 @@ const MyCategoryCreate = () => {
                   <div className="max-h-[24vh] space-y-1 overflow-y-auto pr-1 md:max-h-[220px]">
                     {placeResults.map((place) => (
                       <Card key={place.id} className="border-border bg-card shadow-sm">
-                        <div className="flex items-start gap-2.5 p-3">
+                        <button
+                          type="button"
+                          className={`flex w-full items-start gap-2.5 p-3 text-left transition-colors ${
+                            highlightedSearchPlaceId === place.id ? 'bg-primary/5' : ''
+                          }`}
+                          onClick={() => handleSelectSearchPlace(place.id)}
+                        >
                           <div className="mt-0.5 shrink-0 text-primary">
                             <MapPin className="w-4 h-4" />
                           </div>
@@ -327,14 +360,17 @@ const MyCategoryCreate = () => {
                             size="sm"
                             variant={selectedPlaces.some((item) => item.id === place.id) ? 'secondary' : 'outline'}
                             className="shrink-0"
-                            onClick={() => handleAddPlace(place)}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleAddPlace(place);
+                            }}
                             disabled={selectedPlaces.some((item) => item.id === place.id)}
                           >
                             {selectedPlaces.some((item) => item.id === place.id)
                               ? UI_COPY.myCategory.detailDialog.addCompleted
                               : UI_COPY.myCategory.editorDialog.addPlaceAction}
                           </Button>
-                        </div>
+                        </button>
                       </Card>
                     ))}
                   </div>
