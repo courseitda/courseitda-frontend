@@ -270,7 +270,7 @@ const MyCategoryDetail = () => {
             </Button>
           </div>
         )}
-        rightContent={<UserMenu />}
+        rightContent={<UserMenu currentMyCategoryLabel={category.title} />}
       />
 
       <main className="space-y-2.5 pb-4 md:space-y-2.5 md:pb-4">

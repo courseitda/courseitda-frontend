@@ -10,16 +10,17 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useUserDropdown, useUserNickname } from '@/shared/hooks/use-user-info';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { FileText, Folder, House, LayoutGrid, LogOut, Menu, User as UserIcon } from 'lucide-react';
+import { CornerDownRight, FileText, Folder, House, LayoutGrid, LogOut, Menu, User as UserIcon } from 'lucide-react';
 import { useState } from 'react';
 import { Separator } from '@/components/ui/separator';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 
 type UserMenuProps = {
   onBeforeNavigate?: (proceed: () => void) => void;
+  currentMyCategoryLabel?: string;
 };
 
-const UserMenu = ({ onBeforeNavigate }: UserMenuProps) => {
+const UserMenu = ({ onBeforeNavigate, currentMyCategoryLabel }: UserMenuProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, logout } = useAuthStore();
@@ -67,6 +68,8 @@ const UserMenu = ({ onBeforeNavigate }: UserMenuProps) => {
   };
 
   const isActive = (path: string) => location.pathname === path;
+  const isMyCategoryDetailActive = location.pathname.startsWith('/my-category/');
+  const isMyCategorySectionActive = location.pathname === '/my-category';
   const menuItemClassName = (active: boolean) =>
     [
       'w-full justify-start gap-2 transition-all duration-150',
@@ -125,12 +128,29 @@ const UserMenu = ({ onBeforeNavigate }: UserMenuProps) => {
               </Button>
               <Button
                 variant="ghost"
-                className={menuItemClassName(isActive('/my-category'))}
+                className={menuItemClassName(isMyCategorySectionActive)}
                 onClick={() => handleNavigate('/my-category')}
               >
                 <Folder className="w-4 h-4" />
                 {UI_COPY.userMenu.myCategory}
               </Button>
+              {currentMyCategoryLabel && (
+                <button
+                  type="button"
+                  className={[
+                    'flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent/60',
+                    isMyCategoryDetailActive ? 'bg-primary/10 text-primary' : 'text-primary',
+                  ].join(' ')}
+                  onClick={() => {
+                    setOpen(false);
+                  }}
+                >
+                  {/* UserRequest: 카테고리 상세보기에서는 햄버거 메뉴에 현재 카테고리를 하위 페이지처럼 표시한다. */}
+                  <CornerDownRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <Folder className="h-4 w-4 shrink-0" />
+                  <span className="truncate font-medium">{currentMyCategoryLabel}</span>
+                </button>
+              )}
             </div>
 
             <Separator />
