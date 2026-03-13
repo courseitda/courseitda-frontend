@@ -1,15 +1,5 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Calendar, GitFork, MapPin, User as UserIcon } from 'lucide-react';
 import type { SharedSavedCategory } from '@/entities/types';
@@ -57,7 +47,6 @@ const SharedCategoryDetailDialog = ({
   forkPending = false,
 }: SharedCategoryDetailDialogProps) => {
   const [focusedPlaceId, setFocusedPlaceId] = useState<string | null>(null);
-  const [confirmOpen, setConfirmOpen] = useState(false);
   const [displayForkCount, setDisplayForkCount] = useState(0);
   const [displayIsForked, setDisplayIsForked] = useState(isForked);
   const {
@@ -71,7 +60,6 @@ const SharedCategoryDetailDialog = ({
     // UserRequest: 팝업 재진입 시 이전 선택 상태를 초기화
     if (open) {
       setFocusedPlaceId(null);
-      setConfirmOpen(false);
     }
   }, [open, category?.id]);
 
@@ -105,23 +93,13 @@ const SharedCategoryDetailDialog = ({
       setDisplayForkCount((previous) => previous + 1);
       return;
     }
-    if (result === 'unforked') {
-      setDisplayIsForked(false);
-      setDisplayForkCount((previous) => Math.max(0, previous - 1));
-    }
   };
 
   const handleForkClick = async () => {
     if (displayIsForked) {
-      setConfirmOpen(true);
       return;
     }
 
-    await runToggleFork();
-  };
-
-  const handleConfirmUnfork = async () => {
-    setConfirmOpen(false);
     await runToggleFork();
   };
 
@@ -159,8 +137,8 @@ const SharedCategoryDetailDialog = ({
                     : 'border-primary/30 bg-primary/10 text-primary hover:scale-105 hover:bg-primary/15',
                   'disabled:cursor-not-allowed disabled:opacity-60',
                 ].join(' ')}
-                aria-label={displayIsForked ? `${displayCategory.title} fork 해제` : `${displayCategory.title} 내 카테고리로 복사`}
-                title={displayIsForked ? 'fork 해제' : '내 카테고리로 복사'}
+                aria-label={displayIsForked ? `${displayCategory.title} 이미 내 카테고리에 복사됨` : `${displayCategory.title} 내 카테고리로 복사`}
+                title={displayIsForked ? '이미 내 카테고리에 복사됨' : '내 카테고리로 복사'}
               >
                 <GitFork className="h-4 w-4" />
                 <span>{displayForkCount}</span>
@@ -203,22 +181,6 @@ const SharedCategoryDetailDialog = ({
           </div>
         </div>
       </DialogContent>
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{UI_COPY.sharedCategoryDetail.unforkDialog.title}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {displayCategory ? UI_COPY.sharedCategoryDetail.unforkDialog.description(displayCategory.title) : ''}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={forkPending}>{UI_COPY.common.cancel}</AlertDialogCancel>
-            <AlertDialogAction onClick={() => void handleConfirmUnfork()} disabled={forkPending}>
-              {UI_COPY.sharedCategoryDetail.unforkDialog.confirm}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </Dialog>
   );
 };
