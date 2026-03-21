@@ -8,6 +8,7 @@ import { useAuthStore } from '@/shared/stores/auth-store';
 import { useUserProfile } from '@/shared/hooks/use-user-info';
 import { Spinner } from '@/components/ui/spinner';
 import PageHeader from '@/components/layout/page-header';
+import DesktopSideLayout from '@/components/layout/desktop-side-layout';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 
 /**
@@ -49,38 +50,40 @@ const MyPage = () => {
     <div className="min-h-screen bg-gradient-card">
       {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
       {/* UserRequest: 마이페이지 우측 상단에도 햄버거 메뉴를 노출 */}
-      <PageHeader title={UI_COPY.myPage.pageTitle} />
+      <PageHeader title={UI_COPY.myPage.pageTitle} desktopSideLayout />
 
-      <main className="container mx-auto max-w-2xl px-8 py-12 md:py-8">
-        <div className="space-y-6">
+      <DesktopSideLayout className="min-h-[calc(100vh-72px)]">
+        <main className="px-8 py-12 md:py-8">
+          <div className="mx-auto max-w-2xl space-y-6">
           {/* 사용자 정보 카드 */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex flex-col items-center gap-6 pb-4">
-                <Avatar className="w-32 h-32">
-                  <AvatarFallback className="bg-primary text-primary-foreground">
-                    <UserIcon className="w-16 h-16" />
-                  </AvatarFallback>
-                </Avatar>
-                <div className="text-center space-y-1">
-                  <h2 className="font-semibold text-2xl">{nickname}</h2>
-                  <p className="text-sm text-muted-foreground">{email}</p>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex flex-col items-center gap-6 pb-4">
+                  <Avatar className="w-32 h-32">
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      <UserIcon className="w-16 h-16" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="text-center space-y-1">
+                    <h2 className="font-semibold text-2xl">{nickname}</h2>
+                    <p className="text-sm text-muted-foreground">{email}</p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
           {/* 로그아웃 */}
-          <Button
-            variant="outline"
-            className="w-full gap-2"
-            onClick={handleLogout}
-          >
-            <LogOut className="w-4 h-4" />
-            {UI_COPY.myPage.logout}
-          </Button>
-        </div>
-      </main>
+            <Button
+              variant="outline"
+              className="w-full gap-2"
+              onClick={handleLogout}
+            >
+              <LogOut className="w-4 h-4" />
+              {UI_COPY.myPage.logout}
+            </Button>
+          </div>
+        </main>
+      </DesktopSideLayout>
     </div>
   );
 };

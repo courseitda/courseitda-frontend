@@ -16,6 +16,7 @@ import SharedCategoryList from '@/components/community/shared-category-list';
 import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
 import LoginRequiredDialog from '@/components/common/login-required-dialog';
 import PageHeader from '@/components/layout/page-header';
+import DesktopSideLayout from '@/components/layout/desktop-side-layout';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 
 const CommunityCategoryBoard = () => {
@@ -104,46 +105,49 @@ const CommunityCategoryBoard = () => {
   }
 
   return (
-      <div className="min-h-screen bg-gradient-card">
+      <div className="min-h-screen overflow-x-hidden bg-gradient-card">
       {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
-      <PageHeader title={UI_COPY.community.boardPageTitle} />
+      <PageHeader title={UI_COPY.community.boardPageTitle} desktopSideLayout />
 
       {/* UserRequest: 헤더와 검색 영역 사이 간격을 0.5배로 조정 */}
-      <main className="min-h-[calc(100vh-72px)] flex flex-col pt-6 pb-6 md:pt-8 md:pb-8">
-        <div className="container mx-auto px-8">
-          <div className="max-w-6xl mx-auto space-y-6">
-            {/* UserRequest: 검색 영역 클릭 시 검색 전용 페이지로 이동 */}
-            <section className="space-y-3">
-              <SharedCategorySearchBar
-                value=""
-                onChange={() => undefined}
-                onSubmit={handleSearchSubmit}
-                readOnly
-                onFocus={() => navigate('/community/search')}
-                onClick={() => navigate('/community/search')}
-              />
-            </section>
+      <DesktopSideLayout className="min-h-[calc(100vh-72px)]">
+        <main className="min-h-[calc(100vh-72px)] flex flex-col overflow-x-hidden pt-6 pb-6 md:pt-8 md:pb-8">
+          <div className="px-8">
+            <div className="space-y-6">
+              {/* UserRequest: 검색 영역 클릭 시 검색 전용 페이지로 이동 */}
+              <section className="space-y-3">
+                <SharedCategorySearchBar
+                  value=""
+                  onChange={() => undefined}
+                  onSubmit={handleSearchSubmit}
+                  readOnly
+                  onFocus={() => navigate('/community/search')}
+                  onClick={() => navigate('/community/search')}
+                />
+              </section>
+            </div>
           </div>
-        </div>
 
-        {/* UserRequest: 검색 영역과 데이터 영역 사이 구분선 위치 조정 */}
-        <div className="mt-12 border-t border-border/60" />
+          {/* UserRequest: 검색 영역과 데이터 영역 사이 구분선 위치 조정 */}
+          <div className="mt-12 border-t border-border/60" />
 
-        {/* UserRequest: 구분선 아래 전체 배경을 회색으로 표시 */}
-        <div className="bg-muted/30 flex-1">
-          <div className="container mx-auto px-8">
-            <section className="max-w-6xl mx-auto space-y-3 p-3 md:p-4">
-              {/* UserRequest: 정렬 드롭다운 제거 */}
-              <SharedCategoryList
-                categories={filteredCategories}
-                forkedSharedCategoryMap={forkedSharedCategoryMap}
-                onOpenDetail={handleOpenDetail}
-                viewportClassName="h-[520px]"
-              />
-            </section>
+          {/* UserRequest: 구분선 아래 전체 배경을 회색으로 표시 */}
+          <div className="bg-muted/30 flex-1">
+            <div className="px-8">
+              <section className="space-y-3 p-3 md:p-4">
+                {/* UserRequest: 정렬 드롭다운 제거 */}
+                <SharedCategoryList
+                  categories={filteredCategories}
+                  forkedSharedCategoryMap={forkedSharedCategoryMap}
+                  onOpenDetail={handleOpenDetail}
+                  // UserRequest: 데스크톱 게시판 목록은 고정 높이로 자르지 않고 자연 높이로 모두 노출한다.
+                  viewportClassName="h-[520px] md:h-auto"
+                />
+              </section>
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </DesktopSideLayout>
 
       <SharedCategoryDetailDialog
         open={detailOpen}

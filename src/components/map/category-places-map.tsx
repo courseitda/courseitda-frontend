@@ -7,6 +7,7 @@ import { useSettingsStore } from '@/shared/stores/settings-store';
 import { useNaverLoader } from '@/shared/hooks/use-naver-loader';
 import { PlaceInfoWindow } from '@/features/map/place-info-window';
 import { UI_COPY } from '@/shared/constants/ui-copy';
+import { cn } from '@/lib/utils';
 import { Loader2, LocateFixed } from 'lucide-react';
 
 type CategoryMapPlace = {
@@ -22,6 +23,7 @@ type CategoryPlacesMapProps = {
   focusedPlaceId: string | null;
   searchPlaces?: CategoryMapPlace[];
   highlightedSearchPlaceId?: string | null;
+  mapClassName?: string;
 };
 
 const MAIN_MARKER_PREFIX = 'main:';
@@ -46,6 +48,7 @@ export const CategoryPlacesMap = ({
   focusedPlaceId,
   searchPlaces = [],
   highlightedSearchPlaceId = null,
+  mapClassName,
 }: CategoryPlacesMapProps) => {
   const naverMapKeyId = useSettingsStore((state) => state.naverMapKeyId);
   const { ready, error } = useNaverLoader(naverMapKeyId);
@@ -400,22 +403,26 @@ export const CategoryPlacesMap = ({
 
   if (!naverMapKeyId || error) {
     return (
-      <div className="w-full h-96 rounded-lg border border-dashed border-border bg-muted/40 flex items-center justify-center text-sm text-muted-foreground text-center px-6">
-        네이버 지도 설정이 완료되지 않았습니다. 관리자에게 문의해주세요.
+      <div className={cn('relative h-96 w-full', mapClassName)}>
+        <div className="flex h-full w-full items-center justify-center rounded-lg border border-dashed border-border bg-muted/40 px-6 text-center text-sm text-muted-foreground">
+          네이버 지도 설정이 완료되지 않았습니다. 관리자에게 문의해주세요.
+        </div>
       </div>
     );
   }
 
   if (!ready) {
     return (
-      <div className="w-full h-96 rounded-lg border border-dashed border-border bg-muted/40 flex items-center justify-center text-sm text-muted-foreground">
-        지도 로딩 중...
+      <div className={cn('relative h-96 w-full', mapClassName)}>
+        <div className="flex h-full w-full items-center justify-center rounded-lg border border-dashed border-border bg-muted/40 text-sm text-muted-foreground">
+          지도 로딩 중...
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="relative">
+    <div className={cn('relative h-96 w-full', mapClassName)}>
       <div className="absolute bottom-4 right-4 z-20">
         {/* UserRequest: 내 카테고리 상세/생성 지도에서도 워크스페이스 상세와 같은 내 위치 바로가기 버튼을 노출한다. */}
         <Button
@@ -430,7 +437,7 @@ export const CategoryPlacesMap = ({
           {isLocating ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}
         </Button>
       </div>
-      <div ref={mapRef} className="w-full h-96 rounded-lg border border-border overflow-hidden" />
+      <div ref={mapRef} className="h-full w-full overflow-hidden rounded-lg border border-border" />
     </div>
   );
 };

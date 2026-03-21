@@ -4,6 +4,7 @@ import {Button} from '@/components/ui/button';
 import {CircleHelp, Compass, FolderTree, Layers, MapPinned, Route, Search, Share2, Sparkles, Workflow} from 'lucide-react';
 import {useAuthStore} from '@/shared/stores/auth-store';
 import PageHeader from '@/components/layout/page-header';
+import DesktopSideLayout from '@/components/layout/desktop-side-layout';
 import HeroAnimation from '@/components/landing/hero-animation';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 
@@ -86,11 +87,12 @@ const Index = () => {
     return (
         <div className="min-h-screen bg-background">
             {/* UserRequest: 랜딩 페이지 헤더도 공통 헤더로 통일 (좌측 로고, 우측 햄버거) */}
-            <PageHeader className="z-30" />
+            <PageHeader className="z-30" desktopSideLayout />
 
-            <main className="w-full pb-10 md:pb-12">
+            <DesktopSideLayout className="min-h-[calc(100vh-72px)]" contentClassName="bg-background">
+                <main className="w-full pb-10 md:pb-12">
                 <section
-                    className="relative overflow-hidden border-b border-border/60 px-8 pb-12 pt-10 md:px-12 md:pb-16 md:pt-14">
+                    className="relative overflow-hidden border-b border-border/60 px-8 pb-12 pt-10">
                     <div
                         className="absolute inset-0 bg-[radial-gradient(120%_100%_at_95%_0%,hsl(var(--primary)/0.2),transparent_55%),radial-gradient(70%_80%_at_0%_100%,hsl(var(--accent-foreground)/0.12),transparent_50%)]"/>
                     <div className="relative z-10">
@@ -98,7 +100,7 @@ const Index = () => {
                             initial={{opacity: 0, y: 18}}
                             animate={{opacity: 1, y: 0}}
                             transition={{duration: 0.5, delay: 0.1}}
-                            className="mt-5 text-4xl font-extrabold leading-tight tracking-tight md:text-5xl"
+                            className="mt-5 text-4xl font-extrabold leading-tight tracking-tight"
                         >
                             {/* UserRequest: 랜딩 최상단 문구를 3줄 카피(시작/마무리/코스잇다)로 교체한다. */}
                             {UI_COPY.landing.hero.line1}
@@ -112,7 +114,7 @@ const Index = () => {
                             initial={{opacity: 0, y: 18}}
                             animate={{opacity: 1, y: 0}}
                             transition={{duration: 0.5, delay: 0.2}}
-                            className="mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base"
+                            className="mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground"
                         >
                             {/* UserRequest: 랜딩 보조 문구를 카테고리 선택 기반의 간편 시작 메시지로 교체한다. */}
                             {UI_COPY.landing.hero.description}
@@ -122,7 +124,7 @@ const Index = () => {
                             initial={{opacity: 0, y: 20}}
                             animate={{opacity: 1, y: 0}}
                             transition={{duration: 0.5, delay: 0.3}}
-                            className="mt-7 flex flex-col gap-3 sm:flex-row"
+                            className="mt-7 flex flex-col gap-3"
                         >
                             {isAuthenticated ? (
                                 <>
@@ -130,7 +132,7 @@ const Index = () => {
                                         size="lg"
                                         // UserRequest: 내 워크스페이스 이동 버튼의 텍스트를 버튼 정중앙에 고정한다.
                                         // UserRequest: 시작하기/내 워크스페이스 이동 버튼의 화살표 아이콘을 제거한다.
-                                        className="justify-center sm:min-w-48 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-primary/45"
+                                        className="justify-center transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-primary/45"
                                         onClick={() => navigate('/my-workspaces')}
                                     >
                                         {UI_COPY.landing.hero.moveToWorkspace}
@@ -138,7 +140,7 @@ const Index = () => {
                                     <Button
                                         size="lg"
                                         variant="outline"
-                                        className="sm:min-w-48 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-primary/45"
+                                        className="transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-primary/45"
                                         onClick={() => navigate('/community')}
                                     >
                                         {UI_COPY.landing.hero.exploreCommunity}
@@ -148,7 +150,7 @@ const Index = () => {
                                 <>
                                     <Button
                                         size="lg"
-                                        className="justify-center sm:min-w-40 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-primary/45"
+                                        className="justify-center transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-primary/45"
                                         onClick={() => navigate('/auth?tab=register')}
                                     >
                                         {UI_COPY.landing.hero.start}
@@ -156,7 +158,7 @@ const Index = () => {
                                     <Button
                                         size="lg"
                                         variant="outline"
-                                        className="sm:min-w-40 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-primary/45"
+                                        className="transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-primary/45"
                                         onClick={() => navigate('/community')}
                                     >
                                         {UI_COPY.landing.hero.exploreCommunity}
@@ -177,7 +179,7 @@ const Index = () => {
                     </div>
                 </section>
 
-                <section className="border-b border-border/60 px-8 py-12 md:px-10 md:py-16">
+                <section className="border-b border-border/60 px-8 py-12">
                     <motion.h2
                         initial={{opacity: 0, y: 14}}
                         whileInView={{opacity: 1, y: 0}}
@@ -188,7 +190,7 @@ const Index = () => {
                         <CircleHelp className="h-6 w-6 text-primary"/>
                         {UI_COPY.landing.problemsTitle}
                     </motion.h2>
-                    <div className="mt-6 grid gap-3 md:grid-cols-3">
+                    <div className="mt-6 grid gap-3">
                         {problems.map((item, index) => (
                             <motion.article
                                 key={item.title}
@@ -213,7 +215,7 @@ const Index = () => {
                     </div>
                 </section>
 
-                <section className="border-b border-border/60 bg-accent/70 px-8 py-12 md:px-10 md:py-16">
+                <section className="border-b border-border/60 bg-accent/70 px-8 py-12">
                     <motion.h2
                         initial={{opacity: 0, y: 14}}
                         whileInView={{opacity: 1, y: 0}}
@@ -223,7 +225,7 @@ const Index = () => {
                         <Sparkles className="h-6 w-6 text-primary"/>
                         {UI_COPY.landing.featuresTitle}
                     </motion.h2>
-                    <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="mt-6 grid grid-cols-1 gap-3">
                         {features.map((feature, index) => (
                             <motion.article
                                 key={feature.title}
@@ -248,7 +250,7 @@ const Index = () => {
                     </div>
                 </section>
 
-                <section className="border-b border-border/60 px-8 py-12 md:px-10 md:py-16">
+                <section className="border-b border-border/60 px-8 py-12">
                     <motion.h2
                         initial={{opacity: 0, y: 14}}
                         whileInView={{opacity: 1, y: 0}}
@@ -287,7 +289,8 @@ const Index = () => {
                     </div>
                 </section>
 
-            </main>
+                </main>
+            </DesktopSideLayout>
         </div>
     );
 };

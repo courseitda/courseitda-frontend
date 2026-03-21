@@ -14,6 +14,7 @@ import {useDeleteSavedCategory, useMySavedCategories,} from '@/shared/hooks/use-
 import {MESSAGES} from '@/shared/constants/messages';
 import type {SavedCategory} from '@/entities/types';
 import PageHeader from '@/components/layout/page-header';
+import DesktopSideLayout from '@/components/layout/desktop-side-layout';
 import {formatRelativeTimeKorean} from '@/shared/utils/relative-time';
 import {UI_COPY} from '@/shared/constants/ui-copy';
 import DeleteConfirmDialog from '@/components/common/delete-confirm-dialog';
@@ -222,7 +223,7 @@ const MyCategory = () => {
         <div className="flex min-h-dvh flex-col bg-gradient-card">
             {/* UserRequest: 뒤로가기 버튼은 직전 페이지로 이동 */}
             {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
-            <PageHeader title={UI_COPY.myCategory.pageTitle}/>
+            <PageHeader title={UI_COPY.myCategory.pageTitle} desktopSideLayout/>
 
             {/* 모바일 레이아웃 */}
             {/* UserRequest: 모바일 하단 safe area와 동적 viewport를 반영해 빈 상태 영역이 화면 끝 직전까지 이어지게 조정한다. */}
@@ -257,44 +258,39 @@ const MyCategory = () => {
                 </div>
             </main>
 
-            {/* 데스크톱 레이아웃 - 3단 구조 */}
-            <main className="hidden flex-1 md:block min-h-[calc(100vh-80px)]">
-                <div className="grid grid-cols-[1fr_2fr_1fr] min-h-[calc(100vh-80px)]">
-                    <div className="bg-primary/5 min-h-[calc(100vh-80px)]"></div>
+            {/* 데스크톱 레이아웃 */}
+            {/* UserRequest: 카테고리 상세를 제외한 데스크톱 화면도 모바일과 동일한 단일 컬럼 흐름으로 동작하게 맞춘다. */}
+            <DesktopSideLayout className="hidden min-h-[calc(100vh-80px)] flex-1 md:grid" contentClassName="min-h-[calc(100vh-80px)]">
+                <main className="flex min-h-[calc(100vh-80px)] flex-col overflow-y-auto px-8 py-6">
+                    {/* UserRequest: 카테고리 페이지에서 생성 버튼과 목록을 동일한 흐름으로 표시 */}
+                    <Card
+                        className="hover-lift cursor-pointer border-border bg-card hover:bg-accent/40 transition-colors"
+                        onClick={handleOpenCreateDialog}
+                    >
+                        <CardHeader className="flex flex-col items-center justify-center">
+                            <div className="flex items-center gap-2 text-primary">
+                                <Plus className="w-5 h-5"/>
+                                <CardTitle
+                                    className="text-base md:text-lg text-primary">{UI_COPY.myCategory.createAction}</CardTitle>
+                            </div>
+                        </CardHeader>
+                    </Card>
 
-                    <div className="flex min-h-[calc(100vh-80px)] flex-col overflow-y-auto px-8 py-4">
-                        {/* UserRequest: 카테고리 페이지에서 생성 버튼과 목록을 동일한 흐름으로 표시 */}
-                        <Card
-                            className="hover-lift cursor-pointer border-border bg-card hover:bg-accent/40 transition-colors"
-                            onClick={handleOpenCreateDialog}
-                        >
-                            <CardHeader className="flex flex-col items-center justify-center">
-                                <div className="flex items-center gap-2 text-primary">
-                                    <Plus className="w-5 h-5"/>
-                                    <CardTitle
-                                        className="text-base md:text-lg text-primary">{UI_COPY.myCategory.createAction}</CardTitle>
+                    <div className="mt-3 flex flex-1 flex-col">
+                        {savedCategories.length === 0
+                            ? renderEmptyState(
+                                <Folder className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60"/>,
+                                `${UI_COPY.myCategory.empty.title}\n${UI_COPY.myCategory.empty.description}`,
+                                '',
+                            )
+                            : (
+                                <div className="space-y-3">
+                                    {savedCategories.map((category) => renderSavedCategoryCard(category))}
                                 </div>
-                            </CardHeader>
-                        </Card>
-
-                        <div className="mt-2 flex flex-1 flex-col">
-                            {savedCategories.length === 0
-                                ? renderEmptyState(
-                                    <Folder className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60"/>,
-                                    `${UI_COPY.myCategory.empty.title}\n${UI_COPY.myCategory.empty.description}`,
-                                    'flex-1 min-h-[clamp(20rem,calc(100vh-14rem),42rem)]',
-                                )
-                                : (
-                                    <div className="space-y-2">
-                                        {savedCategories.map((category) => renderSavedCategoryCard(category))}
-                                    </div>
-                                )}
-                        </div>
+                            )}
                     </div>
-
-                    <div className="bg-primary/5 min-h-[calc(100vh-80px)]"></div>
-                </div>
-            </main>
+                </main>
+            </DesktopSideLayout>
 
             <Dialog
                 open={createDialogOpen}

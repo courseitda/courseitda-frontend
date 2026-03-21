@@ -248,8 +248,206 @@ const MyCategoryDetail = () => {
     );
   }
 
+  const placeSectionHeader = (
+    <div className="flex items-center justify-between gap-3">
+      <p className="text-lg font-semibold flex items-center gap-1.5">
+        <MapPin className="w-4 h-4 text-primary" />
+        {isAddingPlace ? UI_COPY.myCategory.detailDialog.editingPlaceListTitle : UI_COPY.myCategory.detailDialog.placeListTitle}
+        <span className="text-xs text-muted-foreground">
+          ({currentPlaces.length}곳)
+        </span>
+      </p>
+      <div className="flex items-center gap-2">
+        {isAddingPlace ? (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCancelAddPlaceMode}
+              disabled={updateSavedCategoryMutation.isPending}
+            >
+              {UI_COPY.myCategory.editorDialog.cancel}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => void handleSavePlaces()}
+              disabled={
+                updateSavedCategoryMutation.isPending
+                || selectedPlaces.length === 0
+                || isUnchangedPlaceSelection
+              }
+            >
+              {updateSavedCategoryMutation.isPending
+                ? UI_COPY.myCategory.editorDialog.editing
+                : UI_COPY.myCategory.editorDialog.edit}
+            </Button>
+          </>
+        ) : (
+          <Button
+            type="button"
+            onClick={handleOpenAddPlaceMode}
+            className="gap-2 rounded-full"
+          >
+            <PenLine className="w-4 h-4" />
+            {UI_COPY.myCategory.detailDialog.editAction}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+
+  const placeSectionContent = isAddingPlace ? (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <div className="max-h-[24vh] space-y-1 overflow-y-auto pr-1 md:max-h-[220px]">
+          {selectedPlaces.length === 0 ? (
+            <div className="flex min-h-24 items-center justify-center rounded-xl border-2 border-dashed border-border px-3 text-sm text-muted-foreground">
+              {UI_COPY.myCategory.editorDialog.noPlacesSelected}
+            </div>
+          ) : (
+            selectedPlaces.map((place) => (
+              <Card key={place.id} className="border-border bg-card shadow-sm">
+                <div className="flex items-center">
+                  <div className="flex-1 min-w-0">
+                    <button
+                      type="button"
+                      className="w-full text-left"
+                      onClick={() => handleFocusPlace(place.id)}
+                    >
+                      <CardHeader className="flex-row items-center space-y-0 py-1.5">
+                        <CardTitle className="text-base flex flex-1 items-center gap-1.5 truncate">
+                          <MapPin className="w-4 h-4 shrink-0 text-primary" />
+                          <span className="truncate">{place.name}</span>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="pt-0 pb-1.5">
+                        <p className="text-sm text-muted-foreground truncate">{place.addressName}</p>
+                      </CardContent>
+                    </button>
+                  </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="mr-2 shrink-0 self-center"
+                    onClick={() => handleRemovePlace(place.id)}
+                    aria-label={UI_COPY.myCategory.editorDialog.removePlaceAriaLabel}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              </Card>
+            ))
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-sm font-semibold">{UI_COPY.myCategory.editorDialog.placeSearchLabel}</p>
+        <div className="flex w-full min-w-0 items-center gap-2">
+          <Input
+            className="min-w-0 flex-1"
+            placeholder={UI_COPY.myCategory.editorDialog.placeSearchPlaceholder}
+            value={placeQuery}
+            onChange={(event) => setPlaceQuery(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                void handleSearchPlaces();
+              }
+            }}
+          />
+          <Button
+            onClick={() => void handleSearchPlaces()}
+            disabled={placeSearchLoading}
+            className="shrink-0 gap-2 px-3"
+          >
+            <Search className="w-4 h-4" />
+            {UI_COPY.myCategory.editorDialog.searchAction}
+          </Button>
+        </div>
+        {placeSearchLoading && (
+          <div className="text-sm text-muted-foreground">{UI_COPY.myCategory.editorDialog.searching}</div>
+        )}
+        {!placeSearchLoading && placeResults.length > 0 && (
+          <div className="max-h-[24vh] space-y-1 overflow-y-auto pr-1 md:max-h-[220px]">
+            {placeResults.map((place) => (
+              <Card key={place.id} className="border-border bg-card shadow-sm">
+                <button
+                  type="button"
+                  className={`flex w-full items-start gap-2.5 p-3 text-left transition-colors ${
+                    highlightedSearchPlaceId === place.id ? 'bg-primary/5' : ''
+                  }`}
+                  onClick={() => handleSelectSearchPlace(place.id)}
+                >
+                  <div className="mt-0.5 shrink-0 text-primary">
+                    <MapPin className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium break-words">{place.name}</p>
+                    <p className="text-xs text-muted-foreground break-words">{place.addressName}</p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant={selectedPlaces.some((item) => item.id === place.id) ? 'secondary' : 'outline'}
+                    className="shrink-0"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleAddPlace(place);
+                    }}
+                    disabled={selectedPlaces.some((item) => item.id === place.id)}
+                  >
+                    {selectedPlaces.some((item) => item.id === place.id)
+                      ? UI_COPY.myCategory.detailDialog.addCompleted
+                      : UI_COPY.myCategory.editorDialog.addPlaceAction}
+                  </Button>
+                </button>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  ) : (
+    <div className="max-h-[42vh] space-y-1 overflow-y-auto pr-1 md:max-h-none">
+      {detailPlaces.length === 0 ? (
+        <div className="flex min-h-24 items-center justify-center rounded-xl border-2 border-dashed border-border px-3 text-sm text-muted-foreground">
+          {UI_COPY.myCategory.detailDialog.noPlacesInDetail}
+        </div>
+      ) : (
+        <>
+          {detailPlaces.map((place) => (
+            <Card
+              key={place.id}
+              className={`transition-colors ${
+                focusedPlaceId === place.id
+                  ? 'border-primary/30 bg-primary/5 shadow-sm ring-1 ring-primary/20'
+                  : 'border-border bg-card shadow-sm hover:bg-accent/20'
+              }`}
+            >
+              <button
+                type="button"
+                onClick={() => handleFocusPlace(place.id)}
+                className="w-full text-left"
+              >
+                <CardHeader className="flex-row items-center space-y-0 py-1.5 cursor-pointer">
+                  <CardTitle className="text-base flex flex-1 items-center gap-1.5 truncate">
+                    <MapPin className="w-4 h-4 shrink-0 text-primary" />
+                    <span className="truncate">{place.name}</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0 pb-1.5">
+                  <p className="text-sm text-muted-foreground break-words">{place.addressName}</p>
+                </CardContent>
+              </button>
+            </Card>
+          ))}
+        </>
+      )}
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-card">
+    <div className="min-h-screen bg-gradient-card md:h-screen md:flex md:flex-col">
       <PageHeader
         showBackButton
         showBrand={false}
@@ -273,228 +471,72 @@ const MyCategoryDetail = () => {
         rightContent={<UserMenu currentMyCategoryLabel={category.title} />}
       />
 
-      <main className="space-y-2.5 pb-4 md:space-y-2.5 md:pb-4">
-        <section className="rounded-none bg-card p-0 shadow-sm md:rounded-xl md:mx-8 md:p-4 md:container md:max-w-2xl">
-          <CategoryPlacesMap
-            open
-            places={currentPlaces.map((place) => ({
-              id: place.id,
-              name: place.name,
-              latitude: place.latitude,
-              longitude: place.longitude,
-            }))}
-            focusedPlaceId={focusedPlaceId}
-            searchPlaces={
-              isAddingPlace
-                ? placeResults.map((place) => ({
-                  id: place.id,
-                  name: place.name,
-                  latitude: place.latitude,
-                  longitude: place.longitude,
-                }))
-                : []
-            }
-            highlightedSearchPlaceId={isAddingPlace ? highlightedSearchPlaceId : null}
-          />
-        </section>
+      <main className="space-y-2.5 pb-4 md:flex-1 md:min-h-0 md:space-y-0 md:pb-0">
+        <div className="md:hidden space-y-2.5 pb-4">
+          <section className="rounded-none bg-card p-0 shadow-sm md:rounded-xl md:mx-8 md:p-4 md:container md:max-w-2xl">
+            <CategoryPlacesMap
+              open
+              places={currentPlaces.map((place) => ({
+                id: place.id,
+                name: place.name,
+                latitude: place.latitude,
+                longitude: place.longitude,
+              }))}
+              focusedPlaceId={focusedPlaceId}
+              searchPlaces={
+                isAddingPlace
+                  ? placeResults.map((place) => ({
+                    id: place.id,
+                    name: place.name,
+                    latitude: place.latitude,
+                    longitude: place.longitude,
+                  }))
+                  : []
+              }
+              highlightedSearchPlaceId={isAddingPlace ? highlightedSearchPlaceId : null}
+            />
+          </section>
 
-        <div className="container mx-auto max-w-2xl px-8 pt-3 md:pt-4">
-          <section className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-lg font-semibold flex items-center gap-1.5">
-                <MapPin className="w-4 h-4 text-primary" />
-                {isAddingPlace ? UI_COPY.myCategory.detailDialog.editingPlaceListTitle : UI_COPY.myCategory.detailDialog.placeListTitle}
-                <span className="text-xs text-muted-foreground">
-                  ({currentPlaces.length}곳)
-                </span>
-              </p>
-              <div className="flex items-center gap-2">
-                {isAddingPlace ? (
-                  <>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleCancelAddPlaceMode}
-                      disabled={updateSavedCategoryMutation.isPending}
-                    >
-                      {UI_COPY.myCategory.editorDialog.cancel}
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={() => void handleSavePlaces()}
-                      disabled={
-                        updateSavedCategoryMutation.isPending
-                        || selectedPlaces.length === 0
-                        || isUnchangedPlaceSelection
-                      }
-                    >
-                      {updateSavedCategoryMutation.isPending
-                        ? UI_COPY.myCategory.editorDialog.editing
-                        : UI_COPY.myCategory.editorDialog.edit}
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    type="button"
-                    onClick={handleOpenAddPlaceMode}
-                    className="gap-2 rounded-full"
-                  >
-                    <PenLine className="w-4 h-4" />
-                    {UI_COPY.myCategory.detailDialog.editAction}
-                  </Button>
-                )}
-              </div>
+          <div className="container mx-auto max-w-2xl px-8 pt-3 md:pt-4">
+            <section className="space-y-3">
+              {placeSectionHeader}
+              {placeSectionContent}
+            </section>
+          </div>
+        </div>
+
+        <div className="hidden h-full md:grid md:grid-cols-2 md:gap-4 md:px-0 md:pb-4">
+          <section className="rounded-xl overflow-hidden border border-border/50 shadow-lg bg-card min-h-0">
+            <CategoryPlacesMap
+              open
+              // UserRequest: 데스크톱 카테고리 상세는 지도가 좌측 칼럼 높이를 채워 워크스페이스 상세와 같은 분할 레이아웃으로 보이게 한다.
+              mapClassName="md:h-full md:min-h-[calc(100vh-10rem)] md:rounded-none md:border-0"
+              places={currentPlaces.map((place) => ({
+                id: place.id,
+                name: place.name,
+                latitude: place.latitude,
+                longitude: place.longitude,
+              }))}
+              focusedPlaceId={focusedPlaceId}
+              searchPlaces={
+                isAddingPlace
+                  ? placeResults.map((place) => ({
+                    id: place.id,
+                    name: place.name,
+                    latitude: place.latitude,
+                    longitude: place.longitude,
+                  }))
+                  : []
+              }
+              highlightedSearchPlaceId={isAddingPlace ? highlightedSearchPlaceId : null}
+            />
+          </section>
+
+          <section className="flex min-h-0 flex-col rounded-xl border border-border/50 bg-card p-4 shadow-lg">
+            {placeSectionHeader}
+            <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
+              {placeSectionContent}
             </div>
-
-            {isAddingPlace ? (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <div className="max-h-[24vh] space-y-1 overflow-y-auto pr-1 md:max-h-[220px]">
-                    {selectedPlaces.length === 0 ? (
-                      <div className="flex min-h-24 items-center justify-center rounded-xl border-2 border-dashed border-border px-3 text-sm text-muted-foreground">
-                        {UI_COPY.myCategory.editorDialog.noPlacesSelected}
-                      </div>
-                    ) : (
-                      selectedPlaces.map((place) => (
-                        <Card key={place.id} className="border-border bg-card shadow-sm">
-                          <div className="flex items-center">
-                            <div className="flex-1 min-w-0">
-                              <button
-                                type="button"
-                                className="w-full text-left"
-                                onClick={() => handleFocusPlace(place.id)}
-                              >
-                                <CardHeader className="flex-row items-center space-y-0 py-1.5">
-                                  <CardTitle className="text-base flex flex-1 items-center gap-1.5 truncate">
-                                    <MapPin className="w-4 h-4 shrink-0 text-primary" />
-                                    <span className="truncate">{place.name}</span>
-                                  </CardTitle>
-                                </CardHeader>
-                                <CardContent className="pt-0 pb-1.5">
-                                  <p className="text-sm text-muted-foreground truncate">{place.addressName}</p>
-                                </CardContent>
-                              </button>
-                            </div>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="mr-2 shrink-0 self-center"
-                              onClick={() => handleRemovePlace(place.id)}
-                              aria-label={UI_COPY.myCategory.editorDialog.removePlaceAriaLabel}
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </Card>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-sm font-semibold">{UI_COPY.myCategory.editorDialog.placeSearchLabel}</p>
-                  <div className="flex w-full min-w-0 items-center gap-2">
-                    <Input
-                      className="min-w-0 flex-1"
-                      placeholder={UI_COPY.myCategory.editorDialog.placeSearchPlaceholder}
-                      value={placeQuery}
-                      onChange={(event) => setPlaceQuery(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter') {
-                          event.preventDefault();
-                          void handleSearchPlaces();
-                        }
-                      }}
-                    />
-                    <Button
-                      onClick={() => void handleSearchPlaces()}
-                      disabled={placeSearchLoading}
-                      className="shrink-0 gap-2 px-3"
-                    >
-                      <Search className="w-4 h-4" />
-                      {UI_COPY.myCategory.editorDialog.searchAction}
-                    </Button>
-                  </div>
-                  {placeSearchLoading && (
-                    <div className="text-sm text-muted-foreground">{UI_COPY.myCategory.editorDialog.searching}</div>
-                  )}
-                  {!placeSearchLoading && placeResults.length > 0 && (
-                    <div className="max-h-[24vh] space-y-1 overflow-y-auto pr-1 md:max-h-[220px]">
-                      {placeResults.map((place) => (
-                        <Card key={place.id} className="border-border bg-card shadow-sm">
-                          <button
-                            type="button"
-                            className={`flex w-full items-start gap-2.5 p-3 text-left transition-colors ${
-                              highlightedSearchPlaceId === place.id ? 'bg-primary/5' : ''
-                            }`}
-                            onClick={() => handleSelectSearchPlace(place.id)}
-                          >
-                            <div className="mt-0.5 shrink-0 text-primary">
-                              <MapPin className="w-4 h-4" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-medium break-words">{place.name}</p>
-                              <p className="text-xs text-muted-foreground break-words">{place.addressName}</p>
-                            </div>
-                            <Button
-                              size="sm"
-                              variant={selectedPlaces.some((item) => item.id === place.id) ? 'secondary' : 'outline'}
-                              className="shrink-0"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                handleAddPlace(place);
-                              }}
-                              disabled={selectedPlaces.some((item) => item.id === place.id)}
-                            >
-                              {selectedPlaces.some((item) => item.id === place.id)
-                                ? UI_COPY.myCategory.detailDialog.addCompleted
-                                : UI_COPY.myCategory.editorDialog.addPlaceAction}
-                            </Button>
-                          </button>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="max-h-[42vh] space-y-1 overflow-y-auto pr-1 md:max-h-[420px]">
-                {detailPlaces.length === 0 ? (
-                  <div className="flex min-h-24 items-center justify-center rounded-xl border-2 border-dashed border-border px-3 text-sm text-muted-foreground">
-                    {UI_COPY.myCategory.detailDialog.noPlacesInDetail}
-                  </div>
-                ) : (
-                  <>
-                    {detailPlaces.map((place) => (
-                      <Card
-                        key={place.id}
-                        className={`transition-colors ${
-                          focusedPlaceId === place.id
-                            ? 'border-primary/30 bg-primary/5 shadow-sm ring-1 ring-primary/20'
-                            : 'border-border bg-card shadow-sm hover:bg-accent/20'
-                        }`}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => handleFocusPlace(place.id)}
-                          className="w-full text-left"
-                        >
-                          <CardHeader className="flex-row items-center space-y-0 py-1.5 cursor-pointer">
-                            <CardTitle className="text-base flex flex-1 items-center gap-1.5 truncate">
-                              <MapPin className="w-4 h-4 shrink-0 text-primary" />
-                              <span className="truncate">{place.name}</span>
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="pt-0 pb-1.5">
-                            <p className="text-sm text-muted-foreground break-words">{place.addressName}</p>
-                          </CardContent>
-                        </button>
-                      </Card>
-                    ))}
-                  </>
-                )}
-              </div>
-            )}
           </section>
         </div>
       </main>

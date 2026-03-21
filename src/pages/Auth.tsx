@@ -6,6 +6,7 @@ import { RegisterForm } from '@/features/auth/register-form';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useUserNickname } from '@/shared/hooks/use-user-info';
 import PageHeader from '@/components/layout/page-header';
+import DesktopSideLayout from '@/components/layout/desktop-side-layout';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 
 /**
@@ -40,35 +41,38 @@ const Auth = () => {
       {/* UserRequest: 인증 페이지 헤더에서는 좌측 브랜드와 우측 로그인 버튼을 숨긴다. */}
       <PageHeader
         title={UI_COPY.auth.pageTitle}
+        desktopSideLayout
         showBackButton
         showBorder={false}
         rightContent={<div className="h-10 w-10" aria-hidden="true" />}
       />
-      <main className="flex justify-center px-8 pb-8 pt-8 md:px-8 md:pb-4 md:pt-4">
-        <div className="w-full max-w-md space-y-20">
+      <DesktopSideLayout className="min-h-[calc(100vh-72px)]">
+        <main className="flex justify-center px-8 pb-8 pt-8 md:px-8 md:pb-4 md:pt-4">
+          <div className="w-full max-w-md space-y-20">
           {/* UserRequest: 로그인/회원가입 폼 상단 중앙에 클릭 기능 없는 브랜드 워드마크를 배치한다. */}
-          <div className="flex justify-center">
-            <span className="brand-wordmark text-[2rem] whitespace-nowrap text-primary md:text-[2.2rem]">코스잇다</span>
-          </div>
+            <div className="flex justify-center">
+              <span className="brand-wordmark text-[2rem] whitespace-nowrap text-primary md:text-[2.2rem]">코스잇다</span>
+            </div>
           {/* UserRequest: 인증 페이지는 박스형 카드 대신 열린 레이아웃으로 폼을 노출한다. */}
-          <section className="space-y-6">
-            {isRegisterPage ? <RegisterForm /> : <LoginForm />}
-            {!isRegisterPage && (
-              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                <span>아직 계정이 없나요?</span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="h-auto p-0 text-sm font-semibold text-primary hover:bg-transparent hover:text-primary/80"
-                  onClick={() => navigate('/auth?tab=register')}
-                >
-                  {UI_COPY.auth.registerTab}
-                </Button>
-              </div>
-            )}
-          </section>
-        </div>
-      </main>
+            <section className="space-y-6">
+              {isRegisterPage ? <RegisterForm /> : <LoginForm />}
+              {!isRegisterPage && (
+                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <span>아직 계정이 없나요?</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-auto p-0 text-sm font-semibold text-primary hover:bg-transparent hover:text-primary/80"
+                    onClick={() => navigate('/auth?tab=register')}
+                  >
+                    {UI_COPY.auth.registerTab}
+                  </Button>
+                </div>
+              )}
+            </section>
+          </div>
+        </main>
+      </DesktopSideLayout>
     </div>
   );
 };

@@ -35,7 +35,6 @@ const SharedCategoryList = ({
 }: SharedCategoryListProps) => {
   // UserRequest: 커뮤니티 메인 게시판에서는 카드 크기를 5/6 수준으로 축소하고, 다른 화면은 기존 크기를 유지한다.
   const isCompact = size === 'compact';
-  const gridMinWidth = isCompact ? 217 : 260;
   const iconWrapperClassName = isCompact
     ? 'h-[1.875rem] w-[1.875rem] rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground'
     : 'w-9 h-9 rounded-full border border-border flex items-center justify-center bg-muted/40 text-muted-foreground';
@@ -58,10 +57,7 @@ const SharedCategoryList = ({
           <p className="text-sm">{UI_COPY.community.emptySearchResult}</p>
         </div>
       ) : (
-        <div
-          className="grid gap-1.5 items-start auto-rows-min"
-          style={{ gridTemplateColumns: `repeat(auto-fit, minmax(${gridMinWidth}px, 1fr))` }}
-        >
+        <div className="grid grid-cols-1 gap-1.5 items-start auto-rows-min">
           {categories.map((category) => {
             const isForked = !!forkedSharedCategoryMap[category.id];
             const forkMetaClassName = isForked ? 'text-violet-600' : 'text-muted-foreground/70';
@@ -83,7 +79,6 @@ const SharedCategoryList = ({
                   </div>
                   <div className="flex flex-col gap-1 flex-1 min-w-0">
                     <CardTitle className={titleClassName}>{category.title}</CardTitle>
-                    {/* UserRequest: 작성자 닉네임 길이와 무관하게 등록일 위치를 고정한다. */}
                     <div className={metaRowClassName}>
                       {/* UserRequest: 목록 카드 메타 정보를 달력 아이콘 + 날짜 형식으로 표시한다. */}
                       {category.uploadedAt && (

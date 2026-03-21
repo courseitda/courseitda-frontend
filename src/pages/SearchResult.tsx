@@ -12,6 +12,7 @@ import SharedCategoryList from '@/components/community/shared-category-list';
 import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
 import LoginRequiredDialog from '@/components/common/login-required-dialog';
 import PageHeader from '@/components/layout/page-header';
+import DesktopSideLayout from '@/components/layout/desktop-side-layout';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 import { useAuthStore } from '@/shared/stores/auth-store';
 
@@ -107,10 +108,11 @@ const SearchResult = () => {
   return (
     <div className="min-h-screen bg-gradient-card">
       {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
-      <PageHeader title={UI_COPY.searchResult.pageTitle} />
+      <PageHeader title={UI_COPY.searchResult.pageTitle} desktopSideLayout />
 
-      <main className="container mx-auto px-8 py-6 md:py-8">
-        <div className="max-w-6xl mx-auto space-y-6">
+      <DesktopSideLayout className="min-h-[calc(100vh-72px)]">
+        <main className="px-8 py-6 md:py-8">
+          <div className="space-y-6">
           <section className="space-y-3">
             {/* UserRequest: 검색 결과 페이지 검색창을 커뮤니티 페이지와 동일한 형태로 변경 */}
             {/* UserRequest: 검색 페이지 진입 시 키보드 포커스를 바로 활성화 */}
@@ -139,12 +141,14 @@ const SearchResult = () => {
                 forkedSharedCategoryMap={forkedSharedCategoryMap}
                 onOpenDetail={handleOpenDetail}
                 showEmptyState
-                viewportClassName="h-[520px]"
+                // UserRequest: 데스크톱 검색 결과 목록은 고정 높이로 자르지 않고 자연 높이로 모두 노출한다.
+                viewportClassName="h-[520px] md:h-auto"
               />
             </div>
           </section>
-    </div>
-  </main>
+          </div>
+        </main>
+      </DesktopSideLayout>
 
       <SharedCategoryDetailDialog
         open={detailOpen}

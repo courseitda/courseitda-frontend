@@ -19,6 +19,7 @@ import { useForkedSharedCategoryIds, useMySavedCategories, useToggleSharedCatego
 import { useUserNickname } from '@/shared/hooks/use-user-info';
 import { MESSAGES } from '@/shared/constants/messages';
 import PageHeader from '@/components/layout/page-header';
+import DesktopSideLayout from '@/components/layout/desktop-side-layout';
 import { UploadCategoryDialog } from '@/features/community/upload-category-dialog';
 import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
 import SharedCategoryList from '@/components/community/shared-category-list';
@@ -185,14 +186,15 @@ const MyPosts = () => {
     <>
       <div className="min-h-screen bg-background">
       {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
-      <PageHeader title={UI_COPY.myPosts.pageTitle} />
+      <PageHeader title={UI_COPY.myPosts.pageTitle} desktopSideLayout />
 
-      <main className="min-h-[calc(100vh-72px)] flex flex-col pt-6 pb-6 md:pt-8 md:pb-8">
-        <div className="container mx-auto px-8 mt-2">
-          {/* UserRequest: 커뮤니티 카테고리 게시판의 회색 박스 영역처럼 컨테이너를 구성 */}
-          <div className="relative max-w-6xl mx-auto">
-            <section className="relative z-10 rounded-2xl bg-muted/30 border border-border/60 p-3 md:p-4">
-              <div className="space-y-3">
+      <DesktopSideLayout className="min-h-[calc(100vh-72px)]">
+        <main className="min-h-[calc(100vh-72px)] flex flex-col pt-6 pb-6 md:pt-8 md:pb-8">
+          <div className="px-8 mt-2">
+            {/* UserRequest: 커뮤니티 카테고리 게시판의 회색 박스 영역처럼 컨테이너를 구성 */}
+            <div className="relative">
+              <section className="relative z-10 rounded-2xl bg-muted/30 border border-border/60 p-3 md:p-4">
+                <div className="space-y-3">
                 {/* UserRequest: 영역 내부 상단에 '공유한 카테고리' 라벨 표시 */}
                 {/* UserRequest: 제목과 공유 버튼을 한 줄로 정렬 */}
                 <div className="flex items-center justify-between">
@@ -257,11 +259,12 @@ const MyPosts = () => {
                     />
                   )}
                 </div>
-              </div>
-            </section>
+                </div>
+              </section>
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </DesktopSideLayout>
       </div>
 
       <UploadCategoryDialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen} />

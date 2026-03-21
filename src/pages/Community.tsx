@@ -9,6 +9,7 @@ import { useForkedSharedCategoryIds, useMySavedCategories, useToggleSharedCatego
 import { MESSAGES } from '@/shared/constants/messages';
 import type { SharedSavedCategory } from '@/entities/types';
 import PageHeader from '@/components/layout/page-header';
+import DesktopSideLayout from '@/components/layout/desktop-side-layout';
 import SharedCategoryList from '@/components/community/shared-category-list';
 import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
 import LoginRequiredDialog from '@/components/common/login-required-dialog';
@@ -283,12 +284,13 @@ const Community = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
-      <PageHeader title={UI_COPY.community.pageTitle} />
+      <PageHeader title={UI_COPY.community.pageTitle} desktopSideLayout />
 
-      <main className="min-h-[calc(100vh-72px)] flex flex-col">
+      <DesktopSideLayout className="min-h-[calc(100vh-72px)]">
+        <main className="min-h-[calc(100vh-72px)] flex flex-col">
 
         {/* UserRequest: 검색 제거 후 섹션 간 여백 재조정 */}
-        <section className="container mx-auto px-8 pb-4 pt-6 md:pt-8">
+        <section className="px-8 pb-4 pt-6 md:pt-8">
             <div className="flex flex-col gap-3 mb-6">
               <div className="inline-flex items-center gap-2">
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -302,7 +304,7 @@ const Community = () => {
               <div className="flex items-center justify-center">
                 <div
                   ref={sliderRef}
-                  className="overflow-hidden w-full max-w-5xl"
+                  className="overflow-hidden w-full"
                   onPointerDown={(event) => {
                     if (filteredCategories.length === 0) return;
                     isDragging.current = true;
@@ -456,7 +458,7 @@ const Community = () => {
 
         {/* UserRequest: 커뮤니티 페이지에서 검색 영역 제거 */}
 
-        <section className="container mx-auto px-8 pt-2 pb-8">
+        <section className="px-8 pt-2 pb-8">
           {/* UserRequest: 섹션 문구를 "카테고리 게시판"으로 변경 */}
           <div className="flex items-center justify-between mb-2 px-1">
             <h2 className="text-base font-semibold pl-1">{UI_COPY.community.boardTitle}</h2>
@@ -485,7 +487,8 @@ const Community = () => {
         </section>
 
         {/* UserRequest: 커뮤니티 페이지에서 커뮤니티 관리 영역 제거 */}
-      </main>
+        </main>
+      </DesktopSideLayout>
 
       <SharedCategoryDetailDialog
         open={detailOpen}

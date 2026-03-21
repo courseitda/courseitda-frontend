@@ -2,6 +2,7 @@ import type {FormEvent} from 'react';
 import {useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import SearchHeader from '@/components/layout/search-header';
+import DesktopSideLayout from '@/components/layout/desktop-side-layout';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 
 const CommunitySearch = () => {
@@ -35,9 +36,10 @@ const CommunitySearch = () => {
                 autoFocus
             />
 
-            <main className="container mx-auto px-8 py-8 md:py-10">
-                {/* UserRequest: 추천 검색어 영역은 상단 제목과 분류 카드를 분리해 더 깔끔하게 구성 */}
-                <section className="max-w-2xl mx-auto space-y-5">
+            <DesktopSideLayout className="min-h-[calc(100vh-72px)]">
+                <main className="px-8 py-8 md:py-10">
+                    {/* UserRequest: 추천 검색어 영역은 상단 제목과 분류 카드를 분리해 더 깔끔하게 구성 */}
+                    <section className="max-w-2xl mx-auto space-y-5">
                     <h2 className="text-base font-semibold">{UI_COPY.communitySearch.sectionTitle}</h2>
 
                     {/* UserRequest: 추천 검색어를 지역 파트와 일정 파트로 분리해 선택할 수 있도록 구성 */}
@@ -91,8 +93,9 @@ const CommunitySearch = () => {
                             </div>
                         </section>
                     </section>
-                </section>
-            </main>
+                    </section>
+                </main>
+            </DesktopSideLayout>
         </div>
     );
 };
