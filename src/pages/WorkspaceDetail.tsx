@@ -41,7 +41,8 @@ const WorkspaceDetail = () => {
     if (typeof window === 'undefined') return false;
     return window.matchMedia('(max-width: 767px)').matches;
   });
-  const headerHeight = '64px';
+  const headerRef = useRef<HTMLElement | null>(null);
+  const [headerHeight, setHeaderHeight] = useState('64px');
 
   // UserRequest: Step 4 — 워크스페이스 상세 데이터를 React Query로 가져와 캐싱
   const {
@@ -96,6 +97,30 @@ const WorkspaceDetail = () => {
     };
 
     return undefined;
+  }, []);
+
+  useEffect(() => {
+    // UserRequest: 모바일 워크스페이스 상세 높이 계산은 실제 헤더 높이를 기준으로 맞춘다.
+    if (typeof window === 'undefined') return;
+    if (!headerRef.current) return;
+
+    const updateHeaderHeight = () => {
+      if (!headerRef.current) return;
+      setHeaderHeight(`${headerRef.current.getBoundingClientRect().height}px`);
+    };
+
+    updateHeaderHeight();
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateHeaderHeight();
+    });
+    resizeObserver.observe(headerRef.current);
+    window.addEventListener('resize', updateHeaderHeight);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updateHeaderHeight);
+    };
   }, []);
 
   useEffect(() => {
@@ -212,6 +237,7 @@ const WorkspaceDetail = () => {
       {/* UserRequest: 좌우 여백을 0.5배로 축소하여 다른 페이지와 통일성 유지 (px-8 → px-4) */}
       {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
       <PageHeader
+        headerRef={headerRef}
         showBackButton
         showBrand={false}
         showBrandText={false}

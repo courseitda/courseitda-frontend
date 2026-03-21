@@ -142,19 +142,19 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceIdentifier, cat
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* UserRequest: 색상을 7개씩 2줄로 중앙 정렬하여 배치하고 시각적 균형 유지 */}
+          {/* UserRequest: 색상 순서를 유지하되 공간이 부족하면 간격을 먼저 줄이고, 더 줄이기 어려우면 다음 줄로 넘긴다. */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label>{UI_COPY.categoryDialog.add.colorLabel}</Label>
               <span className="text-xs text-muted-foreground">{PALETTE_NAMES[colorPaletteMode]}</span>
             </div>
-            <div className="grid grid-cols-7 gap-2 justify-items-center">
+            <div className="flex flex-wrap justify-center gap-[clamp(0.125rem,1.2vw,0.5rem)]">
               {colors.map((color) => (
                 <button
                   key={color}
                   type="button"
                   onClick={() => setSelectedColor(color)}
-                  className="w-10 h-10 rounded-full border-2 border-border hover:scale-110 transition-transform relative"
+                  className="relative h-10 w-10 shrink-0 rounded-full border-2 border-border transition-transform hover:scale-110"
                   style={{ backgroundColor: color }}
                   aria-label={UI_COPY.categoryDialog.colorSelectAriaLabel(color)}
                 >
@@ -166,7 +166,7 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceIdentifier, cat
               <button
                 type="button"
                 onClick={handleTogglePalette}
-                className="w-10 h-10 rounded-full border-2 border-dashed border-border hover:scale-110 transition-transform relative cursor-pointer flex items-center justify-center bg-background"
+                className="relative flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-dashed border-border bg-background transition-transform hover:scale-110"
                 aria-label={UI_COPY.categoryDialog.paletteToggleAriaLabel}
               >
                 <Palette className="w-5 h-5 text-muted-foreground" />
@@ -176,7 +176,7 @@ export const AddCategoryDialog = ({ open, onOpenChange, workspaceIdentifier, cat
 
           <div className="space-y-2">
             <Label>{UI_COPY.categoryDialog.add.suggestedLabel}</Label>
-            <div className="flex justify-center gap-2">
+            <div className="flex flex-wrap justify-center gap-2">
               {UI_COPY.categoryDialog.suggestedCategories.map((category) => (
                 <Button
                   key={category}

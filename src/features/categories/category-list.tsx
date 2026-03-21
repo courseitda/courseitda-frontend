@@ -280,7 +280,8 @@ export const CategoryList = ({
       {!isOrderEditMode && !isReorderControlsVisible && (
         <div
           ref={addOptionRef}
-          className="fixed right-4 bottom-4 md:right-8 md:bottom-8 z-40 flex flex-col items-end gap-2"
+          // UserRequest: 모바일 하단 제스처 영역과 겹치지 않도록 FAB 위치에 safe area 여백을 반영한다.
+          className="fixed right-4 bottom-[calc(env(safe-area-inset-bottom)+1rem)] md:right-8 md:bottom-8 z-40 flex flex-col items-end gap-2"
         >
           <div
             className={`flex flex-col items-end gap-2 transition-all duration-200 ease-out ${
