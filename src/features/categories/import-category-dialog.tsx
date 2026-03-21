@@ -11,8 +11,8 @@ import { ChevronDown, Folder, FolderDown, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { useMySavedCategories, useSavedCategoryPlaces } from '@/shared/hooks/use-my-storage';
-import { categoryApi, placeApi } from '@/services/api';
+import { MY_STORAGE_QUERY_KEYS, useMySavedCategories, useSavedCategoryPlaces } from '@/shared/hooks/use-my-storage';
+import { categoryApi, myStorageApi, placeApi } from '@/services/api';
 import { getCategoryColors, type PaletteMode } from '@/shared/constants/colors';
 import { useSettingsStore } from '@/shared/stores/settings-store';
 import { MESSAGES } from '@/shared/constants/messages';
@@ -39,20 +39,7 @@ type ImportTarget = {
   }>;
 };
 
-const toImportTarget = (category: SavedCategory): ImportTarget => ({
-  id: category.id,
-  title: category.title,
-  places: category.places.map((place) => ({
-    name: place.name,
-    placeUrl: place.placeUrl,
-    roadAddressName: place.roadAddressName ?? null,
-    addressName: place.addressName,
-    latitude: place.latitude,
-    longitude: place.longitude,
-  })),
-});
-
-const toImportTargetWithPlaces = (
+const toImportTarget = (
   category: SavedCategory,
   places: SavedCategory['places'],
 ): ImportTarget => ({
@@ -108,10 +95,26 @@ export const ImportCategoryDialog = ({
   }, [categories, colorPaletteMode]);
 
   const importMutation = useMutation({
-    mutationFn: async (target: ImportTarget) => {
+    // UserRequest: 카테고리 상세를 펼치지 않고 불러오기해도 장소 목록이 누락되지 않도록 상세 API 기준으로 가져온다.
+    mutationFn: async (categoryToImport: SavedCategory) => {
       if (!token) {
         throw new Error(UI_COPY.system.authTokenRequired);
       }
+
+      // 상세 보기에서 이미 조회한 캐시가 있으면 재사용하고, 없으면 즉시 상세 API를 조회한다.
+      const savedCategoryPlaces = await queryClient.fetchQuery({
+        queryKey: MY_STORAGE_QUERY_KEYS.savedCategoryPlaces(categoryToImport.id),
+        queryFn: async () => {
+          const response = await myStorageApi.getSavedCategoryDetail(token, categoryToImport.id);
+          if (!response.success || !response.data) {
+            throw new Error(response.error?.message ?? MESSAGES.savedCategory.listLoadFailed);
+          }
+
+          return response.data.category.places;
+        },
+        staleTime: 1000 * 30,
+      });
+      const target = toImportTarget(categoryToImport, savedCategoryPlaces);
 
       const { category, error } = await categoryApi.add({
         workspaceIdentifier,
@@ -156,12 +159,7 @@ export const ImportCategoryDialog = ({
 
   const handleImport = (category: SavedCategory) => {
     if (importMutation.isPending) return;
-    // UserRequest: 불러오기 창에서도 상세 API 장소 목록을 기준으로 가져오기 대상을 생성한다.
-    const target =
-      expandedCategoryId === category.id && expandedCategoryPlaces.length > 0
-        ? toImportTargetWithPlaces(category, expandedCategoryPlaces)
-        : toImportTarget(category);
-    importMutation.mutate(target);
+    importMutation.mutate(category);
   };
 
   const handleTogglePlaces = (categoryId: string) => {
