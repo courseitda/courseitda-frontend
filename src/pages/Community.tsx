@@ -122,7 +122,7 @@ const Community = () => {
               className="text-xs font-medium text-muted-foreground hover:underline flex items-center gap-1"
               onClick={() => navigate('/community/category-board')}
             >
-              더보기
+              {UI_COPY.community.boardMoreAction}
               <span aria-hidden>&gt;</span>
             </button>
           </div>
@@ -157,7 +157,7 @@ const Community = () => {
         open={loginDialogOpen}
         onOpenChange={setLoginDialogOpen}
         onStart={handleLoginStart}
-        featureName="fork 기능"
+        featureName={UI_COPY.sharedCategoryDetail.forkFeatureName}
       />
     </div>
   );

@@ -232,7 +232,7 @@ const MyPosts = () => {
                               variant="ghost"
                               className="h-8 w-8 rounded-full"
                               onClick={(event) => event.stopPropagation()}
-                              aria-label="게시물 더보기"
+                              aria-label={UI_COPY.myPosts.moreActionAriaLabel}
                             >
                               <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
                             </Button>
@@ -250,7 +250,7 @@ const MyPosts = () => {
                               }}
                             >
                               <Trash2 className="w-4 h-4" />
-                              삭제
+                              {UI_COPY.common.delete}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

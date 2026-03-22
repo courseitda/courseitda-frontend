@@ -94,7 +94,7 @@ const UserMenu = ({ onBeforeNavigate, currentMyCategoryLabel, currentWorkspaceLa
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         {/* UserRequest: 헤더 햄버거 메뉴를 드롭다운 대신 우측 Sheet/Drawer 형태로 전환 */}
-        <Button variant="ghost" size="icon" className="h-10 w-10" aria-label="사용자 메뉴">
+        <Button variant="ghost" size="icon" className="h-10 w-10" aria-label={UI_COPY.userMenu.triggerAriaLabel}>
           <Menu className="w-5 h-5" />
         </Button>
       </SheetTrigger>

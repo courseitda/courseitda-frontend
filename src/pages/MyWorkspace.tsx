@@ -107,7 +107,7 @@ const MyWorkspace = () => {
             </CardTitle>
             {/* UserRequest: 수정 시간을 주/개월/년 단위까지 포함한 상대시간으로 표시한다. */}
             <p className="text-xs text-muted-foreground">
-              업데이트 {formatRelativeTimeKorean(workspace.updatedAt)}
+              {UI_COPY.myWorkspace.updatedPrefix} {formatRelativeTimeKorean(workspace.updatedAt)}
             </p>
           </div>
         </div>
@@ -117,7 +117,7 @@ const MyWorkspace = () => {
               type="button"
               variant="ghost"
               size="icon"
-              aria-label="워크스페이스 더보기"
+              aria-label={UI_COPY.myWorkspace.moreActionAriaLabel}
               className="h-8 w-8 shrink-0"
               onClick={(event) => event.stopPropagation()}
               onPointerDown={(event) => event.stopPropagation()}
@@ -134,7 +134,7 @@ const MyWorkspace = () => {
               }}
             >
               <Trash2 className="w-4 h-4" />
-              삭제
+              {UI_COPY.common.delete}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -154,9 +154,9 @@ const MyWorkspace = () => {
     <div className={`border-2 border-dashed border-border rounded-xl p-8 text-center flex flex-col items-center justify-center ${className}`}>
       <LayoutGrid className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />
       <p className="text-sm text-muted-foreground">
-        워크스페이스가 없습니다.
+        {UI_COPY.myWorkspace.empty.title}
         <br />
-        지금 추가해보세요!
+        {UI_COPY.myWorkspace.empty.description}
       </p>
     </div>
   );
@@ -204,7 +204,7 @@ const MyWorkspace = () => {
     return (
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center space-y-3">
-            <p className="text-sm text-muted-foreground">워크스페이스를 불러오지 못했습니다.</p>
+            <p className="text-sm text-muted-foreground">{MESSAGES.workspace.loadFailed}</p>
             <Button variant="outline" onClick={() => window.location.reload()}>{UI_COPY.common.retry}</Button>
           </div>
         </div>

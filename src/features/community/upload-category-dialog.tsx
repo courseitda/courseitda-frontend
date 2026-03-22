@@ -86,7 +86,7 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
   const handleUpload = (category: SavedCategory) => {
     if (shareMutation.isPending) return;
     if (!category.canPublish) {
-      toast.error('공유 카테고리를 복사한 직후에는 다시 게시할 수 없습니다.');
+      toast.error(UI_COPY.uploadCategoryDialog.republishBlockedToast);
       return;
     }
     shareMutation.mutate(category.id);
@@ -106,10 +106,10 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
           <div className="flex items-start gap-2 rounded-lg border border-border/70 bg-muted/20 px-3 py-2.5">
             <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
               <Megaphone className="h-3.5 w-3.5" />
-              안내
+              {UI_COPY.uploadCategoryDialog.noticeBadge}
             </span>
             <p className="text-sm text-muted-foreground">
-              복사한 카테고리는 수정 후 업로드할 수 있어요!
+              {UI_COPY.uploadCategoryDialog.republishBlockedDescription}
             </p>
           </div>
         </DialogHeader>
@@ -123,8 +123,8 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
               <div className="flex h-full w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-border p-5 text-center sm:p-8">
                 <Folder className="mb-3 h-9 w-9 text-muted-foreground/60 sm:h-10 sm:w-10" />
                 {/* UserRequest: 업로드 불가 안내 문구를 3줄 구조와 내 카테고리 바로가기 액션으로 교체한다. */}
-                <p className="text-xs leading-5 text-muted-foreground sm:text-sm">업로드 할 카테고리가 없습니다.</p>
-                <p className="mt-1 text-xs leading-5 text-muted-foreground sm:text-sm">내 카테고리에서 먼저 만들어보세요.</p>
+                <p className="text-xs leading-5 text-muted-foreground sm:text-sm">{UI_COPY.uploadCategoryDialog.empty.title}</p>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground sm:text-sm">{UI_COPY.uploadCategoryDialog.empty.description}</p>
                 <Button
                   type="button"
                   variant="link"
@@ -132,7 +132,7 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
                   onClick={handleMoveToMyCategory}
                 >
                   <ArrowRight className="h-4 w-4 shrink-0" />
-                  내 카테고리 만들러 가기
+                  {UI_COPY.uploadCategoryDialog.empty.action}
                 </Button>
               </div>
             </div>
@@ -158,7 +158,7 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
                       {!category.canPublish && (
                         <p className="mt-1 flex items-center gap-1 text-xs text-destructive">
                           <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                          수정 필요
+                          {UI_COPY.uploadCategoryDialog.needsEdit}
                         </p>
                       )}
                     </div>

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 type WorkspaceDetailCategoryPanelsProps = {
   categoryListSection: ReactNode;
@@ -51,7 +52,7 @@ export const WorkspaceDetailCategoryPanels = ({
             className="h-2 w-20 cursor-grab rounded-full bg-muted-foreground/50 touch-none select-none active:cursor-grabbing"
             role="button"
             tabIndex={fullscreenActive ? -1 : 0}
-            aria-label="카테고리 패널 높이 조절"
+            aria-label={UI_COPY.workspaceDetail.categoryPanelResizeAriaLabel}
             onPointerDown={onSheetDragStart}
             onKeyDown={(event) => {
               if (event.key === 'Enter' || event.key === ' ') {

@@ -28,7 +28,7 @@ const LoginRequiredDialog = ({ open, onOpenChange, onStart, featureName }: Login
           <DialogTitle className="text-lg font-semibold">{UI_COPY.loginRequiredDialog.title}</DialogTitle>
           <DialogDescription>
             {featureName
-              ? `${featureName}을 이용하시려면 먼저 로그인해주세요.`
+              ? UI_COPY.loginRequiredDialog.featureDescription(featureName)
               : UI_COPY.loginRequiredDialog.description}
           </DialogDescription>
         </DialogHeader>

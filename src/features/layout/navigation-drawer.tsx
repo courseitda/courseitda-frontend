@@ -96,7 +96,7 @@ export const NavigationDrawer = ({
         <Button
           variant="ghost"
           size="icon"
-          aria-label="메뉴 열기"
+          aria-label={UI_COPY.navigationDrawer.openMenuAriaLabel}
         >
           <Menu className="w-5 h-5" />
         </Button>
@@ -169,14 +169,14 @@ export const NavigationDrawer = ({
                         onClick={() => handleEdit(workspace)}
                       >
                         <Pencil className="w-4 h-4" />
-                        이름 바꾸기
+                        {UI_COPY.navigationDrawer.renameWorkspace}
                       </ContextMenuItem>
                       <ContextMenuItem
                         className="text-destructive focus:text-destructive gap-2"
                         onClick={() => handleDeleteClick(workspace)}
                       >
                         <Trash2 className="w-4 h-4" />
-                        삭제
+                        {UI_COPY.common.delete}
                       </ContextMenuItem>
                     </ContextMenuContent>
                   </ContextMenu>

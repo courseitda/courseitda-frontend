@@ -134,8 +134,12 @@ const SharedCategoryDetailDialog = ({
                     : 'border-primary/30 bg-primary/10 text-primary hover:scale-105 hover:bg-primary/15',
                   'disabled:cursor-not-allowed disabled:opacity-60',
                 ].join(' ')}
-                aria-label={displayIsForked ? `${displayCategory.title} 이미 내 카테고리에 복사됨` : `${displayCategory.title} 내 카테고리로 복사`}
-                title={displayIsForked ? '이미 내 카테고리에 복사됨' : '내 카테고리로 복사'}
+                aria-label={displayIsForked
+                  ? UI_COPY.sharedCategoryDetail.alreadyForkedAriaLabel(displayCategory.title)
+                  : UI_COPY.sharedCategoryDetail.forkActionAriaLabel(displayCategory.title)}
+                title={displayIsForked
+                  ? UI_COPY.sharedCategoryDetail.alreadyForkedTitle
+                  : UI_COPY.sharedCategoryDetail.forkActionTitle}
               >
                 <GitFork className="h-4 w-4" />
                 <span>{displayForkCount}</span>
@@ -151,10 +155,10 @@ const SharedCategoryDetailDialog = ({
           )}
           <div className="space-y-2">
             <p className="text-sm font-semibold">
-              장소 목록
+              {UI_COPY.sharedCategoryDetail.placeListTitle}
               {displayCategory?.placeCount !== undefined && (
                 <span className="ml-1 text-xs text-muted-foreground">
-                  ({displayCategory.placeCount}곳)
+                  ({displayCategory.placeCount}{UI_COPY.common.placeCountSuffix})
                 </span>
               )}
             </p>

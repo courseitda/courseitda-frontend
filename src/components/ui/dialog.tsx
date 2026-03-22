@@ -3,6 +3,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { UI_COPY } from "@/shared/constants/ui-copy";
 
 // 다이얼로그 컴포넌트 - 모달 형태의 팝업 표시
 // 사용 위치: features/categories (add-category-dialog, edit-category-dialog), features/places (place-search-dialog), features/workspaces (create-workspace-dialog, edit-workspace-dialog)
@@ -55,7 +56,7 @@ const DialogContent = React.forwardRef<
       {/* 우측 상단 닫기 버튼 */}
       <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-accent data-[state=open]:text-muted-foreground hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
         <X className="h-4 w-4" />
-        <span className="sr-only">닫기</span>
+        <span className="sr-only">{UI_COPY.common.close}</span>
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
   </DialogPortal>

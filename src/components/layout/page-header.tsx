@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import UserMenu from '@/components/header/user-menu';
 import DesktopSideLayout from '@/components/layout/desktop-side-layout';
 import { ArrowLeft } from 'lucide-react';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 
 type PageHeaderProps = {
   title?: string;
@@ -55,7 +56,7 @@ const PageHeader = ({
               variant="ghost"
               size="icon"
               onClick={handleBack}
-              aria-label="뒤로가기"
+              aria-label={UI_COPY.pageHeader.backAriaLabel}
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
@@ -64,10 +65,10 @@ const PageHeader = ({
               type="button"
               className="flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
               onClick={onLogoClick ?? (() => navigate('/'))}
-              aria-label="홈으로 이동"
+              aria-label={UI_COPY.pageHeader.homeAriaLabel}
             >
               {showBrandText && (
-                <span className="brand-wordmark text-[1.4rem] whitespace-nowrap text-primary">코스잇다</span>
+                <span className="brand-wordmark text-[1.4rem] whitespace-nowrap text-primary">{UI_COPY.common.brandName}</span>
               )}
             </button>
           ) : (

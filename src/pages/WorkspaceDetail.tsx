@@ -109,7 +109,7 @@ const WorkspaceDetail = () => {
       color: category.color,
       categoryName: category.name,
       representativePlace: representativePlace?.place ?? null,
-      representativePlaceName: representativePlace?.place.name ?? '미지정',
+      representativePlaceName: representativePlace?.place.name ?? UI_COPY.system.notSpecified,
     };
   });
 
@@ -134,7 +134,7 @@ const WorkspaceDetail = () => {
               variant="ghost"
               size="icon"
               className="absolute left-full ml-1 h-8 w-8 shrink-0"
-              aria-label="워크스페이스 이름 변경"
+              aria-label={UI_COPY.workspaceDetail.renameAriaLabel}
               onClick={() => setEditWorkspaceOpen(true)}
             >
               <PenLine className="w-4 h-4 text-muted-foreground" />

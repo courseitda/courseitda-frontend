@@ -405,7 +405,7 @@ export const CategoryPlacesMap = ({
     return (
       <div className={cn('relative h-96 w-full', mapClassName)}>
         <div className="flex h-full w-full items-center justify-center rounded-lg border border-dashed border-border bg-muted/40 px-6 text-center text-sm text-muted-foreground">
-          네이버 지도 설정이 완료되지 않았습니다. 관리자에게 문의해주세요.
+          {UI_COPY.workspaceDetail.mapNotReady}
         </div>
       </div>
     );
@@ -415,7 +415,7 @@ export const CategoryPlacesMap = ({
     return (
       <div className={cn('relative h-96 w-full', mapClassName)}>
         <div className="flex h-full w-full items-center justify-center rounded-lg border border-dashed border-border bg-muted/40 text-sm text-muted-foreground">
-          지도 로딩 중...
+          {UI_COPY.map.loading}
         </div>
       </div>
     );
@@ -432,7 +432,7 @@ export const CategoryPlacesMap = ({
           className="h-11 w-11 rounded-full border border-border bg-background/90 shadow-lg backdrop-blur hover:bg-background focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary"
           onClick={handleLocateMe}
           disabled={isLocating || !ready}
-          aria-label="내 위치로 이동"
+          aria-label={UI_COPY.map.locateMeAriaLabel}
         >
           {isLocating ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}
         </Button>

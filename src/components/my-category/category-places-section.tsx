@@ -64,7 +64,7 @@ export const CategoryPlacesSection = ({
       <p className="flex items-center gap-1.5 text-lg font-semibold">
         <MapPin className="h-4 w-4 text-primary" />
         {sectionTitle}
-        <span className="text-xs text-muted-foreground">({placeCount}곳)</span>
+        <span className="text-xs text-muted-foreground">({placeCount}{UI_COPY.common.placeCountSuffix})</span>
       </p>
       <div className="flex items-center gap-2">
         {isEditing ? (

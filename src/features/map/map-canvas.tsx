@@ -199,7 +199,7 @@ export const MapCanvas = ({
             <div ref={mapRef} className="w-full h-full" />
             {(!ready || !mapReady) && (
                 <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-                    <p className="text-muted-foreground">지도 로딩 중...</p>
+                    <p className="text-muted-foreground">{UI_COPY.map.loading}</p>
                 </div>
             )}
             <Button
@@ -209,7 +209,7 @@ export const MapCanvas = ({
                 className="absolute bottom-4 right-4 rounded-full shadow-lg border border-border bg-background/90 backdrop-blur hover:bg-background focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary z-20 w-11 h-11"
                 onClick={handleLocateMe}
                 disabled={isLocating || !mapReady}
-                aria-label="내 위치로 이동"
+                aria-label={UI_COPY.map.locateMeAriaLabel}
             >
                 {isLocating ? <Loader2 className="w-4 h-4 animate-spin" /> : <LocateFixed className="w-4 h-4" />}
             </Button>

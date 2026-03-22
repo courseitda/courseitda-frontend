@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { MapPin, Map } from "lucide-react";
+import { UI_COPY } from "@/shared/constants/ui-copy";
 
 interface SpinnerProps {
   size?: "sm" | "md" | "lg" | "xl";
@@ -26,12 +27,14 @@ const borderSizes = {
 
 // 다양한 스타일의 로딩 스피너 컴포넌트 - 상황에 맞는 variant 선택 가능
 export function Spinner({ size = "md", variant = "dots", className }: SpinnerProps) {
+  const spinnerLabel = UI_COPY.spinner.statusAriaLabel;
+  const spinnerSrOnly = UI_COPY.spinner.srOnly;
 
   // dots 스타일 - 3개의 점이 순차적으로 튀어오르는 애니메이션
   if (variant === "dots") {
     const dotSize = size === "sm" ? "2" : size === "md" ? "3" : size === "lg" ? "4" : "5";
     return (
-      <div className={cn("relative", sizeClasses[size])} role="status" aria-label="로딩 중">
+      <div className={cn("relative", sizeClasses[size])} role="status" aria-label={spinnerLabel}>
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="flex gap-1">
             <div className={cn(`w-${dotSize} h-${dotSize} bg-primary rounded-full animate-bounce`)} style={{ animationDelay: "0ms" }} />
@@ -39,14 +42,14 @@ export function Spinner({ size = "md", variant = "dots", className }: SpinnerPro
             <div className={cn(`w-${dotSize} h-${dotSize} bg-primary rounded-full animate-bounce`)} style={{ animationDelay: "300ms" }} />
           </div>
         </div>
-        <span className="sr-only">로딩 중...</span>
+        <span className="sr-only">{spinnerSrOnly}</span>
       </div>
     );
   }
 
   if (variant === "pulse") {
     return (
-      <div className="relative" role="status" aria-label="로딩 중">
+      <div className="relative" role="status" aria-label={spinnerLabel}>
         <div
           className={cn(
             "rounded-full bg-primary/20 animate-ping absolute",
@@ -60,14 +63,14 @@ export function Spinner({ size = "md", variant = "dots", className }: SpinnerPro
             className
           )}
         />
-        <span className="sr-only">로딩 중...</span>
+        <span className="sr-only">{spinnerSrOnly}</span>
       </div>
     );
   }
 
   if (variant === "dual-ring") {
     return (
-      <div className="relative" role="status" aria-label="로딩 중">
+      <div className="relative" role="status" aria-label={spinnerLabel}>
         <div className={cn("relative", sizeClasses[size])}>
           {/* 외부 링 */}
           <div
@@ -88,7 +91,7 @@ export function Spinner({ size = "md", variant = "dots", className }: SpinnerPro
             style={{ animation: "spin 1s linear infinite reverse" }}
           />
         </div>
-        <span className="sr-only">로딩 중...</span>
+        <span className="sr-only">{spinnerSrOnly}</span>
       </div>
     );
   }
@@ -96,21 +99,21 @@ export function Spinner({ size = "md", variant = "dots", className }: SpinnerPro
   if (variant === "orbit") {
     const orbitSize = size === "sm" ? "1.5" : size === "md" ? "2" : size === "lg" ? "3" : "4";
     return (
-      <div className={cn("relative", sizeClasses[size])} role="status" aria-label="로딩 중">
+      <div className={cn("relative", sizeClasses[size])} role="status" aria-label={spinnerLabel}>
         <div className="absolute inset-0 animate-spin">
           <div className={cn(`absolute top-0 left-1/2 -translate-x-1/2 w-${orbitSize} h-${orbitSize} bg-primary rounded-full`)} />
           <div className={cn(`absolute bottom-0 left-1/2 -translate-x-1/2 w-${orbitSize} h-${orbitSize} bg-primary/60 rounded-full`)} />
           <div className={cn(`absolute left-0 top-1/2 -translate-y-1/2 w-${orbitSize} h-${orbitSize} bg-primary/40 rounded-full`)} />
           <div className={cn(`absolute right-0 top-1/2 -translate-y-1/2 w-${orbitSize} h-${orbitSize} bg-primary/20 rounded-full`)} />
         </div>
-        <span className="sr-only">로딩 중...</span>
+        <span className="sr-only">{spinnerSrOnly}</span>
       </div>
     );
   }
 
   if (variant === "square") {
     return (
-      <div className="relative" role="status" aria-label="로딩 중">
+      <div className="relative" role="status" aria-label={spinnerLabel}>
         <div
           className={cn(
             "animate-spin rounded-lg bg-gradient-to-br from-primary to-primary/30",
@@ -121,7 +124,7 @@ export function Spinner({ size = "md", variant = "dots", className }: SpinnerPro
             animation: "spin 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite",
           }}
         />
-        <span className="sr-only">로딩 중...</span>
+        <span className="sr-only">{spinnerSrOnly}</span>
       </div>
     );
   }
@@ -135,7 +138,7 @@ export function Spinner({ size = "md", variant = "dots", className }: SpinnerPro
     const dotSize = size === "sm" ? 4 : size === "md" ? 6 : size === "lg" ? 8 : 10;
     
     return (
-      <div className="relative" role="status" aria-label="로딩 중">
+      <div className="relative" role="status" aria-label={spinnerLabel}>
         <svg
           width={svgSize}
           height={svgSize}
@@ -242,7 +245,7 @@ export function Spinner({ size = "md", variant = "dots", className }: SpinnerPro
             />
           </circle>
         </svg>
-        <span className="sr-only">로딩 중...</span>
+        <span className="sr-only">{spinnerSrOnly}</span>
       </div>
     );
   }
@@ -258,7 +261,7 @@ interface LoadingViewProps {
 
 export function LoadingView({
   fullScreen = false,
-  message = "로딩 중...",
+  message = UI_COPY.spinner.defaultMessage,
   size = "lg",
   variant = "dots",
 }: LoadingViewProps) {
@@ -269,12 +272,7 @@ export function LoadingView({
     : "flex items-center justify-center p-8";
 
   // UserRequest: 로딩 중 멘트가 지속적으로 바뀌도록 구현 - "지도를 불러오는 중", "마커를 찍는 중", "경로를 잇는 중" 등 4가지 단계별 메시지를 2초마다 순환하여 로딩 과정 시각화
-  const routeMessages = [
-    "지도를 불러오는 중입니다...",
-    "마커를 찍는 중입니다...",
-    "경로를 잇는 중입니다...",
-    "최적 경로를 계산하는 중입니다..."
-  ];
+  const routeMessages = UI_COPY.spinner.routeMessages;
 
   useEffect(() => {
     if (variant !== "route") return;
@@ -343,4 +341,3 @@ export function LoadingView({
     </div>
   );
 }
-

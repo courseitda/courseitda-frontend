@@ -1,26 +1,35 @@
 // 화면 카피 상수 - 토스트/검증 메시지와 분리해 변하기 쉬운 안내 문구를 관리
 export const UI_COPY = {
   common: {
+    brandName: '코스잇다',
     loading: '불러오는 중...',
     retry: '새로고침',
+    close: '닫기',
     cancel: '취소',
     delete: '삭제',
+    edit: '수정',
     deleting: '삭제 중...',
     search: '검색',
     add: '추가',
     adding: '추가 중...',
     upload: '업로드',
+    more: '더보기',
+    countSuffix: '개',
+    placeCountSuffix: '곳',
+    selectedFallback: '선택한',
   },
   system: {
     authTokenRequired: '인증 토큰이 필요합니다.',
     loginRequired: '로그인이 필요합니다.',
     loginRequiredForFeature: '로그인 후 이용할 수 있는 기능입니다.',
     workspaceIdentifierRequired: '워크스페이스 식별자가 필요합니다.',
+    notSpecified: '미지정',
   },
   loginRequiredDialog: {
     title: '로그인이 필요해요',
     description: '해당 기능을 이용하시려면 먼저 로그인해주세요.',
     action: '로그인 하기',
+    featureDescription: (featureName: string) => `${featureName}을 이용하시려면 먼저 로그인해주세요.`,
   },
   auth: {
     pageTitle: '인증',
@@ -56,6 +65,7 @@ export const UI_COPY = {
       submit: '회원가입',
       submitting: '가입 중...',
     },
+    noAccount: '아직 계정이 없나요?',
   },
   notFound: {
     pageTitle: '페이지 오류',
@@ -140,6 +150,8 @@ export const UI_COPY = {
     pageTitle: '내 워크스페이스',
     createAction: '새 워크스페이스',
     titleRequired: '워크스페이스 제목을 입력해주세요.',
+    updatedPrefix: '업데이트',
+    moreActionAriaLabel: '워크스페이스 더보기',
     empty: {
       title: '워크스페이스가 없습니다.',
       description: '지금 추가해보세요!',
@@ -179,6 +191,8 @@ export const UI_COPY = {
     placeAlreadyAdded: '이미 추가된 장소입니다.',
     atLeastOnePlace: '장소를 1개 이상 추가해주세요.',
     moreActionAriaLabel: '카테고리 더보기',
+    updatedPrefix: '업데이트',
+    deleteAction: '삭제하기',
     empty: {
       title: '카테고리가 없습니다.',
       description: '지금 추가해보세요!',
@@ -186,6 +200,7 @@ export const UI_COPY = {
     source: {
       manual: '직접 만든 카테고리',
       forked: '공유 카테고리에서 복사함',
+      forkedBadge: '복사본',
     },
     detailDialog: {
       placeListTitle: '장소 목록',
@@ -257,6 +272,7 @@ export const UI_COPY = {
     pageTitle: '내 게시물',
     sectionTitle: '업로드한 카테고리',
     uploadAction: '업로드하기',
+    moreActionAriaLabel: '게시물 더보기',
     empty: {
       title: '업로드한 카테고리가 없습니다.',
       description: '내 카테고리를 업로드해보세요.',
@@ -268,6 +284,12 @@ export const UI_COPY = {
     },
   },
   sharedCategoryDetail: {
+    placeListTitle: '장소 목록',
+    forkFeatureName: 'fork 기능',
+    alreadyForkedAriaLabel: (title: string) => `${title} 이미 내 카테고리에 복사됨`,
+    forkActionAriaLabel: (title: string) => `${title} 내 카테고리로 복사`,
+    alreadyForkedTitle: '이미 내 카테고리에 복사됨',
+    forkActionTitle: '내 카테고리로 복사',
     unforkDialog: {
       title: 'fork를 해제할까요?',
       description: (title: string) => `"${title}"를 내 카테고리에서 제거합니다.`,
@@ -278,6 +300,8 @@ export const UI_COPY = {
     notFound: '워크스페이스를 찾을 수 없습니다.',
     createAction: '새 워크스페이스',
     mapNotReady: '네이버 지도 설정이 완료되지 않았습니다. 관리자에게 문의해주세요.',
+    renameAriaLabel: '워크스페이스 이름 변경',
+    categoryPanelResizeAriaLabel: '카테고리 패널 높이 조절',
   },
   community: {
     pageTitle: '커뮤니티',
@@ -286,7 +310,9 @@ export const UI_COPY = {
     boardPageTitle: '카테고리 게시판',
     uploadFabLabel: '업로드',
     searchPlaceholder: '장소 카테고리를 찾아보세요',
+    searchActionAriaLabel: '검색',
     emptySearchResult: '검색 결과가 없습니다.',
+    boardMoreAction: '더보기',
   },
   toaster: {
     close: '닫기',
@@ -300,6 +326,8 @@ export const UI_COPY = {
     emptyDescription: '카테고리를 추가해보세요',
     reorderToggle: '순서 조정',
     confirmAction: '확인',
+    moveUpAriaLabel: '위로 이동',
+    moveDownAriaLabel: '아래로 이동',
     viewModeAriaLabel: '보기 모드',
     editModeAriaLabel: '편집 모드',
   },
@@ -335,6 +363,7 @@ export const UI_COPY = {
   },
   userMenu: {
     sheetTitle: '메뉴',
+    triggerAriaLabel: '사용자 메뉴',
     storageSection: '보관함',
     communitySection: '커뮤니티',
     accountSection: '계정',
@@ -350,9 +379,15 @@ export const UI_COPY = {
     sheetTitle: '메뉴',
     workspaceSection: '워크스페이스',
     createWorkspace: '새 워크스페이스',
+    openMenuAriaLabel: '메뉴 열기',
+    renameWorkspace: '이름 바꾸기',
   },
   uploadCategoryDialog: {
     title: '카테고리 업로드',
+    noticeBadge: '안내',
+    republishBlockedToast: '공유 카테고리를 복사한 직후에는 다시 게시할 수 없습니다.',
+    republishBlockedDescription: '복사한 카테고리는 수정 후 업로드할 수 있어요!',
+    needsEdit: '수정 필요',
     empty: {
       title: '업로드 할 카테고리가 없습니다.',
       description: '내 카테고리에서 먼저 만들어보세요.',
@@ -378,6 +413,7 @@ export const UI_COPY = {
   place: {
     linkMissing: '장소 링크가 없습니다.',
     openSearchAction: '장소 검색',
+    emptyPrompt: '장소를 추가해보세요',
     menuOpenAriaLabel: '장소 메뉴 열기',
     openInMapAction: '지도 바로가기',
     setRepresentativeAction: '대표 장소 지정',
@@ -385,9 +421,39 @@ export const UI_COPY = {
     deleteAction: '삭제',
   },
   map: {
+    loading: '지도 로딩 중...',
+    locateMeAriaLabel: '내 위치로 이동',
     browserLocationUnsupported: '이 브라우저에서는 위치 정보를 지원하지 않습니다.',
     mapNotReady: '지도가 아직 준비되지 않았습니다.',
     locationPermissionDenied: '위치 권한이 거부되었습니다. 브라우저 설정을 확인해주세요.',
     locationFetchFailed: '현재 위치를 가져오지 못했습니다. 다시 시도해주세요.',
+  },
+  pageHeader: {
+    backAriaLabel: '뒤로가기',
+    homeAriaLabel: '홈으로 이동',
+  },
+  sidebar: {
+    toggle: '사이드바 토글',
+  },
+  relativeTime: {
+    invalid: '-',
+    justNow: '방금 전',
+    minutesAgo: (value: number) => `${value}분 전`,
+    hoursAgo: (value: number) => `${value}시간 전`,
+    daysAgo: (value: number) => `${value}일 전`,
+    weeksAgo: (value: number) => `${value}주 전`,
+    monthsAgo: (value: number) => `${value}개월 전`,
+    yearsAgo: (value: number) => `${value}년 전`,
+  },
+  spinner: {
+    statusAriaLabel: '로딩 중',
+    srOnly: '로딩 중...',
+    defaultMessage: '로딩 중...',
+    routeMessages: [
+      '지도를 불러오는 중입니다...',
+      '마커를 찍는 중입니다...',
+      '경로를 잇는 중입니다...',
+      '최적 경로를 계산하는 중입니다...',
+    ],
   },
 } as const;

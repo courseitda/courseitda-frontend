@@ -44,7 +44,7 @@ const SharedCategorySearchBar = ({
       <button
         type="submit"
         className="absolute right-3 top-1/2 -translate-y-1/2 text-primary hover:text-primary/80"
-        aria-label="검색"
+        aria-label={UI_COPY.community.searchActionAriaLabel}
       >
         <Search className="w-5 h-5" />
       </button>

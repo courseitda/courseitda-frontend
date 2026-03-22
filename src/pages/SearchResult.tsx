@@ -1,7 +1,6 @@
 import type { FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import { useSharedCategorySearch } from '@/shared/hooks/use-community';
 import { useForkedSharedCategoryIds, useMySavedCategories, useToggleSharedCategoryFork } from '@/shared/hooks/use-my-storage';
@@ -126,7 +125,7 @@ const SearchResult = () => {
             <div className="flex items-center justify-between mb-2 px-1">
               <h2 className="text-base font-semibold pl-1">{UI_COPY.searchResult.sectionTitle}</h2>
               <span className="text-xs text-muted-foreground">
-                {filteredCategories.length}개
+                {filteredCategories.length}{UI_COPY.common.countSuffix}
               </span>
             </div>
 
@@ -159,7 +158,7 @@ const SearchResult = () => {
         open={loginDialogOpen}
         onOpenChange={setLoginDialogOpen}
         onStart={handleLoginStart}
-        featureName="fork 기능"
+        featureName={UI_COPY.sharedCategoryDetail.forkFeatureName}
       />
     </div>
   );

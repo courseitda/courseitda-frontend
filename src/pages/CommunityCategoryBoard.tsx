@@ -158,7 +158,7 @@ const CommunityCategoryBoard = () => {
         open={loginDialogOpen}
         onOpenChange={setLoginDialogOpen}
         onStart={handleLoginStart}
-        featureName="fork 기능"
+        featureName={UI_COPY.sharedCategoryDetail.forkFeatureName}
       />
 
       {/* UserRequest: 비회원에게는 업로드 버튼을 숨김 */}

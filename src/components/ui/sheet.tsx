@@ -4,6 +4,7 @@ import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { UI_COPY } from "@/shared/constants/ui-copy";
 
 // Sheet 컴포넌트 - 화면 측면에서 슬라이드되는 사이드 패널
 // 사용 위치: features/layout (navigation-drawer)
@@ -80,7 +81,7 @@ const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Con
           {/* 방향에 따라 위치가 다른 닫기 버튼 */}
           <SheetPrimitive.Close className={cn("absolute top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-secondary hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none", closePosition)}>
             <CloseIcon className="h-5 w-5" />
-            <span className="sr-only">닫기</span>
+            <span className="sr-only">{UI_COPY.common.close}</span>
           </SheetPrimitive.Close>
         </SheetPrimitive.Content>
       </SheetPortal>

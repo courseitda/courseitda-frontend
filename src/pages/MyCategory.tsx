@@ -139,13 +139,13 @@ const MyCategory = () => {
                                     className="shrink-0 gap-1 border-fork-badge-border bg-fork-badge-bg px-2 py-0 text-[11px] font-semibold text-fork-badge-dot"
                                 >
                                     <GitFork className="h-3 w-3 text-fork-badge-dot" aria-hidden="true"/>
-                                    복사본
+                                    {UI_COPY.myCategory.source.forkedBadge}
                                 </Badge>
                             )}
                         </div>
                         {/* UserRequest: 수정 시간을 주/개월/년 단위까지 포함한 상대시간으로 표시한다. */}
                         <p className="text-xs text-muted-foreground">
-                            업데이트 {formatRelativeTimeKorean(category.updatedAt)}
+                            {UI_COPY.myCategory.updatedPrefix} {formatRelativeTimeKorean(category.updatedAt)}
                         </p>
                     </div>
                 </div>
@@ -172,7 +172,7 @@ const MyCategory = () => {
                             }}
                         >
                             <Trash2 className="w-4 h-4"/>
-                            삭제하기
+                            {UI_COPY.myCategory.deleteAction}
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
@@ -341,7 +341,7 @@ const MyCategory = () => {
                     <>
                         {selectedForDelete
                             ? UI_COPY.myCategory.deleteDialog.description(selectedForDelete.title)
-                            : UI_COPY.myCategory.deleteDialog.description('선택한')}
+                            : UI_COPY.myCategory.deleteDialog.description(UI_COPY.common.selectedFallback)}
                         <br/>
                         <span className="text-destructive">{UI_COPY.myCategory.deleteDialog.warning}</span>
                     </>

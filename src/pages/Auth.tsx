@@ -51,14 +51,14 @@ const Auth = () => {
           <div className="w-full max-w-md space-y-20">
           {/* UserRequest: 로그인/회원가입 폼 상단 중앙에 클릭 기능 없는 브랜드 워드마크를 배치한다. */}
             <div className="flex justify-center">
-              <span className="brand-wordmark text-[2rem] whitespace-nowrap text-primary md:text-[2.2rem]">코스잇다</span>
+              <span className="brand-wordmark text-[2rem] whitespace-nowrap text-primary md:text-[2.2rem]">{UI_COPY.common.brandName}</span>
             </div>
           {/* UserRequest: 인증 페이지는 박스형 카드 대신 열린 레이아웃으로 폼을 노출한다. */}
             <section className="space-y-6">
               {isRegisterPage ? <RegisterForm /> : <LoginForm />}
               {!isRegisterPage && (
                 <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                  <span>아직 계정이 없나요?</span>
+                  <span>{UI_COPY.auth.noAccount}</span>
                   <Button
                     type="button"
                     variant="ghost"

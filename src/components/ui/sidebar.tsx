@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { UI_COPY } from "@/shared/constants/ui-copy";
 
 // Sidebar 컴포넌트 - 접을 수 있는 사이드바 UI
 // 사용 위치: 현재 미사용 (필요 시 대시보드나 관리 페이지에 활용 가능)
@@ -238,7 +239,7 @@ const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.C
         {...props}
       >
         <PanelLeft />
-        <span className="sr-only">사이드바 토글</span>
+        <span className="sr-only">{UI_COPY.sidebar.toggle}</span>
       </Button>
     );
   },
@@ -253,10 +254,10 @@ const SidebarRail = React.forwardRef<HTMLButtonElement, React.ComponentProps<"bu
       <button
         ref={ref}
         data-sidebar="rail"
-        aria-label="사이드바 토글"
+        aria-label={UI_COPY.sidebar.toggle}
         tabIndex={-1}
         onClick={toggleSidebar}
-        title="사이드바 토글"
+        title={UI_COPY.sidebar.toggle}
         className={cn(
           "absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] group-data-[side=left]:-right-4 group-data-[side=right]:left-0 hover:after:bg-sidebar-border sm:flex",
           "[[data-side=left]_&]:cursor-w-resize [[data-side=right]_&]:cursor-e-resize",

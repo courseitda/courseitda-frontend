@@ -119,7 +119,7 @@ export const CategoryCard = ({
                         className="h-8 w-8 rounded-none hover:bg-background/80 disabled:opacity-35"
                         onClick={onMoveUp}
                         disabled={!canMoveUp || isReordering}
-                        aria-label={`${category.name} 위로 이동`}
+                        aria-label={`${category.name} ${UI_COPY.categoryList.moveUpAriaLabel}`}
                       >
                         <ArrowUp className="w-4 h-4" />
                       </Button>
@@ -130,7 +130,7 @@ export const CategoryCard = ({
                         className="h-8 w-8 rounded-none hover:bg-background/80 disabled:opacity-35"
                         onClick={onMoveDown}
                         disabled={!canMoveDown || isReordering}
-                        aria-label={`${category.name} 아래로 이동`}
+                        aria-label={`${category.name} ${UI_COPY.categoryList.moveDownAriaLabel}`}
                       >
                         <ArrowDown className="w-4 h-4" />
                       </Button>
@@ -189,7 +189,7 @@ export const CategoryCard = ({
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground text-center py-4">
-                  장소를 추가해보세요
+                  {UI_COPY.place.emptyPrompt}
                 </p>
               )}
 
@@ -203,7 +203,7 @@ export const CategoryCard = ({
                     onClick={() => setSearchDialogOpen(true)}
                   >
                     <Plus className="w-4 h-4" />
-                    장소 검색
+                    {UI_COPY.place.openSearchAction}
                   </Button>
                 </>
               )}
