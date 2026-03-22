@@ -3,6 +3,7 @@ import { communityApi } from '@/services/api';
 import { MESSAGES } from '@/shared/constants/messages';
 import type { MySharedCategory, SharedSavedCategory } from '@/entities/types';
 import { UI_COPY } from '@/shared/constants/ui-copy';
+import { fetchAllCursorPages } from '@/shared/utils/cursor-pagination';
 
 type SharedSavedCategoryPayload = {
   id: string;
@@ -54,6 +55,25 @@ export const COMMUNITY_QUERY_KEYS = {
     ['community', 'shared-categories', 'detail', sharedCategoryId] as const,
 };
 
+type SharedCategoryPageFetcher = (cursor: number | null) => Promise<{
+  items: SharedSavedCategory[];
+  hasNext: boolean;
+  nextCursor: number | null;
+}>;
+
+// 커뮤니티 목록/검색의 반복 커서 조회를 공통화하여 종료 조건과 에러 처리를 한곳에서 유지한다.
+const fetchSharedCategoryPages = async (
+  fetchPage: SharedCategoryPageFetcher,
+  fetchAll: boolean,
+): Promise<SharedSavedCategory[]> => {
+  if (!fetchAll) {
+    const firstPage = await fetchPage(null);
+    return firstPage.items;
+  }
+
+  return fetchAllCursorPages(fetchPage);
+};
+
 export const useSharedCategories = (
   size = 20,
   fetchAll = true,
@@ -61,47 +81,21 @@ export const useSharedCategories = (
   useQuery<SharedSavedCategory[], Error>({
     queryKey: [...COMMUNITY_QUERY_KEYS.list(size), fetchAll],
     queryFn: async () => {
-      const categories: SharedSavedCategory[] = [];
-      let cursor: number | null | undefined = null;
-      let hasNext = true;
-      const visitedCursors = new Set<number | null>();
-
-      while (hasNext) {
-        // 잘못된 nextCursor 반복 응답으로 인한 무한 조회를 방지한다.
-        if (visitedCursors.has(cursor)) {
-          break;
-        }
-        visitedCursors.add(cursor);
-
+      return fetchSharedCategoryPages(async (cursor) => {
         const response = await communityApi.getSharedCategories({ cursor, size });
 
         if (!response.success || !response.data) {
           throw new Error(response.error?.message ?? MESSAGES.sharedCategory.searchLoadFailed);
         }
 
-        categories.push(
-          ...response.data.sharedCategories.map((category) =>
+        return {
+          items: response.data.sharedCategories.map((category) =>
             toSharedSavedCategoryEntity(category),
           ),
-        );
-
-        if (response.data.sharedCategories.length === 0 || response.data.nextCursor === null) {
-          hasNext = false;
-          cursor = null;
-        } else if (response.data.nextCursor === cursor) {
-          hasNext = false;
-          cursor = null;
-        } else {
-          hasNext = response.data.hasNext;
-          cursor = response.data.nextCursor;
-        }
-
-        if (!fetchAll) {
-          break;
-        }
-      }
-
-      return categories;
+          hasNext: response.data.hasNext,
+          nextCursor: response.data.nextCursor,
+        };
+      }, fetchAll);
     },
     staleTime: 1000 * 15,
     placeholderData: (previousData) => previousData,
@@ -139,43 +133,21 @@ export const useSharedCategorySearch = (
   useQuery<SharedSavedCategory[], Error>({
     queryKey: COMMUNITY_QUERY_KEYS.search(keyword),
     queryFn: async () => {
-      const categories: SharedSavedCategory[] = [];
-      let cursor: number | null | undefined = null;
-      let hasNext = true;
-      const visitedCursors = new Set<number | null>();
-
-      while (hasNext) {
-        // 검색 페이지도 반복 커서 응답이 오면 즉시 종료해 오류 전파를 막는다.
-        if (visitedCursors.has(cursor)) {
-          break;
-        }
-        visitedCursors.add(cursor);
-
+      return fetchSharedCategoryPages(async (cursor) => {
         const response = await communityApi.searchSharedCategories(keyword, { cursor, size: 20 });
 
         if (!response.success || !response.data) {
           throw new Error(response.error?.message ?? MESSAGES.sharedCategory.searchLoadFailed);
         }
 
-        categories.push(
-          ...response.data.sharedCategories.map((category) =>
+        return {
+          items: response.data.sharedCategories.map((category) =>
             toSharedSavedCategoryEntity(category),
           ),
-        );
-
-        if (response.data.sharedCategories.length === 0 || response.data.nextCursor === null) {
-          hasNext = false;
-          cursor = null;
-        } else if (response.data.nextCursor === cursor) {
-          hasNext = false;
-          cursor = null;
-        } else {
-          hasNext = response.data.hasNext;
-          cursor = response.data.nextCursor;
-        }
-      }
-
-      return categories;
+          hasNext: response.data.hasNext,
+          nextCursor: response.data.nextCursor,
+        };
+      }, true);
     },
     staleTime: 1000 * 15,
     placeholderData: (previousData) => previousData,
@@ -220,26 +192,19 @@ export const useMySharedCategories = (
         throw new Error(UI_COPY.system.authTokenRequired);
       }
 
-      const categories: MySharedCategory[] = [];
-      let cursor: number | null | undefined = null;
-      let hasNext = true;
-
-      while (hasNext) {
+      return fetchAllCursorPages(async (cursor) => {
         const response = await communityApi.getMySharedCategories(token, { cursor, size: 20 });
 
         if (!response.success || !response.data) {
           throw new Error(response.error?.message ?? MESSAGES.sharedCategory.myPostsLoadFailed);
         }
 
-        categories.push(
-          ...response.data.sharedCategories.map((category) => toMySharedCategoryEntity(category)),
-        );
-
-        hasNext = response.data.hasNext;
-        cursor = response.data.nextCursor;
-      }
-
-      return categories;
+        return {
+          items: response.data.sharedCategories.map((category) => toMySharedCategoryEntity(category)),
+          hasNext: response.data.hasNext,
+          nextCursor: response.data.nextCursor,
+        };
+      });
     },
     staleTime: 1000 * 15,
     placeholderData: (previousData) => previousData,

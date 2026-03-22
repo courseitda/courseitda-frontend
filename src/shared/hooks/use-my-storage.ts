@@ -8,8 +8,50 @@ import { fetchAllCursorPages } from '@/shared/utils/cursor-pagination';
 import { MY_STORAGE_QUERY_KEYS } from '@/shared/hooks/my-storage/query-keys';
 import { toSavedCategoryEntity } from '@/shared/hooks/my-storage/mappers';
 import { syncSharedCategoryForkCount } from '@/shared/hooks/my-storage/cache-sync';
+import { COMMUNITY_QUERY_KEYS } from '@/shared/hooks/use-community';
 
 export { MY_STORAGE_QUERY_KEYS } from '@/shared/hooks/my-storage/query-keys';
+
+const MY_STORAGE_CONTAINS_QUERY_KEY = ['my-storage', 'saved-categories', 'contains'] as const;
+const MY_STORAGE_ALL_SAVED_CATEGORIES_QUERY_KEY = ['my-storage', 'saved-categories'] as const;
+
+// 반복되는 인증 토큰 검증을 공통화하여 각 query/mutation이 도메인 로직에만 집중하도록 정리한다.
+const requireAuthToken = (token: string | null): string => {
+  if (!token) {
+    throw new Error(UI_COPY.system.authTokenRequired);
+  }
+
+  return token;
+};
+
+// 상세 조회 기반 훅이 같은 API 호출/에러 처리 규칙을 공유하도록 공통 helper로 묶는다.
+const fetchSavedCategoryDetailOrThrow = async (
+  token: string | null,
+  savedCategoryId: string | null | undefined,
+): Promise<SavedCategory> => {
+  const authToken = requireAuthToken(token);
+
+  if (!savedCategoryId) {
+    throw new Error(UI_COPY.myCategory.empty.title);
+  }
+
+  const response = await myStorageApi.getSavedCategoryDetail(authToken, savedCategoryId);
+
+  if (!response.success || !response.data) {
+    throw new Error(response.error?.message ?? MESSAGES.savedCategory.listLoadFailed);
+  }
+
+  return toSavedCategoryEntity(response.data.category);
+};
+
+const getMutationErrorMessage = (error: unknown, fallbackMessage: string) =>
+  error instanceof Error ? error.message : fallbackMessage;
+
+const invalidateMySavedCategories = (queryClient: ReturnType<typeof useQueryClient>) =>
+  queryClient.invalidateQueries({ queryKey: MY_STORAGE_QUERY_KEYS.mySavedCategories });
+
+const invalidateForkedSharedCategoryIds = (queryClient: ReturnType<typeof useQueryClient>) =>
+  queryClient.invalidateQueries({ queryKey: MY_STORAGE_CONTAINS_QUERY_KEY });
 
 /**
  * 내 보관 카테고리 목록 조회 커스텀 훅
@@ -23,12 +65,10 @@ export const useMySavedCategories = (
     queryKey: [...MY_STORAGE_QUERY_KEYS.mySavedCategories, pageSize],
     enabled: !!token,
     queryFn: async () => {
-      if (!token) {
-        throw new Error(UI_COPY.system.authTokenRequired);
-      }
+      const authToken = requireAuthToken(token);
 
       return fetchAllCursorPages(async (cursor) => {
-        const response = await myStorageApi.getMySavedCategories(token, { cursor, size: pageSize });
+        const response = await myStorageApi.getMySavedCategories(authToken, { cursor, size: pageSize });
 
         if (!response.success || !response.data) {
           throw new Error(response.error?.message ?? MESSAGES.savedCategory.listLoadFailed);
@@ -53,23 +93,7 @@ export const useSavedCategoryDetail = (
   useQuery<SavedCategory | null, Error>({
     queryKey: MY_STORAGE_QUERY_KEYS.savedCategoryDetail(savedCategoryId ?? ''),
     enabled: !!token && !!savedCategoryId,
-    queryFn: async () => {
-      if (!token) {
-        throw new Error(UI_COPY.system.authTokenRequired);
-      }
-
-      if (!savedCategoryId) {
-        throw new Error(UI_COPY.myCategory.empty.title);
-      }
-
-      const response = await myStorageApi.getSavedCategoryDetail(token, savedCategoryId);
-
-      if (!response.success || !response.data) {
-        throw new Error(response.error?.message ?? MESSAGES.savedCategory.listLoadFailed);
-      }
-
-      return toSavedCategoryEntity(response.data.category);
-    },
+    queryFn: async () => fetchSavedCategoryDetailOrThrow(token, savedCategoryId),
     staleTime: 1000 * 30,
     placeholderData: (previousData) => previousData,
   });
@@ -85,11 +109,9 @@ export const useCreateSavedCategory = (token: string | null) => {
 
   return useMutation({
     mutationFn: async (input: CreateSavedCategoryInput) => {
-      if (!token) {
-        throw new Error(UI_COPY.system.authTokenRequired);
-      }
+      const authToken = requireAuthToken(token);
 
-      const response = await myStorageApi.createSavedCategory(token, {
+      const response = await myStorageApi.createSavedCategory(authToken, {
         name: input.title,
         savedCategoryPlaces: input.places.map((place) => ({
           name: place.name,
@@ -108,12 +130,11 @@ export const useCreateSavedCategory = (token: string | null) => {
       return response.data.category;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: MY_STORAGE_QUERY_KEYS.mySavedCategories });
+      invalidateMySavedCategories(queryClient);
       toast.success(MESSAGES.savedCategory.addSuccess);
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : MESSAGES.savedCategory.addFailed;
-      toast.error(message);
+      toast.error(getMutationErrorMessage(error, MESSAGES.savedCategory.addFailed));
     },
   });
 };
@@ -127,23 +148,7 @@ export const useSavedCategoryPlaces = (
     // 상세 객체 캐시와 장소 배열 캐시를 분리하여 데이터 형태 충돌을 방지한다.
     queryKey: MY_STORAGE_QUERY_KEYS.savedCategoryPlaces(savedCategoryId ?? ''),
     enabled: !!token && !!savedCategoryId,
-    queryFn: async () => {
-      if (!token) {
-        throw new Error(UI_COPY.system.authTokenRequired);
-      }
-
-      if (!savedCategoryId) {
-        throw new Error(UI_COPY.myCategory.empty.title);
-      }
-
-      const response = await myStorageApi.getSavedCategoryDetail(token, savedCategoryId);
-
-      if (!response.success || !response.data) {
-        throw new Error(response.error?.message ?? MESSAGES.savedCategory.listLoadFailed);
-      }
-
-      return toSavedCategoryEntity(response.data.category).places;
-    },
+    queryFn: async () => (await fetchSavedCategoryDetailOrThrow(token, savedCategoryId)).places,
     staleTime: 1000 * 30,
     placeholderData: (previousData) => previousData,
   });
@@ -157,11 +162,9 @@ export const useForkedSharedCategoryIds = (
     queryKey: MY_STORAGE_QUERY_KEYS.forkedSharedCategoryIds(sharedCategoryIds),
     enabled: !!token && sharedCategoryIds.length > 0,
     queryFn: async () => {
-      if (!token) {
-        throw new Error(UI_COPY.system.authTokenRequired);
-      }
+      const authToken = requireAuthToken(token);
 
-      const response = await myStorageApi.containsForkedSharedCategories(token, sharedCategoryIds);
+      const response = await myStorageApi.containsForkedSharedCategories(authToken, sharedCategoryIds);
       if (!response.success || !response.data) {
         throw new Error(response.error?.message ?? MESSAGES.sharedCategory.forkFailed);
       }
@@ -178,11 +181,9 @@ export const useForkSharedCategory = (token: string | null) => {
 
   return useMutation({
     mutationFn: async (category: SharedSavedCategory) => {
-      if (!token) {
-        throw new Error(UI_COPY.system.authTokenRequired);
-      }
+      const authToken = requireAuthToken(token);
 
-      const response = await myStorageApi.forkSavedCategory(token, category.id);
+      const response = await myStorageApi.forkSavedCategory(authToken, category.id);
 
       if (!response.success || !response.data) {
         throw new Error(response.error?.message ?? MESSAGES.sharedCategory.forkFailed);
@@ -191,16 +192,15 @@ export const useForkSharedCategory = (token: string | null) => {
       return response.data.category;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: MY_STORAGE_QUERY_KEYS.mySavedCategories });
-      queryClient.invalidateQueries({ queryKey: ['my-storage', 'saved-categories', 'contains'] });
+      invalidateMySavedCategories(queryClient);
+      invalidateForkedSharedCategoryIds(queryClient);
       queryClient.invalidateQueries({ queryKey: COMMUNITY_QUERY_KEYS.recommended });
       queryClient.invalidateQueries({ queryKey: COMMUNITY_QUERY_KEYS.search('') });
       queryClient.invalidateQueries({ queryKey: COMMUNITY_QUERY_KEYS.myShared });
       toast.success(MESSAGES.sharedCategory.forkSuccess);
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : MESSAGES.sharedCategory.forkFailed;
-      toast.error(message);
+      toast.error(getMutationErrorMessage(error, MESSAGES.sharedCategory.forkFailed));
     },
   });
 };
@@ -211,12 +211,10 @@ export const useToggleSharedCategoryFork = (token: string | null) => {
 
   return useMutation({
     mutationFn: async (input: { category: SharedSavedCategory; forkedSavedCategoryId: string | null }) => {
-      if (!token) {
-        throw new Error(UI_COPY.system.authTokenRequired);
-      }
+      const authToken = requireAuthToken(token);
 
       if (input.forkedSavedCategoryId) {
-        const response = await myStorageApi.deleteSavedCategory(token, input.forkedSavedCategoryId);
+        const response = await myStorageApi.deleteSavedCategory(authToken, input.forkedSavedCategoryId);
         if (!response.success) {
           throw new Error(response.error?.message ?? MESSAGES.sharedCategory.unforkFailed);
         }
@@ -224,7 +222,7 @@ export const useToggleSharedCategoryFork = (token: string | null) => {
         return { action: 'unforked' as const, sharedCategoryId: input.category.id };
       }
 
-      const response = await myStorageApi.forkSavedCategory(token, input.category.id);
+      const response = await myStorageApi.forkSavedCategory(authToken, input.category.id);
 
       if (!response.success || !response.data) {
         throw new Error(response.error?.message ?? MESSAGES.sharedCategory.forkFailed);
@@ -237,8 +235,8 @@ export const useToggleSharedCategoryFork = (token: string | null) => {
       };
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: MY_STORAGE_QUERY_KEYS.mySavedCategories });
-      queryClient.invalidateQueries({ queryKey: ['my-storage', 'saved-categories', 'contains'] });
+      invalidateMySavedCategories(queryClient);
+      invalidateForkedSharedCategoryIds(queryClient);
       syncSharedCategoryForkCount(
         queryClient,
         result.sharedCategoryId,
@@ -254,8 +252,7 @@ export const useToggleSharedCategoryFork = (token: string | null) => {
       const fallbackMessage = variables.forkedSavedCategoryId
         ? MESSAGES.sharedCategory.unforkFailed
         : MESSAGES.sharedCategory.forkFailed;
-      const message = error instanceof Error ? error.message : fallbackMessage;
-      toast.error(message);
+      toast.error(getMutationErrorMessage(error, fallbackMessage));
     },
   });
 };
@@ -266,11 +263,9 @@ export const useUpdateSavedCategory = (token: string | null) => {
 
   return useMutation({
     mutationFn: async (input: { id: string; title: string; places: SearchedPlace[]; originalPlaceIds: string[] }) => {
-      if (!token) {
-        throw new Error(UI_COPY.system.authTokenRequired);
-      }
+      const authToken = requireAuthToken(token);
 
-      const response = await myStorageApi.updateSavedCategory(token, input.id, {
+      const response = await myStorageApi.updateSavedCategory(authToken, input.id, {
         name: input.title,
         savedCategoryPlaces: input.places.map((place) => ({
           savedCategoryPlaceId: input.originalPlaceIds.includes(place.id) ? place.id : null,
@@ -290,13 +285,12 @@ export const useUpdateSavedCategory = (token: string | null) => {
       return response.data.category;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: MY_STORAGE_QUERY_KEYS.mySavedCategories });
-      queryClient.invalidateQueries({ queryKey: ['my-storage', 'saved-categories'] });
+      invalidateMySavedCategories(queryClient);
+      queryClient.invalidateQueries({ queryKey: MY_STORAGE_ALL_SAVED_CATEGORIES_QUERY_KEY });
       toast.success(MESSAGES.savedCategory.updateSuccess);
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : MESSAGES.savedCategory.updateFailed;
-      toast.error(message);
+      toast.error(getMutationErrorMessage(error, MESSAGES.savedCategory.updateFailed));
     },
   });
 };
@@ -307,23 +301,20 @@ export const useDeleteSavedCategory = (token: string | null) => {
 
   return useMutation({
     mutationFn: async (savedCategoryId: string) => {
-      if (!token) {
-        throw new Error(UI_COPY.system.authTokenRequired);
-      }
+      const authToken = requireAuthToken(token);
 
-      const response = await myStorageApi.deleteSavedCategory(token, savedCategoryId);
+      const response = await myStorageApi.deleteSavedCategory(authToken, savedCategoryId);
 
       if (!response.success) {
         throw new Error(response.error?.message ?? MESSAGES.savedCategory.deleteFailed);
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: MY_STORAGE_QUERY_KEYS.mySavedCategories });
+      invalidateMySavedCategories(queryClient);
       toast.success(MESSAGES.savedCategory.deleteSuccess);
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : MESSAGES.savedCategory.deleteFailed;
-      toast.error(message);
+      toast.error(getMutationErrorMessage(error, MESSAGES.savedCategory.deleteFailed));
     },
   });
 };
