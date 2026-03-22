@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import PageHeader from '@/components/layout/page-header';
 import { CategoryPlacesMap } from '@/components/map/category-places-map';
@@ -8,28 +8,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import UserMenu from '@/components/header/user-menu';
-import { placeApi } from '@/services/api';
-import type { SearchedPlace } from '@/entities/types';
 import { MESSAGES } from '@/shared/constants/messages';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 import { useSavedCategoryDetail, useUpdateSavedCategory } from '@/shared/hooks/use-my-storage';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { MapPin, PenLine, Search, X } from 'lucide-react';
-import { toast } from 'sonner';
+import { useRequireAuthRedirect } from '@/shared/hooks/use-require-auth-redirect';
+import { useQueryErrorToast } from '@/shared/hooks/use-query-error-toast';
+import { useSavedCategoryEditor } from '@/shared/hooks/use-saved-category-editor';
 
 const MyCategoryDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { isAuthenticated, token } = useAuthStore();
-  const [focusedPlaceId, setFocusedPlaceId] = useState<string | null>(null);
-  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
-  const [renameTitle, setRenameTitle] = useState('');
-  const [isAddingPlace, setIsAddingPlace] = useState(false);
-  const [placeQuery, setPlaceQuery] = useState('');
-  const [placeResults, setPlaceResults] = useState<SearchedPlace[]>([]);
-  const [placeSearchLoading, setPlaceSearchLoading] = useState(false);
-  const [selectedPlaces, setSelectedPlaces] = useState<SearchedPlace[]>([]);
-  const [highlightedSearchPlaceId, setHighlightedSearchPlaceId] = useState<string | null>(null);
+  const { token } = useAuthStore();
 
   const {
     data: category = null,
@@ -37,190 +27,40 @@ const MyCategoryDetail = () => {
     error: savedCategoryError,
   } = useSavedCategoryDetail(token, id);
   const updateSavedCategoryMutation = useUpdateSavedCategory(token);
-  const detailPlaces = category?.places ?? [];
-  const isUnchangedRenameTitle = category ? renameTitle === category.title : true;
-  const currentPlaces = isAddingPlace ? selectedPlaces : detailPlaces;
-  const isUnchangedPlaceSelection = category
-    ? selectedPlaces.length === category.places.length
-      && selectedPlaces.every((place, index) => {
-        const originalPlace = category.places[index];
-        return originalPlace
-          && place.id === originalPlace.id
-          && place.name === originalPlace.name
-          && place.placeUrl === originalPlace.placeUrl
-          && place.roadAddressName === originalPlace.roadAddressName
-          && place.addressName === originalPlace.addressName
-          && place.latitude === originalPlace.latitude
-          && place.longitude === originalPlace.longitude;
-      })
-    : true;
+  // UserRequest: 반복되는 인증 리다이렉트 로직을 공통 훅으로 통합
+  useRequireAuthRedirect();
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/auth');
-    }
-  }, [isAuthenticated, navigate]);
+  // UserRequest: 내 카테고리 상세 조회 실패 시 사용자에게 즉시 알림
+  useQueryErrorToast(savedCategoryError, MESSAGES.savedCategory.listLoadFailed);
 
-  useEffect(() => {
-    if (savedCategoryError) {
-      toast.error(savedCategoryError.message || MESSAGES.savedCategory.listLoadFailed);
-    }
-  }, [savedCategoryError]);
-
-  useEffect(() => {
-    if (!category || isAddingPlace) return;
-
-    setSelectedPlaces(
-      category.places.map((place) => ({
-        id: place.id,
-        name: place.name,
-        placeUrl: place.placeUrl,
-        roadAddressName: place.roadAddressName,
-        addressName: place.addressName,
-        latitude: place.latitude,
-        longitude: place.longitude,
-      })),
-    );
-  }, [category, isAddingPlace]);
-
-  const handleOpenRenameDialog = () => {
-    if (!category) return;
-    setRenameTitle(category.title);
-    setRenameDialogOpen(true);
-  };
-
-  const handleRenameCategory = async () => {
-    if (!category) return;
-    if (!renameTitle.trim()) {
-      toast.error(UI_COPY.myCategory.nameRequired);
-      return;
-    }
-
-    if (isUnchangedRenameTitle) {
-      return;
-    }
-
-    try {
-      await updateSavedCategoryMutation.mutateAsync({
-        id: category.id,
-        title: renameTitle,
-        originalPlaceIds: category.places.map((place) => place.id),
-        places: category.places.map((place) => ({
-          id: place.id,
-          name: place.name,
-          placeUrl: place.placeUrl,
-          roadAddressName: place.roadAddressName,
-          addressName: place.addressName,
-          latitude: place.latitude,
-          longitude: place.longitude,
-        })),
-      });
-      setRenameDialogOpen(false);
-    } catch {
-      // UserRequest: 이름 변경 실패 시 다이얼로그를 유지한다.
-    }
-  };
-
-  const handleOpenAddPlaceMode = () => {
-    if (!category) return;
-
-    setSelectedPlaces(
-      category.places.map((place) => ({
-        id: place.id,
-        name: place.name,
-        placeUrl: place.placeUrl,
-        roadAddressName: place.roadAddressName,
-        addressName: place.addressName,
-        latitude: place.latitude,
-        longitude: place.longitude,
-      })),
-    );
-    setPlaceQuery('');
-    setPlaceResults([]);
-    setFocusedPlaceId(null);
-    setHighlightedSearchPlaceId(null);
-    setIsAddingPlace(true);
-  };
-
-  const handleCancelAddPlaceMode = () => {
-    setIsAddingPlace(false);
-    setPlaceQuery('');
-    setPlaceResults([]);
-    setFocusedPlaceId(null);
-    setHighlightedSearchPlaceId(null);
-  };
-
-  const handleSearchPlaces = async () => {
-    if (!placeQuery.trim()) {
-      toast.error(UI_COPY.myCategory.placeSearchKeywordRequired);
-      return;
-    }
-
-    setPlaceSearchLoading(true);
-    const { searchedPlaces, error } = await placeApi.search({ keyword: placeQuery.trim() });
-    if (error) {
-      toast.error(error || MESSAGES.place.searchFailed);
-      setPlaceResults([]);
-    } else {
-      setPlaceResults(searchedPlaces ?? []);
-      setHighlightedSearchPlaceId(null);
-      if (!searchedPlaces || searchedPlaces.length === 0) {
-        toast.info(UI_COPY.myCategory.placeSearchNoResult);
-      }
-    }
-    setPlaceSearchLoading(false);
-  };
-
-  const handleAddPlace = (place: SearchedPlace) => {
-    const exists = selectedPlaces.some((item) => item.id === place.id);
-    if (exists) {
-      toast.info(UI_COPY.myCategory.placeAlreadyAdded);
-      return;
-    }
-
-    setSelectedPlaces((previous) => [...previous, place]);
-  };
-
-  const handleSelectSearchPlace = (placeId: string) => {
-    // UserRequest: 검색 결과 카드를 클릭하면 해당 장소의 지도 점만 파란색으로 강조한다.
-    setHighlightedSearchPlaceId(placeId);
-  };
-
-  const handleRemovePlace = (placeId: string) => {
-    setSelectedPlaces((previous) => previous.filter((place) => place.id !== placeId));
-    if (focusedPlaceId === placeId) {
-      setFocusedPlaceId(null);
-    }
-  };
-
-  const handleFocusPlace = (placeId: string) => {
-    // UserRequest: 장소 목록 클릭 시 해당 장소로 이동하면서 이름표를 함께 표시한다.
-    setHighlightedSearchPlaceId(null);
-    setFocusedPlaceId(placeId);
-  };
-
-  const handleSavePlaces = async () => {
-    if (!category) return;
-    if (selectedPlaces.length === 0) {
-      toast.error(UI_COPY.myCategory.atLeastOnePlace);
-      return;
-    }
-
-    try {
-      await updateSavedCategoryMutation.mutateAsync({
-        id: category.id,
-        title: category.title,
-        originalPlaceIds: category.places.map((place) => place.id),
-        places: selectedPlaces,
-      });
-      setIsAddingPlace(false);
-      setPlaceQuery('');
-      setPlaceResults([]);
-      setHighlightedSearchPlaceId(null);
-    } catch {
-      // UserRequest: 장소 추가 실패 시 편집 영역을 유지한다.
-    }
-  };
+  const {
+    focusedPlaceId,
+    renameDialogOpen,
+    renameTitle,
+    isAddingPlace,
+    placeQuery,
+    placeResults,
+    placeSearchLoading,
+    selectedPlaces,
+    highlightedSearchPlaceId,
+    detailPlaces,
+    currentPlaces,
+    isUnchangedRenameTitle,
+    isUnchangedPlaceSelection,
+    setRenameDialogOpen,
+    setRenameTitle,
+    setPlaceQuery,
+    handleOpenRenameDialog,
+    handleRenameCategory,
+    handleOpenAddPlaceMode,
+    handleCancelAddPlaceMode,
+    handleSearchPlaces,
+    handleAddPlace,
+    handleSelectSearchPlace,
+    handleRemovePlace,
+    handleFocusPlace,
+    handleSavePlaces,
+  } = useSavedCategoryEditor(category, updateSavedCategoryMutation);
 
   if (savedCategoryLoading) {
     return (

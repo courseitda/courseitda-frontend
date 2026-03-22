@@ -16,6 +16,7 @@ import { useAuthStore } from '@/shared/stores/auth-store';
 import { MapPin, PenLine, Search, X } from 'lucide-react';
 import { toast } from 'sonner';
 import InfoConfirmDialog from '@/components/common/info-confirm-dialog';
+import { useRequireAuthRedirect } from '@/shared/hooks/use-require-auth-redirect';
 
 type MyCategoryCreateLocationState = {
   draftTitle?: string;
@@ -25,7 +26,7 @@ const MyCategoryCreate = () => {
   const CATEGORY_NAME_MAX_LENGTH = 10;
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, token } = useAuthStore();
+  const { token } = useAuthStore();
   const createSavedCategoryMutation = useCreateSavedCategory(token);
   const locationState = (location.state as MyCategoryCreateLocationState | null) ?? null;
   const [focusedPlaceId, setFocusedPlaceId] = useState<string | null>(null);
@@ -50,11 +51,8 @@ const MyCategoryCreate = () => {
     event.returnValue = '';
   });
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/auth');
-    }
-  }, [isAuthenticated, navigate]);
+  // UserRequest: 반복되는 인증 리다이렉트 로직을 공통 훅으로 통합
+  useRequireAuthRedirect();
 
   useEffect(() => {
     if (locationState?.draftTitle?.trim()) {

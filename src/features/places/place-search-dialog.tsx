@@ -47,7 +47,7 @@ export const PlaceSearchDialog = ({
   useEffect(() => {
     // UserRequest: 장소 검색 팝업은 현재 카테고리에 이미 있는 장소를 즉시 "추가됨" 상태로 표시한다.
     setAddedPlaceIds(existingPlaceIds);
-  }, [categoryId, open]);
+  }, [categoryId, existingPlaceIds, open]);
 
   // API 서비스 레이어를 통해 장소 검색 수행 (백엔드 연동 시 placeApi.search만 수정)
   const handleSearch = async () => {

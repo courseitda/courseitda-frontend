@@ -8,6 +8,7 @@ import { UI_COPY } from '@/shared/constants/ui-copy';
 import { useSharedCategoryDetail } from '@/shared/hooks/use-community';
 import { Spinner } from '@/components/ui/spinner';
 import { MESSAGES } from '@/shared/constants/messages';
+import { useQueryErrorToast } from '@/shared/hooks/use-query-error-toast';
 
 type SharedCategoryDetailDialogProps = {
   open: boolean;
@@ -71,12 +72,8 @@ const SharedCategoryDetailDialog = ({
     setDisplayForkCount(category?.forkCount ?? 0);
   }, [category?.forkCount, category?.id]);
 
-  useEffect(() => {
-    // UserRequest: 공유 카테고리 상세 조회 실패를 모달 내부에서 즉시 안내한다.
-    if (detailError && open) {
-      toast.error(detailError.message || MESSAGES.sharedCategory.fetchDetailFailed);
-    }
-  }, [detailError, open]);
+  // UserRequest: 공유 카테고리 상세 조회 실패를 모달 내부에서 즉시 안내한다.
+  useQueryErrorToast(detailError, MESSAGES.sharedCategory.fetchDetailFailed, open);
 
   useEffect(() => {
     if (detailCategory) {

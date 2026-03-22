@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useAuthStore } from '@/shared/stores/auth-store';
 import { useWorkspace } from '@/shared/hooks/use-workspace';
 import { useWorkspaceCategories } from '@/shared/hooks/use-categories';
 import { Button } from '@/components/ui/button';
@@ -15,6 +14,9 @@ import { Spinner } from '@/components/ui/spinner';
 import PageHeader from '@/components/layout/page-header';
 import UserMenu from '@/components/header/user-menu';
 import { MESSAGES } from '@/shared/constants/messages';
+import { useRequireAuthRedirect } from '@/shared/hooks/use-require-auth-redirect';
+import { useQueryErrorToast } from '@/shared/hooks/use-query-error-toast';
+import { useWorkspaceDetailLayout } from '@/shared/hooks/use-workspace-detail-layout';
 
 /**
  * 워크스페이스 상세 페이지 - 카테고리 관리 및 지도 표시
@@ -25,24 +27,21 @@ const WorkspaceDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated } = useAuthStore();
   const naverMapKeyId = useSettingsStore((state) => state.naverMapKeyId);
   const [focusedPlace, setFocusedPlace] = useState<Place | null>(null);
   const [editWorkspaceOpen, setEditWorkspaceOpen] = useState(false);
-  // UserRequest: 모바일 뷰에서 Bottom Sheet 확장/축소 상태를 관리하여 지도/카테고리 높이를 전환
-  const [isSheetExpanded, setIsSheetExpanded] = useState(false);
-  const [isSheetDragging, setIsSheetDragging] = useState(false);
-  const sheetDragStartY = useRef(0);
-  // UserRequest: 지도 전체 화면 토글 상태를 관리하여 카테고리 영역 대신 지도 집중 모드 제공
-  const [isMapFullscreen, setIsMapFullscreen] = useState(false);
   const [startInCategoryEditMode] = useState(() => location.state?.startInCategoryEditMode === true);
-  // UserRequest: 전체 화면 토글은 모바일에서만 제공되므로 뷰포트 폭을 추적
-  const [isMobile, setIsMobile] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return window.matchMedia('(max-width: 767px)').matches;
-  });
-  const headerRef = useRef<HTMLElement | null>(null);
-  const [headerHeight, setHeaderHeight] = useState('64px');
+  const {
+    headerRef,
+    isSheetExpanded,
+    isMapFullscreen,
+    fullscreenActive,
+    mobileSheetHeight,
+    mobileMapHeight,
+    setIsSheetExpanded,
+    setIsMapFullscreen,
+    handleSheetDragStart,
+  } = useWorkspaceDetailLayout();
 
   // UserRequest: Step 4 — 워크스페이스 상세 데이터를 React Query로 가져와 캐싱
   const {
@@ -57,121 +56,18 @@ const WorkspaceDetail = () => {
     error: categoriesError,
   } = useWorkspaceCategories(workspace?.identifier);
 
-  // 미인증 사용자 접근 차단 - 로그인 페이지로 리다이렉트하여 보안 유지
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/auth');
-    }
-  }, [isAuthenticated, navigate]);
+  // UserRequest: 반복되는 인증 리다이렉트 로직을 공통 훅으로 통합
+  useRequireAuthRedirect();
 
-  useEffect(() => {
-    // UserRequest: Step 4 — 워크스페이스 조회 실패 시 사용자에게 즉시 안내
-    if (workspaceError) {
-      toast.error(workspaceError.message || MESSAGES.workspace.loadFailed);
-    }
-  }, [workspaceError]);
-
-  useEffect(() => {
-    if (categoriesError) {
-      toast.error(categoriesError.message || MESSAGES.workspaceCategory.listLoadFailed);
-    }
-  }, [categoriesError]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const mediaQuery = window.matchMedia('(max-width: 767px)');
-    const handleChange = (event: MediaQueryListEvent | MediaQueryList) => {
-      setIsMobile(event.matches);
-    };
-
-    handleChange(mediaQuery);
-
-    if (typeof mediaQuery.addEventListener === 'function') {
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
-    }
-
-    mediaQuery.onchange = handleChange as (this: MediaQueryList, ev: MediaQueryListEvent) => unknown;
-    return () => {
-      mediaQuery.onchange = null;
-    };
-
-    return undefined;
-  }, []);
-
-  useEffect(() => {
-    // UserRequest: 모바일 워크스페이스 상세 높이 계산은 실제 헤더 높이를 기준으로 맞춘다.
-    if (typeof window === 'undefined') return;
-    if (!headerRef.current) return;
-
-    const updateHeaderHeight = () => {
-      if (!headerRef.current) return;
-      setHeaderHeight(`${headerRef.current.getBoundingClientRect().height}px`);
-    };
-
-    updateHeaderHeight();
-
-    const resizeObserver = new ResizeObserver(() => {
-      updateHeaderHeight();
-    });
-    resizeObserver.observe(headerRef.current);
-    window.addEventListener('resize', updateHeaderHeight);
-
-    return () => {
-      resizeObserver.disconnect();
-      window.removeEventListener('resize', updateHeaderHeight);
-    };
-  }, []);
+  // UserRequest: Step 4 — 워크스페이스 조회 실패 시 사용자에게 즉시 안내
+  useQueryErrorToast(workspaceError, MESSAGES.workspace.loadFailed);
+  useQueryErrorToast(categoriesError, MESSAGES.workspaceCategory.listLoadFailed);
 
   useEffect(() => {
     // UserRequest: 워크스페이스 생성 직후에만 편집 모드로 진입하고 새로고침/재방문 시에는 기본 보기 모드로 되돌린다.
     if (!startInCategoryEditMode) return;
     navigate(location.pathname, { replace: true, state: null });
   }, [location.pathname, navigate, startInCategoryEditMode]);
-
-  useEffect(() => {
-    // UserRequest: 지도 전체 화면 진입 시 Bottom Sheet를 강제로 접어 이중 스크롤 방지
-    if (isMobile && isMapFullscreen && isSheetExpanded) {
-      setIsSheetExpanded(false);
-    }
-  }, [isMobile, isMapFullscreen, isSheetExpanded]);
-
-
-  useEffect(() => {
-    // UserRequest: 드래그 진행 중에는 전역 포인터 이벤트를 감지하여 Bottom Sheet 높이를 조정
-    if (!isSheetDragging) return;
-
-    const handlePointerMove = (event: PointerEvent) => {
-      const deltaY = event.clientY - sheetDragStartY.current;
-      if (Math.abs(deltaY) < 25) return;
-      setIsSheetExpanded(deltaY < 0);
-    };
-
-    const handlePointerUp = (event: PointerEvent) => {
-      const deltaY = event.clientY - sheetDragStartY.current;
-      if (Math.abs(deltaY) >= 15) {
-        setIsSheetExpanded(deltaY < 0);
-      } else {
-        setIsSheetExpanded((previous) => !previous);
-      }
-      setIsSheetDragging(false);
-    };
-
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerup', handlePointerUp);
-
-    return () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
-    };
-  }, [isSheetDragging]);
-
-  // UserRequest: Bottom Sheet 핸들 드래그 시작 시 기준 좌표를 기록하여 이동 방향 판단
-  const handleSheetDragStart = (event: React.PointerEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    sheetDragStartY.current = event.clientY;
-    setIsSheetDragging(true);
-  };
 
   // 로그아웃 처리 후 인증 상태 초기화 및 랜딩 페이지로 이동
   // 데이터 로딩 중에는 스피너를 표시하여 진행 상황 안내
@@ -215,21 +111,6 @@ const WorkspaceDetail = () => {
       representativePlaceName: representativePlace?.place.name ?? '미지정',
     };
   });
-
-  // UserRequest: half-open / full-open 전환에 따라 지도와 Bottom Sheet 높이를 동적으로 계산
-  const collapsedSheetHeight = '45vh';
-  const layoutTopPadding = '0px'; // 컨테이너 상단 여백 제거로 지도가 헤더 바로 아래에서 시작
-  const layoutVerticalPadding = '1rem'; // 상단 여백 제거 후 하단 여백만 유지하여 전체 화면 시 답답함 방지
-  // UserRequest: full-open 시 카테고리 영역 상단을 기존 지도 영역과 동일한 위치까지 끌어올림
-  const fullscreenActive = isMobile && isMapFullscreen;
-  const mobileSheetHeight = isSheetExpanded ? `calc(100vh - ${headerHeight} - ${layoutTopPadding})` : collapsedSheetHeight;
-  // UserRequest: 디폴트 상태의 지도·카테고리 간 간격을 기존의 절반으로 줄이기 위해 map height를 재계산
-  const collapsedMapHeight = `calc(((100vh - ${headerHeight}) - ${collapsedSheetHeight} + ((100vh - ${headerHeight}) * 0.45)) / 2)`;
-  const mobileMapHeight = fullscreenActive
-    ? `calc(100vh - ${headerHeight} - ${layoutVerticalPadding})`
-    : isSheetExpanded
-      ? '0px'
-      : collapsedMapHeight;
 
   return (
     <div className="h-screen bg-gradient-card flex flex-col overflow-hidden">

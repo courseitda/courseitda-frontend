@@ -5,6 +5,7 @@ import { COMMUNITY_QUERY_KEYS } from '@/shared/hooks/use-community';
 import { MESSAGES } from '@/shared/constants/messages';
 import { toast } from 'sonner';
 import { UI_COPY } from '@/shared/constants/ui-copy';
+import { fetchAllCursorPages } from '@/shared/utils/cursor-pagination';
 
 type SavedCategoryPayload = {
   id: string;
@@ -116,47 +117,19 @@ export const useMySavedCategories = (
         throw new Error(UI_COPY.system.authTokenRequired);
       }
 
-      const categories: SavedCategory[] = [];
-      let cursor: number | null | undefined = null;
-      let hasNext = true;
-      const visitedCursors = new Set<number | null>();
-
-      // UserRequest: 내 카테고리가 0개일 때도 무한 로딩 없이 빈 상태 화면으로 진입되도록 페이지네이션 종료 조건을 방어한다.
-      while (hasNext) {
-        // 잘못된 nextCursor 반복 응답으로 인한 무한 루프를 사전에 차단
-        if (visitedCursors.has(cursor)) {
-          break;
-        }
-        visitedCursors.add(cursor);
-
+      return fetchAllCursorPages(async (cursor) => {
         const response = await myStorageApi.getMySavedCategories(token, { cursor, size: pageSize });
 
         if (!response.success || !response.data) {
           throw new Error(response.error?.message ?? MESSAGES.savedCategory.listLoadFailed);
         }
 
-        const pageCategories = response.data.categories.map((category) => toSavedCategoryEntity(category));
-        categories.push(...pageCategories);
-
-        // 빈 페이지거나 다음 커서가 없으면 즉시 종료하여 빈 목록을 정상 상태로 처리
-        if (pageCategories.length === 0 || response.data.nextCursor === null) {
-          hasNext = false;
-          cursor = null;
-          continue;
-        }
-
-        // 현재 커서와 동일한 nextCursor가 오면 백엔드 응답 이상으로 간주하고 종료
-        if (response.data.nextCursor === cursor) {
-          hasNext = false;
-          cursor = null;
-          continue;
-        }
-
-        hasNext = response.data.hasNext;
-        cursor = response.data.nextCursor;
-      }
-
-      return categories;
+        return {
+          items: response.data.categories.map((category) => toSavedCategoryEntity(category)),
+          hasNext: response.data.hasNext,
+          nextCursor: response.data.nextCursor,
+        };
+      });
     },
     staleTime: 1000 * 30,
     placeholderData: (previousData) => previousData,

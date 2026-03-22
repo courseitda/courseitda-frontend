@@ -26,6 +26,8 @@ import SharedCategoryList from '@/components/community/shared-category-list';
 import type { SharedSavedCategory } from '@/entities/types';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 import DeleteConfirmDialog from '@/components/common/delete-confirm-dialog';
+import { useRequireAuthRedirect } from '@/shared/hooks/use-require-auth-redirect';
+import { useQueryErrorToast } from '@/shared/hooks/use-query-error-toast';
 
 /**
  * 커뮤니티 관리 페이지 - 회원만 접근 가능, 보관 카테고리를 공유/삭제 관리
@@ -62,12 +64,9 @@ const MyPosts = () => {
     {},
   );
 
-  // 로그인되지 않은 경우 관리 페이지 접근을 차단하고 인증 화면으로 이동
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/auth');
-    }
-  }, [isAuthenticated, navigate]);
+  // UserRequest: 반복되는 인증 리다이렉트 로직을 공통 훅으로 통합
+  useRequireAuthRedirect();
+  useQueryErrorToast(mySharedCategoriesError, MESSAGES.sharedCategory.searchLoadFailed);
 
   const handleOpenDetail = (category: SharedSavedCategory) => {
     // UserRequest: 업로드한 카테고리 클릭 시 카테고리 게시판과 동일한 상세 팝업 표시

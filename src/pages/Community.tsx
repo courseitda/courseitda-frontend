@@ -1,7 +1,6 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
-import { toast } from 'sonner';
 import { Calendar, GitFork, Sparkles } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { useSharedCategories } from '@/shared/hooks/use-community';
@@ -15,6 +14,8 @@ import SharedCategoryDetailDialog from '@/components/community/shared-category-d
 import LoginRequiredDialog from '@/components/common/login-required-dialog';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 import { useAuthStore } from '@/shared/stores/auth-store';
+import { useQueryErrorToast } from '@/shared/hooks/use-query-error-toast';
+import { useCommunityRecommendCarousel } from '@/shared/hooks/use-community-recommend-carousel';
 
 /**
  * 커뮤니티 메인 페이지 - 검색 입력 후 검색 결과 페이지로 이동
@@ -26,16 +27,6 @@ const Community = () => {
   const [selectedCategory, setSelectedCategory] = useState<SharedSavedCategory | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);
-  const [recommendIndex, setRecommendIndex] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(true);
-  const sliderRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const isDragging = useRef(false);
-  const startX = useRef(0);
-  const currentTranslate = useRef(0);
-  const isLoopFixingRef = useRef(false);
-  const loopFallbackTimerRef = useRef<number | null>(null);
-  const [sliderWidth, setSliderWidth] = useState(0);
   // UserRequest: Community 페이지의 추천/검색 로직은 service 계층 인터페이스를 통해 실행
   // TODO: 다음 스프린트에서 recommendations API가 준비되면 추천 영역 조회를 전용 API로 교체한다.
   const {
@@ -63,30 +54,26 @@ const Community = () => {
       }, {}),
     [forkedSharedCategoryIds],
   );
-  const hasLoop = filteredCategories.length > 1;
-  const sliderCategories = useMemo(() => {
-    if (filteredCategories.length === 0) return [];
-    if (!hasLoop) return filteredCategories;
-    const first = filteredCategories[0];
-    const last = filteredCategories[filteredCategories.length - 1];
-    return [last, ...filteredCategories, first];
-  }, [filteredCategories, hasLoop]);
-  // UserRequest: 커뮤니티 추천 카테고리 카드를 현재 대비 5/6 크기로 축소한다.
-  const RECOMMEND_CARD_SCALE = 5 / 6;
-  const CARD_WIDTH = Math.round(280 * RECOMMEND_CARD_SCALE);
-  const CARD_GAP = Math.round(16 * RECOMMEND_CARD_SCALE);
-  const CARD_IMAGE_HEIGHT = Math.round(192 * RECOMMEND_CARD_SCALE);
-  // UserRequest: 클린 코드 기준 Hook 의존성 경고를 제거하기 위해 계산 함수를 메모이제이션
-  const getBaseTranslate = useCallback(
-    (index: number) =>
-      sliderWidth ? (sliderWidth - CARD_WIDTH) / 2 - index * (CARD_WIDTH + CARD_GAP) : 0,
-    [sliderWidth],
-  );
-  const activeIndex = filteredCategories.length
-    ? hasLoop
-      ? (recommendIndex - 1 + filteredCategories.length) % filteredCategories.length
-      : recommendIndex
-    : 0;
+  const {
+    sliderRef,
+    trackRef,
+    sliderCategories,
+    activeIndex,
+    isAnimating,
+    hasLoop,
+    recommendIndex,
+    sliderWidth,
+    cardWidth,
+    cardGap,
+    cardImageHeight,
+    getBaseTranslate,
+    handleSelectRecommend,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    handlePointerLeave,
+    handleTransitionEnd,
+  } = useCommunityRecommendCarousel(filteredCategories);
 
   const formatUploadedDate = (uploadedAt: string): string => {
     const date = new Date(uploadedAt);
@@ -128,149 +115,9 @@ const Community = () => {
     navigate('/auth?tab=login');
   };
 
-  // UserRequest: pagination dots 클릭 시 정상 이동을 보장하도록 드래그 상태를 초기화
-  const handleSelectRecommend = (index: number) => {
-    isDragging.current = false;
-    if (trackRef.current) {
-      // UserRequest: 점프 시 transform 제거 대신 목표 위치로 동기화하여 깜빡임 방지
-      const nextIndex = hasLoop ? index + 1 : index;
-      trackRef.current.style.transform = `translateX(${getBaseTranslate(nextIndex)}px)`;
-    }
-    // UserRequest: 추천 슬라이더를 무한 루프로 동작하도록 인덱스 보정
-    setIsAnimating(true);
-    setRecommendIndex(hasLoop ? index + 1 : index);
-  };
-
-  useEffect(() => {
-    // UserRequest: 추천 목록 조회 실패 시 사용자에게 즉시 알림
-    if (sharedCategoriesError) {
-      toast.error(sharedCategoriesError.message || MESSAGES.sharedCategory.recommendedLoadFailed);
-    }
-  }, [sharedCategoriesError]);
-
-  useEffect(() => {
-    if (boardCategoriesError) {
-      toast.error(boardCategoriesError.message || MESSAGES.sharedCategory.searchLoadFailed);
-    }
-  }, [boardCategoriesError]);
-
-  // 추천 카드 자동 전환 - 일정 간격으로 다음 카드로 이동
-  useEffect(() => {
-    if (filteredCategories.length === 0 || !hasLoop) return;
-    if (sliderWidth === 0) return;
-    const timer = setInterval(() => {
-      setRecommendIndex((prev) => prev + 1);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, [filteredCategories.length, hasLoop, sliderWidth]);
-
-  useEffect(() => {
-    // UserRequest: 초기 렌더/리로드 시 중앙 정렬이 확정된 뒤에 슬라이더 위치를 설정
-    if (filteredCategories.length === 0) {
-      setRecommendIndex(0);
-      return;
-    }
-    if (sliderWidth === 0) return;
-    setIsAnimating(false);
-    setRecommendIndex(hasLoop ? 1 : 0);
-    requestAnimationFrame(() => setIsAnimating(true));
-  }, [filteredCategories.length, hasLoop, sliderWidth]);
-
-  useEffect(() => {
-    if (!trackRef.current || sliderWidth === 0) return;
-    if (isDragging.current) return;
-    // UserRequest: 인덱스 변경 시 DOM 위치와 상태를 강제로 동기화하여 정지 현상 방지
-    trackRef.current.style.transform = `translateX(${getBaseTranslate(recommendIndex)}px)`;
-  }, [recommendIndex, sliderWidth, getBaseTranslate]);
-
-  useEffect(() => {
-    // UserRequest: transitionend 누락 시에만 지연 보정하여 경계 전환이 점프처럼 보이지 않게 처리
-    if (!hasLoop) return;
-    if (!isAnimating) return;
-
-    const isLoopBoundary = recommendIndex === 0 || recommendIndex === filteredCategories.length + 1;
-    if (!isLoopBoundary) {
-      if (loopFallbackTimerRef.current) {
-        window.clearTimeout(loopFallbackTimerRef.current);
-        loopFallbackTimerRef.current = null;
-      }
-      return;
-    }
-
-    if (loopFallbackTimerRef.current) {
-      window.clearTimeout(loopFallbackTimerRef.current);
-    }
-
-    loopFallbackTimerRef.current = window.setTimeout(() => {
-      if (isLoopFixingRef.current) return;
-      isLoopFixingRef.current = true;
-      setIsAnimating(false);
-      requestAnimationFrame(() => {
-        const nextIndex = recommendIndex === 0 ? filteredCategories.length : 1;
-        setRecommendIndex(nextIndex);
-        requestAnimationFrame(() => {
-          setIsAnimating(true);
-          isLoopFixingRef.current = false;
-        });
-      });
-      loopFallbackTimerRef.current = null;
-    }, 560);
-
-    return () => {
-      if (loopFallbackTimerRef.current) {
-        window.clearTimeout(loopFallbackTimerRef.current);
-        loopFallbackTimerRef.current = null;
-      }
-    };
-  }, [recommendIndex, hasLoop, filteredCategories.length, isAnimating]);
-
-  const updateSliderWidth = useCallback(() => {
-    if (sliderRef.current) {
-      setSliderWidth(sliderRef.current.getBoundingClientRect().width);
-    }
-  }, []);
-
-  // UserRequest: 데스크톱에서도 중앙 정렬이 안정적으로 계산되도록 슬라이더 폭을 실시간 측정
-  useLayoutEffect(() => {
-    const slider = sliderRef.current;
-    if (!slider) return;
-
-    updateSliderWidth();
-    const observer = new ResizeObserver(() => updateSliderWidth());
-    observer.observe(slider);
-
-    return () => observer.disconnect();
-  }, [updateSliderWidth, filteredCategories.length, sharedCategoriesLoading]);
-
-  useEffect(() => {
-    // UserRequest: 다른 탭에서 복귀 시 애니메이션/중앙 정렬 상태를 즉시 복구
-    const handleVisibilityChange = () => {
-      if (document.hidden) return;
-      updateSliderWidth();
-      if (hasLoop) {
-        if (recommendIndex === 0) {
-          setIsAnimating(false);
-          requestAnimationFrame(() => {
-            setRecommendIndex(filteredCategories.length);
-            requestAnimationFrame(() => setIsAnimating(true));
-          });
-          return;
-        }
-        if (recommendIndex === filteredCategories.length + 1) {
-          setIsAnimating(false);
-          requestAnimationFrame(() => {
-            setRecommendIndex(1);
-            requestAnimationFrame(() => setIsAnimating(true));
-          });
-          return;
-        }
-      }
-      setIsAnimating(true);
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [updateSliderWidth, hasLoop, recommendIndex, filteredCategories.length]);
+  // UserRequest: 추천 목록 조회 실패 시 사용자에게 즉시 알림
+  useQueryErrorToast(sharedCategoriesError, MESSAGES.sharedCategory.recommendedLoadFailed);
+  useQueryErrorToast(boardCategoriesError, MESSAGES.sharedCategory.searchLoadFailed);
 
   // 데이터 로딩 중에는 중앙에 스피너를 표시하여 진행 상황 안내
   if (sharedCategoriesLoading) {
@@ -306,75 +153,25 @@ const Community = () => {
                   ref={sliderRef}
                   className="overflow-hidden w-full"
                   onPointerDown={(event) => {
-                    if (filteredCategories.length === 0) return;
-                    isDragging.current = true;
-                    // UserRequest: 드래그 중에는 애니메이션을 제거하여 자연스러운 이동 제공
-                    setIsAnimating(false);
-                    startX.current = event.clientX;
-                    // UserRequest: 순차 전환 시 활성 카드가 정중앙에 오도록 기준 위치를 계산
-                    currentTranslate.current = getBaseTranslate(recommendIndex);
+                    handlePointerDown(event.clientX);
                   }}
                   onPointerMove={(event) => {
-                    if (!isDragging.current || !trackRef.current) return;
-                    const delta = event.clientX - startX.current;
-                    trackRef.current.style.setProperty(
-                      'transform',
-                      `translateX(${currentTranslate.current + delta}px)`
-                    );
+                    handlePointerMove(event.clientX);
                   }}
                   onPointerUp={(event) => {
-                    if (!isDragging.current || !trackRef.current) return;
-                    isDragging.current = false;
-                    setIsAnimating(true);
-                    const delta = event.clientX - startX.current;
-                    const threshold = CARD_WIDTH / 3;
-                    let nextIndex = recommendIndex;
-                    if (delta > threshold) {
-                      nextIndex = hasLoop ? recommendIndex - 1 : Math.max(0, recommendIndex - 1);
-                    } else if (delta < -threshold) {
-                      nextIndex = hasLoop
-                        ? recommendIndex + 1
-                        : Math.min(filteredCategories.length - 1, recommendIndex + 1);
-                    }
-                    // UserRequest: 드래그 종료 시 DOM과 상태의 transform을 동일 위치로 맞춤
-                    trackRef.current.style.transform = `translateX(${getBaseTranslate(nextIndex)}px)`;
-                    setRecommendIndex(nextIndex);
+                    handlePointerUp(event.clientX);
                   }}
                   onPointerLeave={() => {
-                    if (isDragging.current) {
-                      isDragging.current = false;
-                      setIsAnimating(true);
-                      if (trackRef.current) {
-                        trackRef.current.style.transform = `translateX(${getBaseTranslate(recommendIndex)}px)`;
-                      }
-                    }
+                    handlePointerLeave();
                   }}
                 >
                   <div
                     ref={trackRef}
                     className={`flex items-center gap-4 ease-out ${isAnimating ? 'transition-transform duration-500' : 'transition-none'}`}
                     style={{
-                      transform: `translateX(${sliderWidth ? (sliderWidth - CARD_WIDTH) / 2 - recommendIndex * (CARD_WIDTH + CARD_GAP) : 0}px)`,
+                      transform: `translateX(${sliderWidth ? (sliderWidth - cardWidth) / 2 - recommendIndex * (cardWidth + cardGap) : 0}px)`,
                     }}
-                    onTransitionEnd={() => {
-                      if (!hasLoop) return;
-                      if (recommendIndex === 0) {
-                        // UserRequest: 마지막 -> 첫번째 이동 시 역방향 튐을 방지하기 위해 위치를 즉시 보정
-                        setIsAnimating(false);
-                        requestAnimationFrame(() => {
-                          setRecommendIndex(filteredCategories.length);
-                          requestAnimationFrame(() => setIsAnimating(true));
-                        });
-                      }
-                      if (recommendIndex === filteredCategories.length + 1) {
-                        // UserRequest: 첫번째 -> 마지막 이동 시 자연스러운 무한 루프를 유지
-                        setIsAnimating(false);
-                        requestAnimationFrame(() => {
-                          setRecommendIndex(1);
-                          requestAnimationFrame(() => setIsAnimating(true));
-                        });
-                      }
-                    }}
+                    onTransitionEnd={handleTransitionEnd}
                   >
                     {sliderCategories.map((category, index) => {
                       const normalizedIndex = hasLoop
@@ -394,7 +191,7 @@ const Community = () => {
                           className="flex-shrink-0 hover-lift cursor-pointer"
                           onClick={() => handleOpenDetail(category)}
                           style={{
-                            width: CARD_WIDTH,
+                            width: cardWidth,
                             transform: `scale(${scale})`,
                             opacity,
                             filter: blur,
@@ -403,7 +200,7 @@ const Community = () => {
                         >
                           <div
                             className="rounded-t-xl border-b border-border bg-muted/60 flex items-center justify-center text-xs text-muted-foreground"
-                            style={{ height: CARD_IMAGE_HEIGHT }}
+                            style={{ height: cardImageHeight }}
                           >
                             이미지 영역
                           </div>

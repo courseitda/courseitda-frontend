@@ -15,6 +15,7 @@ import PageHeader from '@/components/layout/page-header';
 import DesktopSideLayout from '@/components/layout/desktop-side-layout';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 import { useAuthStore } from '@/shared/stores/auth-store';
+import { useQueryErrorToast } from '@/shared/hooks/use-query-error-toast';
 
 const SearchResult = () => {
   const navigate = useNavigate();
@@ -53,12 +54,8 @@ const SearchResult = () => {
     [forkedSharedCategoryIds],
   );
 
-  useEffect(() => {
-    // UserRequest: 검색 결과 조회 실패 시 사용자에게 즉시 알림
-    if (sharedCategoriesError) {
-      toast.error(sharedCategoriesError.message || MESSAGES.sharedCategory.searchLoadFailed);
-    }
-  }, [sharedCategoriesError]);
+  // UserRequest: 검색 결과 조회 실패 시 사용자에게 즉시 알림
+  useQueryErrorToast(sharedCategoriesError, MESSAGES.sharedCategory.searchLoadFailed);
 
   const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

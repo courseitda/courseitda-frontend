@@ -3,6 +3,7 @@ import { workspaceApi } from '@/services/api';
 import { MESSAGES } from '@/shared/constants/messages';
 import type { Workspace } from '@/entities/types';
 import { UI_COPY } from '@/shared/constants/ui-copy';
+import { fetchAllCursorPages } from '@/shared/utils/cursor-pagination';
 
 type WorkspacePayload = {
   identifier: string;
@@ -66,32 +67,25 @@ export const useWorkspacesByOwner = (token?: string): UseQueryResult<Workspace[]
         throw new Error(UI_COPY.system.authTokenRequired);
       }
 
-      const workspaces: Workspace[] = [];
-      let cursor: number | null | undefined = null;
-      let hasNext = true;
-
-      while (hasNext) {
+      return fetchAllCursorPages(async (cursor) => {
         const response = await workspaceApi.getMyWorkspaces(token, { cursor, size: 20 });
 
         if (!response.success || !response.data) {
           throw new Error(response.error?.message ?? MESSAGES.workspace.loadFailed);
         }
 
-        workspaces.push(
-          ...response.data.workspaces.map((workspace) =>
+        return {
+          items: response.data.workspaces.map((workspace) =>
             toWorkspaceEntity({
               identifier: workspace.identifier,
               title: workspace.title,
               modifiedAt: workspace.modifiedAt,
             }),
           ),
-        );
-
-        hasNext = response.data.hasNext;
-        cursor = response.data.nextCursor;
-      }
-
-      return workspaces;
+          hasNext: response.data.hasNext,
+          nextCursor: response.data.nextCursor,
+        };
+      });
     },
     staleTime: 1000 * 30,
     placeholderData: (previousData) => previousData,

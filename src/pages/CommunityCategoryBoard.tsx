@@ -18,6 +18,7 @@ import LoginRequiredDialog from '@/components/common/login-required-dialog';
 import PageHeader from '@/components/layout/page-header';
 import DesktopSideLayout from '@/components/layout/desktop-side-layout';
 import { UI_COPY } from '@/shared/constants/ui-copy';
+import { useQueryErrorToast } from '@/shared/hooks/use-query-error-toast';
 
 const CommunityCategoryBoard = () => {
   const navigate = useNavigate();
@@ -52,12 +53,8 @@ const CommunityCategoryBoard = () => {
     [forkedSharedCategoryIds],
   );
 
-  useEffect(() => {
-    // UserRequest: 공유된 카테고리 게시판 조회 실패 시 사용자에게 즉시 알림
-    if (sharedCategoriesError) {
-      toast.error(sharedCategoriesError.message || MESSAGES.sharedCategory.searchLoadFailed);
-    }
-  }, [sharedCategoriesError]);
+  // UserRequest: 공유된 카테고리 게시판 조회 실패 시 사용자에게 즉시 알림
+  useQueryErrorToast(sharedCategoriesError, MESSAGES.sharedCategory.searchLoadFailed);
 
   const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

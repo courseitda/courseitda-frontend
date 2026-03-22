@@ -20,12 +20,14 @@ export const useDialogViewportPosition = ({
   const [keyboardOffset, setKeyboardOffset] = useState(0);
 
   useEffect(() => {
+    const dialogElement = dialogRef?.current ?? null;
+
     if (!open) {
       setKeyboardOffset(0);
 
       // 중앙 정렬 모드는 닫힐 때 기본 transform으로 복원하여 다음 열림 상태를 안정화한다.
-      if (mode === 'center' && dialogRef?.current) {
-        dialogRef.current.style.transform = 'translate(-50%, -50%)';
+      if (mode === 'center' && dialogElement) {
+        dialogElement.style.transform = 'translate(-50%, -50%)';
       }
 
       return;
@@ -39,8 +41,8 @@ export const useDialogViewportPosition = ({
           setKeyboardOffset(0);
         }
 
-        if (mode === 'center' && dialogRef?.current) {
-          dialogRef.current.style.transform = 'translate(-50%, -50%)';
+        if (mode === 'center' && dialogElement) {
+          dialogElement.style.transform = 'translate(-50%, -50%)';
         }
 
         return;
@@ -57,11 +59,11 @@ export const useDialogViewportPosition = ({
       }
 
       // 중앙 정렬 모드는 키보드 높이의 절반만큼 위로 이동시켜 입력창 가림을 줄인다.
-      if (!dialogRef?.current) {
+      if (!dialogElement) {
         return;
       }
 
-      dialogRef.current.style.transform = isKeyboardOpen
+      dialogElement.style.transform = isKeyboardOpen
         ? `translate(-50%, calc(-50% - ${(windowHeight - viewportHeight) / 2}px))`
         : 'translate(-50%, -50%)';
     };
@@ -79,8 +81,8 @@ export const useDialogViewportPosition = ({
       window.visualViewport?.removeEventListener('resize', handleViewportResize);
       window.visualViewport?.removeEventListener('scroll', handleViewportResize);
 
-      if (mode === 'center' && dialogRef?.current) {
-        dialogRef.current.style.transform = 'translate(-50%, -50%)';
+      if (mode === 'center' && dialogElement) {
+        dialogElement.style.transform = 'translate(-50%, -50%)';
       }
     };
   }, [dialogRef, keyboardOpenThreshold, mode, open]);

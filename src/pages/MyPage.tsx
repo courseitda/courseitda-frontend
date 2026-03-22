@@ -10,6 +10,7 @@ import { Spinner } from '@/components/ui/spinner';
 import PageHeader from '@/components/layout/page-header';
 import DesktopSideLayout from '@/components/layout/desktop-side-layout';
 import { UI_COPY } from '@/shared/constants/ui-copy';
+import { useRequireAuthRedirect } from '@/shared/hooks/use-require-auth-redirect';
 
 /**
  * 사용자 프로필 정보를 표시하는 마이페이지 컴포넌트
@@ -21,12 +22,8 @@ const MyPage = () => {
   const { logout, isAuthenticated } = useAuthStore();
   const { nickname, email, loading } = useUserProfile(); // 토큰으로 프로필 정보 조회 (마이페이지용)
 
-  // 미인증 사용자 접근 시 로그인 페이지로 자동 이동하여 보안 유지
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/auth');
-    }
-  }, [isAuthenticated, navigate]);
+  // UserRequest: 반복되는 인증 리다이렉트 로직을 공통 훅으로 통합
+  useRequireAuthRedirect();
 
   // 로그아웃 처리 후 로그인 페이지로 이동
   const handleLogout = () => {

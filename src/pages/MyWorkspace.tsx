@@ -24,6 +24,8 @@ import { formatRelativeTimeKorean } from '@/shared/utils/relative-time';
 import { MESSAGES } from '@/shared/constants/messages';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 import DeleteConfirmDialog from '@/components/common/delete-confirm-dialog';
+import { useRequireAuthRedirect } from '@/shared/hooks/use-require-auth-redirect';
+import { useQueryErrorToast } from '@/shared/hooks/use-query-error-toast';
 
 /**
  * 워크스페이스 목록 페이지 컴포넌트
@@ -32,18 +34,13 @@ import DeleteConfirmDialog from '@/components/common/delete-confirm-dialog';
  */
 const MyWorkspace = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuthStore();
   const [createOpen, setCreateOpen] = useState(false);
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState<Workspace | null>(null);
   const queryClient = useQueryClient();
 
-  // 미인증 사용자 접근 차단 - 로그인 페이지로 리다이렉트하여 보안 유지
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/auth');
-    }
-  }, [isAuthenticated, navigate]);
+  // UserRequest: 반복되는 인증 리다이렉트 로직을 공통 훅으로 통합
+  useRequireAuthRedirect();
 
   // UserRequest: Step 4 — React Query로 내 워크스페이스 목록을 불러와 카드 리스트에 적용
   const token = useAuthStore((state) => state.token);
@@ -57,12 +54,8 @@ const MyWorkspace = () => {
       (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
   );
 
-  useEffect(() => {
-    // UserRequest: Step 4 — 워크스페이스 목록 조회 실패 시 사용자에게 즉시 알림
-    if (workspacesError) {
-      toast.error(workspacesError.message || MESSAGES.workspace.loadFailed);
-    }
-  }, [workspacesError]);
+  // UserRequest: Step 4 — 워크스페이스 목록 조회 실패 시 사용자에게 즉시 알림
+  useQueryErrorToast(workspacesError, MESSAGES.workspace.loadFailed);
 
   // UserRequest: Step 5 — React Query 뮤테이션으로 삭제 후 내 워크스페이스 캐시 무효화
   const deleteWorkspaceMutation = useMutation({
@@ -168,6 +161,36 @@ const MyWorkspace = () => {
     </div>
   );
 
+  // 모바일/데스크톱 모두 동일한 워크스페이스 리스트 구조를 공유하여 수정 누락을 방지
+  const renderWorkspaceSection = (emptyStateClassName: string) => (
+    <div className="flex flex-1 flex-col">
+      {/* UserRequest: 내 워크스페이스 페이지의 생성 진입 버튼을 이전 카드형 새 워크스페이스 UI로 되돌린다. */}
+      <Card
+        className="hover-lift cursor-pointer border-border bg-card hover:bg-accent/40 transition-colors"
+        onClick={() => setCreateOpen(true)}
+      >
+        <CardHeader className="flex flex-col items-center justify-center">
+          <div className="flex items-center gap-2 text-primary">
+            <Plus className="w-5 h-5" />
+            <CardTitle className="text-base md:text-lg text-primary">{UI_COPY.myWorkspace.createAction}</CardTitle>
+          </div>
+        </CardHeader>
+      </Card>
+      <div className="mt-2.5 flex flex-1 flex-col">
+        {sortedWorkspaces.length === 0
+          ? renderEmptyState(emptyStateClassName)
+          : (
+            <div className="space-y-2.5">
+              {/* UserRequest: 워크스페이스 간격을 0.3배로 축소하여 공간 효율성 향상 (gap-8 → gap-2.5) */}
+              {sortedWorkspaces.map((workspace) => (
+                renderWorkspaceCard(workspace)
+              ))}
+            </div>
+          )}
+      </div>
+    </div>
+  );
+
   // 데이터 로딩 중에는 중앙에 스피너를 표시하여 진행 상황 안내
   if (workspacesLoading) {
     return (
@@ -198,32 +221,7 @@ const MyWorkspace = () => {
         {/* UserRequest: 모바일 뷰 좌우 여백을 0.5배로 축소하여 다른 페이지와 통일성 유지 (px-8 → px-4) */}
         <main className="container mx-auto flex flex-1 flex-col px-8 py-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] md:hidden">
           {/* UserRequest: 워크스페이스 목록 페이지에서 Tabs 제거 */}
-          <div className="flex flex-1 flex-col">
-            {/* UserRequest: 내 워크스페이스 페이지의 생성 진입 버튼을 이전 카드형 새 워크스페이스 UI로 되돌린다. */}
-            <Card
-                className="hover-lift cursor-pointer border-border bg-card hover:bg-accent/40 transition-colors"
-                onClick={() => setCreateOpen(true)}
-            >
-              <CardHeader className="flex flex-col items-center justify-center">
-                <div className="flex items-center gap-2 text-primary">
-                  <Plus className="w-5 h-5" />
-                  <CardTitle className="text-base md:text-lg text-primary">{UI_COPY.myWorkspace.createAction}</CardTitle>
-                </div>
-              </CardHeader>
-            </Card>
-            <div className="mt-2.5 flex flex-1 flex-col">
-              {sortedWorkspaces.length === 0
-                ? renderEmptyState('flex-1 min-h-[clamp(18rem,calc(100dvh-12rem),40rem)]')
-                : (
-                  <div className="space-y-2.5">
-                    {/* UserRequest: 워크스페이스 간격을 0.3배로 축소하여 공간 효율성 향상 (gap-8 → gap-2.5) */}
-                    {sortedWorkspaces?.map((workspace) => (
-                      renderWorkspaceCard(workspace)
-                    ))}
-                  </div>
-                )}
-            </div>
-          </div>
+          {renderWorkspaceSection('flex-1 min-h-[clamp(18rem,calc(100dvh-12rem),40rem)]')}
         </main>
 
         {/* 데스크톱 레이아웃 */}
@@ -231,32 +229,7 @@ const MyWorkspace = () => {
         <DesktopSideLayout className="hidden min-h-[calc(100vh-80px)] flex-1 md:grid" contentClassName="min-h-[calc(100vh-80px)]">
           <main className="flex min-h-[calc(100vh-80px)] flex-col overflow-y-auto px-8 py-6">
             {/* UserRequest: 워크스페이스 목록 페이지에서 Tabs 제거 */}
-            <div className="flex flex-1 flex-col">
-              {/* UserRequest: 내 워크스페이스 페이지의 생성 진입 버튼을 이전 카드형 새 워크스페이스 UI로 되돌린다. */}
-              <Card
-                  className="hover-lift cursor-pointer border-border bg-card hover:bg-accent/40 transition-colors"
-                  onClick={() => setCreateOpen(true)}
-              >
-                <CardHeader className="flex flex-col items-center justify-center">
-                  <div className="flex items-center gap-2 text-primary">
-                    <Plus className="w-5 h-5" />
-                    <CardTitle className="text-base md:text-lg text-primary">{UI_COPY.myWorkspace.createAction}</CardTitle>
-                  </div>
-                </CardHeader>
-              </Card>
-              <div className="mt-2.5 flex flex-1 flex-col">
-                {sortedWorkspaces.length === 0
-                  ? renderEmptyState('flex-1 min-h-[clamp(18rem,calc(100vh-12rem),40rem)]')
-                  : (
-                    <div className="space-y-2.5">
-                      {/* UserRequest: 데스크톱도 모바일과 같은 카드 간격으로 목록 밀도를 통일한다. */}
-                      {sortedWorkspaces?.map((workspace) => (
-                        renderWorkspaceCard(workspace)
-                      ))}
-                    </div>
-                  )}
-              </div>
-            </div>
+            {renderWorkspaceSection('flex-1 min-h-[clamp(18rem,calc(100vh-12rem),40rem)]')}
           </main>
         </DesktopSideLayout>
 

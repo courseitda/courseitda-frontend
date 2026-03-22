@@ -18,6 +18,8 @@ import DesktopSideLayout from '@/components/layout/desktop-side-layout';
 import {formatRelativeTimeKorean} from '@/shared/utils/relative-time';
 import {UI_COPY} from '@/shared/constants/ui-copy';
 import DeleteConfirmDialog from '@/components/common/delete-confirm-dialog';
+import { useRequireAuthRedirect } from '@/shared/hooks/use-require-auth-redirect';
+import { useQueryErrorToast } from '@/shared/hooks/use-query-error-toast';
 
 /**
  * 내 카테고리 페이지 컴포넌트
@@ -27,7 +29,7 @@ import DeleteConfirmDialog from '@/components/common/delete-confirm-dialog';
 const MyCategory = () => {
     const CATEGORY_NAME_MAX_LENGTH = 10;
     const navigate = useNavigate();
-    const {isAuthenticated, token} = useAuthStore();
+    const {token} = useAuthStore();
     const [createDialogOpen, setCreateDialogOpen] = useState(false);
     const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
     const [selectedForDelete, setSelectedForDelete] = useState<SavedCategory | null>(null);
@@ -42,19 +44,11 @@ const MyCategory = () => {
     } = useMySavedCategories(token);
     const deleteSavedCategoryMutation = useDeleteSavedCategory(token);
 
-    // 미인증 사용자 접근 차단 - 로그인 페이지로 리다이렉트하여 보안 유지
-    useEffect(() => {
-        if (!isAuthenticated) {
-            navigate('/auth');
-        }
-    }, [isAuthenticated, navigate]);
+    // UserRequest: 반복되는 인증 리다이렉트 로직을 공통 훅으로 통합
+    useRequireAuthRedirect();
 
-    useEffect(() => {
-        // UserRequest: 내 카테고리 목록 조회 실패 시 사용자에게 즉시 알림
-        if (savedCategoriesError) {
-            toast.error(savedCategoriesError.message || MESSAGES.savedCategory.listLoadFailed);
-        }
-    }, [savedCategoriesError]);
+    // UserRequest: 내 카테고리 목록 조회 실패 시 사용자에게 즉시 알림
+    useQueryErrorToast(savedCategoriesError, MESSAGES.savedCategory.listLoadFailed);
 
     // UserRequest: 카테고리 카드 클릭 시 상세 페이지로 이동하여 이름/지도/장소 목록을 보여줌
     const handleOpenCategory = (categoryId: string) => {
