@@ -2,18 +2,18 @@ import { useEffect, useState } from 'react';
 import { useBeforeUnload, useLocation, useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/layout/page-header';
 import { CategoryPlacesMap } from '@/components/map/category-places-map';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import UserMenu from '@/components/header/user-menu';
+import { CategoryPlacesSection } from '@/components/my-category/category-places-section';
 import { placeApi } from '@/services/api';
 import type { SearchedPlace } from '@/entities/types';
 import { MESSAGES } from '@/shared/constants/messages';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 import { useCreateSavedCategory } from '@/shared/hooks/use-my-storage';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { MapPin, PenLine, Search, X } from 'lucide-react';
+import { PenLine } from 'lucide-react';
 import { toast } from 'sonner';
 import InfoConfirmDialog from '@/components/common/info-confirm-dialog';
 import { useRequireAuthRedirect } from '@/shared/hooks/use-require-auth-redirect';
@@ -241,141 +241,31 @@ const MyCategoryCreate = () => {
         </section>
 
         <div className="container mx-auto max-w-2xl px-8 pt-3 md:pt-4">
-          <section className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-lg font-semibold flex items-center gap-1.5">
-                <MapPin className="w-4 h-4 text-primary" />
-                {UI_COPY.myCategory.detailDialog.editingPlaceListTitle}
-                <span className="text-xs text-muted-foreground">
-                  ({selectedPlaces.length}곳)
-                </span>
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  // UserRequest: 생성 전용 페이지에서는 장소를 1개 이상 추가해야 최종 생성 버튼이 활성화된다.
-                  // UserRequest: 카테고리 생성 전용 페이지의 최종 제출 버튼 텍스트를 저장으로 변경한다.
-                  onClick={() => void handleCreateCategory()}
-                  disabled={createSavedCategoryMutation.isPending || selectedPlaces.length === 0}
-                >
-                  {createSavedCategoryMutation.isPending
-                    ? UI_COPY.myCategory.editorDialog.saving
-                    : UI_COPY.myCategory.editorDialog.save}
-                </Button>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <div className="max-h-[24vh] space-y-1 overflow-y-auto pr-1 md:max-h-[220px]">
-                  {selectedPlaces.length === 0 ? (
-                    <div className="flex min-h-24 items-center justify-center rounded-xl border-2 border-dashed border-border px-3 text-sm text-muted-foreground">
-                      {UI_COPY.myCategory.editorDialog.noPlacesSelected}
-                    </div>
-                  ) : (
-                    selectedPlaces.map((place) => (
-                      <Card key={place.id} className="border-border bg-card shadow-sm">
-                        <div className="flex items-center">
-                          <div className="flex-1 min-w-0">
-                            <button
-                              type="button"
-                              className="w-full text-left"
-                              onClick={() => handleFocusPlace(place.id)}
-                            >
-                              <CardHeader className="flex-row items-center space-y-0 py-1.5">
-                                <CardTitle className="text-base flex flex-1 items-center gap-1.5 truncate">
-                                  <MapPin className="w-4 h-4 shrink-0 text-primary" />
-                                  <span className="truncate">{place.name}</span>
-                                </CardTitle>
-                              </CardHeader>
-                              <CardContent className="pt-0 pb-1.5">
-                                <p className="text-sm text-muted-foreground truncate">{place.addressName}</p>
-                              </CardContent>
-                            </button>
-                          </div>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="mr-2 shrink-0 self-center"
-                            onClick={() => handleRemovePlace(place.id)}
-                            aria-label={UI_COPY.myCategory.editorDialog.removePlaceAriaLabel}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </Card>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm font-semibold">{UI_COPY.myCategory.editorDialog.placeSearchLabel}</p>
-                <div className="flex w-full min-w-0 items-center gap-2">
-                  <Input
-                    className="min-w-0 flex-1"
-                    placeholder={UI_COPY.myCategory.editorDialog.placeSearchPlaceholder}
-                    value={placeQuery}
-                    onChange={(event) => setPlaceQuery(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter') {
-                        event.preventDefault();
-                        void handleSearchPlaces();
-                      }
-                    }}
-                  />
-                  <Button
-                    onClick={() => void handleSearchPlaces()}
-                    disabled={placeSearchLoading}
-                    className="shrink-0 gap-2 px-3"
-                  >
-                    <Search className="w-4 h-4" />
-                    {UI_COPY.myCategory.editorDialog.searchAction}
-                  </Button>
-                </div>
-                {placeSearchLoading && (
-                  <div className="text-sm text-muted-foreground">{UI_COPY.myCategory.editorDialog.searching}</div>
-                )}
-                {!placeSearchLoading && placeResults.length > 0 && (
-                  <div className="max-h-[24vh] space-y-1 overflow-y-auto pr-1 md:max-h-[220px]">
-                    {placeResults.map((place) => (
-                      <Card key={place.id} className="border-border bg-card shadow-sm">
-                        <button
-                          type="button"
-                          className={`flex w-full items-start gap-2.5 p-3 text-left transition-colors ${
-                            highlightedSearchPlaceId === place.id ? 'bg-primary/5' : ''
-                          }`}
-                          onClick={() => handleSelectSearchPlace(place.id)}
-                        >
-                          <div className="mt-0.5 shrink-0 text-primary">
-                            <MapPin className="w-4 h-4" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium break-words">{place.name}</p>
-                            <p className="text-xs text-muted-foreground break-words">{place.addressName}</p>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant={selectedPlaces.some((item) => item.id === place.id) ? 'secondary' : 'outline'}
-                            className="shrink-0"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              handleAddPlace(place);
-                            }}
-                            disabled={selectedPlaces.some((item) => item.id === place.id)}
-                          >
-                            {selectedPlaces.some((item) => item.id === place.id)
-                              ? UI_COPY.myCategory.detailDialog.addCompleted
-                              : UI_COPY.myCategory.editorDialog.addPlaceAction}
-                          </Button>
-                        </button>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
+          <CategoryPlacesSection
+            sectionTitle={UI_COPY.myCategory.detailDialog.editingPlaceListTitle}
+            placeCount={selectedPlaces.length}
+            isEditing
+            isPending={createSavedCategoryMutation.isPending}
+            canSubmit={selectedPlaces.length > 0}
+            submitLabel={UI_COPY.myCategory.editorDialog.save}
+            pendingSubmitLabel={UI_COPY.myCategory.editorDialog.saving}
+            selectedPlaces={selectedPlaces}
+            detailPlaces={selectedPlaces}
+            placeQuery={placeQuery}
+            placeResults={placeResults}
+            placeSearchLoading={placeSearchLoading}
+            highlightedSearchPlaceId={highlightedSearchPlaceId}
+            focusedPlaceId={focusedPlaceId}
+            onPlaceQueryChange={setPlaceQuery}
+            onSearchPlaces={handleSearchPlaces}
+            onAddPlace={handleAddPlace}
+            onSelectSearchPlace={handleSelectSearchPlace}
+            onRemovePlace={handleRemovePlace}
+            onFocusPlace={handleFocusPlace}
+            // UserRequest: 생성 전용 페이지에서는 장소를 1개 이상 추가해야 최종 생성 버튼이 활성화된다.
+            // UserRequest: 카테고리 생성 전용 페이지의 최종 제출 버튼 텍스트를 저장으로 변경한다.
+            onSubmit={handleCreateCategory}
+          />
         </div>
       </main>
 
