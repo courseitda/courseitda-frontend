@@ -1,14 +1,8 @@
 import { http, HttpResponse } from 'msw';
 import { BackendErrorCode } from '@/shared/utils/error-message';
 import { createSavedCategoryMocks } from '../factories/my-storage.factory';
-import { createSharedSavedCategoryMocks } from '../factories/community.factory';
-import { createRecommendedSharedCategoryMocks } from '../factories/recommended-community.factory';
 
 const savedCategories = createSavedCategoryMocks();
-const sharedCategories = [
-  ...createSharedSavedCategoryMocks(),
-  ...createRecommendedSharedCategoryMocks(),
-];
 
 const getName = (body: unknown): string => {
   if (body && typeof body === 'object' && 'name' in body) {
@@ -24,14 +18,6 @@ const getSavedCategoryPlaces = (body: unknown) => {
     return Array.isArray(value) ? value : [];
   }
   return [];
-};
-
-const getSharedCategoryId = (body: unknown): string => {
-  if (body && typeof body === 'object' && 'sharedCategoryId' in body) {
-    const value = (body as { sharedCategoryId?: unknown }).sharedCategoryId;
-    return typeof value === 'string' ? value : '';
-  }
-  return '';
 };
 
 const isAuthorized = (request: Request): boolean => {
@@ -104,8 +90,6 @@ export const myStorageHandlers = [
         id: category.id,
         name: category.title,
         placeCount: category.placeCount,
-        sourceSharedCategoryId: category.forkedFromSharedCategoryId,
-        canPublish: category.canPublish,
         modifiedAt: category.modifiedAt,
       })),
       url.searchParams.get('cursor'),
@@ -198,12 +182,6 @@ export const myStorageHandlers = [
     const newCategory = {
       id: `cat-${Date.now()}`,
       title: name,
-      sourceType: 'manual' as const,
-      forkedFromSharedCategoryId: null,
-      sourceAuthorName: null,
-      sourceCategoryTitle: null,
-      canPublish: true,
-      publishBlockedReason: null,
       modifiedAt: new Date().toISOString(),
       placeCount: 0,
       places: [],
@@ -259,71 +237,6 @@ export const myStorageHandlers = [
     };
 
     return HttpResponse.json({ savedCategoryPlaces: places }, { status: 201 });
-  }),
-
-  // UserRequest: 공유 카테고리 포크는 전용 fork 엔드포인트를 사용한다.
-  http.post('*/api/saved-categories/fork', async ({ request }) => {
-    if (!isAuthorized(request)) {
-      return HttpResponse.json(
-        {
-          type: 'about:blank',
-          title: 'Unauthorized',
-          status: 401,
-          detail: '인증이 필요합니다.',
-          code: BackendErrorCode.MISSING_AUTH_HEADER,
-        },
-        { status: 401 },
-      );
-    }
-
-    const body = await request.json().catch(() => ({}));
-    const sharedCategoryId = getSharedCategoryId(body);
-    if (!sharedCategoryId) {
-      return HttpResponse.json(
-        {
-          type: 'about:blank',
-          title: 'Bad Request',
-          status: 400,
-          detail: '공유 카테고리 ID가 필요합니다.',
-          code: BackendErrorCode.REQUEST_VALIDATION_FAILED,
-        },
-        { status: 400 },
-      );
-    }
-
-    const sourceSharedCategory = sharedCategories.find((category) => category.id === sharedCategoryId);
-    if (!sourceSharedCategory) {
-      return HttpResponse.json(
-        {
-          type: 'about:blank',
-          title: 'Not Found',
-          status: 404,
-          detail: '존재하지 않는 공유 카테고리입니다.',
-          code: BackendErrorCode.SHARED_SAVED_CATEGORY_NOT_FOUND,
-        },
-        { status: 404 },
-      );
-    }
-
-    const newCategory = {
-      id: `cat-${Date.now()}`,
-      title: sourceSharedCategory.title,
-      sourceType: 'forked' as const,
-      forkedFromSharedCategoryId: sharedCategoryId,
-      sourceAuthorName: sourceSharedCategory.uploaderNickname,
-      sourceCategoryTitle: sourceSharedCategory.title,
-      canPublish: false,
-      publishBlockedReason: '공유 카테고리를 복사한 직후에는 다시 게시할 수 없습니다.',
-      modifiedAt: new Date().toISOString(),
-      placeCount: sourceSharedCategory.placeCount,
-      places: sourceSharedCategory.places.map((place) => ({
-        ...place,
-        id: `forked-${sharedCategoryId}-${place.id}`,
-      })),
-    };
-
-    savedCategories.unshift(newCategory);
-    return HttpResponse.json({ id: newCategory.id, name: newCategory.title }, { status: 201 });
   }),
 
   // UserRequest: 내 보관 카테고리 수정 API를 MSW로 제공
@@ -417,42 +330,12 @@ export const myStorageHandlers = [
     const places = mapPlaces(getSavedCategoryPlaces(body), savedCategoryId);
     savedCategories[targetIndex] = {
       ...savedCategories[targetIndex],
-      canPublish: true,
-      publishBlockedReason: null,
       modifiedAt: new Date().toISOString(),
       placeCount: places.length,
       places,
     };
 
     return HttpResponse.json({ savedCategoryPlaces: places });
-  }),
-
-  // UserRequest: 공유 카테고리 포크 여부는 contains 엔드포인트로 확인한다.
-  http.get('*/api/me/saved-categories/contains', ({ request }) => {
-    if (!isAuthorized(request)) {
-      return HttpResponse.json(
-        {
-          type: 'about:blank',
-          title: 'Unauthorized',
-          status: 401,
-          detail: '인증이 필요합니다.',
-          code: BackendErrorCode.MISSING_AUTH_HEADER,
-        },
-        { status: 401 },
-      );
-    }
-
-    const url = new URL(request.url);
-    const sharedCategoryIds = (url.searchParams.get('sharedCategoryIds') ?? '')
-      .split(',')
-      .map((id) => id.trim())
-      .filter(Boolean);
-
-    return HttpResponse.json({
-      forkedSharedCategoryIds: savedCategories
-        .filter((category) => category.forkedFromSharedCategoryId && sharedCategoryIds.includes(category.forkedFromSharedCategoryId))
-        .map((category) => category.forkedFromSharedCategoryId),
-    });
   }),
 
   // UserRequest: 내 보관 카테고리 삭제 API를 MSW로 제공

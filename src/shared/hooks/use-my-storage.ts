@@ -1,18 +1,15 @@
 import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { myStorageApi } from '@/services/api';
-import type { SavedCategory, SearchedPlace, SharedSavedCategory } from '@/entities/types';
+import type { SavedCategory, SearchedPlace } from '@/entities/types';
 import { MESSAGES } from '@/shared/constants/messages';
 import { toast } from 'sonner';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 import { fetchAllCursorPages } from '@/shared/utils/cursor-pagination';
 import { MY_STORAGE_QUERY_KEYS } from '@/shared/hooks/my-storage/query-keys';
 import { toSavedCategoryEntity } from '@/shared/hooks/my-storage/mappers';
-import { syncSharedCategoryForkCount } from '@/shared/hooks/my-storage/cache-sync';
-import { COMMUNITY_QUERY_KEYS } from '@/shared/hooks/use-community';
 
 export { MY_STORAGE_QUERY_KEYS } from '@/shared/hooks/my-storage/query-keys';
 
-const MY_STORAGE_CONTAINS_QUERY_KEY = ['my-storage', 'saved-categories', 'contains'] as const;
 const MY_STORAGE_ALL_SAVED_CATEGORIES_QUERY_KEY = ['my-storage', 'saved-categories'] as const;
 
 // 반복되는 인증 토큰 검증을 공통화하여 각 query/mutation이 도메인 로직에만 집중하도록 정리한다.
@@ -49,9 +46,6 @@ const getMutationErrorMessage = (error: unknown, fallbackMessage: string) =>
 
 const invalidateMySavedCategories = (queryClient: ReturnType<typeof useQueryClient>) =>
   queryClient.invalidateQueries({ queryKey: MY_STORAGE_QUERY_KEYS.mySavedCategories });
-
-const invalidateForkedSharedCategoryIds = (queryClient: ReturnType<typeof useQueryClient>) =>
-  queryClient.invalidateQueries({ queryKey: MY_STORAGE_CONTAINS_QUERY_KEY });
 
 /**
  * 내 보관 카테고리 목록 조회 커스텀 훅
@@ -152,110 +146,6 @@ export const useSavedCategoryPlaces = (
     staleTime: 1000 * 30,
     placeholderData: (previousData) => previousData,
   });
-
-// UserRequest: 공유 카테고리 포크 여부는 contains API로 조회한다.
-export const useForkedSharedCategoryIds = (
-  token: string | null,
-  sharedCategoryIds: string[],
-): UseQueryResult<string[], Error> =>
-  useQuery<string[], Error>({
-    queryKey: MY_STORAGE_QUERY_KEYS.forkedSharedCategoryIds(sharedCategoryIds),
-    enabled: !!token && sharedCategoryIds.length > 0,
-    queryFn: async () => {
-      const authToken = requireAuthToken(token);
-
-      const response = await myStorageApi.containsForkedSharedCategories(authToken, sharedCategoryIds);
-      if (!response.success || !response.data) {
-        throw new Error(response.error?.message ?? MESSAGES.sharedCategory.forkFailed);
-      }
-
-      return response.data.forkedSharedCategoryIds;
-    },
-    staleTime: 1000 * 15,
-    placeholderData: (previousData) => previousData,
-  });
-
-// UserRequest: 공유 카테고리를 내 보관 카테고리로 fork 하는 흐름을 React Query 뮤테이션으로 관리
-export const useForkSharedCategory = (token: string | null) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (category: SharedSavedCategory) => {
-      const authToken = requireAuthToken(token);
-
-      const response = await myStorageApi.forkSavedCategory(authToken, category.id);
-
-      if (!response.success || !response.data) {
-        throw new Error(response.error?.message ?? MESSAGES.sharedCategory.forkFailed);
-      }
-
-      return response.data.category;
-    },
-    onSuccess: () => {
-      invalidateMySavedCategories(queryClient);
-      invalidateForkedSharedCategoryIds(queryClient);
-      queryClient.invalidateQueries({ queryKey: COMMUNITY_QUERY_KEYS.recommended });
-      queryClient.invalidateQueries({ queryKey: COMMUNITY_QUERY_KEYS.search('') });
-      queryClient.invalidateQueries({ queryKey: COMMUNITY_QUERY_KEYS.myShared });
-      toast.success(MESSAGES.sharedCategory.forkSuccess);
-    },
-    onError: (error) => {
-      toast.error(getMutationErrorMessage(error, MESSAGES.sharedCategory.forkFailed));
-    },
-  });
-};
-
-// UserRequest: 공유 카테고리 fork 버튼은 생성/해제를 토글로 처리
-export const useToggleSharedCategoryFork = (token: string | null) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (input: { category: SharedSavedCategory; forkedSavedCategoryId: string | null }) => {
-      const authToken = requireAuthToken(token);
-
-      if (input.forkedSavedCategoryId) {
-        const response = await myStorageApi.deleteSavedCategory(authToken, input.forkedSavedCategoryId);
-        if (!response.success) {
-          throw new Error(response.error?.message ?? MESSAGES.sharedCategory.unforkFailed);
-        }
-
-        return { action: 'unforked' as const, sharedCategoryId: input.category.id };
-      }
-
-      const response = await myStorageApi.forkSavedCategory(authToken, input.category.id);
-
-      if (!response.success || !response.data) {
-        throw new Error(response.error?.message ?? MESSAGES.sharedCategory.forkFailed);
-      }
-
-      return {
-        action: 'forked' as const,
-        sharedCategoryId: input.category.id,
-        savedCategoryId: response.data.category.id,
-      };
-    },
-    onSuccess: (result) => {
-      invalidateMySavedCategories(queryClient);
-      invalidateForkedSharedCategoryIds(queryClient);
-      syncSharedCategoryForkCount(
-        queryClient,
-        result.sharedCategoryId,
-        result.action === 'forked' ? 1 : -1,
-      );
-      toast.success(
-        result.action === 'forked'
-          ? MESSAGES.sharedCategory.forkSuccess
-          : MESSAGES.sharedCategory.unforkSuccess,
-      );
-    },
-    onError: (error, variables) => {
-      const fallbackMessage = variables.forkedSavedCategoryId
-        ? MESSAGES.sharedCategory.unforkFailed
-        : MESSAGES.sharedCategory.forkFailed;
-      toast.error(getMutationErrorMessage(error, fallbackMessage));
-    },
-  });
-};
 
 // UserRequest: 내 보관 카테고리 수정은 React Query 뮤테이션으로 관리
 export const useUpdateSavedCategory = (token: string | null) => {

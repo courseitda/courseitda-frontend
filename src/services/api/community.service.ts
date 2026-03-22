@@ -29,7 +29,6 @@ type SharedCategoryApiResponse = {
   uploaderNickname?: string;
   createdAt?: string;
   uploadedAt?: string;
-  forkCount?: number;
   placeCount?: number;
   sharedCategoryPlaces?: SharedCategoryPlaceApiResponse[];
   places?: SharedCategoryPlaceApiResponse[];
@@ -39,7 +38,6 @@ type MySharedCategoryApiResponse = {
   id: number | string;
   name: string;
   createdAt: string;
-  forkCount: number;
   placeCount: number;
 };
 
@@ -57,7 +55,6 @@ export interface SharedCategoriesData {
     uploaderNickname: string;
     uploadedAt: string;
     isImmutableSnapshot: true;
-    forkCount: number;
     placeCount: number;
     places: Array<{
       id: string;
@@ -81,7 +78,6 @@ export interface MySharedCategoriesData {
     uploaderNickname: string;
     uploadedAt: string;
     isImmutableSnapshot: true;
-    forkCount: number;
     placeCount: number;
     publishedFromSavedCategoryId: string;
   }>;
@@ -97,7 +93,6 @@ export interface ShareSavedCategoryData {
     uploaderNickname: string;
     uploadedAt: string;
     isImmutableSnapshot: true;
-    forkCount: number;
     placeCount: number;
     publishedFromSavedCategoryId: string;
   };
@@ -125,7 +120,6 @@ const adaptSharedCategories = (payload: SharedCategoryApiResponse[]): SharedCate
       uploaderNickname: category.authorNickname ?? category.uploaderNickname ?? '',
       uploadedAt: category.createdAt ?? category.uploadedAt ?? new Date().toISOString(),
       isImmutableSnapshot: true,
-      forkCount: category.forkCount ?? 0,
       placeCount: category.placeCount ?? categoryPlaces.length,
       places: adaptSharedCategoryPlaces(categoryPlaces),
     };
@@ -141,7 +135,6 @@ const adaptMySharedCategories = (payload: MySharedCategoryApiResponse[]): MyShar
     uploaderNickname: 'me',
     uploadedAt: category.createdAt,
     isImmutableSnapshot: true,
-    forkCount: category.forkCount,
     placeCount: category.placeCount,
     publishedFromSavedCategoryId: '',
   })),
@@ -320,7 +313,6 @@ export const communityApi = {
           uploaderNickname: 'me',
           uploadedAt: new Date().toISOString(),
           isImmutableSnapshot: true,
-          forkCount: 0,
           placeCount: 0,
           publishedFromSavedCategoryId: '',
         },

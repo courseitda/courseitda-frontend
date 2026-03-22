@@ -3,6 +3,4 @@ export const MY_STORAGE_QUERY_KEYS = {
   savedCategoryDetail: (savedCategoryId: string) => ['my-storage', 'saved-categories', savedCategoryId] as const,
   savedCategoryPlaces: (savedCategoryId: string) =>
     ['my-storage', 'saved-categories', savedCategoryId, 'places'] as const,
-  forkedSharedCategoryIds: (sharedCategoryIds: string[]) =>
-    ['my-storage', 'saved-categories', 'contains', ...sharedCategoryIds] as const,
 };

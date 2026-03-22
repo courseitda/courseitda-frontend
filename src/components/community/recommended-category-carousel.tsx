@@ -1,12 +1,11 @@
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import type { SharedSavedCategory } from '@/entities/types';
-import { Calendar, GitFork, Sparkles } from 'lucide-react';
+import { Calendar, Sparkles } from 'lucide-react';
 import { useCommunityRecommendCarousel } from '@/shared/hooks/use-community-recommend-carousel';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 
 type RecommendedCategoryCarouselProps = {
   categories: SharedSavedCategory[];
-  forkedSharedCategoryMap: Record<string, boolean>;
   onOpenDetail: (category: SharedSavedCategory) => void;
 };
 
@@ -22,7 +21,6 @@ const formatUploadedDate = (uploadedAt: string): string => {
 // 커뮤니티 추천 캐러셀을 페이지 본문에서 분리하여 렌더 책임을 축소
 const RecommendedCategoryCarousel = ({
   categories,
-  forkedSharedCategoryMap,
   onOpenDetail,
 }: RecommendedCategoryCarouselProps) => {
   const {
@@ -119,17 +117,6 @@ const RecommendedCategoryCarousel = ({
                               {formatUploadedDate(category.uploadedAt)}
                             </span>
                           )}
-                          <span
-                            className={[
-                              'inline-flex shrink-0 items-center gap-1',
-                              forkedSharedCategoryMap[category.id]
-                                ? 'text-violet-600'
-                                : 'text-muted-foreground/70',
-                            ].join(' ')}
-                          >
-                            <GitFork className="h-3 w-3" />
-                            {category.forkCount}
-                          </span>
                         </div>
                       </div>
                     </CardContent>

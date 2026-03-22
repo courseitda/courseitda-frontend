@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, ArrowRight, ChevronDown, Folder, MapPin, Megaphone, Upload } from 'lucide-react';
+import { ArrowRight, ChevronDown, Folder, MapPin, Megaphone, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/shared/stores/auth-store';
@@ -85,10 +85,6 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
 
   const handleUpload = (category: SavedCategory) => {
     if (shareMutation.isPending) return;
-    if (!category.canPublish) {
-      toast.error(UI_COPY.uploadCategoryDialog.republishBlockedToast);
-      return;
-    }
     shareMutation.mutate(category.id);
   };
 
@@ -109,7 +105,7 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
               {UI_COPY.uploadCategoryDialog.noticeBadge}
             </span>
             <p className="text-sm text-muted-foreground">
-              {UI_COPY.uploadCategoryDialog.republishBlockedDescription}
+              {UI_COPY.uploadCategoryDialog.description}
             </p>
           </div>
         </DialogHeader>
@@ -155,12 +151,6 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
                     </div>
                     <div className="min-w-0 flex-1">
                       <CardTitle className="truncate text-sm sm:text-base">{category.title}</CardTitle>
-                      {!category.canPublish && (
-                        <p className="mt-1 flex items-center gap-1 text-xs text-destructive">
-                          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                          {UI_COPY.uploadCategoryDialog.needsEdit}
-                        </p>
-                      )}
                     </div>
                     <div className="ml-auto flex items-center gap-2">
                       <Button
@@ -171,7 +161,7 @@ export const UploadCategoryDialog = ({ open, onOpenChange }: UploadCategoryDialo
                           event.stopPropagation();
                           handleUpload(category);
                         }}
-                        disabled={shareMutation.isPending || !category.canPublish}
+                        disabled={shareMutation.isPending}
                       >
                         <Upload className="w-4 h-4" />
                         {UI_COPY.common.upload}

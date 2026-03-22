@@ -15,14 +15,12 @@ const mySharedCategories: Array<{
   id: string;
   name: string;
   createdAt: string;
-  forkCount: number;
   placeCount: number;
 }> = [
   {
     id: 'my-shared-1',
     name: mySavedCategories[0]?.title ?? '내 공유 카테고리',
     createdAt: new Date().toISOString(),
-    forkCount: 0,
     placeCount: mySavedCategories[0]?.placeCount ?? 0,
   },
 ];
@@ -60,7 +58,6 @@ const toApiResponse = (categories: typeof sharedSavedCategories) =>
     name: category.title,
     authorNickname: category.uploaderNickname,
     createdAt: category.uploadedAt,
-    forkCount: category.forkCount,
     placeCount: category.placeCount,
     sharedCategoryPlaces: category.places.map((place) => ({
       id: place.id,
@@ -194,26 +191,10 @@ export const communityHandlers = [
       );
     }
 
-    if (!savedCategory.canPublish) {
-      return HttpResponse.json(
-        {
-          type: 'about:blank',
-          title: 'Forbidden',
-          status: 403,
-          detail: savedCategory.publishBlockedReason ?? '현재 상태의 카테고리는 게시할 수 없습니다.',
-          code: BackendErrorCode.ACCESS_FORBIDDEN,
-        },
-        { status: 403 },
-      );
-    }
-
-    // UserRequest: 동일한 보관 카테고리의 중복 업로드를 허용
-
     const newShared = {
       id: `my-shared-${Date.now()}`,
       name: savedCategory.title,
       createdAt: new Date().toISOString(),
-      forkCount: 0,
       placeCount: savedCategory.placeCount,
     };
     mySharedCategories.unshift(newShared);
@@ -223,7 +204,6 @@ export const communityHandlers = [
       uploaderNickname: 'me',
       uploadedAt: newShared.createdAt,
       isImmutableSnapshot: true,
-      forkCount: 0,
       placeCount: savedCategory.placeCount,
       places: savedCategory.places.map((place) => ({ ...place })),
     });

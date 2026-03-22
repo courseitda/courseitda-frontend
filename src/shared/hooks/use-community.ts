@@ -11,7 +11,6 @@ type SharedSavedCategoryPayload = {
   uploaderNickname: string;
   uploadedAt: string;
   isImmutableSnapshot: true;
-  forkCount: number;
   placeCount: number;
   places: Array<{
     id: string;
@@ -32,7 +31,6 @@ const toSharedSavedCategoryEntity = (payload: SharedSavedCategoryPayload): Share
   uploader: payload.uploaderNickname,
   uploadedAt: payload.uploadedAt,
   isImmutableSnapshot: true,
-  forkCount: payload.forkCount,
   placeCount: payload.placeCount,
   places: payload.places.map((place) => ({
     id: place.id,
@@ -159,7 +157,6 @@ type MySharedCategoryPayload = {
   uploaderNickname: string;
   uploadedAt: string;
   isImmutableSnapshot: true;
-  forkCount: number;
   placeCount: number;
   publishedFromSavedCategoryId: string;
 };
@@ -171,7 +168,6 @@ const toMySharedCategoryEntity = (payload: MySharedCategoryPayload): MySharedCat
   uploader: payload.uploaderNickname,
   uploadedAt: payload.uploadedAt,
   isImmutableSnapshot: true,
-  forkCount: payload.forkCount,
   placeCount: payload.placeCount,
   places: [],
   publishedFromSavedCategoryId: payload.publishedFromSavedCategoryId,

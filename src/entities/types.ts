@@ -88,12 +88,6 @@ export type SavedCategoryPlace = {
 export type SavedCategory = {
   id: string; // Long -> string (JSON 직렬화)
   title: string; // 카테고리 제목(이름)
-  sourceType: 'manual' | 'forked'; // 직접 생성인지, 공유 카테고리에서 복사한 결과인지 구분
-  forkedFromSharedCategoryId: string | null; // 공유 카테고리에서 복사한 경우 원본 공유 카테고리 ID
-  sourceAuthorName: string | null; // 공유 카테고리에서 복사한 경우 원본 작성자명
-  sourceCategoryTitle: string | null; // 공유 카테고리에서 복사한 경우 원본 카테고리명
-  canPublish: boolean; // 현재 상태로 공유 카테고리 publish 가능 여부
-  publishBlockedReason: string | null; // publish 불가 시 사용자 안내 문구
   updatedAt: string; // 수정일시 (ISO 8601)
   placeCount: number; // 포함된 장소 수
   places: SavedCategoryPlace[]; // 상세 표시용 장소 목록(간략)
@@ -120,7 +114,6 @@ export type SharedSavedCategory = {
   uploader: string; // 업로더 닉네임
   uploadedAt: string; // 업로드 일시 (ISO 8601)
   isImmutableSnapshot: true; // 공유 카테고리는 publish 시점의 스냅샷으로 취급
-  forkCount: number; // 공유 카테고리를 복사한 횟수
   placeCount: number; // 포함된 장소 수
   places: SharedSavedCategoryPlace[]; // 상세 표시용 장소 목록(간략)
 };

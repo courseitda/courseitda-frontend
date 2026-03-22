@@ -1,12 +1,11 @@
 import type { ReactNode } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, Folder, GitFork, SearchX } from 'lucide-react';
+import { Calendar, Folder, SearchX } from 'lucide-react';
 import type { SharedSavedCategory } from '@/entities/types';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 
 type SharedCategoryListProps = {
   categories: SharedSavedCategory[];
-  forkedSharedCategoryMap?: Record<string, boolean>;
   onOpenDetail: (category: SharedSavedCategory) => void;
   showEmptyState?: boolean;
   viewportClassName?: string;
@@ -26,7 +25,6 @@ const formatUploadedDate = (uploadedAt: string): string => {
 // UserRequest: 공유 카테고리 목록 렌더링을 공통 컴포넌트로 분리
 const SharedCategoryList = ({
   categories,
-  forkedSharedCategoryMap = {},
   onOpenDetail,
   showEmptyState = false,
   viewportClassName = 'h-[520px]',
@@ -59,9 +57,6 @@ const SharedCategoryList = ({
       ) : (
         <div className="grid grid-cols-1 gap-1.5 items-start auto-rows-min">
           {categories.map((category) => {
-            const isForked = !!forkedSharedCategoryMap[category.id];
-            const forkMetaClassName = isForked ? 'text-violet-600' : 'text-muted-foreground/70';
-
             return (
               <Card
                 key={category.id}
@@ -87,10 +82,6 @@ const SharedCategoryList = ({
                           {formatUploadedDate(category.uploadedAt)}
                         </span>
                       )}
-                      <span className={`shrink-0 inline-flex items-center gap-1 ${forkMetaClassName}`}>
-                        <GitFork className={metaIconClassName} />
-                        {category.forkCount}
-                      </span>
                     </div>
                   </div>
                   {renderTrailingAction?.(category)}

@@ -1,22 +1,18 @@
 import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Calendar, GitFork, MapPin, User as UserIcon } from 'lucide-react';
+import { Calendar, MapPin, User as UserIcon } from 'lucide-react';
 import type { SharedSavedCategory } from '@/entities/types';
 import { CategoryPlacesMap } from '@/components/map/category-places-map';
-import { UI_COPY } from '@/shared/constants/ui-copy';
 import { useSharedCategoryDetail } from '@/shared/hooks/use-community';
 import { Spinner } from '@/components/ui/spinner';
 import { MESSAGES } from '@/shared/constants/messages';
+import { UI_COPY } from '@/shared/constants/ui-copy';
 import { useQueryErrorToast } from '@/shared/hooks/use-query-error-toast';
 
 type SharedCategoryDetailDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   category: SharedSavedCategory | null;
-  isForked?: boolean;
-  onToggleFork?: (category: SharedSavedCategory) => Promise<'forked' | 'unforked' | false> | 'forked' | 'unforked' | false;
-  forkPending?: boolean;
 };
 
 type SharedCategoryMapProps = {
@@ -43,13 +39,8 @@ const SharedCategoryDetailDialog = ({
   open,
   onOpenChange,
   category,
-  isForked = false,
-  onToggleFork,
-  forkPending = false,
 }: SharedCategoryDetailDialogProps) => {
   const [focusedPlaceId, setFocusedPlaceId] = useState<string | null>(null);
-  const [displayForkCount, setDisplayForkCount] = useState(0);
-  const [displayIsForked, setDisplayIsForked] = useState(isForked);
   const {
     data: detailCategory,
     isLoading: detailLoading,
@@ -64,41 +55,8 @@ const SharedCategoryDetailDialog = ({
     }
   }, [open, category?.id]);
 
-  useEffect(() => {
-    setDisplayIsForked(isForked);
-  }, [isForked, category?.id]);
-
-  useEffect(() => {
-    setDisplayForkCount(category?.forkCount ?? 0);
-  }, [category?.forkCount, category?.id]);
-
   // UserRequest: 공유 카테고리 상세 조회 실패를 모달 내부에서 즉시 안내한다.
   useQueryErrorToast(detailError, MESSAGES.sharedCategory.fetchDetailFailed, open);
-
-  useEffect(() => {
-    if (detailCategory) {
-      setDisplayForkCount(detailCategory.forkCount);
-    }
-  }, [detailCategory]);
-
-  const runToggleFork = async () => {
-    if (!displayCategory || !onToggleFork || forkPending) return;
-
-    const result = await onToggleFork(displayCategory);
-    if (result === 'forked') {
-      setDisplayIsForked(true);
-      setDisplayForkCount((previous) => previous + 1);
-      return;
-    }
-  };
-
-  const handleForkClick = async () => {
-    if (displayIsForked) {
-      return;
-    }
-
-    await runToggleFork();
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -121,29 +79,6 @@ const SharedCategoryDetailDialog = ({
                   day: 'numeric',
                 })}
               </span>
-            )}
-            {displayCategory && onToggleFork && (
-              <button
-                type="button"
-                onClick={() => void handleForkClick()}
-                disabled={forkPending}
-                className={[
-                  'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold shadow-sm transition-all',
-                  displayIsForked
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : 'border-primary/30 bg-primary/10 text-primary hover:scale-105 hover:bg-primary/15',
-                  'disabled:cursor-not-allowed disabled:opacity-60',
-                ].join(' ')}
-                aria-label={displayIsForked
-                  ? UI_COPY.sharedCategoryDetail.alreadyForkedAriaLabel(displayCategory.title)
-                  : UI_COPY.sharedCategoryDetail.forkActionAriaLabel(displayCategory.title)}
-                title={displayIsForked
-                  ? UI_COPY.sharedCategoryDetail.alreadyForkedTitle
-                  : UI_COPY.sharedCategoryDetail.forkActionTitle}
-              >
-                <GitFork className="h-4 w-4" />
-                <span>{displayForkCount}</span>
-              </button>
             )}
           </div>
           {detailLoading && !detailCategory ? (

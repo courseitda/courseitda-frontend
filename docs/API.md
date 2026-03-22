@@ -94,15 +94,10 @@
 | 보관 카테고리 장소 추가 | `/api/saved-categories/{savedCategoryId}/places` | `POST` | 생성 직후 장소 입력에 사용 |
 | 보관 카테고리 수정 | `/api/saved-categories/{savedCategoryId}` | `PATCH` | `Authorization` 필요, `name` 수정 |
 | 보관 카테고리 장소 동기화 | `/api/saved-categories/{savedCategoryId}/places` | `PATCH` | 장소 추가/수정/삭제를 일괄 반영 |
-| 공유 카테고리 포크 | `/api/saved-categories/fork` | `POST` | `sharedCategoryId` 전달 |
-| 포크 여부 확인 | `/api/me/saved-categories/contains` | `GET` | `sharedCategoryIds` 쿼리 사용 |
 | 내 보관 카테고리 삭제 | `/api/saved-categories/{savedCategoryId}` | `DELETE` | `Authorization` 필요 |
 
 - `myStorageApi`(`src/services/api/my-storage.service.ts`)가 호출을 담당하며, 화면에서는 `useMySavedCategories`, `useCreateSavedCategory`, `useUpdateSavedCategory`, `useDeleteSavedCategory`로 사용합니다.
 - `MyCategoryDetail` 페이지는 목록 응답에 의존하지 않고 `GET /api/saved-categories/{savedCategoryId}`로 상세를 별도 조회합니다.
-- 보관 카테고리는 목록 응답의 `sourceSharedCategoryId` 유무로 `sourceType`을 파생합니다.
-- 공유 카테고리 복사는 `POST /api/saved-categories/fork`, 포크 여부 표시는 `GET /api/me/saved-categories/contains`로 처리합니다.
-- `forked` 카테고리는 장소 동기화 이후에만 다시 게시 가능하므로, 프론트는 `canPublish` 값과 고정 안내 문구를 함께 사용합니다.
 
 ## 6. 에러 처리 & 메시지 규약
 

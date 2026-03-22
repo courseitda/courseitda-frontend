@@ -9,13 +9,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { Folder, GitFork, MoreHorizontal, Trash2, Upload } from 'lucide-react';
+import { MoreHorizontal, Trash2, Upload } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { communityApi } from '@/services/api';
 import { Spinner } from '@/components/ui/spinner';
 import { COMMUNITY_QUERY_KEYS, useMySharedCategories } from '@/shared/hooks/use-community';
-import { useForkedSharedCategoryIds, useMySavedCategories, useToggleSharedCategoryFork } from '@/shared/hooks/use-my-storage';
 import { useUserNickname } from '@/shared/hooks/use-user-info';
 import { MESSAGES } from '@/shared/constants/messages';
 import PageHeader from '@/components/layout/page-header';
@@ -35,11 +34,9 @@ import { useQueryErrorToast } from '@/shared/hooks/use-query-error-toast';
  */
 const MyPosts = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, token } = useAuthStore();
+  const { token } = useAuthStore();
   const queryClient = useQueryClient();
-  const { data: savedCategories = [] } = useMySavedCategories(token);
   const { nickname } = useUserNickname();
-  const toggleForkMutation = useToggleSharedCategoryFork(token);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<SharedSavedCategory | null>(null);
@@ -51,18 +48,6 @@ const MyPosts = () => {
     isLoading: mySharedCategoriesLoading,
     error: mySharedCategoriesError,
   } = useMySharedCategories(token);
-  const { data: forkedSharedCategoryIds = [] } = useForkedSharedCategoryIds(
-    token,
-    mySharedCategories.map((category) => category.id),
-  );
-
-  const forkedSharedCategoryMap = forkedSharedCategoryIds.reduce<Record<string, boolean>>(
-    (accumulator, sharedCategoryId) => {
-      accumulator[sharedCategoryId] = true;
-      return accumulator;
-    },
-    {},
-  );
 
   // UserRequest: 반복되는 인증 리다이렉트 로직을 공통 훅으로 통합
   useRequireAuthRedirect();
@@ -94,7 +79,6 @@ const MyPosts = () => {
         uploader,
         uploadedAt: shared.uploadedAt,
         isImmutableSnapshot: true,
-        forkCount: shared.forkCount,
         placeCount: shared.placeCount,
         places: shared.places,
       });
@@ -143,21 +127,6 @@ const MyPosts = () => {
   const handleConfirmDelete = () => {
     if (!selectedForDelete || deleteMutation.isPending) return;
     deleteMutation.mutate(selectedForDelete.id);
-  };
-
-  const handleFork = async (category: SharedSavedCategory) => {
-    // UserRequest: 상세 모달의 fork 아이콘을 누르면 내 카테고리로 복사
-    const forkedSavedCategoryId = savedCategories.find(
-      (savedCategory) => savedCategory.forkedFromSharedCategoryId === category.id,
-    )?.id ?? null;
-
-    if (toggleForkMutation.isPending) return false;
-    try {
-      const result = await toggleForkMutation.mutateAsync({ category, forkedSavedCategoryId });
-      return result.action;
-    } catch {
-      return false;
-    }
   };
 
   if (mySharedCategoriesLoading) {
@@ -221,7 +190,6 @@ const MyPosts = () => {
                   ) : (
                     <SharedCategoryList
                       categories={mySharedCategories}
-                      forkedSharedCategoryMap={forkedSharedCategoryMap}
                       onOpenDetail={handleOpenDetail}
                       viewportClassName="h-[75vh]"
                       renderTrailingAction={(category) => (
@@ -271,9 +239,6 @@ const MyPosts = () => {
         open={detailOpen}
         onOpenChange={setDetailOpen}
         category={selectedCategory}
-        isForked={selectedCategory ? forkedSharedCategoryIds.includes(selectedCategory.id) : false}
-        onToggleFork={handleFork}
-        forkPending={toggleForkMutation.isPending}
       />
       <DeleteConfirmDialog
         open={deleteAlertOpen}

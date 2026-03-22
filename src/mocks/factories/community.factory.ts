@@ -4,7 +4,6 @@ export type SharedSavedCategoryMock = {
     uploaderNickname: string;
     uploadedAt: string;
     isImmutableSnapshot: true;
-    forkCount: number;
     placeCount: number;
     places: Array<{
         id: string;
@@ -26,7 +25,6 @@ export const createSharedSavedCategoryMocks = (): SharedSavedCategoryMock[] => [
         uploaderNickname: 'lucas',
         uploadedAt: new Date().toISOString(),
         isImmutableSnapshot: true,
-        forkCount: 12,
         placeCount: 3,
         places: [
             {
@@ -64,7 +62,6 @@ export const createSharedSavedCategoryMocks = (): SharedSavedCategoryMock[] => [
         uploaderNickname: 'selena',
         uploadedAt: new Date().toISOString(),
         isImmutableSnapshot: true,
-        forkCount: 8,
         placeCount: 3,
         places: [
             {
@@ -102,7 +99,6 @@ export const createSharedSavedCategoryMocks = (): SharedSavedCategoryMock[] => [
         uploaderNickname: 'hana',
         uploadedAt: new Date().toISOString(),
         isImmutableSnapshot: true,
-        forkCount: 21,
         placeCount: 3,
         places: [
             {
@@ -141,7 +137,6 @@ export const createSharedSavedCategoryMocks = (): SharedSavedCategoryMock[] => [
         uploaderNickname: 'mori',
         uploadedAt: new Date().toISOString(),
         isImmutableSnapshot: true,
-        forkCount: 17,
         placeCount: 6,
         places: [
             {
@@ -179,7 +174,6 @@ export const createSharedSavedCategoryMocks = (): SharedSavedCategoryMock[] => [
         uploaderNickname: 'jun',
         uploadedAt: new Date().toISOString(),
         isImmutableSnapshot: true,
-        forkCount: 10,
         placeCount: 4,
         places: [
             {
@@ -217,7 +211,6 @@ export const createSharedSavedCategoryMocks = (): SharedSavedCategoryMock[] => [
         uploaderNickname: 'mina',
         uploadedAt: new Date().toISOString(),
         isImmutableSnapshot: true,
-        forkCount: 6,
         placeCount: 7,
         places: [
             {

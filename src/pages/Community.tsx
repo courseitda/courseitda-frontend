@@ -2,16 +2,13 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Spinner } from '@/components/ui/spinner';
 import { useSharedCategories } from '@/shared/hooks/use-community';
-import { useForkedSharedCategoryIds, useMySavedCategories, useToggleSharedCategoryFork } from '@/shared/hooks/use-my-storage';
 import { MESSAGES } from '@/shared/constants/messages';
 import type { SharedSavedCategory } from '@/entities/types';
 import PageHeader from '@/components/layout/page-header';
 import DesktopSideLayout from '@/components/layout/desktop-side-layout';
 import SharedCategoryList from '@/components/community/shared-category-list';
 import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
-import LoginRequiredDialog from '@/components/common/login-required-dialog';
 import { UI_COPY } from '@/shared/constants/ui-copy';
-import { useAuthStore } from '@/shared/stores/auth-store';
 import { useQueryErrorToast } from '@/shared/hooks/use-query-error-toast';
 import RecommendedCategoryCarousel from '@/components/community/recommended-category-carousel';
 
@@ -21,10 +18,8 @@ import RecommendedCategoryCarousel from '@/components/community/recommended-cate
  */
 const Community = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, token } = useAuthStore();
   const [selectedCategory, setSelectedCategory] = useState<SharedSavedCategory | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
   // UserRequest: Community 페이지의 추천/검색 로직은 service 계층 인터페이스를 통해 실행
   // TODO: 다음 스프린트에서 recommendations API가 준비되면 추천 영역 조회를 전용 API로 교체한다.
   const {
@@ -36,52 +31,12 @@ const Community = () => {
     data: boardCategories = [],
     error: boardCategoriesError,
   } = useSharedCategories(3, false);
-  const { data: savedCategories = [] } = useMySavedCategories(token);
-  const { data: forkedSharedCategoryIds = [] } = useForkedSharedCategoryIds(
-    token,
-    Array.from(new Set([...sharedCategories, ...boardCategories].map((category) => category.id))),
-  );
-  const toggleForkMutation = useToggleSharedCategoryFork(token);
 
   const filteredCategories = useMemo(() => sharedCategories, [sharedCategories]);
-  const forkedSharedCategoryMap = useMemo(
-    () =>
-      forkedSharedCategoryIds.reduce<Record<string, boolean>>((accumulator, sharedCategoryId) => {
-        accumulator[sharedCategoryId] = true;
-        return accumulator;
-      }, {}),
-    [forkedSharedCategoryIds],
-  );
 
   const handleOpenDetail = (category: SharedSavedCategory) => {
     setSelectedCategory(category);
     setDetailOpen(true);
-  };
-
-  const handleFork = async (category: SharedSavedCategory) => {
-    // UserRequest: 상세 모달의 fork 아이콘을 누르면 내 카테고리로 복사
-    if (!isAuthenticated) {
-      setLoginDialogOpen(true);
-      return false;
-    }
-
-    const forkedSavedCategoryId = savedCategories.find(
-      (savedCategory) => savedCategory.forkedFromSharedCategoryId === category.id,
-    )?.id ?? null;
-
-    if (toggleForkMutation.isPending) return false;
-    try {
-      const result = await toggleForkMutation.mutateAsync({ category, forkedSavedCategoryId });
-      return result.action;
-    } catch {
-      return false;
-    }
-  };
-
-  // UserRequest: 로그인 필요 안내는 전용 안내창으로 노출
-  const handleLoginStart = () => {
-    setLoginDialogOpen(false);
-    navigate('/auth?tab=login');
   };
 
   // UserRequest: 추천 목록 조회 실패 시 사용자에게 즉시 알림
@@ -107,7 +62,6 @@ const Community = () => {
 
         <RecommendedCategoryCarousel
           categories={filteredCategories}
-          forkedSharedCategoryMap={forkedSharedCategoryMap}
           onOpenDetail={handleOpenDetail}
         />
 
@@ -133,7 +87,6 @@ const Community = () => {
             {/* UserRequest: 커뮤니티 메인 카테고리 게시판 카드도 공통 SharedCategoryList를 사용한다. */}
             <SharedCategoryList
               categories={boardCategories}
-              forkedSharedCategoryMap={forkedSharedCategoryMap}
               onOpenDetail={handleOpenDetail}
               viewportClassName="h-auto"
               size="compact"
@@ -149,15 +102,6 @@ const Community = () => {
         open={detailOpen}
         onOpenChange={setDetailOpen}
         category={selectedCategory}
-        isForked={selectedCategory ? forkedSharedCategoryIds.includes(selectedCategory.id) : false}
-        onToggleFork={handleFork}
-        forkPending={toggleForkMutation.isPending}
-      />
-      <LoginRequiredDialog
-        open={loginDialogOpen}
-        onOpenChange={setLoginDialogOpen}
-        onStart={handleLoginStart}
-        featureName={UI_COPY.sharedCategoryDetail.forkFeatureName}
       />
     </div>
   );

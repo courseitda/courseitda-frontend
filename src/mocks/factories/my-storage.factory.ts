@@ -1,12 +1,6 @@
 export type SavedCategoryMock = {
     id: string;
     title: string;
-    sourceType: 'manual' | 'forked';
-    forkedFromSharedCategoryId: string | null;
-    sourceAuthorName: string | null;
-    sourceCategoryTitle: string | null;
-    canPublish: boolean;
-    publishBlockedReason: string | null;
     modifiedAt: string;
     placeCount: number;
     places: Array<{
@@ -27,12 +21,6 @@ export const createSavedCategoryMocks = (): SavedCategoryMock[] => [
     {
         id: 'cat-1',
         title: '점심 맛집',
-        sourceType: 'manual',
-        forkedFromSharedCategoryId: null,
-        sourceAuthorName: null,
-        sourceCategoryTitle: null,
-        canPublish: true,
-        publishBlockedReason: null,
         modifiedAt: new Date().toISOString(),
         placeCount: 2,
         places: [
@@ -59,12 +47,6 @@ export const createSavedCategoryMocks = (): SavedCategoryMock[] => [
     {
         id: 'cat-2',
         title: '카페 탐방',
-        sourceType: 'manual',
-        forkedFromSharedCategoryId: null,
-        sourceAuthorName: null,
-        sourceCategoryTitle: null,
-        canPublish: true,
-        publishBlockedReason: null,
         modifiedAt: new Date().toISOString(),
         placeCount: 2,
         places: [
@@ -85,38 +67,6 @@ export const createSavedCategoryMocks = (): SavedCategoryMock[] => [
                 addressName: '서울시 용산구 대사관로 35',
                 latitude: 37.5343,
                 longitude: 126.9996,
-            },
-        ],
-    },
-    {
-        id: 'cat-3',
-        title: '한강 산책 코스 복사본',
-        sourceType: 'forked',
-        forkedFromSharedCategoryId: 'shared-3',
-        sourceAuthorName: 'hana',
-        sourceCategoryTitle: '한강 산책 코스',
-        canPublish: false,
-        publishBlockedReason: '공유 카테고리에서 복사한 카테고리는 장소를 수정한 뒤에만 다시 게시할 수 있습니다.',
-        modifiedAt: new Date().toISOString(),
-        placeCount: 2,
-        places: [
-            {
-                id: 'p-5',
-                name: '서울숲',
-                placeUrl: 'https://map.naver.com/p/entry/place/1005',
-                roadAddressName: '서울 성동구 뚝섬로 273',
-                addressName: '서울시 성동구 뚝섬로 273',
-                latitude: 37.5447,
-                longitude: 127.0374,
-            },
-            {
-                id: 'p-6',
-                name: '반포 한강공원',
-                placeUrl: 'https://map.naver.com/p/entry/place/1006',
-                roadAddressName: '서울 서초구 신반포로11길 40',
-                addressName: '서울시 서초구 신반포로 11길 40',
-                latitude: 37.5111,
-                longitude: 126.9944,
             },
         ],
     },

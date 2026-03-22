@@ -10,14 +10,10 @@ import {
   adaptSavedCategoryPlaces,
 } from './my-storage.adapters';
 import type {
-  ContainsForkedSharedCategoriesApiResponse,
-  ContainsForkedSharedCategoriesData,
   CreateSavedCategoryData,
   CreateSavedCategoryManualApiResponse,
   CreateSavedCategoryManualData,
   CreateSavedCategoryManualRequest,
-  ForkSavedCategoryApiResponse,
-  ForkSavedCategoryData,
   MySavedCategoriesData,
   SavedCategoryApiResponse,
   SavedCategoryDetailApiResponse,
@@ -31,8 +27,6 @@ import type {
 // 내 보관함(MyStorage) 관련 백엔드 엔드포인트 상수 정의
 const MY_SAVED_CATEGORIES_ENDPOINT = '/api/me/saved-categories';
 const SAVED_CATEGORIES_ENDPOINT = '/api/saved-categories';
-const SAVED_CATEGORY_FORK_ENDPOINT = '/api/saved-categories/fork';
-const SAVED_CATEGORY_CONTAINS_ENDPOINT = '/api/me/saved-categories/contains';
 
 // 내 보관함 API 서비스 객체 - 내 카테고리(보관 카테고리) 관련 API 호출을 service 계층에서 중앙 관리
 export const myStorageApi = {
@@ -181,40 +175,6 @@ export const myStorageApi = {
   },
 
   /**
-   * 공유 카테고리 포크 API 호출
-   * @param token 인증 토큰
-   * @param sharedCategoryId 공유 카테고리 ID
-   * @returns API 응답 (성공 시 생성된 보관 카테고리 정보, 실패 시 에러 정보)
-   *
-   * 백엔드 엔드포인트: POST /api/saved-categories/fork
-   */
-  forkSavedCategory: async (
-    token: string,
-    sharedCategoryId: string,
-  ): Promise<ApiResponse<ForkSavedCategoryData>> => {
-    try {
-      const response = await apiClient.post<ForkSavedCategoryApiResponse>(
-        SAVED_CATEGORY_FORK_ENDPOINT,
-        { sharedCategoryId },
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
-
-      return toSuccess<ForkSavedCategoryData>({
-        category: {
-          id: String(response.data.id),
-          title: response.data.name,
-        },
-      });
-    } catch (error) {
-      return toError(
-        error,
-        BackendErrorCode.REQUEST_VALIDATION_FAILED,
-        MESSAGES.sharedCategory.forkFailed,
-      );
-    }
-  },
-
-  /**
    * 내 보관 카테고리 수정 API 호출
    * @param token 인증 토큰
    * @param savedCategoryId 수정할 카테고리 ID
@@ -246,12 +206,6 @@ export const myStorageApi = {
         category: {
           id: String(savedCategoryId),
           title: renamedResponse.data.name,
-          sourceType: 'manual',
-          forkedFromSharedCategoryId: null,
-          sourceAuthorName: null,
-          sourceCategoryTitle: null,
-          canPublish: true,
-          publishBlockedReason: null,
           modifiedAt: new Date().toISOString(),
           placeCount: placesResponse.data.savedCategoryPlaces.length,
           places: adaptSavedCategoryPlaces(placesResponse.data.savedCategoryPlaces),
@@ -262,39 +216,6 @@ export const myStorageApi = {
         error,
         BackendErrorCode.REQUEST_VALIDATION_FAILED,
         MESSAGES.savedCategory.updateFailed,
-      );
-    }
-  },
-
-  /**
-   * 포크 여부 확인 API 호출
-   * @param token 인증 토큰
-   * @param sharedCategoryIds 포크 여부를 확인할 공유 카테고리 ID 목록
-   * @returns 현재 로그인한 사용자가 포크한 공유 카테고리 ID 목록
-   *
-   * 백엔드 엔드포인트: GET /api/me/saved-categories/contains
-   */
-  containsForkedSharedCategories: async (
-    token: string,
-    sharedCategoryIds: string[],
-  ): Promise<ApiResponse<ContainsForkedSharedCategoriesData>> => {
-    try {
-      const response = await apiClient.get<ContainsForkedSharedCategoriesApiResponse>(
-        SAVED_CATEGORY_CONTAINS_ENDPOINT,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { sharedCategoryIds: sharedCategoryIds.join(',') },
-        },
-      );
-
-      return toSuccess<ContainsForkedSharedCategoriesData>({
-        forkedSharedCategoryIds: response.data.forkedSharedCategoryIds.map((id) => String(id)),
-      });
-    } catch (error) {
-      return toError(
-        error,
-        BackendErrorCode.INVALID_TOKEN,
-        MESSAGES.sharedCategory.forkFailed,
       );
     }
   },

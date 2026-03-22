@@ -14,8 +14,6 @@ export type SavedCategoryPlaceApiResponse = {
 export type SavedCategoryApiResponse = {
   id: number | string;
   name: string;
-  sourceSharedCategoryId: number | string | null;
-  canPublish: boolean;
   modifiedAt: string;
   placeCount: number;
 };
@@ -64,15 +62,6 @@ export type SavedCategoryPlacesApiResponse = {
   savedCategoryPlaces: SavedCategoryPlaceApiResponse[];
 };
 
-export type ForkSavedCategoryApiResponse = {
-  id: number | string;
-  name: string;
-};
-
-export type ContainsForkedSharedCategoriesApiResponse = {
-  forkedSharedCategoryIds: Array<number | string>;
-};
-
 export type SavedCategoryDetailApiResponse = {
   id: number | string;
   name: string;
@@ -84,12 +73,6 @@ export interface MySavedCategoriesData {
   categories: Array<{
     id: string;
     title: string;
-    sourceType: 'manual' | 'forked';
-    forkedFromSharedCategoryId: string | null;
-    sourceAuthorName: string | null;
-    sourceCategoryTitle: string | null;
-    canPublish: boolean;
-    publishBlockedReason: string | null;
     modifiedAt: string;
     placeCount: number;
     places: Array<{
@@ -138,23 +121,10 @@ export interface CreateSavedCategoryManualData {
   };
 }
 
-export interface ForkSavedCategoryData {
-  category: {
-    id: string;
-    title: string;
-  };
-}
-
 export interface UpdateSavedCategoryData {
   category: {
     id: string;
     title: string;
-    sourceType: 'manual' | 'forked';
-    forkedFromSharedCategoryId: string | null;
-    sourceAuthorName: string | null;
-    sourceCategoryTitle: string | null;
-    canPublish: boolean;
-    publishBlockedReason: string | null;
     modifiedAt: string;
     placeCount: number;
     places: Array<{
@@ -173,12 +143,6 @@ export interface SavedCategoryDetailData {
   category: {
     id: string;
     title: string;
-    sourceType: 'manual' | 'forked';
-    forkedFromSharedCategoryId: string | null;
-    sourceAuthorName: string | null;
-    sourceCategoryTitle: string | null;
-    canPublish: boolean;
-    publishBlockedReason: string | null;
     modifiedAt: string;
     placeCount: number;
     places: Array<{
@@ -191,8 +155,4 @@ export interface SavedCategoryDetailData {
       longitude: number;
     }>;
   };
-}
-
-export interface ContainsForkedSharedCategoriesData {
-  forkedSharedCategoryIds: string[];
 }

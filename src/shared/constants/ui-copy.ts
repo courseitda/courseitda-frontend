@@ -197,11 +197,6 @@ export const UI_COPY = {
       title: '카테고리가 없습니다.',
       description: '지금 추가해보세요!',
     },
-    source: {
-      manual: '직접 만든 카테고리',
-      forked: '공유 카테고리에서 복사함',
-      forkedBadge: '복사본',
-    },
     detailDialog: {
       placeListTitle: '장소 목록',
       noPlacesInDetail: '표시할 장소가 없습니다.',
@@ -285,16 +280,6 @@ export const UI_COPY = {
   },
   sharedCategoryDetail: {
     placeListTitle: '장소 목록',
-    forkFeatureName: 'fork 기능',
-    alreadyForkedAriaLabel: (title: string) => `${title} 이미 내 카테고리에 복사됨`,
-    forkActionAriaLabel: (title: string) => `${title} 내 카테고리로 복사`,
-    alreadyForkedTitle: '이미 내 카테고리에 복사됨',
-    forkActionTitle: '내 카테고리로 복사',
-    unforkDialog: {
-      title: 'fork를 해제할까요?',
-      description: (title: string) => `"${title}"를 내 카테고리에서 제거합니다.`,
-      confirm: '해제하기',
-    },
   },
   workspaceDetail: {
     notFound: '워크스페이스를 찾을 수 없습니다.',
@@ -385,9 +370,7 @@ export const UI_COPY = {
   uploadCategoryDialog: {
     title: '카테고리 업로드',
     noticeBadge: '안내',
-    republishBlockedToast: '공유 카테고리를 복사한 직후에는 다시 게시할 수 없습니다.',
-    republishBlockedDescription: '복사한 카테고리는 수정 후 업로드할 수 있어요!',
-    needsEdit: '수정 필요',
+    description: '내 카테고리 중 커뮤니티에 공유할 항목을 선택하세요.',
     empty: {
       title: '업로드 할 카테고리가 없습니다.',
       description: '내 카테고리에서 먼저 만들어보세요.',
