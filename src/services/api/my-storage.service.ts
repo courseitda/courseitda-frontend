@@ -3,274 +3,36 @@ import type { ApiResponse } from '@/types/api';
 import { BackendErrorCode } from '@/shared/utils/error-message';
 import { MESSAGES } from '@/shared/constants/messages';
 import { toError, toSuccess } from './http';
+import {
+  adaptCreatedSavedCategory,
+  adaptMySavedCategories,
+  adaptSavedCategoryDetail,
+  adaptSavedCategoryPlaces,
+} from './my-storage.adapters';
+import type {
+  ContainsForkedSharedCategoriesApiResponse,
+  ContainsForkedSharedCategoriesData,
+  CreateSavedCategoryData,
+  CreateSavedCategoryManualApiResponse,
+  CreateSavedCategoryManualData,
+  CreateSavedCategoryManualRequest,
+  ForkSavedCategoryApiResponse,
+  ForkSavedCategoryData,
+  MySavedCategoriesData,
+  SavedCategoryApiResponse,
+  SavedCategoryDetailApiResponse,
+  SavedCategoryDetailData,
+  SavedCategoryPlacesApiResponse,
+  SyncSavedCategoryPlacesRequest,
+  UpdateSavedCategoryData,
+  UpdateSavedCategoryRequest,
+} from './my-storage.types';
 
 // 내 보관함(MyStorage) 관련 백엔드 엔드포인트 상수 정의
 const MY_SAVED_CATEGORIES_ENDPOINT = '/api/me/saved-categories';
 const SAVED_CATEGORIES_ENDPOINT = '/api/saved-categories';
 const SAVED_CATEGORY_FORK_ENDPOINT = '/api/saved-categories/fork';
 const SAVED_CATEGORY_CONTAINS_ENDPOINT = '/api/me/saved-categories/contains';
-
-type SavedCategoryPlaceApiResponse = {
-  id: number | string;
-  // UserRequest: 보관 카테고리 장소 응답에 위치/주소/URL 필드 포함
-  name: string;
-  placeUrl: string;
-  roadAddressName: string;
-  addressName: string;
-  latitude: number;
-  longitude: number;
-};
-
-type SavedCategoryApiResponse = {
-  id: number | string;
-  name: string;
-  sourceSharedCategoryId: number | string | null;
-  canPublish: boolean;
-  modifiedAt: string;
-  placeCount: number;
-};
-
-type SavedCategoryPlacePayload = {
-  name: string;
-  placeUrl: string;
-  roadAddressName: string | null;
-  addressName: string;
-  latitude: number;
-  longitude: number;
-};
-
-type CreateSavedCategoryRequest = {
-  name: string;
-};
-
-type RenameSavedCategoryRequest = {
-  name: string;
-};
-
-type SyncSavedCategoryPlacesRequest = {
-  savedCategoryPlaces: Array<{
-    savedCategoryPlaceId: string | null;
-  } & SavedCategoryPlacePayload>;
-};
-
-type CreateSavedCategoryManualRequest = {
-  name: string;
-  savedCategoryPlaces: SavedCategoryPlacePayload[];
-};
-
-type UpdateSavedCategoryRequest = {
-  name: string;
-  savedCategoryPlaces: Array<{
-    savedCategoryPlaceId: string | null;
-  } & SavedCategoryPlacePayload>;
-};
-
-type CreateSavedCategoryManualApiResponse = {
-  id: number | string;
-  name: string;
-};
-
-type SavedCategoryPlacesApiResponse = {
-  savedCategoryPlaces: SavedCategoryPlaceApiResponse[];
-};
-
-type ForkSavedCategoryApiResponse = {
-  id: number | string;
-  name: string;
-};
-
-type ContainsForkedSharedCategoriesApiResponse = {
-  forkedSharedCategoryIds: Array<number | string>;
-};
-
-type SavedCategoryDetailApiResponse = {
-  id: number | string;
-  name: string;
-  savedCategoryPlaces: SavedCategoryPlaceApiResponse[];
-};
-
-// 내 보관 카테고리 목록 조회 응답 데이터 타입 - 백엔드 API 스펙과 일치
-export interface MySavedCategoriesData {
-  categories: Array<{
-    id: string;
-    title: string;
-    sourceType: 'manual' | 'forked';
-    forkedFromSharedCategoryId: string | null;
-    sourceAuthorName: string | null;
-    sourceCategoryTitle: string | null;
-    canPublish: boolean;
-    publishBlockedReason: string | null;
-    modifiedAt: string;
-    placeCount: number;
-    places: Array<{
-      id: string;
-      name: string;
-      placeUrl: string;
-      roadAddressName: string;
-      addressName: string;
-      latitude: number;
-      longitude: number;
-    }>;
-  }>;
-  hasNext: boolean;
-  nextCursor: number | null;
-}
-
-// 내 보관 카테고리 생성 응답 데이터 타입
-export interface CreateSavedCategoryData {
-  category: {
-    id: string;
-    title: string;
-    places: Array<{
-      id: string;
-      name: string;
-      placeUrl: string;
-      roadAddressName: string;
-      addressName: string;
-      latitude: number;
-      longitude: number;
-    }>;
-  };
-}
-
-export interface CreateSavedCategoryManualData {
-  category: {
-    id: string;
-    title: string;
-    places: Array<{
-      id: string;
-      name: string;
-      placeUrl: string;
-      roadAddressName: string;
-      addressName: string;
-      latitude: number;
-      longitude: number;
-    }>;
-  };
-}
-
-export interface ForkSavedCategoryData {
-  category: {
-    id: string;
-    title: string;
-  };
-}
-
-// 내 보관 카테고리 수정 응답 데이터 타입
-export interface UpdateSavedCategoryData {
-  category: {
-    id: string;
-    title: string;
-    sourceType: 'manual' | 'forked';
-    forkedFromSharedCategoryId: string | null;
-    sourceAuthorName: string | null;
-    sourceCategoryTitle: string | null;
-    canPublish: boolean;
-    publishBlockedReason: string | null;
-    modifiedAt: string;
-    placeCount: number;
-    places: Array<{
-      id: string;
-      name: string;
-      placeUrl: string;
-      roadAddressName: string;
-      addressName: string;
-      latitude: number;
-      longitude: number;
-    }>;
-  };
-}
-
-export interface SavedCategoryDetailData {
-  category: {
-    id: string;
-    title: string;
-    sourceType: 'manual' | 'forked';
-    forkedFromSharedCategoryId: string | null;
-    sourceAuthorName: string | null;
-    sourceCategoryTitle: string | null;
-    canPublish: boolean;
-    publishBlockedReason: string | null;
-    modifiedAt: string;
-    placeCount: number;
-    places: Array<{
-      id: string;
-      name: string;
-      placeUrl: string;
-      roadAddressName: string;
-      addressName: string;
-      latitude: number;
-      longitude: number;
-    }>;
-  };
-}
-
-export interface ContainsForkedSharedCategoriesData {
-  forkedSharedCategoryIds: string[];
-}
-
-const adaptSavedCategoryPlaces = (payload: SavedCategoryPlaceApiResponse[]) =>
-  payload.map((place) => ({
-    id: String(place.id),
-    name: place.name,
-    placeUrl: place.placeUrl,
-    roadAddressName: place.roadAddressName,
-    addressName: place.addressName,
-    latitude: place.latitude,
-    longitude: place.longitude,
-  }));
-
-const adaptSavedCategory = (
-  category: SavedCategoryApiResponse,
-): UpdateSavedCategoryData['category'] => ({
-  id: String(category.id),
-  title: category.name,
-  sourceType: category.sourceSharedCategoryId === null ? 'manual' : 'forked',
-  forkedFromSharedCategoryId: category.sourceSharedCategoryId === null ? null : String(category.sourceSharedCategoryId),
-  sourceAuthorName: null,
-  sourceCategoryTitle: null,
-  canPublish: category.canPublish,
-  publishBlockedReason:
-    category.canPublish ? null : '공유 카테고리를 복사한 직후에는 다시 게시할 수 없습니다.',
-  modifiedAt: category.modifiedAt,
-  placeCount: category.placeCount,
-  places: [],
-});
-
-const adaptMySavedCategories = (payload: SavedCategoryApiResponse[]): MySavedCategoriesData => ({
-  categories: payload.map((category) => ({
-    id: String(category.id),
-    title: category.name,
-    sourceType: category.sourceSharedCategoryId === null ? 'manual' : 'forked',
-    forkedFromSharedCategoryId: category.sourceSharedCategoryId === null ? null : String(category.sourceSharedCategoryId),
-    sourceAuthorName: null,
-    sourceCategoryTitle: null,
-    canPublish: category.canPublish,
-    publishBlockedReason:
-      category.canPublish ? null : '공유 카테고리를 복사한 직후에는 다시 게시할 수 없습니다.',
-    modifiedAt: category.modifiedAt,
-    placeCount: category.placeCount,
-    places: [],
-  })),
-  hasNext: false,
-  nextCursor: null,
-});
-
-const adaptSavedCategoryDetail = (
-  payload: SavedCategoryDetailApiResponse,
-): SavedCategoryDetailData['category'] => ({
-  id: String(payload.id),
-  title: payload.name,
-  sourceType: 'manual',
-  forkedFromSharedCategoryId: null,
-  sourceAuthorName: null,
-  sourceCategoryTitle: null,
-  canPublish: true,
-  publishBlockedReason: null,
-  modifiedAt: new Date().toISOString(),
-  placeCount: payload.savedCategoryPlaces.length,
-  places: adaptSavedCategoryPlaces(payload.savedCategoryPlaces),
-});
 
 // 내 보관함 API 서비스 객체 - 내 카테고리(보관 카테고리) 관련 API 호출을 service 계층에서 중앙 관리
 export const myStorageApi = {
@@ -294,13 +56,7 @@ export const myStorageApi = {
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
-      return toSuccess<CreateSavedCategoryManualData>({
-        category: {
-          id: String(response.data.id),
-          title: response.data.name,
-          places: [],
-        },
-      });
+      return toSuccess<CreateSavedCategoryManualData>({ category: adaptCreatedSavedCategory(response.data) });
     } catch (error) {
       return toError(
         error,

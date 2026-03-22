@@ -1,105 +1,15 @@
 import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { myStorageApi } from '@/services/api';
-import type { MySharedCategory, SavedCategory, SearchedPlace, SharedSavedCategory } from '@/entities/types';
-import { COMMUNITY_QUERY_KEYS } from '@/shared/hooks/use-community';
+import type { SavedCategory, SearchedPlace, SharedSavedCategory } from '@/entities/types';
 import { MESSAGES } from '@/shared/constants/messages';
 import { toast } from 'sonner';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 import { fetchAllCursorPages } from '@/shared/utils/cursor-pagination';
+import { MY_STORAGE_QUERY_KEYS } from '@/shared/hooks/my-storage/query-keys';
+import { toSavedCategoryEntity } from '@/shared/hooks/my-storage/mappers';
+import { syncSharedCategoryForkCount } from '@/shared/hooks/my-storage/cache-sync';
 
-type SavedCategoryPayload = {
-  id: string;
-  title: string;
-  sourceType: 'manual' | 'forked';
-  forkedFromSharedCategoryId: string | null;
-  sourceAuthorName: string | null;
-  sourceCategoryTitle: string | null;
-  canPublish: boolean;
-  publishBlockedReason: string | null;
-  modifiedAt: string;
-  placeCount: number;
-  places: Array<{
-    id: string;
-    // UserRequest: 보관 카테고리 장소 응답에 위치/주소/URL 필드 포함
-    name: string;
-    placeUrl: string;
-    roadAddressName: string;
-    addressName: string;
-    latitude: number;
-    longitude: number;
-  }>;
-};
-
-// UserRequest: 내 보관함 API 응답을 화면에서 사용하는 SavedCategory 타입으로 보정
-const toSavedCategoryEntity = (payload: SavedCategoryPayload): SavedCategory => ({
-  id: payload.id,
-  title: payload.title,
-  sourceType: payload.sourceType,
-  forkedFromSharedCategoryId: payload.forkedFromSharedCategoryId,
-  sourceAuthorName: payload.sourceAuthorName,
-  sourceCategoryTitle: payload.sourceCategoryTitle,
-  canPublish: payload.canPublish,
-  publishBlockedReason: payload.publishBlockedReason,
-  updatedAt: payload.modifiedAt,
-  placeCount: payload.placeCount,
-  places: payload.places.map((place) => ({
-    id: place.id,
-    name: place.name,
-    addressName: place.addressName,
-    // UserRequest: 보관 카테고리 장소 응답 필드 확장 반영
-    placeUrl: place.placeUrl,
-    roadAddressName: place.roadAddressName,
-    latitude: place.latitude,
-    longitude: place.longitude,
-  })),
-});
-
-export const MY_STORAGE_QUERY_KEYS = {
-  mySavedCategories: ['my-storage', 'saved-categories', 'me'] as const,
-  savedCategoryDetail: (savedCategoryId: string) => ['my-storage', 'saved-categories', savedCategoryId] as const,
-  savedCategoryPlaces: (savedCategoryId: string) =>
-    ['my-storage', 'saved-categories', savedCategoryId, 'places'] as const,
-  forkedSharedCategoryIds: (sharedCategoryIds: string[]) =>
-    ['my-storage', 'saved-categories', 'contains', ...sharedCategoryIds] as const,
-};
-
-const updateForkCount = <T extends { id: string; forkCount: number }>(
-  categories: T[] | undefined,
-  sharedCategoryId: string,
-  delta: number,
-): T[] | undefined =>
-  categories?.map((category) =>
-    category.id === sharedCategoryId
-      ? { ...category, forkCount: Math.max(0, category.forkCount + delta) }
-      : category,
-  );
-
-const syncSharedCategoryForkCount = (
-  queryClient: ReturnType<typeof useQueryClient>,
-  sharedCategoryId: string,
-  delta: number,
-) => {
-  queryClient.setQueryData<SharedSavedCategory[]>(
-    COMMUNITY_QUERY_KEYS.recommended,
-    (previous) => updateForkCount(previous, sharedCategoryId, delta),
-  );
-
-  queryClient.setQueryData<MySharedCategory[]>(
-    COMMUNITY_QUERY_KEYS.myShared,
-    (previous) => updateForkCount(previous, sharedCategoryId, delta),
-  );
-
-  const searchQueries = queryClient.getQueriesData<SharedSavedCategory[]>({
-    queryKey: ['community', 'shared-categories', 'search'],
-  });
-
-  searchQueries.forEach(([queryKey]) => {
-    queryClient.setQueryData<SharedSavedCategory[]>(
-      queryKey,
-      (previous) => updateForkCount(previous, sharedCategoryId, delta),
-    );
-  });
-};
+export { MY_STORAGE_QUERY_KEYS } from '@/shared/hooks/my-storage/query-keys';
 
 /**
  * 내 보관 카테고리 목록 조회 커스텀 훅
