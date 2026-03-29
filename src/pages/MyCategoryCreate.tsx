@@ -194,7 +194,7 @@ const MyCategoryCreate = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-card">
+    <div className="min-h-screen bg-gradient-card md:flex md:h-screen md:flex-col md:overflow-hidden">
       <PageHeader
         showBackButton
         showBrand={false}
@@ -219,53 +219,58 @@ const MyCategoryCreate = () => {
         rightContent={<UserMenu onBeforeNavigate={handleAttemptLeave} />}
       />
 
-      <main className="space-y-2.5 pb-4 md:space-y-2.5 md:pb-4">
-        <section className="rounded-none bg-card p-0 shadow-sm md:rounded-xl md:mx-8 md:p-4 md:container md:max-w-2xl">
-          <CategoryPlacesMap
-            open
-            places={selectedPlaces.map((place) => ({
-              id: place.id,
-              name: place.name,
-              latitude: place.latitude,
-              longitude: place.longitude,
-            }))}
-            focusedPlaceId={focusedPlaceId}
-            searchPlaces={placeResults.map((place) => ({
-              id: place.id,
-              name: place.name,
-              latitude: place.latitude,
-              longitude: place.longitude,
-            }))}
-            highlightedSearchPlaceId={highlightedSearchPlaceId}
-          />
-        </section>
+      <main className="space-y-2.5 pb-4 md:relative md:flex-1 md:min-h-0 md:space-y-0 md:pb-4">
+        {/* UserRequest: 카테고리 추가 페이지 데스크톱 화면은 워크스페이스 상세처럼 왼쪽 지도, 오른쪽 편집 영역 2열로 배치한다. */}
+        <div className="md:grid md:h-full md:grid-cols-2 md:gap-4 md:px-4">
+          <section className="rounded-none bg-card p-0 shadow-sm md:min-h-0 md:overflow-hidden md:rounded-xl md:border md:border-border/50 md:p-4 md:shadow-lg">
+            <CategoryPlacesMap
+              open
+              places={selectedPlaces.map((place) => ({
+                id: place.id,
+                name: place.name,
+                latitude: place.latitude,
+                longitude: place.longitude,
+              }))}
+              focusedPlaceId={focusedPlaceId}
+              searchPlaces={placeResults.map((place) => ({
+                id: place.id,
+                name: place.name,
+                latitude: place.latitude,
+                longitude: place.longitude,
+              }))}
+              highlightedSearchPlaceId={highlightedSearchPlaceId}
+              mapClassName="md:h-full"
+            />
+          </section>
 
-        <div className="container mx-auto max-w-2xl px-8 pt-3 md:pt-4">
-          <CategoryPlacesSection
-            sectionTitle={UI_COPY.myCategory.detailDialog.editingPlaceListTitle}
-            placeCount={selectedPlaces.length}
-            isEditing
-            isPending={createSavedCategoryMutation.isPending}
-            canSubmit={selectedPlaces.length > 0}
-            submitLabel={UI_COPY.myCategory.editorDialog.save}
-            pendingSubmitLabel={UI_COPY.myCategory.editorDialog.saving}
-            selectedPlaces={selectedPlaces}
-            detailPlaces={selectedPlaces}
-            placeQuery={placeQuery}
-            placeResults={placeResults}
-            placeSearchLoading={placeSearchLoading}
-            highlightedSearchPlaceId={highlightedSearchPlaceId}
-            focusedPlaceId={focusedPlaceId}
-            onPlaceQueryChange={setPlaceQuery}
-            onSearchPlaces={handleSearchPlaces}
-            onAddPlace={handleAddPlace}
-            onSelectSearchPlace={handleSelectSearchPlace}
-            onRemovePlace={handleRemovePlace}
-            onFocusPlace={handleFocusPlace}
-            // UserRequest: 생성 전용 페이지에서는 장소를 1개 이상 추가해야 최종 생성 버튼이 활성화된다.
-            // UserRequest: 카테고리 생성 전용 페이지의 최종 제출 버튼 텍스트를 저장으로 변경한다.
-            onSubmit={handleCreateCategory}
-          />
+          {/* 데스크톱에서는 우측 편집 패널만 스크롤되도록 분리해 지도와 편집 영역을 동시에 크게 유지 */}
+          <div className="px-8 pt-3 md:min-h-0 md:overflow-y-auto md:rounded-xl md:border md:border-border/50 md:bg-card md:px-6 md:py-6 md:shadow-lg">
+            <CategoryPlacesSection
+              sectionTitle={UI_COPY.myCategory.detailDialog.editingPlaceListTitle}
+              placeCount={selectedPlaces.length}
+              isEditing
+              isPending={createSavedCategoryMutation.isPending}
+              canSubmit={selectedPlaces.length > 0}
+              submitLabel={UI_COPY.myCategory.editorDialog.save}
+              pendingSubmitLabel={UI_COPY.myCategory.editorDialog.saving}
+              selectedPlaces={selectedPlaces}
+              detailPlaces={selectedPlaces}
+              placeQuery={placeQuery}
+              placeResults={placeResults}
+              placeSearchLoading={placeSearchLoading}
+              highlightedSearchPlaceId={highlightedSearchPlaceId}
+              focusedPlaceId={focusedPlaceId}
+              onPlaceQueryChange={setPlaceQuery}
+              onSearchPlaces={handleSearchPlaces}
+              onAddPlace={handleAddPlace}
+              onSelectSearchPlace={handleSelectSearchPlace}
+              onRemovePlace={handleRemovePlace}
+              onFocusPlace={handleFocusPlace}
+              // UserRequest: 생성 전용 페이지에서는 장소를 1개 이상 추가해야 최종 생성 버튼이 활성화된다.
+              // UserRequest: 카테고리 생성 전용 페이지의 최종 제출 버튼 텍스트를 저장으로 변경한다.
+              onSubmit={handleCreateCategory}
+            />
+          </div>
         </div>
       </main>
 
