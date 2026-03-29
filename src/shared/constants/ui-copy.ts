@@ -183,6 +183,8 @@ export const UI_COPY = {
   myCategory: {
     pageTitle: '내 카테고리',
     createAction: '새 카테고리',
+    archiveTab: '보관',
+    favoriteTab: '찜',
     pageTitleShort: '카테고리 상세',
     nameRequired: '카테고리 이름을 입력해주세요.',
     nameMaxLength: '카테고리 이름은 10자를 초과할 수 없습니다.',
@@ -196,6 +198,10 @@ export const UI_COPY = {
     empty: {
       title: '카테고리가 없습니다.',
       description: '지금 추가해보세요!',
+    },
+    favoriteEmpty: {
+      title: '찜한 카테고리가 없습니다.',
+      description: '나중에 찜한 항목이 여기에 표시됩니다.',
     },
     detailDialog: {
       placeListTitle: '장소 목록',

@@ -1,4 +1,4 @@
-import {type ReactNode, useEffect, useState} from 'react';
+import {type ReactNode, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {Button} from '@/components/ui/button';
 import {Card, CardHeader, CardTitle} from '@/components/ui/card';
@@ -6,7 +6,7 @@ import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/components/ui/
 import {Input} from '@/components/ui/input';
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,} from '@/components/ui/dropdown-menu';
 import {useAuthStore} from '@/shared/stores/auth-store';
-import {Folder, MoreHorizontal, Plus, Trash2} from 'lucide-react';
+import {Folder, Heart, MoreHorizontal, Plus, Trash2} from 'lucide-react';
 import {toast} from 'sonner';
 import {Spinner} from '@/components/ui/spinner';
 import {useDeleteSavedCategory, useMySavedCategories,} from '@/shared/hooks/use-my-storage';
@@ -19,6 +19,7 @@ import {UI_COPY} from '@/shared/constants/ui-copy';
 import DeleteConfirmDialog from '@/components/common/delete-confirm-dialog';
 import { useRequireAuthRedirect } from '@/shared/hooks/use-require-auth-redirect';
 import { useQueryErrorToast } from '@/shared/hooks/use-query-error-toast';
+import {Tabs, TabsContent, TabsList, TabsTrigger} from '@/components/ui/tabs';
 
 /**
  * 내 카테고리 페이지 컴포넌트
@@ -29,6 +30,7 @@ const MyCategory = () => {
     const CATEGORY_NAME_MAX_LENGTH = 10;
     const navigate = useNavigate();
     const {token} = useAuthStore();
+    const [activeSection, setActiveSection] = useState<'archive' | 'favorite'>('archive');
     const [createDialogOpen, setCreateDialogOpen] = useState(false);
     const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
     const [selectedForDelete, setSelectedForDelete] = useState<SavedCategory | null>(null);
@@ -193,17 +195,93 @@ const MyCategory = () => {
     const renderEmptyState = (
         icon: ReactNode,
         message: string,
-        className = 'flex-1 min-h-[clamp(18rem,calc(100dvh-12rem),40rem)]',
+        className = '',
+        style?: CSSProperties,
     ) => (
         <div
+            style={style}
             className={`border-2 border-dashed border-border rounded-xl p-5 text-center flex flex-col items-center justify-center sm:p-8 md:p-10 ${className}`}>
             {icon}
             <p className="whitespace-pre-line text-sm leading-6 text-muted-foreground">{message}</p>
         </div>
     );
 
+    // UserRequest: 카테고리 상단에 좌측 보관 탭과 우측 찜 탭을 추가하고 기존 화면은 보관 탭에 연결한다.
+    const renderTabHeader = () => (
+        <TabsList className="grid w-full grid-cols-2 mb-4 md:mb-6">
+            <TabsTrigger value="archive" className="flex items-center gap-1.5">
+                <Folder className="w-4 h-4"/>
+                {UI_COPY.myCategory.archiveTab}
+            </TabsTrigger>
+            <TabsTrigger value="favorite" className="flex items-center gap-1.5">
+                <Heart className="w-4 h-4"/>
+                {UI_COPY.myCategory.favoriteTab}
+            </TabsTrigger>
+        </TabsList>
+    );
+
+    // UserRequest: 보관 탭의 새 카테고리 추가 버튼은 찜 탭 높이 기준에도 사용되므로 동일한 구조로 분리한다.
+    const renderCreateCategoryCard = (hidden = false) => (
+        <Card
+            aria-hidden={hidden}
+            className={`hover-lift cursor-pointer border-border bg-card transition-colors ${
+                hidden ? 'invisible pointer-events-none' : 'hover:bg-accent/40'
+            }`}
+            onClick={hidden ? undefined : handleOpenCreateDialog}
+        >
+            <CardHeader className="flex flex-col items-center justify-center">
+                <div className="flex items-center gap-2 text-primary">
+                    <Plus className="w-5 h-5"/>
+                    <CardTitle
+                        className="text-base md:text-lg text-primary">{UI_COPY.myCategory.createAction}</CardTitle>
+                </div>
+            </CardHeader>
+        </Card>
+    );
+
+    // UserRequest: 현재의 카테고리 생성/목록 화면은 보관 탭 콘텐츠로 유지한다.
+    const renderArchiveContent = () => (
+        <div className="space-y-3 md:space-y-2">
+            {renderCreateCategoryCard()}
+
+            {savedCategories.length === 0
+                ? renderEmptyState(
+                    <Folder className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60"/>,
+                    `${UI_COPY.myCategory.empty.title}\n${UI_COPY.myCategory.empty.description}`,
+                    'h-[calc(100dvh-18rem-env(safe-area-inset-bottom))] md:h-[calc(100vh-16rem)]',
+                )
+                : (
+                    <div className="space-y-3 md:space-y-2">
+                        {savedCategories.map((category) => renderSavedCategoryCard(category))}
+                    </div>
+                )}
+        </div>
+    );
+
+    // UserRequest: 찜 탭은 추후 구현 전까지 빈 상태만 표시한다.
+    const renderFavoritePlaceholder = () => (
+        <div className="relative">
+            {/* UserRequest: 찜 탭은 보관 탭의 시작점/하단과 동일한 영역을 가져야 하므로 보관 구조를 보이지 않게 유지한다. */}
+            <div className="pointer-events-none invisible space-y-3 md:space-y-2" aria-hidden="true">
+                {renderCreateCategoryCard(true)}
+                {renderEmptyState(
+                    <Folder className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60"/>,
+                    `${UI_COPY.myCategory.empty.title}\n${UI_COPY.myCategory.empty.description}`,
+                    'h-[calc(100dvh-18rem-env(safe-area-inset-bottom))] md:h-[calc(100vh-16rem)]',
+                )}
+            </div>
+            <div className="absolute inset-0">
+                {renderEmptyState(
+                    <Folder className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60"/>,
+                    `${UI_COPY.myCategory.favoriteEmpty.title}\n${UI_COPY.myCategory.favoriteEmpty.description}`,
+                    'h-full',
+                )}
+            </div>
+        </div>
+    );
+
     return (
-        <div className="flex min-h-dvh flex-col bg-gradient-card">
+        <div className="min-h-dvh bg-gradient-card">
             {/* UserRequest: 뒤로가기 버튼은 직전 페이지로 이동 */}
             {/* UserRequest: 헤더 구성 요소를 공통 컴포넌트로 교체 */}
             <PageHeader title={UI_COPY.myCategory.pageTitle} desktopSideLayout/>
@@ -212,66 +290,37 @@ const MyCategory = () => {
             {/* UserRequest: 모바일 하단 safe area와 동적 viewport를 반영해 빈 상태 영역이 화면 끝 직전까지 이어지게 조정한다. */}
             {/* UserRequest: 모바일 뷰 좌우 여백을 0.5배로 축소하여 다른 페이지와 통일성 유지 (px-8 → px-4) */}
             <main
-                className="container mx-auto flex flex-1 flex-col px-8 py-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] md:hidden">
-                {/* UserRequest: 카테고리 페이지에서 생성 버튼과 목록을 동일한 흐름으로 표시 */}
-                <Card
-                    className="hover-lift cursor-pointer border-border bg-card hover:bg-accent/40 transition-colors"
-                    onClick={handleOpenCreateDialog}
+                className="container mx-auto px-8 py-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] md:hidden">
+                <Tabs
+                    value={activeSection}
+                    onValueChange={(value) => setActiveSection(value as 'archive' | 'favorite')}
                 >
-                    <CardHeader className="flex flex-col items-center justify-center">
-                        <div className="flex items-center gap-2 text-primary">
-                            <Plus className="w-5 h-5"/>
-                            <CardTitle
-                                className="text-base md:text-lg text-primary">{UI_COPY.myCategory.createAction}</CardTitle>
-                        </div>
-                    </CardHeader>
-                </Card>
-
-                <div className="mt-3 flex flex-1 flex-col">
-                    {savedCategories.length === 0
-                        ? renderEmptyState(
-                            <Folder className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60"/>,
-                            `${UI_COPY.myCategory.empty.title}\n${UI_COPY.myCategory.empty.description}`,
-                        )
-                        : (
-                            <div className="space-y-3">
-                                {savedCategories.map((category) => renderSavedCategoryCard(category))}
-                            </div>
-                        )}
-                </div>
+                    {renderTabHeader()}
+                    <TabsContent value="archive" className="mt-0">
+                        {renderArchiveContent()}
+                    </TabsContent>
+                    <TabsContent value="favorite" className="mt-0">
+                        {renderFavoritePlaceholder()}
+                    </TabsContent>
+                </Tabs>
             </main>
 
             {/* 데스크톱 레이아웃 */}
             {/* UserRequest: 카테고리 상세를 제외한 데스크톱 화면도 모바일과 동일한 단일 컬럼 흐름으로 동작하게 맞춘다. */}
             <DesktopSideLayout className="hidden min-h-[calc(100vh-80px)] flex-1 md:grid" contentClassName="min-h-[calc(100vh-80px)]">
-                <main className="flex min-h-[calc(100vh-80px)] flex-col overflow-y-auto px-8 py-6">
-                    {/* UserRequest: 카테고리 페이지에서 생성 버튼과 목록을 동일한 흐름으로 표시 */}
-                    <Card
-                        className="hover-lift cursor-pointer border-border bg-card hover:bg-accent/40 transition-colors"
-                        onClick={handleOpenCreateDialog}
+                <main className="px-8 py-6">
+                    <Tabs
+                        value={activeSection}
+                        onValueChange={(value) => setActiveSection(value as 'archive' | 'favorite')}
                     >
-                        <CardHeader className="flex flex-col items-center justify-center">
-                            <div className="flex items-center gap-2 text-primary">
-                                <Plus className="w-5 h-5"/>
-                                <CardTitle
-                                    className="text-base md:text-lg text-primary">{UI_COPY.myCategory.createAction}</CardTitle>
-                            </div>
-                        </CardHeader>
-                    </Card>
-
-                    <div className="mt-3 flex flex-1 flex-col">
-                        {savedCategories.length === 0
-                            ? renderEmptyState(
-                                <Folder className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60"/>,
-                                `${UI_COPY.myCategory.empty.title}\n${UI_COPY.myCategory.empty.description}`,
-                                '',
-                            )
-                            : (
-                                <div className="space-y-3">
-                                    {savedCategories.map((category) => renderSavedCategoryCard(category))}
-                                </div>
-                            )}
-                    </div>
+                        {renderTabHeader()}
+                        <TabsContent value="archive" className="mt-0">
+                            {renderArchiveContent()}
+                        </TabsContent>
+                        <TabsContent value="favorite" className="mt-0">
+                            {renderFavoritePlaceholder()}
+                        </TabsContent>
+                    </Tabs>
                 </main>
             </DesktopSideLayout>
 
