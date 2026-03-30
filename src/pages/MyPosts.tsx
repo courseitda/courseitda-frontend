@@ -79,6 +79,8 @@ const MyPosts = () => {
         uploader,
         uploadedAt: shared.uploadedAt,
         isImmutableSnapshot: true,
+        liked: category.liked,
+        likeCount: shared.likeCount,
         placeCount: shared.placeCount,
         places: shared.places,
       });

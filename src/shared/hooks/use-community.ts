@@ -240,7 +240,7 @@ export const useMySharedCategories = (
         throw new Error(UI_COPY.system.authTokenRequired);
       }
 
-      return fetchAllCursorPages(async (cursor) => {
+      const categories = await fetchAllCursorPages(async (cursor) => {
         const response = await communityApi.getMySharedCategories(token, { cursor, size: 20 });
 
         if (!response.success || !response.data) {
@@ -253,6 +253,8 @@ export const useMySharedCategories = (
           nextCursor: response.data.nextCursor,
         };
       });
+
+      return mergeLikedState(categories, token) as MySharedCategory[];
     },
     staleTime: 1000 * 15,
     placeholderData: (previousData) => previousData,
