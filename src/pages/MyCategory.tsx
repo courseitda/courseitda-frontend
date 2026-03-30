@@ -40,6 +40,8 @@ const MyCategory = () => {
     const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
     const [selectedForDelete, setSelectedForDelete] = useState<SavedCategory | null>(null);
     const [selectedFavoriteCategory, setSelectedFavoriteCategory] = useState<SharedSavedCategory | null>(null);
+    const [selectedDeletedFavoriteCategory, setSelectedDeletedFavoriteCategory] = useState<SharedSavedCategory | null>(null);
+    const [deletedFavoriteAlertOpen, setDeletedFavoriteAlertOpen] = useState(false);
     const [favoriteDetailOpen, setFavoriteDetailOpen] = useState(false);
     const [newCategoryTitle, setNewCategoryTitle] = useState('');
 
@@ -133,6 +135,13 @@ const MyCategory = () => {
     };
 
     const handleOpenFavoriteCategory = (category: SharedSavedCategory) => {
+        if (category.isDeleted) {
+            // UserRequest: 원본이 삭제된 찜한 컬렉션은 상세 대신 삭제 안내창을 띄운다.
+            setSelectedDeletedFavoriteCategory(category);
+            setDeletedFavoriteAlertOpen(true);
+            return;
+        }
+
         // UserRequest: 찜 탭 카드 클릭 시 공유 카테고리 상세 API를 조회한 뒤 동일한 상세 모달을 연다.
         void (async () => {
             const response = await communityApi.getSharedCategoryDetail(category.id);
@@ -153,6 +162,7 @@ const MyCategory = () => {
                 uploader: shared.uploaderNickname,
                 uploadedAt: shared.uploadedAt,
                 isImmutableSnapshot: true,
+                isDeleted: shared.isDeleted,
                 liked: category.liked,
                 likeCount: shared.likeCount,
                 placeCount: shared.placeCount,
@@ -164,6 +174,20 @@ const MyCategory = () => {
 
     const handleFavoriteToggle = (category: SharedSavedCategory) =>
         toggleLike({ sharedCategoryId: category.id, currentLiked: !!category.liked });
+
+    const handleConfirmDeletedFavoriteRemoval = () => {
+        if (!selectedDeletedFavoriteCategory) {
+            return;
+        }
+
+        const toggled = handleFavoriteToggle(selectedDeletedFavoriteCategory);
+        if (toggled === false) {
+            return;
+        }
+
+        setDeletedFavoriteAlertOpen(false);
+        setSelectedDeletedFavoriteCategory(null);
+    };
 
     // UserRequest: 내 카테고리 카드의 롱프레스를 제거하고 우측 더보기 버튼으로 수정/삭제 메뉴를 노출한다.
     const renderSavedCategoryCard = (category: SavedCategory) => (
@@ -274,11 +298,15 @@ const MyCategory = () => {
         <TabsList className="grid w-full grid-cols-2 mb-4 md:mb-6">
             <TabsTrigger value="archive" className="flex items-center gap-1.5">
                 <Folder className="w-4 h-4"/>
-                {UI_COPY.myCategory.archiveTab}
+                내 컬렉션
             </TabsTrigger>
             <TabsTrigger value="favorite" className="flex items-center gap-1.5">
-                <Heart className="w-4 h-4"/>
-                {UI_COPY.myCategory.favoriteTab}
+                <Heart
+                    className={`w-4 h-4 ${activeSection === 'favorite' ? 'like-heart' : ''}`}
+                    fill="none"
+                    strokeWidth={1.5}
+                />
+                찜한 컬렉션
             </TabsTrigger>
         </TabsList>
     );
@@ -458,6 +486,26 @@ const MyCategory = () => {
                 }
                 onConfirm={handleDeleteConfirm}
                 pending={deleteSavedCategoryMutation.isPending}
+            />
+            <DeleteConfirmDialog
+                open={deletedFavoriteAlertOpen}
+                onOpenChange={(open) => {
+                    setDeletedFavoriteAlertOpen(open);
+                    if (!open) {
+                        setSelectedDeletedFavoriteCategory(null);
+                    }
+                }}
+                title="삭제된 컬렉션 정리"
+                description={
+                    <>
+                        {selectedDeletedFavoriteCategory
+                            ? `"${selectedDeletedFavoriteCategory.title}" 원본 컬렉션이 삭제되었습니다.`
+                            : '원본 컬렉션이 삭제되었습니다.'}
+                        <br/>
+                        찜한 컬렉션 목록에서 삭제하시겠습니까?
+                    </>
+                }
+                onConfirm={handleConfirmDeletedFavoriteRemoval}
             />
             <SharedCategoryDetailDialog
                 open={favoriteDetailOpen}

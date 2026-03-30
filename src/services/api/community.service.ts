@@ -32,6 +32,7 @@ type SharedCategoryApiResponse = {
   uploadedAt?: string;
   likeCount?: number;
   placeCount?: number;
+  isDeleted?: boolean;
   sharedCategoryPlaces?: SharedCategoryPlaceApiResponse[];
   places?: SharedCategoryPlaceApiResponse[];
 };
@@ -58,6 +59,7 @@ export interface SharedCategoriesData {
     uploaderNickname: string;
     uploadedAt: string;
     isImmutableSnapshot: true;
+    isDeleted?: boolean;
     likeCount: number;
     placeCount: number;
     places: Array<{
@@ -130,6 +132,7 @@ const adaptSharedCategories = (payload: SharedCategoryApiResponse[]): SharedCate
       uploaderNickname: category.authorNickname ?? category.uploaderNickname ?? '',
       uploadedAt: category.createdAt ?? category.uploadedAt ?? '',
       isImmutableSnapshot: true,
+      isDeleted: category.isDeleted ?? false,
       likeCount: category.likeCount ?? 0,
       placeCount: category.placeCount ?? categoryPlaces.length,
       places: adaptSharedCategoryPlaces(categoryPlaces),

@@ -114,6 +114,7 @@ export type SharedSavedCategory = {
   uploader: string; // 업로더 닉네임
   uploadedAt: string; // 업로드 일시 (ISO 8601)
   isImmutableSnapshot: true; // 공유 카테고리는 publish 시점의 스냅샷으로 취급
+  isDeleted?: boolean; // 원본 공유 카테고리 삭제 여부
   liked?: boolean; // 현재 로그인한 사용자의 찜 여부
   likeCount?: number; // 공유 컬렉션 찜 수
   placeCount: number; // 포함된 장소 수

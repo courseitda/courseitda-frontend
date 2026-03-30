@@ -77,7 +77,9 @@ const SharedCategoryList = ({
             return (
               <Card
                 key={category.id}
-                className="hover-lift cursor-pointer"
+                className={`hover-lift cursor-pointer ${
+                  category.isDeleted ? 'border-border bg-muted/50 hover:bg-muted/70' : ''
+                }`}
                 onClick={() => onOpenDetail(category)}
               >
                 <CardHeader className={cardHeaderClassName}>
@@ -90,7 +92,16 @@ const SharedCategoryList = ({
                     </span>
                   </div>
                   <div className="flex flex-col gap-1 flex-1 min-w-0">
-                    <CardTitle className={titleClassName}>{category.title}</CardTitle>
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      <CardTitle className={`${titleClassName} ${category.isDeleted ? 'text-muted-foreground line-through' : ''}`}>
+                        {category.title}
+                      </CardTitle>
+                      {category.isDeleted && (
+                        <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium leading-none text-muted-foreground">
+                          삭제됨
+                        </span>
+                      )}
+                    </div>
                     <div className={metaRowClassName}>
                       {/* UserRequest: 목록 카드 메타 정보를 달력 아이콘 + 날짜 형식으로 표시한다. */}
                       {category.uploadedAt && (
