@@ -1,6 +1,6 @@
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import type { SharedSavedCategory } from '@/entities/types';
-import { Calendar, Sparkles } from 'lucide-react';
+import { Calendar, Heart, Sparkles } from 'lucide-react';
 import { useCommunityRecommendCarousel } from '@/shared/hooks/use-community-recommend-carousel';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 
@@ -115,6 +115,16 @@ const RecommendedCategoryCarousel = ({
                             <span className="inline-flex shrink-0 items-center gap-1 text-muted-foreground">
                               <Calendar className="h-3 w-3 text-muted-foreground" />
                               {formatUploadedDate(category.uploadedAt)}
+                            </span>
+                          )}
+                          {typeof category.likeCount === 'number' && (
+                            <span className="inline-flex shrink-0 items-center gap-1 text-muted-foreground">
+                              <Heart
+                                className={`h-3 w-3 ${category.liked ? 'like-heart' : 'text-muted-foreground'}`}
+                                fill={category.liked ? 'currentColor' : 'none'}
+                                strokeWidth={category.liked ? 0 : 1.5}
+                              />
+                              <span>{category.likeCount}</span>
                             </span>
                           )}
                         </div>
