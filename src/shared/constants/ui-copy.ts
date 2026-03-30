@@ -385,8 +385,10 @@ export const UI_COPY = {
   },
   importCategoryDialog: {
     title: '컬렉션 불러오기',
-    savedTab: '내 보관함',
-    savedEmpty: '내 보관함에 컬렉션이 없습니다.',
+    savedTab: '내 컬렉션',
+    savedEmpty: '내 컬렉션이 없습니다.',
+    favoriteTab: '찜한 컬렉션',
+    favoriteEmpty: '찜한 컬렉션이 없습니다.',
   },
   placeSearchDialog: {
     title: '장소 검색',
