@@ -10,6 +10,7 @@ import {Folder, Heart, MoreHorizontal, Plus, Trash2} from 'lucide-react';
 import {toast} from 'sonner';
 import {Spinner} from '@/components/ui/spinner';
 import {useDeleteSavedCategory, useMySavedCategories,} from '@/shared/hooks/use-my-storage';
+import { communityApi } from '@/services/api';
 import {MESSAGES} from '@/shared/constants/messages';
 import type {SavedCategory, SharedSavedCategory} from '@/entities/types';
 import PageHeader from '@/components/layout/page-header';
@@ -132,9 +133,33 @@ const MyCategory = () => {
     };
 
     const handleOpenFavoriteCategory = (category: SharedSavedCategory) => {
-        // UserRequest: 찜 탭 카드 클릭 시 공유 카테고리 상세 모달을 연다.
-        setSelectedFavoriteCategory(category);
-        setFavoriteDetailOpen(true);
+        // UserRequest: 찜 탭 카드 클릭 시 공유 카테고리 상세 API를 조회한 뒤 동일한 상세 모달을 연다.
+        void (async () => {
+            const response = await communityApi.getSharedCategoryDetail(category.id);
+            if (!response.success || !response.data) {
+                toast.error(response.error?.message ?? MESSAGES.sharedCategory.fetchDetailFailed);
+                return;
+            }
+
+            const shared = response.data.sharedCategories[0];
+            if (!shared) {
+                toast.error(MESSAGES.sharedCategory.fetchDetailFailed);
+                return;
+            }
+
+            setSelectedFavoriteCategory({
+                id: shared.id,
+                title: shared.title,
+                uploader: shared.uploaderNickname,
+                uploadedAt: shared.uploadedAt,
+                isImmutableSnapshot: true,
+                liked: category.liked,
+                likeCount: shared.likeCount,
+                placeCount: shared.placeCount,
+                places: shared.places,
+            });
+            setFavoriteDetailOpen(true);
+        })();
     };
 
     const handleFavoriteToggle = (category: SharedSavedCategory) =>
