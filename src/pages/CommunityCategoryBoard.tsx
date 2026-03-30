@@ -1,12 +1,11 @@
 import type { FormEvent } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
 import { Upload } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { useSharedCategories } from '@/shared/hooks/use-community';
+import { COMMUNITY_QUERY_KEYS, useSharedCategories } from '@/shared/hooks/use-community';
 import { MESSAGES } from '@/shared/constants/messages';
 import type { SharedSavedCategory } from '@/entities/types';
 import { sortSharedCategoriesById } from '@/shared/utils/shared-category-sort';
@@ -17,12 +16,15 @@ import PageHeader from '@/components/layout/page-header';
 import DesktopSideLayout from '@/components/layout/desktop-side-layout';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 import { useQueryErrorToast } from '@/shared/hooks/use-query-error-toast';
+import LoginRequiredDialog from '@/components/common/login-required-dialog';
+import { useSharedCategoryLike } from '@/shared/hooks/use-shared-category-like';
 
 const CommunityCategoryBoard = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, token } = useAuthStore();
   const [selectedCategory, setSelectedCategory] = useState<SharedSavedCategory | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
 
   // UserRequest: 공유된 카테고리 게시판 페이지는 검색 결과 페이지와 동일한 구성으로 구현
   const {
@@ -30,6 +32,14 @@ const CommunityCategoryBoard = () => {
     isLoading: sharedCategoriesLoading,
     error: sharedCategoriesError,
   } = useSharedCategories();
+
+  const { toggleLike } = useSharedCategoryLike({
+    queryKey: [...COMMUNITY_QUERY_KEYS.list(20), true, token],
+    token,
+    isAuthenticated,
+    setSelectedCategory,
+    onRequireLogin: () => setLoginDialogOpen(true),
+  });
 
   const filteredCategories = useMemo(() => {
     // UserRequest: 카테고리 게시판은 id 오름차순으로 기본 정렬
@@ -48,6 +58,14 @@ const CommunityCategoryBoard = () => {
   const handleOpenDetail = (category: SharedSavedCategory) => {
     setSelectedCategory(category);
     setDetailOpen(true);
+  };
+
+  const handleFavoriteClick = (category: SharedSavedCategory) =>
+    toggleLike({ sharedCategoryId: category.id, currentLiked: !!category.liked });
+
+  const handleLoginStart = () => {
+    setLoginDialogOpen(false);
+    navigate('/auth?tab=login');
   };
 
   if (sharedCategoriesLoading) {
@@ -93,6 +111,7 @@ const CommunityCategoryBoard = () => {
                 <SharedCategoryList
                   categories={filteredCategories}
                   onOpenDetail={handleOpenDetail}
+                  onFavoriteClick={handleFavoriteClick}
                   // UserRequest: 데스크톱 게시판 목록은 고정 높이로 자르지 않고 자연 높이로 모두 노출한다.
                   viewportClassName="h-[520px] md:h-auto"
                 />
@@ -106,6 +125,13 @@ const CommunityCategoryBoard = () => {
         open={detailOpen}
         onOpenChange={setDetailOpen}
         category={selectedCategory}
+        onFavoriteClick={handleFavoriteClick}
+      />
+      <LoginRequiredDialog
+        open={loginDialogOpen}
+        onOpenChange={setLoginDialogOpen}
+        onStart={handleLoginStart}
+        featureName="찜 기능"
       />
 
       {/* UserRequest: 비회원에게는 업로드 버튼을 숨김 */}

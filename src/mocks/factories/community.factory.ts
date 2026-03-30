@@ -1,20 +1,22 @@
 export type SharedSavedCategoryMock = {
+  id: string;
+  title: string;
+  uploaderNickname: string;
+  uploadedAt: string;
+  isImmutableSnapshot: true;
+  liked?: boolean;
+  likeCount: number;
+  placeCount: number;
+  places: Array<{
     id: string;
-    title: string;
-    uploaderNickname: string;
-    uploadedAt: string;
-    isImmutableSnapshot: true;
-    placeCount: number;
-    places: Array<{
-        id: string;
-        // UserRequest: 공유 카테고리 장소 목업에 위치/주소/URL 필드 포함
-        name: string;
-        placeUrl: string;
-        roadAddressName: string;
-        addressName: string;
-        latitude: number;
-        longitude: number;
-    }>;
+    // UserRequest: 공유 카테고리 장소 목업에 위치/주소/URL 필드 포함
+    name: string;
+    placeUrl: string;
+    roadAddressName: string;
+    addressName: string;
+    latitude: number;
+    longitude: number;
+  }>;
 };
 
 // 커뮤니티 공유 카테고리 목업 데이터 생성 함수 - MSW 응답에서 재사용
@@ -25,6 +27,8 @@ export const createSharedSavedCategoryMocks = (): SharedSavedCategoryMock[] => [
         uploaderNickname: 'lucas',
         uploadedAt: new Date().toISOString(),
         isImmutableSnapshot: true,
+        liked: false,
+        likeCount: 12,
         placeCount: 3,
         places: [
             {
@@ -62,6 +66,8 @@ export const createSharedSavedCategoryMocks = (): SharedSavedCategoryMock[] => [
         uploaderNickname: 'selena',
         uploadedAt: new Date().toISOString(),
         isImmutableSnapshot: true,
+        liked: false,
+        likeCount: 7,
         placeCount: 3,
         places: [
             {
@@ -99,6 +105,8 @@ export const createSharedSavedCategoryMocks = (): SharedSavedCategoryMock[] => [
         uploaderNickname: 'hana',
         uploadedAt: new Date().toISOString(),
         isImmutableSnapshot: true,
+        liked: false,
+        likeCount: 18,
         placeCount: 3,
         places: [
             {
@@ -137,6 +145,8 @@ export const createSharedSavedCategoryMocks = (): SharedSavedCategoryMock[] => [
         uploaderNickname: 'mori',
         uploadedAt: new Date().toISOString(),
         isImmutableSnapshot: true,
+        liked: false,
+        likeCount: 31,
         placeCount: 6,
         places: [
             {
@@ -174,6 +184,8 @@ export const createSharedSavedCategoryMocks = (): SharedSavedCategoryMock[] => [
         uploaderNickname: 'jun',
         uploadedAt: new Date().toISOString(),
         isImmutableSnapshot: true,
+        liked: false,
+        likeCount: 22,
         placeCount: 4,
         places: [
             {
@@ -211,6 +223,8 @@ export const createSharedSavedCategoryMocks = (): SharedSavedCategoryMock[] => [
         uploaderNickname: 'mina',
         uploadedAt: new Date().toISOString(),
         isImmutableSnapshot: true,
+        liked: false,
+        likeCount: 15,
         placeCount: 7,
         places: [
             {

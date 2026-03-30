@@ -1,9 +1,14 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Spinner } from '@/components/ui/spinner';
-import { useSharedCategories } from '@/shared/hooks/use-community';
+import {
+  COMMUNITY_QUERY_KEYS,
+  useRecommendedSharedCategories,
+  useSharedCategories,
+} from '@/shared/hooks/use-community';
 import { MESSAGES } from '@/shared/constants/messages';
 import type { SharedSavedCategory } from '@/entities/types';
+import { useAuthStore } from '@/shared/stores/auth-store';
 import PageHeader from '@/components/layout/page-header';
 import DesktopSideLayout from '@/components/layout/desktop-side-layout';
 import SharedCategoryList from '@/components/community/shared-category-list';
@@ -11,6 +16,8 @@ import SharedCategoryDetailDialog from '@/components/community/shared-category-d
 import { UI_COPY } from '@/shared/constants/ui-copy';
 import { useQueryErrorToast } from '@/shared/hooks/use-query-error-toast';
 import RecommendedCategoryCarousel from '@/components/community/recommended-category-carousel';
+import LoginRequiredDialog from '@/components/common/login-required-dialog';
+import { useSharedCategoryLike } from '@/shared/hooks/use-shared-category-like';
 
 /**
  * 커뮤니티 메인 페이지 - 검색 입력 후 검색 결과 페이지로 이동
@@ -18,25 +25,41 @@ import RecommendedCategoryCarousel from '@/components/community/recommended-cate
  */
 const Community = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, token } = useAuthStore();
   const [selectedCategory, setSelectedCategory] = useState<SharedSavedCategory | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
-  // UserRequest: Community 페이지의 추천/검색 로직은 service 계층 인터페이스를 통해 실행
-  // TODO: 다음 스프린트에서 recommendations API가 준비되면 추천 영역 조회를 전용 API로 교체한다.
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
   const {
     data: sharedCategories = [],
     isLoading: sharedCategoriesLoading,
     error: sharedCategoriesError,
-  } = useSharedCategories(5, false);
+  } = useRecommendedSharedCategories();
   const {
     data: boardCategories = [],
     error: boardCategoriesError,
   } = useSharedCategories(3, false);
+
+  const { toggleLike } = useSharedCategoryLike({
+    queryKey: [...COMMUNITY_QUERY_KEYS.list(3), false, token],
+    token,
+    isAuthenticated,
+    setSelectedCategory,
+    onRequireLogin: () => setLoginDialogOpen(true),
+  });
 
   const filteredCategories = useMemo(() => sharedCategories, [sharedCategories]);
 
   const handleOpenDetail = (category: SharedSavedCategory) => {
     setSelectedCategory(category);
     setDetailOpen(true);
+  };
+
+  const handleFavoriteClick = (category: SharedSavedCategory) =>
+    toggleLike({ sharedCategoryId: category.id, currentLiked: !!category.liked });
+
+  const handleLoginStart = () => {
+    setLoginDialogOpen(false);
+    navigate('/auth?tab=login');
   };
 
   // UserRequest: 추천 목록 조회 실패 시 사용자에게 즉시 알림
@@ -88,6 +111,7 @@ const Community = () => {
             <SharedCategoryList
               categories={boardCategories}
               onOpenDetail={handleOpenDetail}
+              onFavoriteClick={handleFavoriteClick}
               viewportClassName="h-auto"
               size="compact"
             />
@@ -102,6 +126,13 @@ const Community = () => {
         open={detailOpen}
         onOpenChange={setDetailOpen}
         category={selectedCategory}
+        onFavoriteClick={handleFavoriteClick}
+      />
+      <LoginRequiredDialog
+        open={loginDialogOpen}
+        onOpenChange={setLoginDialogOpen}
+        onStart={handleLoginStart}
+        featureName="찜 기능"
       />
     </div>
   );

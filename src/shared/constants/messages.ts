@@ -37,33 +37,33 @@ const workspace = {
 // UserRequest: 페이지 분리 없이 카테고리 메시지를 공유/보관/워크스페이스로 나누어 관리
 // 공유 카테고리: 커뮤니티 노출/검색/업로드/내 게시물 삭제
 const sharedCategory = {
-  fetchDetailFailed: '공유 카테고리를 불러올 수 없습니다.',
+  fetchDetailFailed: '공유 컬렉션을 불러올 수 없습니다.',
   myPostsLoadFailed: '커뮤니티 관리 정보를 불러오지 못했습니다.',
-  deleteFailed: '공유 카테고리 삭제에 실패했습니다.',
-  deleteSuccess: '공유 카테고리를 삭제했어요.',
-  uploadFailed: '카테고리 업로드에 실패했습니다.',
+  deleteFailed: '공유 컬렉션 삭제에 실패했습니다.',
+  deleteSuccess: '공유 컬렉션을 삭제했어요.',
+  uploadFailed: '컬렉션 업로드에 실패했습니다.',
   uploadSuccess: '커뮤니티에 업로드했어요.',
-  recommendedLoadFailed: '추천 카테고리를 불러올 수 없습니다.',
+  recommendedLoadFailed: '추천 컬렉션을 불러올 수 없습니다.',
   searchLoadFailed: '검색 결과를 불러올 수 없습니다.',
 } as const;
 
 // 보관 카테고리: 내 카테고리(생성/수정/삭제)
 const savedCategory = {
-  addFailed: '카테고리 추가에 실패했습니다.',
-  addSuccess: '카테고리가 추가되었습니다',
-  updateFailed: '카테고리 수정에 실패했습니다.',
-  updateSuccess: '카테고리가 수정되었습니다',
-  deleteFailed: '카테고리 삭제에 실패했습니다.',
-  deleteSuccess: '카테고리가 삭제되었습니다',
-  listLoadFailed: '내 카테고리를 불러오지 못했습니다.',
+  addFailed: '컬렉션 추가에 실패했습니다.',
+  addSuccess: '컬렉션이 추가되었습니다',
+  updateFailed: '컬렉션 수정에 실패했습니다.',
+  updateSuccess: '컬렉션이 수정되었습니다',
+  deleteFailed: '컬렉션 삭제에 실패했습니다.',
+  deleteSuccess: '컬렉션이 삭제되었습니다',
+  listLoadFailed: '내 컬렉션을 불러오지 못했습니다.',
 } as const;
 
 // 워크스페이스 카테고리: 워크스페이스에 속한 카테고리(정렬/불러오기)
 const workspaceCategory = {
-  listLoadFailed: '카테고리 목록을 불러오지 못했습니다.',
-  reorderFailed: '카테고리 순서 변경에 실패했습니다.',
-  importFailed: '카테고리 불러오기에 실패했습니다.',
-  importSuccess: '카테고리를 불러왔습니다.',
+  listLoadFailed: '컬렉션 목록을 불러오지 못했습니다.',
+  reorderFailed: '컬렉션 순서 변경에 실패했습니다.',
+  importFailed: '컬렉션 불러오기에 실패했습니다.',
+  importSuccess: '컬렉션을 불러왔습니다.',
   placeImportFailed: '장소 불러오기에 실패했습니다.',
 } as const;
 

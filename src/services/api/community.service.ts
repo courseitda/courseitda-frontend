@@ -5,9 +5,10 @@ import { MESSAGES } from '@/shared/constants/messages';
 import { toError, toSuccess } from './http';
 
 // 커뮤니티 관련 백엔드 엔드포인트 상수 정의
-const RECOMMENDED_SHARED_CATEGORIES_ENDPOINT = '/api/community/shared-categories/recommendations';
 const SEARCH_SHARED_CATEGORIES_ENDPOINT = '/api/shared-categories/search';
 const MY_SHARED_CATEGORIES_ENDPOINT = '/api/me/shared-categories';
+const MY_LIKED_SHARED_CATEGORIES_ENDPOINT = '/api/me/liked-shared-categories';
+const MY_LIKED_SHARED_CATEGORIES_CONTAINS_ENDPOINT = '/api/me/liked-shared-categories/contains';
 const SHARED_CATEGORY_ENDPOINT = '/api/shared-categories';
 
 type SharedCategoryPlaceApiResponse = {
@@ -29,6 +30,7 @@ type SharedCategoryApiResponse = {
   uploaderNickname?: string;
   createdAt?: string;
   uploadedAt?: string;
+  likeCount?: number;
   placeCount?: number;
   sharedCategoryPlaces?: SharedCategoryPlaceApiResponse[];
   places?: SharedCategoryPlaceApiResponse[];
@@ -39,6 +41,7 @@ type MySharedCategoryApiResponse = {
   name: string;
   createdAt: string;
   placeCount: number;
+  likeCount?: number;
 };
 
 type SharedCategoriesListApiResponse = {
@@ -55,6 +58,7 @@ export interface SharedCategoriesData {
     uploaderNickname: string;
     uploadedAt: string;
     isImmutableSnapshot: true;
+    likeCount: number;
     placeCount: number;
     places: Array<{
       id: string;
@@ -78,6 +82,7 @@ export interface MySharedCategoriesData {
     uploaderNickname: string;
     uploadedAt: string;
     isImmutableSnapshot: true;
+    likeCount: number;
     placeCount: number;
     publishedFromSavedCategoryId: string;
   }>;
@@ -93,9 +98,14 @@ export interface ShareSavedCategoryData {
     uploaderNickname: string;
     uploadedAt: string;
     isImmutableSnapshot: true;
+    likeCount: number;
     placeCount: number;
     publishedFromSavedCategoryId: string;
   };
+}
+
+export interface LikedSharedCategoryIdsData {
+  likedSharedCategoryIds: string[];
 }
 
 const adaptSharedCategoryPlaces = (places: SharedCategoryPlaceApiResponse[] | undefined) =>
@@ -118,8 +128,9 @@ const adaptSharedCategories = (payload: SharedCategoryApiResponse[]): SharedCate
       id: String(category.id),
       title: category.name ?? category.title ?? '',
       uploaderNickname: category.authorNickname ?? category.uploaderNickname ?? '',
-      uploadedAt: category.createdAt ?? category.uploadedAt ?? new Date().toISOString(),
+      uploadedAt: category.createdAt ?? category.uploadedAt ?? '',
       isImmutableSnapshot: true,
+      likeCount: category.likeCount ?? 0,
       placeCount: category.placeCount ?? categoryPlaces.length,
       places: adaptSharedCategoryPlaces(categoryPlaces),
     };
@@ -135,6 +146,7 @@ const adaptMySharedCategories = (payload: MySharedCategoryApiResponse[]): MyShar
     uploaderNickname: 'me',
     uploadedAt: category.createdAt,
     isImmutableSnapshot: true,
+    likeCount: category.likeCount ?? 0,
     placeCount: category.placeCount,
     publishedFromSavedCategoryId: '',
   })),
@@ -173,11 +185,12 @@ export const communityApi = {
       const response = await apiClient.get<SharedCategoryApiResponse[] | SharedCategoriesListApiResponse>(
         SHARED_CATEGORY_ENDPOINT,
         {
-        params: {
-          cursor: params?.cursor ?? undefined,
-          size: params?.size ?? 20,
+          params: {
+            cursor: params?.cursor ?? undefined,
+            size: params?.size ?? 20,
+          },
         },
-      });
+      );
       return toSuccess<SharedCategoriesData>(normalizeSharedCategoriesResponse(response.data));
     } catch (error) {
       return toError(
@@ -192,15 +205,20 @@ export const communityApi = {
    * 추천 공유 카테고리 목록 조회 API 호출
    * @returns API 응답 (성공 시 공유 카테고리 목록, 실패 시 에러 정보)
    *
-   * 백엔드 엔드포인트: GET /api/community/shared-categories/recommendations
+   * 백엔드 엔드포인트: GET /api/shared-categories?size=5
    */
   getRecommendedSharedCategories: async (): Promise<ApiResponse<SharedCategoriesData>> => {
     try {
-      // UserRequest: Community 페이지의 데이터 로딩을 컴포넌트 내부 mock이 아닌 service 계층 API 호출로 통일
-      const response = await apiClient.get<SharedCategoryApiResponse[]>(
-        RECOMMENDED_SHARED_CATEGORIES_ENDPOINT,
+      // 추천 전용 엔드포인트 대신 목록 API 상위 5개를 사용하여 문서 계약과 구현을 일치시킨다.
+      const response = await apiClient.get<SharedCategoriesListApiResponse>(
+        SHARED_CATEGORY_ENDPOINT,
+        {
+          params: {
+            size: 5,
+          },
+        },
       );
-      return toSuccess<SharedCategoriesData>(adaptSharedCategories(response.data));
+      return toSuccess<SharedCategoriesData>(normalizeSharedCategoriesResponse(response.data));
     } catch (error) {
       return toError(
         error,
@@ -313,6 +331,7 @@ export const communityApi = {
           uploaderNickname: 'me',
           uploadedAt: new Date().toISOString(),
           isImmutableSnapshot: true,
+          likeCount: 0,
           placeCount: 0,
           publishedFromSavedCategoryId: '',
         },
@@ -372,6 +391,100 @@ export const communityApi = {
         error,
         BackendErrorCode.SHARED_SAVED_CATEGORY_NOT_FOUND,
         MESSAGES.sharedCategory.fetchDetailFailed,
+      );
+    }
+  },
+
+  getLikedSharedCategoryIds: async (
+    token: string,
+    sharedCategoryIds: string[],
+  ): Promise<ApiResponse<LikedSharedCategoryIdsData>> => {
+    try {
+      // 백엔드 문서 계약에 맞춰 sharedCategoryIds를 CSV 문자열로 직렬화한다.
+      const response = await apiClient.get<{ likedSharedCategoryIds: Array<string | number> }>(
+        MY_LIKED_SHARED_CATEGORIES_CONTAINS_ENDPOINT,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: {
+            sharedCategoryIds: sharedCategoryIds.join(','),
+          },
+        },
+      );
+
+      return toSuccess<LikedSharedCategoryIdsData>({
+        likedSharedCategoryIds: (response.data.likedSharedCategoryIds ?? []).map((id) => String(id)),
+      });
+    } catch (error) {
+      return toError(
+        error,
+        BackendErrorCode.INVALID_TOKEN,
+        MESSAGES.common.defaultError,
+      );
+    }
+  },
+
+  getLikedSharedCategories: async (
+    token: string,
+    params?: { cursor?: number | null; size?: number },
+  ): Promise<ApiResponse<SharedCategoriesData>> => {
+    try {
+      const response = await apiClient.get<SharedCategoryApiResponse[] | SharedCategoriesListApiResponse>(
+        MY_LIKED_SHARED_CATEGORIES_ENDPOINT,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: {
+            cursor: params?.cursor ?? undefined,
+            size: params?.size ?? 20,
+          },
+        },
+      );
+
+      return toSuccess<SharedCategoriesData>(normalizeSharedCategoriesResponse(response.data));
+    } catch (error) {
+      return toError(
+        error,
+        BackendErrorCode.INVALID_TOKEN,
+        MESSAGES.common.defaultError,
+      );
+    }
+  },
+
+  likeSharedCategory: async (
+    token: string,
+    sharedCategoryId: string,
+  ): Promise<ApiResponse<null>> => {
+    try {
+      await apiClient.post(
+        `${SHARED_CATEGORY_ENDPOINT}/${sharedCategoryId}/likes`,
+        undefined,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      return toSuccess<null>(null);
+    } catch (error) {
+      return toError(
+        error,
+        BackendErrorCode.ACCESS_FORBIDDEN,
+        MESSAGES.common.defaultError,
+      );
+    }
+  },
+
+  unlikeSharedCategory: async (
+    token: string,
+    sharedCategoryId: string,
+  ): Promise<ApiResponse<null>> => {
+    try {
+      await apiClient.delete(`${SHARED_CATEGORY_ENDPOINT}/${sharedCategoryId}/likes`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      return toSuccess<null>(null);
+    } catch (error) {
+      return toError(
+        error,
+        BackendErrorCode.ACCESS_FORBIDDEN,
+        MESSAGES.common.defaultError,
       );
     }
   },

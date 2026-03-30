@@ -106,32 +106,32 @@ const ERROR_MESSAGES: ErrorMessageMap = {
 
   // 3000 Series: Category Errors
   // CATEGORY_NAME_EMPTY
-  [BackendErrorCode.CATEGORY_NAME_EMPTY]: '카테고리 이름을 입력해주세요.',
+  [BackendErrorCode.CATEGORY_NAME_EMPTY]: '컬렉션 이름을 입력해주세요.',
   // CATEGORY_COLOR_EMPTY
-  [BackendErrorCode.CATEGORY_COLOR_EMPTY]: '카테고리 색상을 입력해주세요.',
+  [BackendErrorCode.CATEGORY_COLOR_EMPTY]: '컬렉션 색상을 입력해주세요.',
   // DUPLICATE_CATEGORY_ORDER_IN_REQUEST
   [BackendErrorCode.DUPLICATE_CATEGORY_ORDER_IN_REQUEST]:
     '요청에 중복된 순서 값이 있습니다.',
   // DUPLICATE_CATEGORY_ID_IN_REQUEST
   [BackendErrorCode.DUPLICATE_CATEGORY_ID_IN_REQUEST]:
-    '요청에 중복된 카테고리 ID가 있습니다.',
+    '요청에 중복된 컬렉션 ID가 있습니다.',
   // CATEGORY_MODIFY_FORBIDDEN
   [BackendErrorCode.CATEGORY_MODIFY_FORBIDDEN]:
-    '해당 카테고리의 수정 권한이 없습니다.',
+    '해당 컬렉션의 수정 권한이 없습니다.',
   // CATEGORY_OUT_OF_WORKSPACE
   [BackendErrorCode.CATEGORY_OUT_OF_WORKSPACE]:
-    '해당 워크스페이스에 속한 카테고리가 아닙니다.',
+    '해당 워크스페이스에 속한 컬렉션이 아닙니다.',
   // INVALID_REPRESENTATIVE_PLACE_ASSIGNMENT
   [BackendErrorCode.INVALID_REPRESENTATIVE_PLACE_ASSIGNMENT]:
-    '다른 카테고리의 장소를 대표로 지정할 수 없습니다.',
+    '다른 컬렉션의 장소를 대표로 지정할 수 없습니다.',
   // CATEGORY_NOT_FOUND
-  [BackendErrorCode.CATEGORY_NOT_FOUND]: '존재하지 않는 카테고리입니다.',
+  [BackendErrorCode.CATEGORY_NOT_FOUND]: '존재하지 않는 컬렉션입니다.',
   // PARTIAL_CATEGORY_NOT_FOUND
   [BackendErrorCode.PARTIAL_CATEGORY_NOT_FOUND]:
-    '일부 카테고리를 찾을 수 없습니다.',
+    '일부 컬렉션을 찾을 수 없습니다.',
   // CATEGORY_NAME_LENGTH_EXCEEDED
   [BackendErrorCode.CATEGORY_NAME_LENGTH_EXCEEDED]:
-    '카테고리 이름은 10자를 초과할 수 없습니다.',
+    '컬렉션 이름은 10자를 초과할 수 없습니다.',
   // INVALID_CATEGORY_COLOR_FORMAT
   [BackendErrorCode.INVALID_CATEGORY_COLOR_FORMAT]:
     '유효하지 않은 색상 형식입니다.',
@@ -149,10 +149,10 @@ const ERROR_MESSAGES: ErrorMessageMap = {
     '경도는 -180에서 180 사이여야 합니다.',
   // PLACE_NOT_BELONG_TO_CATEGORY
   [BackendErrorCode.PLACE_NOT_BELONG_TO_CATEGORY]:
-    '해당 카테고리에 속한 장소가 아닙니다.',
+    '해당 컬렉션에 속한 장소가 아닙니다.',
   // CATEGORY_PLACE_NOT_FOUND
   [BackendErrorCode.CATEGORY_PLACE_NOT_FOUND]:
-    '존재하지 않는 카테고리 장소입니다.',
+    '존재하지 않는 컬렉션 장소입니다.',
 
   // 5000 Series: Member Errors
   // MEMBER_NICKNAME_EMPTY
@@ -222,10 +222,10 @@ const ERROR_MESSAGES: ErrorMessageMap = {
   // 7000 Series: Community / MyStorage Errors
   // SHARED_SAVED_CATEGORY_NOT_FOUND
   [BackendErrorCode.SHARED_SAVED_CATEGORY_NOT_FOUND]:
-    '존재하지 않는 공유 카테고리입니다.',
+    '존재하지 않는 공유 컬렉션입니다.',
   // SAVED_CATEGORY_NOT_FOUND
   [BackendErrorCode.SAVED_CATEGORY_NOT_FOUND]:
-    '존재하지 않는 보관 카테고리입니다.',
+    '존재하지 않는 보관 컬렉션입니다.',
 };
 
 export const DEFAULT_ERROR_MESSAGE = '요청 처리 중 오류가 발생했습니다.';

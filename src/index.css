@@ -115,6 +115,13 @@
     --destructive-ring-offset: 0 84% 40%;  /* #DC2626 - 포커스 링 오프셋 (진한 빨강) */
 
     /* ============================================
+       하트(찜) 색상
+       사용처: 하트 아이콘, 찜 애니메이션
+       ============================================ */
+    --like-heart: 346 84% 58%;             /* #f25c6b - 밝은 코랄 핑크, 활기 있는 대비 */
+    --like-heart-ping: 346 84% 90% / 0.7;  /* 같은 Hue를 밝힌 코랄 핑크 오라 */
+
+    /* ============================================
        지도 마커 색상/그림자
        사용처: 네이버 지도 커스텀 마커 (내 위치, 공유 카테고리)
        ============================================ */
@@ -216,6 +223,15 @@
 
   .map-marker {
     @apply w-8 h-8 rounded-full shadow-md border-2 border-white cursor-pointer transition-transform hover:scale-110;
+  }
+
+  /* 하트(찜) 아이콘/애니메이션 색상 통합 관리 */
+  .like-heart {
+    color: hsl(var(--like-heart));
+  }
+
+  .like-heart-ping {
+    background-color: hsl(var(--like-heart-ping));
   }
 
   /* UserRequest: 업로드 버튼 초기 진입 시 가볍게 튕기는 모션 제공 */

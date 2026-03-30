@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, Folder, SearchX } from 'lucide-react';
+import { Calendar, Folder, Heart, SearchX } from 'lucide-react';
 import type { SharedSavedCategory } from '@/entities/types';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 
@@ -11,6 +11,11 @@ type SharedCategoryListProps = {
   viewportClassName?: string;
   size?: 'default' | 'compact';
   renderTrailingAction?: (category: SharedSavedCategory) => ReactNode;
+  onFavoriteClick?: (category: SharedSavedCategory) => boolean | void;
+};
+
+type SharedCategoryWithFavoriteMeta = SharedSavedCategory & {
+  likeCount?: number;
 };
 
 const formatUploadedDate = (uploadedAt: string): string => {
@@ -30,7 +35,9 @@ const SharedCategoryList = ({
   viewportClassName = 'h-[520px]',
   size = 'default',
   renderTrailingAction,
+  onFavoriteClick,
 }: SharedCategoryListProps) => {
+  const [likePulse, setLikePulse] = useState<Record<string, boolean>>({});
   // UserRequest: 커뮤니티 메인 게시판에서는 카드 크기를 5/6 수준으로 축소하고, 다른 화면은 기존 크기를 유지한다.
   const isCompact = size === 'compact';
   const iconWrapperClassName = isCompact
@@ -44,6 +51,15 @@ const SharedCategoryList = ({
   const titleClassName = isCompact ? 'truncate text-sm' : 'text-base truncate';
   const metaRowClassName = isCompact ? 'text-[11px] flex items-center gap-1.5 min-w-0' : 'text-xs flex items-center gap-2 min-w-0';
   const metaIconClassName = isCompact ? 'w-3 h-3' : 'w-3.5 h-3.5';
+  const favoriteButtonClassName = isCompact ? 'h-6 w-6' : 'h-7 w-7';
+  const favoriteIconClassName = isCompact ? 'w-3.5 h-3.5' : 'w-4 h-4';
+
+  const triggerLikePulse = (categoryId: string) => {
+    setLikePulse((prev) => ({ ...prev, [categoryId]: true }));
+    window.setTimeout(() => {
+      setLikePulse((prev) => ({ ...prev, [categoryId]: false }));
+    }, 200);
+  };
 
   return (
     <div className={`${viewportClassName} overflow-y-auto pr-1`}>
@@ -57,6 +73,7 @@ const SharedCategoryList = ({
       ) : (
         <div className="grid grid-cols-1 gap-1.5 items-start auto-rows-min">
           {categories.map((category) => {
+            const favoriteMeta = category as SharedCategoryWithFavoriteMeta;
             return (
               <Card
                 key={category.id}
@@ -82,8 +99,39 @@ const SharedCategoryList = ({
                           {formatUploadedDate(category.uploadedAt)}
                         </span>
                       )}
+                      {/* UserRequest: 카드 하트는 크기를 줄여 날짜 오른쪽 메타 라인으로 이동한다. */}
+                      <button
+                        type="button"
+                        aria-label={`${category.title} 찜 표시`}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          if (onFavoriteClick?.(category) === false) {
+                            return;
+                          }
+                          // UserRequest: 삭제 직전 찜 버튼과 동일한 눌림/펄스 애니메이션을 공통 카드에 적용한다.
+                          triggerLikePulse(category.id);
+                        }}
+                        className={`relative inline-flex ${favoriteButtonClassName} shrink-0 items-center justify-center rounded-full transition-transform duration-150 hover:scale-105 active:scale-90 focus:outline-none ${
+                          likePulse[category.id] ? 'scale-110' : ''
+                        }`}
+                      >
+                        {likePulse[category.id] && (
+                          <span className="absolute inset-0 rounded-full like-heart-ping animate-ping" />
+                        )}
+                        <Heart
+                          className={`${category.liked ? 'like-heart' : 'text-muted-foreground'} ${favoriteIconClassName} transition-transform duration-150 ${
+                            likePulse[category.id] ? 'scale-110' : ''
+                          }`}
+                          fill={category.liked ? 'currentColor' : 'none'}
+                          strokeWidth={category.liked ? 0 : 1.5}
+                        />
+                      </button>
+                      {typeof favoriteMeta.likeCount === 'number' && (
+                        <span className="-ml-0.5 shrink-0 text-muted-foreground">{favoriteMeta.likeCount}</span>
+                      )}
                     </div>
                   </div>
+                  {/* UserRequest: 커뮤니티 공유 카테고리 카드 우측에 하트 모양 찜 표시를 공통 노출한다. */}
                   {renderTrailingAction?.(category)}
                 </CardHeader>
               </Card>

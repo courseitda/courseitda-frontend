@@ -19,10 +19,11 @@ const HeroAnimation = () => {
         <motion.div
             whileHover={shouldReduceMotion ? undefined : {scale: 1.01}}
             transition={{duration: 0.25}}
-            className="relative w-full overflow-hidden rounded-2xl border border-border/60 bg-card shadow-lg aspect-[4/3]"
+            className="relative -mx-8 w-[calc(100%+4rem)] overflow-hidden border-y border-border/60 bg-card/40 aspect-[16/10] sm:aspect-[16/9]"
         >
-            {/* UserRequest: 지도 영역을 직접 그리는 SVG를 제거하고 이미지 배경을 사용한다. */}
+            {/* UserRequest: 랜딩 지도는 카드형 박스 대신 섹션 가로폭 전체를 채우도록 확장한다. */}
             <img src={landingMapImage} alt="" aria-hidden className="absolute inset-0 h-full w-full object-cover"/>
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--background)/0.02),hsl(var(--background)/0.16))]"/>
 
             <svg viewBox="0 0 360 240" className="relative z-10 h-full w-full">
                 <motion.path

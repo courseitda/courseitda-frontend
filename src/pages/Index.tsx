@@ -92,7 +92,7 @@ const Index = () => {
             <DesktopSideLayout className="min-h-[calc(100vh-72px)]" contentClassName="bg-background">
                 <main className="w-full pb-10 md:pb-12">
                 <section
-                    className="relative overflow-hidden border-b border-border/60 px-8 pb-12 pt-10">
+                    className="relative overflow-hidden border-b border-border/60 px-8 pb-0 pt-10">
                     <div
                         className="absolute inset-0 bg-[radial-gradient(120%_100%_at_95%_0%,hsl(var(--primary)/0.2),transparent_55%),radial-gradient(70%_80%_at_0%_100%,hsl(var(--accent-foreground)/0.12),transparent_50%)]"/>
                     <div className="relative z-10">

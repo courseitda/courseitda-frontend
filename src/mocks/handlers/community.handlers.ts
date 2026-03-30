@@ -9,6 +9,7 @@ const recommendedSharedCategories = createRecommendedSharedCategoryMocks();
 const allSharedCategories = new Map(
   [...sharedSavedCategories, ...recommendedSharedCategories].map((category) => [category.id, category]),
 );
+const likedSharedCategoryIds = new Set<string>();
 const mySavedCategories = createSavedCategoryMocks();
 
 const mySharedCategories: Array<{
@@ -16,12 +17,14 @@ const mySharedCategories: Array<{
   name: string;
   createdAt: string;
   placeCount: number;
+  likeCount: number;
 }> = [
   {
     id: 'my-shared-1',
-    name: mySavedCategories[0]?.title ?? '내 공유 카테고리',
+    name: mySavedCategories[0]?.title ?? '내 공유 컬렉션',
     createdAt: new Date().toISOString(),
     placeCount: mySavedCategories[0]?.placeCount ?? 0,
+    likeCount: 0,
   },
 ];
 
@@ -58,6 +61,7 @@ const toApiResponse = (categories: typeof sharedSavedCategories) =>
     name: category.title,
     authorNickname: category.uploaderNickname,
     createdAt: category.uploadedAt,
+    likeCount: category.likeCount,
     placeCount: category.placeCount,
     sharedCategoryPlaces: category.places.map((place) => ({
       id: place.id,
@@ -140,6 +144,65 @@ export const communityHandlers = [
     });
   }),
 
+  http.get('*/api/me/liked-shared-categories/contains', ({ request }) => {
+    if (!isAuthorized(request)) {
+      return HttpResponse.json(
+        {
+          type: 'about:blank',
+          title: 'Unauthorized',
+          status: 401,
+          detail: '인증이 필요합니다.',
+          code: BackendErrorCode.MISSING_AUTH_HEADER,
+        },
+        { status: 401 },
+      );
+    }
+
+    const url = new URL(request.url);
+    const sharedCategoryIds = url.searchParams.getAll('sharedCategoryIds');
+    const matchedIds = sharedCategoryIds.filter((id) => likedSharedCategoryIds.has(id));
+
+    return HttpResponse.json({ likedSharedCategoryIds: matchedIds });
+  }),
+
+  http.get('*/api/me/liked-shared-categories', ({ request }) => {
+    if (!isAuthorized(request)) {
+      return HttpResponse.json(
+        {
+          type: 'about:blank',
+          title: 'Unauthorized',
+          status: 401,
+          detail: '인증이 필요합니다.',
+          code: BackendErrorCode.MISSING_AUTH_HEADER,
+        },
+        { status: 401 },
+      );
+    }
+
+    const url = new URL(request.url);
+    const likedCategories = [...allSharedCategories.values()]
+      .filter((category) => likedSharedCategoryIds.has(category.id))
+      .map((category) => ({
+        id: category.id,
+        name: category.title,
+        authorNickname: category.uploaderNickname,
+        createdAt: category.uploadedAt,
+        likeCount: category.likeCount,
+        placeCount: category.placeCount,
+      }));
+    const paged = paginate(
+      likedCategories,
+      url.searchParams.get('cursor'),
+      url.searchParams.get('size'),
+    );
+
+    return HttpResponse.json({
+      sharedCategories: paged.items,
+      hasNext: paged.hasNext,
+      nextCursor: paged.nextCursor,
+    });
+  }),
+
   http.get('*/api/shared-categories/:sharedCategoryId', ({ params }) => {
     const sharedCategoryId = String(params.sharedCategoryId ?? '');
     const category = allSharedCategories.get(sharedCategoryId);
@@ -150,14 +213,30 @@ export const communityHandlers = [
           type: 'about:blank',
           title: 'Not Found',
           status: 404,
-          detail: '존재하지 않는 공유 카테고리입니다.',
+          detail: '존재하지 않는 공유 컬렉션입니다.',
           code: BackendErrorCode.SHARED_SAVED_CATEGORY_NOT_FOUND,
         },
         { status: 404 },
       );
     }
 
-    return HttpResponse.json(category);
+    return HttpResponse.json({
+      id: category.id,
+      name: category.title,
+      authorNickname: category.uploaderNickname,
+      createdAt: category.uploadedAt,
+      likeCount: category.likeCount,
+      placeCount: category.placeCount,
+      sharedCategoryPlaces: category.places.map((place) => ({
+        id: place.id,
+        name: place.name,
+        placeUrl: place.placeUrl,
+        roadAddressName: place.roadAddressName,
+        addressName: place.addressName,
+        latitude: place.latitude,
+        longitude: place.longitude,
+      })),
+    });
   }),
 
   http.post('*/api/shared-categories', async ({ request }) => {
@@ -184,7 +263,7 @@ export const communityHandlers = [
           type: 'about:blank',
           title: 'Not Found',
           status: 404,
-          detail: '보관 카테고리를 찾을 수 없습니다.',
+          detail: '보관 컬렉션을 찾을 수 없습니다.',
           code: BackendErrorCode.SAVED_CATEGORY_NOT_FOUND,
         },
         { status: 404 },
@@ -204,6 +283,7 @@ export const communityHandlers = [
       uploaderNickname: 'me',
       uploadedAt: newShared.createdAt,
       isImmutableSnapshot: true,
+      likeCount: 0,
       placeCount: savedCategory.placeCount,
       places: savedCategory.places.map((place) => ({ ...place })),
     });
@@ -236,7 +316,7 @@ export const communityHandlers = [
           type: 'about:blank',
           title: 'Not Found',
           status: 404,
-          detail: '존재하지 않는 공유 카테고리입니다.',
+          detail: '존재하지 않는 공유 컬렉션입니다.',
           code: BackendErrorCode.SHARED_SAVED_CATEGORY_NOT_FOUND,
         },
         { status: 404 },
@@ -244,7 +324,84 @@ export const communityHandlers = [
     }
 
     mySharedCategories.splice(index, 1);
+    likedSharedCategoryIds.delete(sharedCategoryId);
     allSharedCategories.delete(sharedCategoryId);
+    return HttpResponse.json(null, { status: 204 });
+  }),
+
+  http.post('*/api/shared-categories/:sharedCategoryId/likes', ({ request, params }) => {
+    if (!isAuthorized(request)) {
+      return HttpResponse.json(
+        {
+          type: 'about:blank',
+          title: 'Unauthorized',
+          status: 401,
+          detail: '인증이 필요합니다.',
+          code: BackendErrorCode.MISSING_AUTH_HEADER,
+        },
+        { status: 401 },
+      );
+    }
+
+    const sharedCategoryId = String(params.sharedCategoryId ?? '');
+    const category = allSharedCategories.get(sharedCategoryId);
+
+    if (!category) {
+      return HttpResponse.json(
+        {
+          type: 'about:blank',
+          title: 'Not Found',
+          status: 404,
+          detail: '존재하지 않는 공유 컬렉션입니다.',
+          code: BackendErrorCode.SHARED_SAVED_CATEGORY_NOT_FOUND,
+        },
+        { status: 404 },
+      );
+    }
+
+    if (!likedSharedCategoryIds.has(sharedCategoryId)) {
+      likedSharedCategoryIds.add(sharedCategoryId);
+      category.likeCount += 1;
+    }
+
+    return HttpResponse.json(null, { status: 204 });
+  }),
+
+  http.delete('*/api/shared-categories/:sharedCategoryId/likes', ({ request, params }) => {
+    if (!isAuthorized(request)) {
+      return HttpResponse.json(
+        {
+          type: 'about:blank',
+          title: 'Unauthorized',
+          status: 401,
+          detail: '인증이 필요합니다.',
+          code: BackendErrorCode.MISSING_AUTH_HEADER,
+        },
+        { status: 401 },
+      );
+    }
+
+    const sharedCategoryId = String(params.sharedCategoryId ?? '');
+    const category = allSharedCategories.get(sharedCategoryId);
+
+    if (!category) {
+      return HttpResponse.json(
+        {
+          type: 'about:blank',
+          title: 'Not Found',
+          status: 404,
+          detail: '존재하지 않는 공유 컬렉션입니다.',
+          code: BackendErrorCode.SHARED_SAVED_CATEGORY_NOT_FOUND,
+        },
+        { status: 404 },
+      );
+    }
+
+    if (likedSharedCategoryIds.has(sharedCategoryId)) {
+      likedSharedCategoryIds.delete(sharedCategoryId);
+      category.likeCount = Math.max(0, category.likeCount - 1);
+    }
+
     return HttpResponse.json(null, { status: 204 });
   }),
 ];

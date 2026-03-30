@@ -8,6 +8,7 @@ export const createRecommendedSharedCategoryMocks = (): SharedSavedCategoryMock[
     uploaderNickname: 'courseitda',
     uploadedAt: new Date().toISOString(),
     isImmutableSnapshot: true,
+    likeCount: 42,
     placeCount: 3,
     places: [
       {
@@ -45,6 +46,7 @@ export const createRecommendedSharedCategoryMocks = (): SharedSavedCategoryMock[
     uploaderNickname: 'courseitda',
     uploadedAt: new Date().toISOString(),
     isImmutableSnapshot: true,
+    likeCount: 36,
     placeCount: 3,
     places: [
       {
@@ -82,6 +84,7 @@ export const createRecommendedSharedCategoryMocks = (): SharedSavedCategoryMock[
     uploaderNickname: 'courseitda',
     uploadedAt: new Date().toISOString(),
     isImmutableSnapshot: true,
+    likeCount: 28,
     placeCount: 3,
     places: [
       {

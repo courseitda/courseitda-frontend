@@ -1,4 +1,4 @@
-import {type ReactNode, useState} from 'react';
+import {type CSSProperties, type ReactNode, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {Button} from '@/components/ui/button';
 import {Card, CardHeader, CardTitle} from '@/components/ui/card';
@@ -11,7 +11,7 @@ import {toast} from 'sonner';
 import {Spinner} from '@/components/ui/spinner';
 import {useDeleteSavedCategory, useMySavedCategories,} from '@/shared/hooks/use-my-storage';
 import {MESSAGES} from '@/shared/constants/messages';
-import type {SavedCategory} from '@/entities/types';
+import type {SavedCategory, SharedSavedCategory} from '@/entities/types';
 import PageHeader from '@/components/layout/page-header';
 import DesktopSideLayout from '@/components/layout/desktop-side-layout';
 import {formatRelativeTimeKorean} from '@/shared/utils/relative-time';
@@ -20,6 +20,10 @@ import DeleteConfirmDialog from '@/components/common/delete-confirm-dialog';
 import { useRequireAuthRedirect } from '@/shared/hooks/use-require-auth-redirect';
 import { useQueryErrorToast } from '@/shared/hooks/use-query-error-toast';
 import {Tabs, TabsContent, TabsList, TabsTrigger} from '@/components/ui/tabs';
+import SharedCategoryList from '@/components/community/shared-category-list';
+import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
+import { COMMUNITY_QUERY_KEYS, useMyLikedSharedCategories } from '@/shared/hooks/use-community';
+import { useSharedCategoryLike } from '@/shared/hooks/use-shared-category-like';
 
 /**
  * 내 카테고리 페이지 컴포넌트
@@ -34,6 +38,8 @@ const MyCategory = () => {
     const [createDialogOpen, setCreateDialogOpen] = useState(false);
     const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
     const [selectedForDelete, setSelectedForDelete] = useState<SavedCategory | null>(null);
+    const [selectedFavoriteCategory, setSelectedFavoriteCategory] = useState<SharedSavedCategory | null>(null);
+    const [favoriteDetailOpen, setFavoriteDetailOpen] = useState(false);
     const [newCategoryTitle, setNewCategoryTitle] = useState('');
 
     // UserRequest: 내 카테고리 목록은 service 계층 API + React Query로 로딩 (컴포넌트 내부 mock 제거)
@@ -43,13 +49,27 @@ const MyCategory = () => {
         isFetching: savedCategoriesFetching,
         error: savedCategoriesError,
     } = useMySavedCategories(token);
+    const {
+        data: likedCategories = [],
+        isLoading: likedCategoriesLoading,
+        isFetching: likedCategoriesFetching,
+        error: likedCategoriesError,
+    } = useMyLikedSharedCategories(token);
     const deleteSavedCategoryMutation = useDeleteSavedCategory(token);
+    const { toggleLike } = useSharedCategoryLike({
+        queryKey: [...COMMUNITY_QUERY_KEYS.liked, token],
+        token,
+        isAuthenticated: true,
+        setSelectedCategory: setSelectedFavoriteCategory,
+    });
 
     // UserRequest: 반복되는 인증 리다이렉트 로직을 공통 훅으로 통합
     useRequireAuthRedirect();
 
     // UserRequest: 내 카테고리 목록 조회 실패 시 사용자에게 즉시 알림
     useQueryErrorToast(savedCategoriesError, MESSAGES.savedCategory.listLoadFailed);
+    // UserRequest: 찜 탭은 내가 찜한 공유 카테고리 목록 API 오류를 즉시 노출한다.
+    useQueryErrorToast(likedCategoriesError, MESSAGES.sharedCategory.searchLoadFailed);
 
     // UserRequest: 카테고리 카드 클릭 시 상세 페이지로 이동하여 이름/지도/장소 목록을 보여줌
     const handleOpenCategory = (categoryId: string) => {
@@ -110,6 +130,15 @@ const MyCategory = () => {
             },
         });
     };
+
+    const handleOpenFavoriteCategory = (category: SharedSavedCategory) => {
+        // UserRequest: 찜 탭 카드 클릭 시 공유 카테고리 상세 모달을 연다.
+        setSelectedFavoriteCategory(category);
+        setFavoriteDetailOpen(true);
+    };
+
+    const handleFavoriteToggle = (category: SharedSavedCategory) =>
+        toggleLike({ sharedCategoryId: category.id, currentLiked: !!category.liked });
 
     // UserRequest: 내 카테고리 카드의 롱프레스를 제거하고 우측 더보기 버튼으로 수정/삭제 메뉴를 노출한다.
     const renderSavedCategoryCard = (category: SavedCategory) => (
@@ -172,7 +201,16 @@ const MyCategory = () => {
     );
 
     // UserRequest: 내 카테고리가 비어 있거나 조회 실패해도 초기 fetch 중일 때만 전체 로딩 스피너를 노출한다.
-    if (savedCategoriesLoading && savedCategoriesFetching && savedCategories.length === 0 && !savedCategoriesError) {
+    if (
+        savedCategoriesLoading &&
+        savedCategoriesFetching &&
+        savedCategories.length === 0 &&
+        !savedCategoriesError &&
+        likedCategoriesLoading &&
+        likedCategoriesFetching &&
+        likedCategories.length === 0 &&
+        !likedCategoriesError
+    ) {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <Spinner className="w-8 h-8"/>
@@ -258,8 +296,8 @@ const MyCategory = () => {
         </div>
     );
 
-    // UserRequest: 찜 탭은 추후 구현 전까지 빈 상태만 표시한다.
-    const renderFavoritePlaceholder = () => (
+    // UserRequest: 찜 탭은 내가 찜한 공유 카테고리 목록 API를 사용해 실제 데이터를 표시한다.
+    const renderFavoriteContent = () => (
         <div className="relative">
             {/* UserRequest: 찜 탭은 보관 탭의 시작점/하단과 동일한 영역을 가져야 하므로 보관 구조를 보이지 않게 유지한다. */}
             <div className="pointer-events-none invisible space-y-3 md:space-y-2" aria-hidden="true">
@@ -271,11 +309,20 @@ const MyCategory = () => {
                 )}
             </div>
             <div className="absolute inset-0">
-                {renderEmptyState(
-                    <Folder className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60"/>,
-                    `${UI_COPY.myCategory.favoriteEmpty.title}\n${UI_COPY.myCategory.favoriteEmpty.description}`,
-                    'h-full',
-                )}
+                {likedCategories.length === 0
+                    ? renderEmptyState(
+                        <Heart className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60"/>,
+                        `${UI_COPY.myCategory.favoriteEmpty.title}\n${UI_COPY.myCategory.favoriteEmpty.description}`,
+                        'h-full',
+                    )
+                    : (
+                        <SharedCategoryList
+                            categories={likedCategories}
+                            onOpenDetail={handleOpenFavoriteCategory}
+                            onFavoriteClick={handleFavoriteToggle}
+                            viewportClassName="h-full"
+                        />
+                    )}
             </div>
         </div>
     );
@@ -300,7 +347,7 @@ const MyCategory = () => {
                         {renderArchiveContent()}
                     </TabsContent>
                     <TabsContent value="favorite" className="mt-0">
-                        {renderFavoritePlaceholder()}
+                        {renderFavoriteContent()}
                     </TabsContent>
                 </Tabs>
             </main>
@@ -318,7 +365,7 @@ const MyCategory = () => {
                             {renderArchiveContent()}
                         </TabsContent>
                         <TabsContent value="favorite" className="mt-0">
-                            {renderFavoritePlaceholder()}
+                            {renderFavoriteContent()}
                         </TabsContent>
                     </Tabs>
                 </main>
@@ -386,6 +433,12 @@ const MyCategory = () => {
                 }
                 onConfirm={handleDeleteConfirm}
                 pending={deleteSavedCategoryMutation.isPending}
+            />
+            <SharedCategoryDetailDialog
+                open={favoriteDetailOpen}
+                onOpenChange={setFavoriteDetailOpen}
+                category={selectedFavoriteCategory}
+                onFavoriteClick={handleFavoriteToggle}
             />
         </div>
     );

@@ -2,9 +2,10 @@ import type { FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Spinner } from '@/components/ui/spinner';
-import { useSharedCategorySearch } from '@/shared/hooks/use-community';
+import { COMMUNITY_QUERY_KEYS, useSharedCategorySearch } from '@/shared/hooks/use-community';
 import { MESSAGES } from '@/shared/constants/messages';
 import type { SharedSavedCategory } from '@/entities/types';
+import { useAuthStore } from '@/shared/stores/auth-store';
 import SharedCategorySearchBar from '@/components/community/shared-category-search-bar';
 import SharedCategoryList from '@/components/community/shared-category-list';
 import SharedCategoryDetailDialog from '@/components/community/shared-category-detail-dialog';
@@ -12,14 +13,18 @@ import PageHeader from '@/components/layout/page-header';
 import DesktopSideLayout from '@/components/layout/desktop-side-layout';
 import { UI_COPY } from '@/shared/constants/ui-copy';
 import { useQueryErrorToast } from '@/shared/hooks/use-query-error-toast';
+import LoginRequiredDialog from '@/components/common/login-required-dialog';
+import { useSharedCategoryLike } from '@/shared/hooks/use-shared-category-like';
 
 const SearchResult = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, token } = useAuthStore();
   const [searchParams] = useSearchParams();
   const keyword = searchParams.get('keyword') || '';
   const [inputKeyword, setInputKeyword] = useState(keyword);
   const [selectedCategory, setSelectedCategory] = useState<SharedSavedCategory | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
 
   // UserRequest: /community/search/results 결과는 service 계층 API + React Query로 로딩 (컴포넌트 내부 mock 제거)
   const {
@@ -27,6 +32,14 @@ const SearchResult = () => {
     isLoading: sharedCategoriesLoading,
     error: sharedCategoriesError,
   } = useSharedCategorySearch(keyword);
+
+  const { toggleLike } = useSharedCategoryLike({
+    queryKey: [...COMMUNITY_QUERY_KEYS.search(keyword), token],
+    token,
+    isAuthenticated,
+    setSelectedCategory,
+    onRequireLogin: () => setLoginDialogOpen(true),
+  });
 
   useEffect(() => {
     setInputKeyword(keyword);
@@ -46,6 +59,14 @@ const SearchResult = () => {
   const handleOpenDetail = (category: SharedSavedCategory) => {
     setSelectedCategory(category);
     setDetailOpen(true);
+  };
+
+  const handleFavoriteClick = (category: SharedSavedCategory) =>
+    toggleLike({ sharedCategoryId: category.id, currentLiked: !!category.liked });
+
+  const handleLoginStart = () => {
+    setLoginDialogOpen(false);
+    navigate('/auth?tab=login');
   };
 
   if (sharedCategoriesLoading) {
@@ -90,6 +111,7 @@ const SearchResult = () => {
               <SharedCategoryList
                 categories={filteredCategories}
                 onOpenDetail={handleOpenDetail}
+                onFavoriteClick={handleFavoriteClick}
                 showEmptyState
                 // UserRequest: 데스크톱 검색 결과 목록은 고정 높이로 자르지 않고 자연 높이로 모두 노출한다.
                 viewportClassName="h-[520px] md:h-auto"
@@ -104,6 +126,13 @@ const SearchResult = () => {
         open={detailOpen}
         onOpenChange={setDetailOpen}
         category={selectedCategory}
+        onFavoriteClick={handleFavoriteClick}
+      />
+      <LoginRequiredDialog
+        open={loginDialogOpen}
+        onOpenChange={setLoginDialogOpen}
+        onStart={handleLoginStart}
+        featureName="찜 기능"
       />
     </div>
   );
