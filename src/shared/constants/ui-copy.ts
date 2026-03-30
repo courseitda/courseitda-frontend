@@ -12,7 +12,7 @@ export const UI_COPY = {
     search: '검색',
     add: '추가',
     adding: '추가 중...',
-    upload: '업로드',
+    upload: '공유',
     more: '더보기',
     countSuffix: '개',
     placeCountSuffix: '곳',
@@ -271,8 +271,8 @@ export const UI_COPY = {
   },
   myPosts: {
     pageTitle: '내 게시물',
-    sectionTitle: '업로드한 컬렉션',
-    uploadAction: '업로드하기',
+    sectionTitle: '공유한 컬렉션',
+    uploadAction: '공유하기',
     moreActionAriaLabel: '게시물 더보기',
     empty: {
       title: '업로드한 컬렉션이 없습니다.',
@@ -358,10 +358,10 @@ export const UI_COPY = {
     storageSection: '보관함',
     communitySection: '커뮤니티',
     accountSection: '계정',
-    myWorkspace: '내 워크스페이스',
-    myCategory: '내 컬렉션',
+    myWorkspace: '워크스페이스 보관함',
+    myCategory: '컬렉션 보관함',
     communityExplore: '커뮤니티 둘러보기',
-    myPosts: '내 공유 목록',
+    myPosts: '공유한 컬렉션',
     myPage: '마이페이지',
     login: '로그인',
     logout: '로그아웃',
@@ -374,7 +374,7 @@ export const UI_COPY = {
     renameWorkspace: '이름 바꾸기',
   },
   uploadCategoryDialog: {
-    title: '컬렉션 업로드',
+    title: '컬렉션 공유',
     noticeBadge: '안내',
     description: '내 컬렉션 중 커뮤니티에 공유할 항목을 선택하세요.',
     empty: {
