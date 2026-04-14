@@ -1,4 +1,5 @@
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
+import { useEffect, useState } from 'react';
 import type { SharedSavedCategory } from '@/entities/types';
 import { Calendar, Heart, Sparkles } from 'lucide-react';
 import { useCommunityRecommendCarousel } from '@/shared/hooks/use-community-recommend-carousel';
@@ -23,6 +24,7 @@ const RecommendedCategoryCarousel = ({
   categories,
   onOpenDetail,
 }: RecommendedCategoryCarouselProps) => {
+  const [brokenImageIds, setBrokenImageIds] = useState<Record<string, boolean>>({});
   const {
     sliderRef,
     trackRef,
@@ -42,6 +44,11 @@ const RecommendedCategoryCarousel = ({
     handlePointerLeave,
     handleTransitionEnd,
   } = useCommunityRecommendCarousel(categories);
+
+  useEffect(() => {
+    // 추천 데이터가 바뀌면 이전 이미지 실패 상태를 초기화한다.
+    setBrokenImageIds({});
+  }, [categories]);
 
   if (categories.length === 0) {
     return null;
@@ -102,10 +109,20 @@ const RecommendedCategoryCarousel = ({
                     }}
                   >
                     <div
-                      className="flex items-center justify-center rounded-t-xl border-b border-border bg-muted/60 text-xs text-muted-foreground"
+                      className="overflow-hidden rounded-t-xl border-b border-border bg-white"
                       style={{ height: cardImageHeight }}
                     >
-                      이미지 영역
+                      {category.imageUrl && !brokenImageIds[category.id] ? (
+                        <img
+                          src={category.imageUrl}
+                          alt=""
+                          className="h-full w-full object-cover"
+                          onError={() => {
+                            // 이미지 링크가 비었거나 실제 파일이 없으면 흰 배경만 유지한다.
+                            setBrokenImageIds((previous) => ({ ...previous, [category.id]: true }));
+                          }}
+                        />
+                      ) : null}
                     </div>
                     <CardContent className="p-4">
                       <div className="flex min-w-0 flex-1 flex-col gap-1.5">

@@ -1,119 +1,44 @@
-import type { SharedSavedCategoryMock } from './community.factory';
+export type RecommendedCategoryMock = {
+  id: string;
+  imageUrl: string;
+  sharedCategoryId: string;
+  name: string;
+  authorNickname: string;
+  createdAt: string;
+  placeCount: number;
+  likeCount: number;
+};
 
-// UserRequest: 추천 카테고리 목업 데이터를 별도 파일로 분리
-export const createRecommendedSharedCategoryMocks = (): SharedSavedCategoryMock[] => [
+// UserRequest: 추천 카테고리 목업 데이터를 추천 API 계약에 맞춰 별도 파일로 분리
+export const createRecommendedSharedCategoryMocks = (): RecommendedCategoryMock[] => [
   {
-    id: 'rec-1',
-    title: '강릉 바다 드라이브',
-    uploaderNickname: 'courseitda',
-    uploadedAt: new Date().toISOString(),
-    isImmutableSnapshot: true,
-    likeCount: 42,
-    placeCount: 3,
-    places: [
-      {
-        id: 'rec-p-1',
-        name: '안목해변',
-        placeUrl: 'https://map.naver.com/p/entry/place/3001',
-        roadAddressName: '강원 강릉시 창해로 14',
-        addressName: '강원 강릉시 창해로 14',
-        latitude: 37.7732,
-        longitude: 128.9482,
-      },
-      {
-        id: 'rec-p-2',
-        name: '경포해변',
-        placeUrl: 'https://map.naver.com/p/entry/place/3002',
-        roadAddressName: '강원 강릉시 창해로 514',
-        addressName: '강원 강릉시 창해로 514',
-        latitude: 37.8042,
-        longitude: 128.9097,
-      },
-      {
-        id: 'rec-p-3',
-        name: '주문진 방파제',
-        placeUrl: 'https://map.naver.com/p/entry/place/3003',
-        roadAddressName: '강원 강릉시 주문진읍 주문진리 312-5',
-        addressName: '강원 강릉시 주문진읍 주문진리 312-5',
-        latitude: 37.8947,
-        longitude: 128.8294,
-      },
-    ],
+    id: '1',
+    imageUrl: 'https://courseitda-bucket.s3.ap-northeast-2.amazonaws.com/recommended/hongdae.jpg',
+    sharedCategoryId: 'shared-4',
+    name: '홍대 감성 카페',
+    authorNickname: 'mori',
+    createdAt: new Date().toISOString(),
+    placeCount: 6,
+    likeCount: 31,
   },
   {
-    id: 'rec-2',
-    title: '부산 야경 코스',
-    uploaderNickname: 'courseitda',
-    uploadedAt: new Date().toISOString(),
-    isImmutableSnapshot: true,
-    likeCount: 36,
-    placeCount: 3,
-    places: [
-      {
-        id: 'rec-p-4',
-        name: '황령산 전망대',
-        placeUrl: 'https://map.naver.com/p/entry/place/3004',
-        roadAddressName: '부산 부산진구 전포동 산50-4',
-        addressName: '부산 부산진구 전포동 산50-4',
-        latitude: 35.1647,
-        longitude: 129.0751,
-      },
-      {
-        id: 'rec-p-5',
-        name: '더베이101',
-        placeUrl: 'https://map.naver.com/p/entry/place/3005',
-        roadAddressName: '부산 해운대구 동백로 52',
-        addressName: '부산 해운대구 동백로 52',
-        latitude: 35.1567,
-        longitude: 129.1515,
-      },
-      {
-        id: 'rec-p-6',
-        name: '광안대교 전망대',
-        placeUrl: 'https://map.naver.com/p/entry/place/3006',
-        roadAddressName: '부산 수영구 광안해변로 219',
-        addressName: '부산 수영구 광안해변로 219',
-        latitude: 35.1532,
-        longitude: 129.1185,
-      },
-    ],
+    id: '2',
+    imageUrl: 'https://courseitda-bucket.s3.ap-northeast-2.amazonaws.com/recommended/busan.jpg',
+    sharedCategoryId: 'shared-5',
+    name: '부산 바다 코스',
+    authorNickname: 'jun',
+    createdAt: new Date().toISOString(),
+    placeCount: 4,
+    likeCount: 22,
   },
   {
-    id: 'rec-3',
-    title: '서울 야외 피크닉',
-    uploaderNickname: 'courseitda',
-    uploadedAt: new Date().toISOString(),
-    isImmutableSnapshot: true,
-    likeCount: 28,
-    placeCount: 3,
-    places: [
-      {
-        id: 'rec-p-7',
-        name: '올림픽공원',
-        placeUrl: 'https://map.naver.com/p/entry/place/3007',
-        roadAddressName: '서울 송파구 올림픽로 424',
-        addressName: '서울 송파구 올림픽로 424',
-        latitude: 37.5163,
-        longitude: 127.1215,
-      },
-      {
-        id: 'rec-p-8',
-        name: '서울숲',
-        placeUrl: 'https://map.naver.com/p/entry/place/3008',
-        roadAddressName: '서울 성동구 뚝섬로 273',
-        addressName: '서울 성동구 뚝섬로 273',
-        latitude: 37.5447,
-        longitude: 127.0374,
-      },
-      {
-        id: 'rec-p-9',
-        name: '반포 한강공원',
-        placeUrl: 'https://map.naver.com/p/entry/place/3009',
-        roadAddressName: '서울 서초구 신반포로11길 40',
-        addressName: '서울 서초구 신반포로11길 40',
-        latitude: 37.5111,
-        longitude: 126.9944,
-      },
-    ],
+    id: '3',
+    imageUrl: '',
+    sharedCategoryId: 'shared-6',
+    name: '을지로 저녁 맛집',
+    authorNickname: 'mina',
+    createdAt: new Date().toISOString(),
+    placeCount: 7,
+    likeCount: 15,
   },
 ];

@@ -5,9 +5,9 @@ import { createRecommendedSharedCategoryMocks } from '../factories/recommended-c
 import { createSavedCategoryMocks } from '../factories/my-storage.factory';
 
 const sharedSavedCategories = createSharedSavedCategoryMocks();
-const recommendedSharedCategories = createRecommendedSharedCategoryMocks();
+const recommendedCategories = createRecommendedSharedCategoryMocks();
 const allSharedCategories = new Map(
-  [...sharedSavedCategories, ...recommendedSharedCategories].map((category) => [category.id, category]),
+  [...sharedSavedCategories].map((category) => [category.id, category]),
 );
 const likedSharedCategoryIds = new Set<string>();
 const mySavedCategories = createSavedCategoryMocks();
@@ -76,8 +76,8 @@ const toApiResponse = (categories: typeof sharedSavedCategories) =>
 
 export const communityHandlers = [
   // UserRequest: API baseURL이 다른 origin이어도 매칭되도록 와일드카드(`*`)를 사용
-  http.get('*/api/community/shared-categories/recommendations', () => {
-    return HttpResponse.json(toApiResponse(recommendedSharedCategories));
+  http.get('*/api/recommended-categories', () => {
+    return HttpResponse.json({ recommendedCategories });
   }),
 
   http.get('*/api/shared-categories/search', ({ request }) => {
@@ -159,7 +159,11 @@ export const communityHandlers = [
     }
 
     const url = new URL(request.url);
-    const sharedCategoryIds = url.searchParams.getAll('sharedCategoryIds');
+    const sharedCategoryIds = url.searchParams
+      .getAll('sharedCategoryIds')
+      .flatMap((value) => value.split(','))
+      .map((value) => value.trim())
+      .filter(Boolean);
     const matchedIds = sharedCategoryIds.filter((id) => likedSharedCategoryIds.has(id));
 
     return HttpResponse.json({ likedSharedCategoryIds: matchedIds });

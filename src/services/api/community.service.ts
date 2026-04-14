@@ -6,6 +6,7 @@ import { toError, toSuccess } from './http';
 
 // 커뮤니티 관련 백엔드 엔드포인트 상수 정의
 const SEARCH_SHARED_CATEGORIES_ENDPOINT = '/api/shared-categories/search';
+const RECOMMENDED_CATEGORIES_ENDPOINT = '/api/recommended-categories';
 const MY_SHARED_CATEGORIES_ENDPOINT = '/api/me/shared-categories';
 const MY_LIKED_SHARED_CATEGORIES_ENDPOINT = '/api/me/liked-shared-categories';
 const MY_LIKED_SHARED_CATEGORIES_CONTAINS_ENDPOINT = '/api/me/liked-shared-categories/contains';
@@ -51,6 +52,17 @@ type SharedCategoriesListApiResponse = {
   nextCursor?: number | null;
 };
 
+type RecommendedCategoryApiResponse = {
+  id: number | string;
+  imageUrl?: string | null;
+  sharedCategoryId: number | string;
+  name: string;
+  authorNickname: string;
+  createdAt: string;
+  placeCount: number;
+  likeCount: number;
+};
+
 // 공유 카테고리 목록 조회 응답 데이터 타입 - 백엔드 API 스펙과 일치
 export interface SharedCategoriesData {
   sharedCategories: Array<{
@@ -59,6 +71,7 @@ export interface SharedCategoriesData {
     uploaderNickname: string;
     uploadedAt: string;
     isImmutableSnapshot: true;
+    imageUrl?: string;
     isDeleted?: boolean;
     likeCount: number;
     placeCount: number;
@@ -132,12 +145,33 @@ const adaptSharedCategories = (payload: SharedCategoryApiResponse[]): SharedCate
       uploaderNickname: category.authorNickname ?? category.uploaderNickname ?? '',
       uploadedAt: category.createdAt ?? category.uploadedAt ?? '',
       isImmutableSnapshot: true,
+      imageUrl: undefined,
       isDeleted: category.isDeleted ?? false,
       likeCount: category.likeCount ?? 0,
       placeCount: category.placeCount ?? categoryPlaces.length,
       places: adaptSharedCategoryPlaces(categoryPlaces),
     };
   }),
+  hasNext: false,
+  nextCursor: null,
+});
+
+const adaptRecommendedCategories = (
+  payload: RecommendedCategoryApiResponse[],
+): SharedCategoriesData => ({
+  sharedCategories: payload.map((category) => ({
+    // 추천 카테고리는 공유 카테고리를 참조하므로 상세/찜 흐름 재사용을 위해 sharedCategoryId를 식별자로 사용한다.
+    id: String(category.sharedCategoryId),
+    title: category.name,
+    uploaderNickname: category.authorNickname,
+    uploadedAt: category.createdAt,
+    isImmutableSnapshot: true,
+    imageUrl: category.imageUrl ?? undefined,
+    isDeleted: false,
+    likeCount: category.likeCount,
+    placeCount: category.placeCount,
+    places: [],
+  })),
   hasNext: false,
   nextCursor: null,
 });
@@ -208,20 +242,16 @@ export const communityApi = {
    * 추천 공유 카테고리 목록 조회 API 호출
    * @returns API 응답 (성공 시 공유 카테고리 목록, 실패 시 에러 정보)
    *
-   * 백엔드 엔드포인트: GET /api/shared-categories?size=5
+   * 백엔드 엔드포인트: GET /api/recommended-categories
    */
   getRecommendedSharedCategories: async (): Promise<ApiResponse<SharedCategoriesData>> => {
     try {
-      // 추천 전용 엔드포인트 대신 목록 API 상위 5개를 사용하여 문서 계약과 구현을 일치시킨다.
-      const response = await apiClient.get<SharedCategoriesListApiResponse>(
-        SHARED_CATEGORY_ENDPOINT,
-        {
-          params: {
-            size: 5,
-          },
-        },
+      const response = await apiClient.get<{ recommendedCategories: RecommendedCategoryApiResponse[] }>(
+        RECOMMENDED_CATEGORIES_ENDPOINT,
       );
-      return toSuccess<SharedCategoriesData>(normalizeSharedCategoriesResponse(response.data));
+      return toSuccess<SharedCategoriesData>(
+        adaptRecommendedCategories(response.data.recommendedCategories ?? []),
+      );
     } catch (error) {
       return toError(
         error,

@@ -12,6 +12,7 @@ type SharedSavedCategoryPayload = {
   uploaderNickname: string;
   uploadedAt: string;
   isImmutableSnapshot: true;
+  imageUrl?: string;
   isDeleted?: boolean;
   likeCount: number;
   placeCount: number;
@@ -34,6 +35,7 @@ const toSharedSavedCategoryEntity = (payload: SharedSavedCategoryPayload): Share
   uploader: payload.uploaderNickname,
   uploadedAt: payload.uploadedAt,
   isImmutableSnapshot: true,
+  imageUrl: payload.imageUrl,
   isDeleted: payload.isDeleted ?? false,
   likeCount: payload.likeCount ?? 0,
   placeCount: payload.placeCount,
