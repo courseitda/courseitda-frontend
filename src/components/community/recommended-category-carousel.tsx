@@ -116,7 +116,7 @@ const RecommendedCategoryCarousel = ({
                         <img
                           src={category.imageUrl}
                           alt=""
-                          className="h-full w-full object-cover"
+                          className="h-full w-full object-cover object-center"
                           onError={() => {
                             // 이미지 링크가 비었거나 실제 파일이 없으면 흰 배경만 유지한다.
                             setBrokenImageIds((previous) => ({ ...previous, [category.id]: true }));

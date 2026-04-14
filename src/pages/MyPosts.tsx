@@ -27,6 +27,7 @@ import { UI_COPY } from '@/shared/constants/ui-copy';
 import DeleteConfirmDialog from '@/components/common/delete-confirm-dialog';
 import { useRequireAuthRedirect } from '@/shared/hooks/use-require-auth-redirect';
 import { useQueryErrorToast } from '@/shared/hooks/use-query-error-toast';
+import { useSharedCategoryLike } from '@/shared/hooks/use-shared-category-like';
 
 /**
  * 커뮤니티 관리 페이지 - 회원만 접근 가능, 보관 카테고리를 공유/삭제 관리
@@ -34,7 +35,7 @@ import { useQueryErrorToast } from '@/shared/hooks/use-query-error-toast';
  */
 const MyPosts = () => {
   const navigate = useNavigate();
-  const { token } = useAuthStore();
+  const { token, isAuthenticated } = useAuthStore();
   const queryClient = useQueryClient();
   const { nickname } = useUserNickname();
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
@@ -48,6 +49,12 @@ const MyPosts = () => {
     isLoading: mySharedCategoriesLoading,
     error: mySharedCategoriesError,
   } = useMySharedCategories(token);
+  const { toggleLike } = useSharedCategoryLike({
+    queryKey: [...COMMUNITY_QUERY_KEYS.myShared, token],
+    token,
+    isAuthenticated,
+    setSelectedCategory,
+  });
 
   // UserRequest: 반복되는 인증 리다이렉트 로직을 공통 훅으로 통합
   useRequireAuthRedirect();
@@ -131,6 +138,9 @@ const MyPosts = () => {
     deleteMutation.mutate(selectedForDelete.id);
   };
 
+  const handleFavoriteClick = (category: SharedSavedCategory) =>
+    toggleLike({ sharedCategoryId: category.id, currentLiked: !!category.liked });
+
   if (mySharedCategoriesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -193,6 +203,7 @@ const MyPosts = () => {
                     <SharedCategoryList
                       categories={mySharedCategories}
                       onOpenDetail={handleOpenDetail}
+                      onFavoriteClick={handleFavoriteClick}
                       viewportClassName="h-[75vh]"
                       renderTrailingAction={(category) => (
                         <DropdownMenu>
@@ -241,6 +252,7 @@ const MyPosts = () => {
         open={detailOpen}
         onOpenChange={setDetailOpen}
         category={selectedCategory}
+        onFavoriteClick={handleFavoriteClick}
       />
       <DeleteConfirmDialog
         open={deleteAlertOpen}
